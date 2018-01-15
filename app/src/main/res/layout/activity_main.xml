@@ -16,4 +16,17 @@
         opencv:show_fps="true"
         opencv:camera_id="any"/>
 
+    <Button
+        android:id="@+id/capture_button"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="16dp"
+        android:layout_marginEnd="8dp"
+        android:layout_marginStart="8dp"
+        android:text="Capture"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        android:theme="@style/PrimaryButton"/>
+
 </android.support.constraint.ConstraintLayout>
