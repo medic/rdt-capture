@@ -8,11 +8,16 @@ import org.opencv.core.Core;
 import org.opencv.core.Mat;
 import org.opencv.android.CameraBridgeViewBase;
 import org.opencv.android.CameraBridgeViewBase.CvCameraViewListener2;
+import org.opencv.core.MatOfPoint;
+import org.opencv.core.Rect;
+import org.opencv.core.Scalar;
 import org.opencv.core.Size;
 import org.opencv.imgproc.Imgproc;
 
 import android.Manifest;
 import android.content.pm.PackageManager;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.hardware.Camera;
 import android.support.constraint.ConstraintLayout;
 import android.support.v4.app.ActivityCompat;
@@ -22,6 +27,14 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.SurfaceView;
 import android.view.WindowManager;
+
+import java.util.ArrayList;
+import java.util.List;
+
+import static org.opencv.core.CvType.CV_32F;
+import static org.opencv.core.CvType.CV_64F;
+import static org.opencv.core.CvType.CV_8UC1;
+import static org.opencv.core.CvType.CV_8UC3;
 
 public class MainActivity extends AppCompatActivity implements CvCameraViewListener2{
     private static final String TAG = "rdt-reader:MainActivity";
@@ -154,6 +167,59 @@ public class MainActivity extends AppCompatActivity implements CvCameraViewListe
 
         Log.d(TAG, String.format("%d,%d %d.%d", mContainer.getHeight(), mContainer.getWidth(), inputFrame.rgba().height(), inputFrame.rgba().width()));
 
-        return inputFrame.rgba();
+        //return inputFrame.rgba();
+        return drawContour(inputFrame.rgba());
+    }
+
+    private Mat drawContour(Mat input) {
+        Mat sobelx = new Mat();
+        Mat sobely = new Mat();
+
+        Mat output = new Mat();
+        Mat sharp = new Mat();
+
+        //Imgproc.GaussianBlur(input, output, new Size(21, 21), 8);
+        Imgproc.GaussianBlur(input, output, new Size(21, 21), 3);
+        Imgproc.cvtColor(output, output, Imgproc.COLOR_RGB2GRAY);
+
+        Imgproc.Sobel(output, sobelx, CV_32F, 0, 1, 5);
+        Imgproc.Sobel(output, sobely, CV_32F, 1, 0, 5);
+
+        Core.pow(sobelx, 2, sobelx);
+        Core.pow(sobely, 2, sobely);
+
+        Core.add(sobelx, sobely, output);
+
+        output.convertTo(output, CV_32F);
+
+        Core.pow(output, 0.5, output);
+        Core.multiply(output, new Scalar(Math.pow(2, 0.5)),output);
+
+        output.convertTo(output, CV_8UC1);
+
+        Imgproc.GaussianBlur(output, sharp, new Size(0, 0), 3);
+        Core.addWeighted(output, 1.5, sharp, -0.5, 0, output);
+
+        List<MatOfPoint> contours = new ArrayList<>();
+        Mat hierarchy = new Mat();
+
+        Imgproc.findContours(output, contours, hierarchy, Imgproc.RETR_TREE, Imgproc.CHAIN_APPROX_SIMPLE);
+
+        Log.d(TAG, "contours: " + contours.size());
+
+        //output.convertTo(output, CV_32F);
+
+        //for(int idx = 0; idx >= 0; idx = (int) hierarchy.get(0, idx)[0]) {
+        for( int idx = 0; idx < contours.size(); idx++ ) {
+            MatOfPoint matOfPoint = contours.get(idx);
+            Rect rect = Imgproc.boundingRect(matOfPoint);
+            if(rect.size().width > 100 && rect.size().height > 100)
+                Imgproc.rectangle(output, rect.tl(), rect.br(), new Scalar(255, 255, 255));
+        }
+
+        //output.convertTo(output, CV_32F);
+
+        return output;
+
     }
 }
