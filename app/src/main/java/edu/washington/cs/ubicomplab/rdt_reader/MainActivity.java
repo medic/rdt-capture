@@ -136,6 +136,8 @@ public class MainActivity extends AppCompatActivity implements CvCameraViewListe
 
     @Override
     public Mat onCameraFrame(CvCameraViewFrame inputFrame) {
+        System.gc();
+
         /*Mat newFrame = new Mat();
 
         double hRatio;
