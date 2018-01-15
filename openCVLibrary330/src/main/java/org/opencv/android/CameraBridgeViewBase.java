@@ -408,43 +408,6 @@ public abstract class CameraBridgeViewBase extends SurfaceView implements Surfac
         }
 
         if (bmpValid && mCacheBitmap != null) {
-            /*Canvas canvas = getHolder().lockCanvas();
-            if (canvas != null) {
-                //this is the rotation part
-
-                if (getResources().getConfiguration().orientation == Configuration.ORIENTATION_PORTRAIT && mCameraIndex == -1) {
-                    Log.d(TAG, "INDEX IS: " + mCameraIndex);
-                    canvas.save();
-                    canvas.rotate(90,  (canvas.getWidth()/ 2),(canvas.getHeight()/ 2));
-                }
-
-                if (getResources().getConfiguration().orientation == Configuration.ORIENTATION_PORTRAIT && mCameraIndex == 1) {
-                    canvas.save();
-                    canvas.rotate(270,  (canvas.getWidth()/ 2),(canvas.getHeight()/ 2));
-                }
-
-                if (mScale != 0) {
-                    canvas.drawBitmap(mCacheBitmap, new Rect(0,0,mCacheBitmap.getWidth(), mCacheBitmap.getHeight()),
-                            new Rect((int)((canvas.getWidth() - mScale*mCacheBitmap.getWidth()) / 2),
-                                    (int)((canvas.getHeight() - mScale*mCacheBitmap.getHeight()) / 2),
-                                    (int)((canvas.getWidth() - mScale*mCacheBitmap.getWidth()) / 2 + mScale*mCacheBitmap.getWidth()),
-                                    (int)((canvas.getHeight() - mScale*mCacheBitmap.getHeight()) / 2 + mScale*mCacheBitmap.getHeight())), null);
-                } else {
-                    canvas.drawBitmap(mCacheBitmap, new Rect(0,0,mCacheBitmap.getWidth(), mCacheBitmap.getHeight()),
-                            new Rect((canvas.getWidth() - mCacheBitmap.getWidth()) / 2,
-                                    (canvas.getHeight() - mCacheBitmap.getHeight()) / 2,
-                                    (canvas.getWidth() - mCacheBitmap.getWidth()) / 2 + mCacheBitmap.getWidth(),
-                                    (canvas.getHeight() - mCacheBitmap.getHeight()) / 2 + mCacheBitmap.getHeight()), null);
-                }
-
-                if (mFpsMeter != null) {
-                    mFpsMeter.measure();
-                    mFpsMeter.draw(canvas, 20, 30);
-                }
-                if (getResources().getConfiguration().orientation == Configuration.ORIENTATION_PORTRAIT) {
-                    canvas.restore();
-                }
-                getHolder().unlockCanvasAndPost(canvas);*/
             Canvas canvas = getHolder().lockCanvas();
             if (canvas != null) {
                 //this is the rotation part
@@ -463,19 +426,19 @@ public abstract class CameraBridgeViewBase extends SurfaceView implements Surfac
 
                     Rect rect = canvas.getClipBounds();
 
-                    canvas.drawBitmap(mCacheBitmap, new Rect(0,0,mCacheBitmap.getWidth(), mCacheBitmap.getHeight()), rect, null);
+                    float localScale = Math.min((float)rect.width()/(float)mCacheBitmap.getWidth(), (float)rect.height()/(float)mCacheBitmap.getHeight());
 
+                    canvas.drawBitmap(mCacheBitmap, new Rect(0,0,mCacheBitmap.getWidth(), mCacheBitmap.getHeight()),
+                            new Rect((int)((canvas.getWidth() - localScale*mScale*mCacheBitmap.getWidth()) / 2),
+                                    (int)((canvas.getHeight() - localScale*mScale*mCacheBitmap.getHeight()) / 2),
+                                    (int)((canvas.getWidth() - localScale*mScale*mCacheBitmap.getWidth()) / 2 + localScale*mScale*mCacheBitmap.getWidth()),
+                                    (int)((canvas.getHeight() - localScale*mScale*mCacheBitmap.getHeight()) / 2 + localScale*mScale*mCacheBitmap.getHeight())), null);
                 } else {
                     canvas.drawBitmap(mCacheBitmap, new Rect(0,0,mCacheBitmap.getWidth(), mCacheBitmap.getHeight()),
                             new Rect((canvas.getWidth() - mCacheBitmap.getWidth()) / 2,
                                     (canvas.getHeight() - mCacheBitmap.getHeight()) / 2,
                                     (canvas.getWidth() - mCacheBitmap.getWidth()) / 2 + mCacheBitmap.getWidth(),
                                     (canvas.getHeight() - mCacheBitmap.getHeight()) / 2 + mCacheBitmap.getHeight()), null);
-
-                    Log.d("DIO2", "left"+ (canvas.getWidth() - mCacheBitmap.getWidth()) / 2);
-                    Log.d("DIO2", "top"+ (canvas.getHeight() - mCacheBitmap.getHeight()) / 2);
-                    Log.d("DIO2", "right"+ (canvas.getWidth() - mCacheBitmap.getWidth()) / 2 + mCacheBitmap.getWidth());
-                    Log.d("DIO2", "bottom"+ (canvas.getHeight() - mCacheBitmap.getHeight()) / 2 + mCacheBitmap.getHeight());
                 }
 
                 if (mFpsMeter != null) {
