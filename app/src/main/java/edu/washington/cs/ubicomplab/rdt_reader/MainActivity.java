@@ -4,21 +4,29 @@ import org.opencv.android.BaseLoaderCallback;
 import org.opencv.android.CameraBridgeViewBase.CvCameraViewFrame;
 import org.opencv.android.LoaderCallbackInterface;
 import org.opencv.android.OpenCVLoader;
+import org.opencv.android.Utils;
 import org.opencv.core.Core;
+import org.opencv.core.DMatch;
 import org.opencv.core.Mat;
 import org.opencv.android.CameraBridgeViewBase;
 import org.opencv.android.CameraBridgeViewBase.CvCameraViewListener2;
+import org.opencv.core.MatOfByte;
+import org.opencv.core.MatOfDMatch;
+import org.opencv.core.MatOfKeyPoint;
 import org.opencv.core.MatOfPoint;
 import org.opencv.core.Rect;
 import org.opencv.core.Scalar;
 import org.opencv.core.Size;
+import org.opencv.features2d.DescriptorExtractor;
+import org.opencv.features2d.DescriptorMatcher;
+import org.opencv.features2d.FeatureDetector;
+import org.opencv.features2d.Features2d;
 import org.opencv.imgproc.Imgproc;
 
 import android.Manifest;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.hardware.Camera;
 import android.support.constraint.ConstraintLayout;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
@@ -29,18 +37,26 @@ import android.view.SurfaceView;
 import android.view.WindowManager;
 
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
 
 import static org.opencv.core.CvType.CV_32F;
-import static org.opencv.core.CvType.CV_64F;
 import static org.opencv.core.CvType.CV_8UC1;
-import static org.opencv.core.CvType.CV_8UC3;
 
 public class MainActivity extends AppCompatActivity implements CvCameraViewListener2{
     private static final String TAG = "rdt-reader:MainActivity";
     private static final int MY_CAMERA_REQUEST_CODE = 100;
+    private static final Scalar RED = new Scalar(255, 0, 0);
+    private static final Scalar GREEN = new Scalar(0, 255, 0);
+
     private CameraBridgeViewBase mOpenCvCameraView;
     private ConstraintLayout mContainer;
+    private FeatureDetector mFeatureDetector;
+    private Mat mRefImg;
+    private DescriptorExtractor mDescriptor;
+    private DescriptorMatcher mMatcher;
+    private Mat mRefDescriptor1;
+    private MatOfKeyPoint mRefKeypoints1;
 
     private BaseLoaderCallback mLoaderCallback = new BaseLoaderCallback(this) {
         @Override
@@ -89,6 +105,15 @@ public class MainActivity extends AppCompatActivity implements CvCameraViewListe
         mOpenCvCameraView.setCvCameraViewListener(this);
 
         //mOpenCvCameraView.setMaxFrameSize(container.getMaxWidth(), container.getMinHeight());
+
+
+        if (!OpenCVLoader.initDebug()) {
+            Log.d(TAG, "Internal OpenCV library not found. Using OpenCV Manager for initialization");
+            OpenCVLoader.initAsync(OpenCVLoader.OPENCV_VERSION_3_3_0, this, mLoaderCallback);
+        } else {
+            Log.d(TAG, "OpenCV library found inside package. Using it!");
+            mLoaderCallback.onManagerConnected(LoaderCallbackInterface.SUCCESS);
+        }
     }
 
     @Override
@@ -110,6 +135,8 @@ public class MainActivity extends AppCompatActivity implements CvCameraViewListe
             Log.d(TAG, "OpenCV library found inside package. Using it!");
             mLoaderCallback.onManagerConnected(LoaderCallbackInterface.SUCCESS);
         }
+
+        loadReference(R.drawable.remel_flu_ref);
     }
 
     public void onDestroy() {
@@ -170,13 +197,82 @@ public class MainActivity extends AppCompatActivity implements CvCameraViewListe
         Log.d(TAG, String.format("%d,%d %d.%d", mContainer.getHeight(), mContainer.getWidth(), inputFrame.rgba().height(), inputFrame.rgba().width()));
 
         //return inputFrame.rgba();
-        return drawContour(inputFrame.rgba());
+        //return drawContour(inputFrame.rgba());
+        return extractFeatures(inputFrame.rgba());
+    }
+
+    private void loadReference(int id){
+        mFeatureDetector = FeatureDetector.create(FeatureDetector.ORB);
+        mDescriptor = DescriptorExtractor.create(DescriptorExtractor.ORB);
+        mMatcher = DescriptorMatcher.create(DescriptorMatcher.BRUTEFORCE_HAMMING);
+        mRefImg = new Mat();
+
+        Bitmap bitmap = BitmapFactory.decodeResource(getApplicationContext().getResources(), id);
+        Utils.bitmapToMat(bitmap, mRefImg);
+        Imgproc.cvtColor(mRefImg, mRefImg, Imgproc.COLOR_RGB2GRAY);
+        mRefImg.convertTo(mRefImg, 0); //converting the image to match with the type of the cameras image
+        mRefDescriptor1 = new Mat();
+        mRefKeypoints1 = new MatOfKeyPoint();
+        mFeatureDetector.detect(mRefImg, mRefKeypoints1);
+        mDescriptor.compute(mRefImg, mRefKeypoints1, mRefDescriptor1);
+    }
+
+    private Mat extractFeatures(Mat input) {
+        Imgproc.cvtColor(input, input, Imgproc.COLOR_RGB2GRAY);
+        Mat descriptors2 = new Mat();
+        MatOfKeyPoint keypoints2 = new MatOfKeyPoint();
+        mFeatureDetector.detect(input, keypoints2);
+        mDescriptor.compute(input, keypoints2, descriptors2);
+
+        Size size = descriptors2.size();
+
+        if (descriptors2.size().equals(new Size(0,0))) {
+            return input;
+        }
+
+        // Matching
+        MatOfDMatch matches = new MatOfDMatch();
+        if (mRefImg.type() == input.type()) {
+            mMatcher.match(mRefDescriptor1, descriptors2, matches);
+        } else {
+            return input;
+        }
+        List<DMatch> matchesList = matches.toList();
+
+        Double max_dist = 0.0;
+        Double min_dist = 100.0;
+
+        for (int i = 0; i < matchesList.size(); i++) {
+            Double dist = (double) matchesList.get(i).distance;
+            if (dist < min_dist)
+                min_dist = dist;
+            if (dist > max_dist)
+                max_dist = dist;
+        }
+
+        LinkedList<DMatch> good_matches = new LinkedList<DMatch>();
+        for (int i = 0; i < matchesList.size(); i++) {
+            if (matchesList.get(i).distance <= (1.5 * min_dist))
+                good_matches.addLast(matchesList.get(i));
+        }
+
+        MatOfDMatch goodMatches = new MatOfDMatch();
+        goodMatches.fromList(good_matches);
+        Mat outputImg = new Mat();
+        MatOfByte drawnMatches = new MatOfByte();
+        if (input.empty() || input.cols() < 1 || input.rows() < 1) {
+            return input;
+        }
+
+        Features2d.drawMatches(mRefImg, mRefKeypoints1, input, keypoints2, goodMatches, outputImg, GREEN, RED, drawnMatches, Features2d.NOT_DRAW_SINGLE_POINTS);
+        Imgproc.resize(outputImg, outputImg, input.size());
+
+        return outputImg;
     }
 
     private Mat drawContour(Mat input) {
         Mat sobelx = new Mat();
         Mat sobely = new Mat();
-
         Mat output = new Mat();
         Mat sharp = new Mat();
 
