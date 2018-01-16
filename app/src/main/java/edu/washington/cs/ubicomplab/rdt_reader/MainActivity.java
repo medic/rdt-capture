@@ -184,8 +184,8 @@ public class MainActivity extends AppCompatActivity implements CvCameraViewListe
         Imgproc.GaussianBlur(input, output, new Size(21, 21), 3);
         Imgproc.cvtColor(output, output, Imgproc.COLOR_RGB2GRAY);
 
-        Imgproc.Sobel(output, sobelx, CV_32F, 0, 1, 5);
-        Imgproc.Sobel(output, sobely, CV_32F, 1, 0, 5);
+        Imgproc.Sobel(output, sobelx, CV_32F, 0, 1); //ksize=5
+        Imgproc.Sobel(output, sobely, CV_32F, 1, 0); //ksize=5
 
         Core.pow(sobelx, 2, sobelx);
         Core.pow(sobely, 2, sobely);
