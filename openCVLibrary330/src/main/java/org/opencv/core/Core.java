@@ -2243,7 +2243,10 @@ public class Core {
         return;
     }
 
-// manual port
+    public static void line(Mat outputImg, Point point, Point point1, Scalar scalar, int i) {
+    }
+
+    // manual port
 public static class MinMaxLocResult {
     public double minVal;
     public double maxVal;
