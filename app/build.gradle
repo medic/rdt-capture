@@ -37,4 +37,6 @@ dependencies {
     androidTestImplementation 'com.android.support.test.espresso:espresso-core:3.0.1'
     compile project(':openCVLibrary330')
     implementation 'com.android.support:design:26.1.0'
+    //compile 'org.nd4j:nd4j-native:0.9.1'
+    //compile 'org.nd4j:nd4j-native:0.9.1:android-x86'
 }

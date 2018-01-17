@@ -14,19 +14,23 @@ import org.opencv.core.MatOfByte;
 import org.opencv.core.MatOfDMatch;
 import org.opencv.core.MatOfKeyPoint;
 import org.opencv.core.MatOfPoint;
+import org.opencv.core.Point;
 import org.opencv.core.Rect;
 import org.opencv.core.Scalar;
 import org.opencv.core.Size;
+import org.opencv.dnn.Importer;
 import org.opencv.features2d.DescriptorExtractor;
 import org.opencv.features2d.DescriptorMatcher;
 import org.opencv.features2d.FeatureDetector;
 import org.opencv.features2d.Features2d;
 import org.opencv.imgproc.Imgproc;
+import org.opencv.utils.Converters;
 
 import android.Manifest;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.provider.ContactsContract;
 import android.support.constraint.ConstraintLayout;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
@@ -232,8 +236,10 @@ public class MainActivity extends AppCompatActivity implements CvCameraViewListe
 
         // Matching
         MatOfDMatch matches = new MatOfDMatch();
+        //ArrayList<MatOfDMatch> matchList = new ArrayList<>();
         if (mRefImg.type() == input.type()) {
-            mMatcher.match(mRefDescriptor1, descriptors2, matches);
+           mMatcher.match(mRefDescriptor1, descriptors2, matches);
+           //mMatcher.knnMatch(mRefDescriptor1, descriptors2, matchList, 2);
         } else {
             return input;
         }
@@ -252,7 +258,7 @@ public class MainActivity extends AppCompatActivity implements CvCameraViewListe
 
         LinkedList<DMatch> good_matches = new LinkedList<DMatch>();
         for (int i = 0; i < matchesList.size(); i++) {
-            if (matchesList.get(i).distance <= (1.5 * min_dist))
+            if (matchesList.get(i).distance <= (1.3 * min_dist))
                 good_matches.addLast(matchesList.get(i));
         }
 
@@ -260,6 +266,26 @@ public class MainActivity extends AppCompatActivity implements CvCameraViewListe
         goodMatches.fromList(good_matches);
         Mat outputImg = new Mat();
         MatOfByte drawnMatches = new MatOfByte();
+
+
+        LinkedList<Point> objList = new LinkedList<>();
+        LinkedList<Point> sceneList = new LinkedList<>();
+        for(int i=0;i<good_matches.size();i++){
+            objList.addLast(keypoints2.toList().get(good_matches.get(i).trainIdx).pt);
+            sceneList.addLast(mRefKeypoints1.toList().get(good_matches.get(i).queryIdx).pt);
+        }
+
+        Mat obj = Converters.vector_Point2f_to_Mat(objList);
+        Mat scene = Converters.vector_Point2f_to_Mat(sceneList);
+
+        Log.d(TAG, String.format("checkvector: %d %d", obj.checkVector(2, CV_32F), scene.checkVector(2, CV_32F)));
+
+        Mat perspectiveTransform = Imgproc.getPerspectiveTransform(scene, obj);
+
+        ArrayList<MatOfPoint> temp = new ArrayList<>();
+        Converters.Mat_to_vector_vector_Point(perspectiveTransform, temp);
+        Imgproc.polylines(outputImg, temp, false, RED);
+
         if (input.empty() || input.cols() < 1 || input.rows() < 1) {
             return input;
         }
