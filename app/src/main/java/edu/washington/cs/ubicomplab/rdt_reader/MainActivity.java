@@ -412,6 +412,8 @@ public class MainActivity extends AppCompatActivity implements CvCameraViewListe
                     Mat transformMat = Imgproc.getPerspectiveTransform(scene_corners, obj_corners);
                     Imgproc.warpPerspective(input, mCropped, transformMat, mRefImg.size());
 
+                    Log.d(TAG, String.format("RefImgSize (w,h): (%d, %d)",mRefImg.rows(), mRefImg.cols()));
+
                     Imgproc.resize(mCropped,cropped,input.size());
 
                     mDetected = true;
