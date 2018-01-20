@@ -32,6 +32,7 @@ import org.opencv.imgproc.Imgproc;
 import org.opencv.utils.Converters;
 
 import android.Manifest;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -45,6 +46,7 @@ import android.util.Log;
 import android.view.SurfaceView;
 import android.view.WindowManager;
 
+import java.io.ByteArrayOutputStream;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
@@ -84,6 +86,7 @@ public class MainActivity extends AppCompatActivity implements CvCameraViewListe
             }
         }
     };
+    private Mat mCropped;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -208,7 +211,23 @@ public class MainActivity extends AppCompatActivity implements CvCameraViewListe
 
         //return inputFrame.rgba();
         //return drawContour(inputFrame.rgba());
-        return extractFeatures(inputFrame.rgba());
+
+        Mat returendMat = extractFeatures(inputFrame.rgba());
+
+        if (mDetected) {
+            Bitmap resultBitmap = Bitmap.createBitmap(mCropped.cols(), mCropped.rows(), Bitmap.Config.ARGB_8888);
+            Utils.matToBitmap(mCropped, resultBitmap);
+
+            Intent intent = new Intent(this, ResultActivity.class);
+
+            ByteArrayOutputStream bs = new ByteArrayOutputStream();
+            resultBitmap.compress(Bitmap.CompressFormat.PNG, 50, bs);
+
+            intent.putExtra("byteArray", bs.toByteArray());
+            startActivity(intent);
+        }
+
+        return returendMat;
     }
 
     private void loadReference(int id){
@@ -371,12 +390,13 @@ public class MainActivity extends AppCompatActivity implements CvCameraViewListe
                 }
 
                 if (area > 100000 && checkRange) { //TODO: change the threshold value
+                    mCropped = new Mat(mRefImg.size(), mRefImg.type());
                     Mat cropped = new Mat(mRefImg.size(), mRefImg.type());
 
                     Mat transformMat = Imgproc.getPerspectiveTransform(scene_corners, obj_corners);
-                    Imgproc.warpPerspective(input, cropped, transformMat, mRefImg.size());
+                    Imgproc.warpPerspective(input, mCropped, transformMat, mRefImg.size());
 
-                    Imgproc.resize(cropped,cropped,input.size());
+                    Imgproc.resize(mCropped,cropped,input.size());
 
                     mDetected = true;
 
