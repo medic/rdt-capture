@@ -32,9 +32,10 @@ public class ResultActivity extends AppCompatActivity {
                 resultImageView.setImageBitmap(bitmapRotated);
 
                 ImageView resultImageView1 = findViewById(R.id.resultImageView1);
-                Bitmap resultBitmap1 = Bitmap.createBitmap(bitmap, 250,80,200,45);
                 ImageView resultImageView2 = findViewById(R.id.resultImageView2);
-                Bitmap resultBitmap2 = Bitmap.createBitmap(bitmap, 250,270,200,45);
+
+                Bitmap resultBitmap1 = Bitmap.createBitmap(bitmap, 250,270,200,45);
+                Bitmap resultBitmap2 = Bitmap.createBitmap(bitmap, 250,80,200,45);
 
                 resultImageView1.setImageBitmap(resultBitmap1);
                 resultImageView2.setImageBitmap(resultBitmap2);
