@@ -66,6 +66,7 @@ public class MainActivity extends AppCompatActivity implements CvCameraViewListe
     private DescriptorMatcher mMatcher;
     private Mat mRefDescriptor1;
     private MatOfKeyPoint mRefKeypoints1;
+    private boolean mDetected = false;
 
     private BaseLoaderCallback mLoaderCallback = new BaseLoaderCallback(this) {
         @Override
@@ -239,7 +240,7 @@ public class MainActivity extends AppCompatActivity implements CvCameraViewListe
 
         if (descriptors2.size().equals(new Size(0,0))) {
             Log.d(TAG, String.format("no features on input"));
-            return input;
+            return null;
         }
 
         // Matching
@@ -250,7 +251,7 @@ public class MainActivity extends AppCompatActivity implements CvCameraViewListe
             Log.d(TAG, String.format("matched"));
            //mMatcher.knnMatch(mRefDescriptor1, descriptors2, matchList, 2);
         } else {
-            return input;
+            return null;
         }
         List<DMatch> matchesList = matches.toList();
 
@@ -302,8 +303,9 @@ public class MainActivity extends AppCompatActivity implements CvCameraViewListe
             Mat H = Calib3d.findHomography(obj, scene, Calib3d.RANSAC, 5);
 
             if (H.cols() >= 3 && H.rows() >= 3) {
-                Mat tmp_corners = new Mat(4, 1, CvType.CV_32FC2);
+                Mat obj_corners = new Mat(4, 1, CvType.CV_32FC2);
                 Mat scene_corners = new Mat(4, 1, CvType.CV_32FC2);
+                //Mat obj_corners = new Mat(4, 1, CvType.CV_32FC2);
 
                 double[] a = new double[]{0, 0};
                 double[] b = new double[]{mRefImg.cols() - 1, 0};
@@ -312,14 +314,14 @@ public class MainActivity extends AppCompatActivity implements CvCameraViewListe
 
 
                 //get corners from object
-                tmp_corners.put(0, 0, a);
-                tmp_corners.put(1, 0, b);
-                tmp_corners.put(2, 0, c);
-                tmp_corners.put(3, 0, d);
+                obj_corners.put(0, 0, a);
+                obj_corners.put(1, 0, b);
+                obj_corners.put(2, 0, c);
+                obj_corners.put(3, 0, d);
 
                 Log.d(TAG, String.format("H size: %d, %d", H.cols(), H.rows()));
 
-                Core.perspectiveTransform(tmp_corners, scene_corners, H);
+                Core.perspectiveTransform(obj_corners, scene_corners, H);
 
                 Log.d(TAG, String.format("transformed: (%.2f, %.2f) (%.2f, %.2f) (%.2f, %.2f) (%.2f, %.2f)",
                         scene_corners.get(0, 0)[0], scene_corners.get(0, 0)[1],
@@ -327,18 +329,71 @@ public class MainActivity extends AppCompatActivity implements CvCameraViewListe
                         scene_corners.get(2, 0)[0], scene_corners.get(2, 0)[1],
                         scene_corners.get(3, 0)[0], scene_corners.get(3, 0)[1]));
 
-                Imgproc.line(input, new Point(scene_corners.get(0, 0)), new Point(scene_corners.get(1, 0)), RED, 10);
-                Imgproc.line(input, new Point(scene_corners.get(1, 0)), new Point(scene_corners.get(2, 0)), RED, 10);
-                Imgproc.line(input, new Point(scene_corners.get(2, 0)), new Point(scene_corners.get(3, 0)), RED, 10);
-                Imgproc.line(input, new Point(scene_corners.get(3, 0)), new Point(scene_corners.get(0, 0)), RED, 10);
+                MatOfPoint boundary = new MatOfPoint();
+                ArrayList<Point> listOfBoundary = new ArrayList<>();
+                listOfBoundary.add(new Point(scene_corners.get(0, 0)));
+                listOfBoundary.add(new Point(scene_corners.get(1, 0)));
+                listOfBoundary.add(new Point(scene_corners.get(2, 0)));
+                listOfBoundary.add(new Point(scene_corners.get(3, 0)));
+                boundary.fromList(listOfBoundary);
+
+                ArrayList<MatOfPoint> boundaryList = new ArrayList<>();
+                boundaryList.add(boundary);
+
+                Imgproc.polylines(input, boundaryList, true, RED, 15);
+
+                Point topLeft = new Point(Integer.MAX_VALUE, Integer.MAX_VALUE);
+                Point bottomRight = new Point(Integer.MIN_VALUE, Integer.MIN_VALUE);
+
+                for (int i = 0; i < scene_corners.rows(); i++) {
+                    if (scene_corners.get(i, 0)[0] < topLeft.x)
+                        topLeft.x = scene_corners.get(i, 0)[0];
+                    if (scene_corners.get(i, 0)[1] < topLeft.y)
+                        topLeft.y = scene_corners.get(i, 0)[1];
+                    if (scene_corners.get(i, 0)[0] > bottomRight.x)
+                        bottomRight.x = scene_corners.get(i, 0)[0];
+                    if (scene_corners.get(i, 0)[1] > bottomRight.y)
+                        bottomRight.y = scene_corners.get(i, 0)[1];
+                }
+
+                double area = (bottomRight.x - topLeft.x)*(bottomRight.y - topLeft.y);
+
+                Log.d(TAG, String.format("(%.2f, %.2f), (%.2f, %.2f) Area: %.2f", topLeft.x, topLeft.y, bottomRight.x, bottomRight.y, area));
+
+                boolean checkRange = true;
+
+                for (int i = 0; i < scene_corners.rows(); i++) {
+                    if (topLeft.y < 0 || bottomRight.y > input.rows())
+                        checkRange = false;
+
+                    if (topLeft.x < 0 || bottomRight.x > input.cols())
+                        checkRange = false;
+                }
+
+                if (area > 100000 && checkRange) { //TODO: change the threshold value
+                    Mat cropped = new Mat(mRefImg.size(), mRefImg.type());
+
+                    Mat transformMat = Imgproc.getPerspectiveTransform(scene_corners, obj_corners);
+                    Imgproc.warpPerspective(input, cropped, transformMat, mRefImg.size());
+
+                    Imgproc.resize(cropped,cropped,input.size());
+
+                    mDetected = true;
+
+                    return cropped;
+                }
             }
         }
 
-        Features2d.drawMatches(mRefImg, mRefKeypoints1, input, keypoints2, goodMatches, outputImg, GREEN, RED, drawnMatches, Features2d.NOT_DRAW_SINGLE_POINTS);
+        //Features2d.drawMatches(mRefImg, mRefKeypoints1, input, keypoints2, goodMatches, outputImg, GREEN, RED, drawnMatches, Features2d.NOT_DRAW_SINGLE_POINTS);
+        //Imgproc.resize(outputImg, outputImg, input.size());
+        //return outputImg;
 
-        Imgproc.resize(outputImg, outputImg, input.size());
-
-        return outputImg;
+        if (mDetected) {
+            return null;
+        } else {
+            return input;
+        }
     }
 
     private Mat drawContour(Mat input) {
