@@ -30,6 +30,7 @@ import org.opencv.features2d.Features2d;
 import org.opencv.imgcodecs.Imgcodecs;
 import org.opencv.imgproc.Imgproc;
 import org.opencv.utils.Converters;
+import org.opencv.videoio.VideoWriter;
 
 import android.Manifest;
 import android.content.Intent;
@@ -44,9 +45,12 @@ import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.SurfaceView;
+import android.view.View;
 import android.view.WindowManager;
 
 import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileOutputStream;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
@@ -171,6 +175,7 @@ public class MainActivity extends AppCompatActivity implements CvCameraViewListe
 
     @Override
     public void onCameraViewStopped() {
+        Log.d(TAG, "CameraView stopped.");
 
     }
 
@@ -215,16 +220,27 @@ public class MainActivity extends AppCompatActivity implements CvCameraViewListe
         Mat returendMat = extractFeatures(inputFrame.rgba());
 
         if (mDetected) {
-            Bitmap resultBitmap = Bitmap.createBitmap(mCropped.cols(), mCropped.rows(), Bitmap.Config.ARGB_8888);
-            Utils.matToBitmap(mCropped, resultBitmap);
+            mDetected = false;
+            try {
+                Bitmap resultBitmap = Bitmap.createBitmap(mCropped.cols(), mCropped.rows(), Bitmap.Config.ARGB_8888);
+                Utils.matToBitmap(mCropped, resultBitmap);
 
-            Intent intent = new Intent(this, ResultActivity.class);
+                Intent intent = new Intent(this, ResultActivity.class);
+                File outputDir = getApplicationContext().getCacheDir(); // context being the Activity pointer
+                File outputFile = File.createTempFile("result_segment", ".png", outputDir);
 
-            ByteArrayOutputStream bs = new ByteArrayOutputStream();
-            resultBitmap.compress(Bitmap.CompressFormat.PNG, 50, bs);
+                ByteArrayOutputStream bs = new ByteArrayOutputStream();
+                resultBitmap.compress(Bitmap.CompressFormat.PNG, 100, bs);
 
-            intent.putExtra("byteArray", bs.toByteArray());
-            startActivity(intent);
+                FileOutputStream fos = new FileOutputStream(outputFile);
+                fos.write(bs.toByteArray());
+                fos.close();
+
+                intent.putExtra("imageFilePath", outputFile.getAbsolutePath());
+                startActivity(intent);
+            } catch (Exception e) {
+
+            }
         }
 
         return returendMat;
