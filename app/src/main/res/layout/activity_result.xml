@@ -37,10 +37,10 @@
         android:layout_height="wrap_content"
         android:layout_marginEnd="8dp"
         android:layout_marginStart="8dp"
-        android:layout_marginTop="36dp"
+        android:layout_marginTop="8dp"
         android:text="A"
         app:layout_constraintEnd_toStartOf="@+id/resultImageView1"
-        app:layout_constraintHorizontal_bias="0.608"
+        app:layout_constraintHorizontal_bias="0.612"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/chart1" />
 
@@ -50,7 +50,7 @@
         android:layout_height="wrap_content"
         android:layout_marginEnd="8dp"
         android:layout_marginStart="8dp"
-        android:layout_marginTop="36dp"
+        android:layout_marginTop="12dp"
         android:text="B"
         app:layout_constraintEnd_toStartOf="@+id/resultImageView2"
         app:layout_constraintHorizontal_bias="0.608"
