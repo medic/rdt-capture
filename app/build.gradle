@@ -39,6 +39,7 @@ dependencies {
     compile project(':openCVLibrary330')
     implementation 'com.android.support:design:26.1.0'
     implementation 'com.github.PhilJay:MPAndroidChart:v3.0.3'
+    compile 'com.google.android.gms:play-services-vision:11+'
     //compile 'org.nd4j:nd4j-native:0.9.1'
     //compile 'org.nd4j:nd4j-native:0.9.1:android-x86'
 }

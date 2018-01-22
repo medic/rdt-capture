@@ -44,9 +44,16 @@ import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
+import android.util.SparseArray;
 import android.view.SurfaceView;
 import android.view.View;
 import android.view.WindowManager;
+
+import com.google.android.gms.vision.Frame;
+import com.google.android.gms.vision.text.Text;
+import com.google.android.gms.vision.text.TextBlock;
+import com.google.android.gms.vision.text.TextRecognizer;
+
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -55,6 +62,7 @@ import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 
+import static com.google.android.gms.vision.Frame.ROTATION_90;
 import static org.opencv.core.CvType.CV_32F;
 import static org.opencv.core.CvType.CV_8UC1;
 
@@ -73,6 +81,7 @@ public class MainActivity extends AppCompatActivity implements CvCameraViewListe
     private Mat mRefDescriptor1;
     private MatOfKeyPoint mRefKeypoints1;
     private boolean mDetected = false;
+    private TextRecognizer mTextRecognizer;
 
     private BaseLoaderCallback mLoaderCallback = new BaseLoaderCallback(this) {
         @Override
@@ -131,6 +140,8 @@ public class MainActivity extends AppCompatActivity implements CvCameraViewListe
             Log.d(TAG, "OpenCV library found inside package. Using it!");
             mLoaderCallback.onManagerConnected(LoaderCallbackInterface.SUCCESS);
         }
+
+        mTextRecognizer = new TextRecognizer.Builder(getApplicationContext()).build();
     }
 
     @Override
@@ -216,6 +227,20 @@ public class MainActivity extends AppCompatActivity implements CvCameraViewListe
 
         //return inputFrame.rgba();
         //return drawContour(inputFrame.rgba());
+
+        Bitmap tempBitmap = Bitmap.createBitmap(inputFrame.rgba().cols(), inputFrame.rgba().rows(), Bitmap.Config.ARGB_8888);;
+        Utils.matToBitmap(inputFrame.rgba(), tempBitmap);
+        Frame frame = new Frame.Builder().setBitmap(tempBitmap).setRotation(ROTATION_90).build();
+        SparseArray<TextBlock> items = mTextRecognizer.detect(frame);
+
+        Log.d(TAG, "Detected Text: ================================");
+        for (int i = 0; i < items.size(); ++i) {
+            TextBlock item = items.valueAt(i);
+            for(Text currText: item.getComponents()) {
+                Log.d(TAG, "Detected Text: " + currText.getValue());
+            }
+        }
+        Log.d(TAG, "Detected Text: ================================");
 
         Mat returendMat = extractFeatures(inputFrame.rgba());
 
