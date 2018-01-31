@@ -48,6 +48,7 @@ import android.util.SparseArray;
 import android.view.SurfaceView;
 import android.view.View;
 import android.view.WindowManager;
+import android.widget.TextView;
 
 import com.google.android.gms.vision.Frame;
 import com.google.android.gms.vision.text.Text;
@@ -58,9 +59,13 @@ import com.google.android.gms.vision.text.TextRecognizer;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
+import java.text.DateFormat;
+import java.text.ParseException;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.StringTokenizer;
 
 import static com.google.android.gms.vision.Frame.ROTATION_90;
 import static org.opencv.core.CvType.CV_32F;
@@ -71,6 +76,9 @@ public class MainActivity extends AppCompatActivity implements CvCameraViewListe
     private static final int MY_CAMERA_REQUEST_CODE = 100;
     private static final Scalar RED = new Scalar(255, 0, 0);
     private static final Scalar GREEN = new Scalar(0, 255, 0);
+    private static final Scalar BLUE = new Scalar(0, 0, 255);
+    private static final Scalar WHITE = new Scalar(255, 255, 255);
+    private static final Scalar BLACK = new Scalar(0, 0, 0);
 
     private CameraBridgeViewBase mOpenCvCameraView;
     private ConstraintLayout mContainer;
@@ -82,6 +90,7 @@ public class MainActivity extends AppCompatActivity implements CvCameraViewListe
     private MatOfKeyPoint mRefKeypoints1;
     private boolean mDetected = false;
     private TextRecognizer mTextRecognizer;
+    private boolean isExpChecked = false;
 
     private BaseLoaderCallback mLoaderCallback = new BaseLoaderCallback(this) {
         @Override
@@ -228,23 +237,74 @@ public class MainActivity extends AppCompatActivity implements CvCameraViewListe
         //return inputFrame.rgba();
         //return drawContour(inputFrame.rgba());
 
-        Bitmap tempBitmap = Bitmap.createBitmap(inputFrame.rgba().cols(), inputFrame.rgba().rows(), Bitmap.Config.ARGB_8888);;
-        Utils.matToBitmap(inputFrame.rgba(), tempBitmap);
-        Frame frame = new Frame.Builder().setBitmap(tempBitmap).setRotation(ROTATION_90).build();
-        SparseArray<TextBlock> items = mTextRecognizer.detect(frame);
+        Mat returendMat = inputFrame.rgba();
 
-        Log.d(TAG, "Detected Text: ================================");
-        for (int i = 0; i < items.size(); ++i) {
-            TextBlock item = items.valueAt(i);
-            for(Text currText: item.getComponents()) {
-                Log.d(TAG, "Detected Text: " + currText.getValue());
+        if (!isExpChecked) {
+            Bitmap tempBitmap = Bitmap.createBitmap(inputFrame.rgba().cols(), inputFrame.rgba().rows(), Bitmap.Config.ARGB_8888);;
+            Utils.matToBitmap(inputFrame.rgba(), tempBitmap);
+            Frame frame = new Frame.Builder().setBitmap(tempBitmap).setRotation(ROTATION_90).build();
+            SparseArray<TextBlock> items = mTextRecognizer.detect(frame);
+
+            Date expDate = null;
+            final Date now = new Date();
+
+            Log.d(TAG, "Detected Text: ================================");
+            for (int i = 0; i < items.size(); ++i) {
+                TextBlock item = items.valueAt(i);
+                for(Text currText: item.getComponents()) {
+                    Log.d(TAG, "Detected Text: " + currText.getValue());
+
+                    StringTokenizer st = new StringTokenizer(currText.getValue());
+
+                    ArrayList<DateFormat> dfs = new ArrayList<>();
+                    dfs.add(DateFormat.getDateInstance(DateFormat.SHORT));
+                    dfs.add(DateFormat.getDateInstance(DateFormat.MEDIUM));
+                    dfs.add(DateFormat.getDateInstance(DateFormat.LONG));
+                    dfs.add(DateFormat.getDateInstance(DateFormat.FULL));
+
+                    while(st.hasMoreTokens()) {
+                        String str = st.nextToken();
+
+                        for (DateFormat df: dfs) {
+                            if (str.length() > 8) {
+                                try {
+                                    expDate = df.parse(str);
+                                } catch (ParseException pe) {
+
+                                }
+                            }
+                        }
+
+                        if (expDate != null)
+                            break;
+                    }
+                }
             }
+
+            final Date finalExpDate = expDate;
+
+            if (finalExpDate != null) {
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        TextView instructionView = findViewById(R.id.instructionTextView);
+
+                        if (now.before(finalExpDate)) {
+                            isExpChecked = true;
+                            instructionView.setText("Open the RDT and run the test.");
+                        } else {
+                            instructionView.setText("This RDT is expired!\nPlease try with different RDT.");
+                        }
+                    }
+                });
+            }
+
+            Log.d(TAG, "Detected Text: ================================");
         }
-        Log.d(TAG, "Detected Text: ================================");
 
-        Mat returendMat = extractFeatures(inputFrame.rgba());
+        returendMat = extractFeatures(inputFrame.rgba());
 
-        if (mDetected) {
+        if (isExpChecked && mDetected) {
             mDetected = false;
             try {
                 Bitmap resultBitmap = Bitmap.createBitmap(mCropped.cols(), mCropped.rows(), Bitmap.Config.ARGB_8888);

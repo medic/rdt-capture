@@ -29,4 +29,19 @@
         app:layout_constraintStart_toStartOf="parent"
         android:theme="@style/PrimaryButton"/>
 
+    <TextView
+        android:id="@+id/instructionTextView"
+        android:layout_width="341dp"
+        android:layout_height="94dp"
+        android:layout_marginBottom="8dp"
+        android:layout_marginEnd="8dp"
+        android:layout_marginStart="8dp"
+        android:layout_marginTop="8dp"
+        android:text="Show the expiation date on the packaging"
+        android:textSize="32sp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
 </android.support.constraint.ConstraintLayout>
