@@ -203,39 +203,7 @@ public class MainActivity extends AppCompatActivity implements CvCameraViewListe
     public Mat onCameraFrame(CvCameraViewFrame inputFrame) {
         System.gc();
 
-        /*Mat newFrame = new Mat();
-
-        double hRatio;
-        double wRatio;
-
-        hRatio = mContainer.getHeight()/inputFrame.rgba().height();
-        wRatio = mContainer.getWidth()/inputFrame.rgba().width();
-
         Log.d(TAG, String.format("%d,%d %d.%d", mContainer.getHeight(), mContainer.getWidth(), inputFrame.rgba().height(), inputFrame.rgba().width()));
-
-        if (hRatio < wRatio)
-            Imgproc.resize(inputFrame.rgba(), newFrame, new Size(inputFrame.rgba().width()*hRatio, inputFrame.rgba().height()*hRatio));
-        else
-            Imgproc.resize(inputFrame.rgba(), newFrame, new Size(inputFrame.rgba().width()*wRatio, inputFrame.rgba().height()*wRatio));
-
-        return newFrame;*/
-
-
-
-        /*Mat mRgba = inputFrame.rgba();
-        Mat mRgbaT = mRgba.t();
-        Core.flip(mRgba.t(), mRgbaT, 1);
-        Imgproc.resize(mRgbaT, mRgbaT, new Size(mContainer.getWidth(), mContainer.getHeight()));
-
-        Log.d(TAG, String.format("%d,%d %d,%d %d,%d", mContainer.getHeight(), mContainer.getWidth(), mOpenCvCameraView.getHeight(), mOpenCvCameraView.getWidth(), inputFrame.rgba().height(), inputFrame.rgba().width()));
-
-
-        return mRgbaT;*/
-
-        Log.d(TAG, String.format("%d,%d %d.%d", mContainer.getHeight(), mContainer.getWidth(), inputFrame.rgba().height(), inputFrame.rgba().width()));
-
-        //return inputFrame.rgba();
-        //return drawContour(inputFrame.rgba());
 
         Mat returendMat = inputFrame.rgba();
 
@@ -300,31 +268,32 @@ public class MainActivity extends AppCompatActivity implements CvCameraViewListe
             }
 
             Log.d(TAG, "Detected Text: ================================");
-        }
+        } else {
 
-        returendMat = extractFeatures(inputFrame.rgba());
+            returendMat = extractFeatures(inputFrame.rgba());
 
-        if (isExpChecked && mDetected) {
-            mDetected = false;
-            try {
-                Bitmap resultBitmap = Bitmap.createBitmap(mCropped.cols(), mCropped.rows(), Bitmap.Config.ARGB_8888);
-                Utils.matToBitmap(mCropped, resultBitmap);
+            if (mDetected) {
+                mDetected = false;
+                try {
+                    Bitmap resultBitmap = Bitmap.createBitmap(mCropped.cols(), mCropped.rows(), Bitmap.Config.ARGB_8888);
+                    Utils.matToBitmap(mCropped, resultBitmap);
 
-                Intent intent = new Intent(this, ResultActivity.class);
-                File outputDir = getApplicationContext().getCacheDir(); // context being the Activity pointer
-                File outputFile = File.createTempFile("result_segment", ".png", outputDir);
+                    Intent intent = new Intent(this, ResultActivity.class);
+                    File outputDir = getApplicationContext().getCacheDir(); // context being the Activity pointer
+                    File outputFile = File.createTempFile("result_segment", ".png", outputDir);
 
-                ByteArrayOutputStream bs = new ByteArrayOutputStream();
-                resultBitmap.compress(Bitmap.CompressFormat.PNG, 100, bs);
+                    ByteArrayOutputStream bs = new ByteArrayOutputStream();
+                    resultBitmap.compress(Bitmap.CompressFormat.PNG, 100, bs);
 
-                FileOutputStream fos = new FileOutputStream(outputFile);
-                fos.write(bs.toByteArray());
-                fos.close();
+                    FileOutputStream fos = new FileOutputStream(outputFile);
+                    fos.write(bs.toByteArray());
+                    fos.close();
 
-                intent.putExtra("imageFilePath", outputFile.getAbsolutePath());
-                startActivity(intent);
-            } catch (Exception e) {
+                    intent.putExtra("imageFilePath", outputFile.getAbsolutePath());
+                    startActivity(intent);
+                } catch (Exception e) {
 
+                }
             }
         }
 
