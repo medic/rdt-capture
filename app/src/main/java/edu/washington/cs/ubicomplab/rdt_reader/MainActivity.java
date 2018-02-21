@@ -149,7 +149,7 @@ public class MainActivity extends AppCompatActivity implements CvCameraViewListe
                     add("Exp. Date");
                     add("Sample");
                     add("Buffer");
-                    add("Image Capture");
+                    add("Image\nCapture");
                     add("Result");
                 }})
                 .stepsNumber(5)
@@ -275,7 +275,7 @@ public class MainActivity extends AppCompatActivity implements CvCameraViewListe
                         if (now.before(finalExpDate)) {
                             isExpChecked = true;
                             instructionView.setText("Open the RDT and run the test.");
-                            mStepView.go(4, true);
+                            mStepView.go(3, true);
                         } else {
                             instructionView.setText("This RDT is expired!\nPlease try with different RDT.");
                         }
