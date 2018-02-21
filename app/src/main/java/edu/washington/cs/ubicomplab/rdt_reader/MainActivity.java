@@ -54,6 +54,7 @@ import com.google.android.gms.vision.Frame;
 import com.google.android.gms.vision.text.Text;
 import com.google.android.gms.vision.text.TextBlock;
 import com.google.android.gms.vision.text.TextRecognizer;
+import com.shuhart.stepview.StepView;
 
 
 import java.io.ByteArrayOutputStream;
@@ -91,6 +92,7 @@ public class MainActivity extends AppCompatActivity implements CvCameraViewListe
     private boolean mDetected = false;
     private TextRecognizer mTextRecognizer;
     private boolean isExpChecked = false;
+    private StepView mStepView;
 
     private BaseLoaderCallback mLoaderCallback = new BaseLoaderCallback(this) {
         @Override
@@ -140,6 +142,19 @@ public class MainActivity extends AppCompatActivity implements CvCameraViewListe
         mOpenCvCameraView.setCvCameraViewListener(this);
 
         //mOpenCvCameraView.setMaxFrameSize(container.getMaxWidth(), container.getMinHeight());
+
+        mStepView = findViewById(R.id.step_view);
+        mStepView.getState()
+                .steps(new ArrayList<String>(){{
+                    add("Exp. Date");
+                    add("Sample");
+                    add("Buffer");
+                    add("Image Capture");
+                    add("Result");
+                }})
+                .stepsNumber(5)
+                .animationDuration(getResources().getInteger(android.R.integer.config_shortAnimTime))
+                .commit();
 
 
         if (!OpenCVLoader.initDebug()) {
@@ -260,6 +275,7 @@ public class MainActivity extends AppCompatActivity implements CvCameraViewListe
                         if (now.before(finalExpDate)) {
                             isExpChecked = true;
                             instructionView.setText("Open the RDT and run the test.");
+                            mStepView.go(4, true);
                         } else {
                             instructionView.setText("This RDT is expired!\nPlease try with different RDT.");
                         }

@@ -44,4 +44,26 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
+    <com.shuhart.stepview.StepView
+        android:id="@+id/step_view"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:padding="16dp"
+        app:selectedCircleColor="@color/colorPrimary"
+        app:selectedTextColor="@color/colorPrimary"
+        app:stepLineWidth="1dp"
+        app:stepPadding="4dp"
+        app:nextTextColor="@color/colorPrimary"
+        app:nextStepLineColor="@color/colorPrimary"
+        app:doneCircleColor="@color/colorPrimary"
+        app:doneStepLineColor="@color/colorPrimary"
+        app:doneCircleRadius="12dp"
+        app:selectedCircleRadius="12dp"
+        app:selectedStepNumberColor="@color/colorWhite"
+        app:stepViewStyle="@style/StepView"
+        app:doneStepMarkColor="@color/colorWhite"
+        app:stepNumberTextSize="12sp"
+        app:animationType="Line"
+        android:background="@color/gray_overlay"/>
+
 </android.support.constraint.ConstraintLayout>
