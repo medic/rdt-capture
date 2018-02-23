@@ -36,11 +36,11 @@ dependencies {
     implementation 'com.android.support.constraint:constraint-layout:1.0.2'
     androidTestImplementation 'com.android.support.test:runner:1.0.1'
     androidTestImplementation 'com.android.support.test.espresso:espresso-core:3.0.1'
-    compile project(':openCVLibrary330')
     implementation 'com.android.support:design:26.1.0'
     implementation 'com.github.PhilJay:MPAndroidChart:v3.0.3'
     compile 'com.google.android.gms:play-services-vision:11+'
     compile 'com.shuhart.stepview:stepview:1.2.0'
     //compile 'org.nd4j:nd4j-native:0.9.1'
     //compile 'org.nd4j:nd4j-native:0.9.1:android-x86'
+    implementation project(':openCVLibrary340')
 }

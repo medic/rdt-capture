@@ -17,7 +17,6 @@ import com.github.mikephil.charting.data.LineDataSet;
 
 import org.opencv.android.Utils;
 import org.opencv.core.Mat;
-import org.opencv.dnn.Importer;
 import org.opencv.imgproc.Imgproc;
 
 import java.util.ArrayList;
