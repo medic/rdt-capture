@@ -15,6 +15,7 @@ import org.opencv.android.CameraBridgeViewBase;
 import org.opencv.android.CameraBridgeViewBase.CvCameraViewListener2;
 import org.opencv.core.MatOfByte;
 import org.opencv.core.MatOfDMatch;
+import org.opencv.core.MatOfDouble;
 import org.opencv.core.MatOfKeyPoint;
 import org.opencv.core.MatOfPoint;
 import org.opencv.core.MatOfPoint2f;
@@ -88,6 +89,7 @@ public class MainActivity extends AppCompatActivity implements CvCameraViewListe
     private boolean mDetected = false;
     private TextRecognizer mTextRecognizer;
     private boolean isExpChecked = false;
+    private boolean isQualChecked = false;
     private StepView mStepView;
 
     private BaseLoaderCallback mLoaderCallback = new BaseLoaderCallback(this) {
@@ -215,8 +217,8 @@ public class MainActivity extends AppCompatActivity implements CvCameraViewListe
         System.gc();
 
         Log.d(TAG, String.format("%d,%d %d.%d", mContainer.getHeight(), mContainer.getWidth(), inputFrame.rgba().height(), inputFrame.rgba().width()));
-
         Mat returnedMat = inputFrame.rgba();
+
 
         if (!isExpChecked) {
             Bitmap tempBitmap = Bitmap.createBitmap(inputFrame.rgba().cols(), inputFrame.rgba().rows(), Bitmap.Config.ARGB_8888);;
@@ -282,33 +284,63 @@ public class MainActivity extends AppCompatActivity implements CvCameraViewListe
             Log.d(TAG, "Detected Text: ================================");
         } else {
 
-            //returnedMat = extractFeaturesWithORB(inputFrame.rgba(), mRefImg, mFeatureDetector, mExtractor, mMatcher, mRefDescriptor1, mRefKeypoints1);
-            long startTime = System.currentTimeMillis();
-            returnedMat = extractFeaturesWithSURFSIFT(inputFrame.rgba(), mRefImg, surfDetector, mMatcher, mRefDescriptor1, mRefKeypoints1);
-            Log.d(TAG, String.format("%d taken", System.currentTimeMillis() - startTime));
-            //returnedMat = extractFeaturesWithSURFSIFT(inputFrame.rgba());
+            if (!isQualChecked) {
+                System.gc();
 
-            if (mDetected) {
-                mDetected = false;
-                try {
-                    Bitmap resultBitmap = Bitmap.createBitmap(mCropped.cols(), mCropped.rows(), Bitmap.Config.ARGB_8888);
-                    Utils.matToBitmap(mCropped, resultBitmap);
+                Mat des = new Mat();
+                Imgproc.Laplacian(inputFrame.gray(), des, inputFrame.rgba().depth());
 
-                    Intent intent = new Intent(this, ResultActivity.class);
-                    File outputDir = getApplicationContext().getCacheDir(); // context being the Activity pointer
-                    File outputFile = File.createTempFile("result_segment", ".png", outputDir);
+                MatOfDouble median = new MatOfDouble();
+                MatOfDouble std= new MatOfDouble();
 
-                    ByteArrayOutputStream bs = new ByteArrayOutputStream();
-                    resultBitmap.compress(Bitmap.CompressFormat.PNG, 100, bs);
+                Core.meanStdDev(des, median , std);
 
-                    FileOutputStream fos = new FileOutputStream(outputFile);
-                    fos.write(bs.toByteArray());
-                    fos.close();
+                double maxLap = Double.MIN_VALUE;
 
-                    intent.putExtra("imageFilePath", outputFile.getAbsolutePath());
-                    startActivity(intent);
-                } catch (Exception e) {
+                for(int i = 0; i < std.cols(); i++) {
+                    for (int j = 0; j < std.rows(); j++) {
+                        if (maxLap < std.get(j, i)[0]) {
+                            maxLap = std.get(j, i)[0];
+                        }
+                    }
+                }
 
+                double bluriness = Math.pow(maxLap,2);
+
+                Log.d(TAG, String.format("Bluriness: %.2f", bluriness));
+
+
+
+            }
+            else {
+                //returnedMat = extractFeaturesWithORB(inputFrame.rgba(), mRefImg, mFeatureDetector, mExtractor, mMatcher, mRefDescriptor1, mRefKeypoints1);
+                long startTime = System.currentTimeMillis();
+                returnedMat = extractFeaturesWithSURFSIFT(inputFrame.rgba(), mRefImg, surfDetector, mMatcher, mRefDescriptor1, mRefKeypoints1);
+                Log.d(TAG, String.format("%d taken", System.currentTimeMillis() - startTime));
+                //returnedMat = extractFeaturesWithSURFSIFT(inputFrame.rgba());
+
+                if (mDetected) {
+                    mDetected = false;
+                    try {
+                        Bitmap resultBitmap = Bitmap.createBitmap(mCropped.cols(), mCropped.rows(), Bitmap.Config.ARGB_8888);
+                        Utils.matToBitmap(mCropped, resultBitmap);
+
+                        Intent intent = new Intent(this, ResultActivity.class);
+                        File outputDir = getApplicationContext().getCacheDir(); // context being the Activity pointer
+                        File outputFile = File.createTempFile("result_segment", ".png", outputDir);
+
+                        ByteArrayOutputStream bs = new ByteArrayOutputStream();
+                        resultBitmap.compress(Bitmap.CompressFormat.PNG, 100, bs);
+
+                        FileOutputStream fos = new FileOutputStream(outputFile);
+                        fos.write(bs.toByteArray());
+                        fos.close();
+
+                        intent.putExtra("imageFilePath", outputFile.getAbsolutePath());
+                        startActivity(intent);
+                    } catch (Exception e) {
+
+                    }
                 }
             }
         }
