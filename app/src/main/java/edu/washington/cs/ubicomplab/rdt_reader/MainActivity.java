@@ -317,6 +317,21 @@ public class MainActivity extends AppCompatActivity implements CvCameraViewListe
                 median.release();
                 std.release();
                 des.release();
+
+                Mat temp =  new Mat();
+
+                Imgproc.cvtColor(inputFrame.rgba(), temp, Imgproc.COLOR_RGB2YUV);
+                List <Mat> colors = new ArrayList<>();
+
+                Core.split(temp, colors);
+
+                Scalar sum = Core.sumElems(colors.get(0));
+
+                Log.d(TAG, String.format("brightness: %d, elems: %.2f, %.2f, %.2f", sum.val.length, sum.val[0]/(colors.get(0).rows()*colors.get(0).cols()), sum.val[1], sum.val[2]));
+
+                temp.release();
+                for(Mat c : colors)
+                    c.release();
             }
             else {
                 //returnedMat = extractFeaturesWithORB(inputFrame.rgba(), mRefImg, mFeatureDetector, mExtractor, mMatcher, mRefDescriptor1, mRefKeypoints1);
