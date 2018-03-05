@@ -2,6 +2,7 @@ package edu.washington.cs.ubicomplab.rdt_reader;
 
 import org.opencv.android.BaseLoaderCallback;
 import org.opencv.android.CameraBridgeViewBase.CvCameraViewFrame;
+import org.opencv.android.JavaCameraView;
 import org.opencv.android.LoaderCallbackInterface;
 import org.opencv.android.OpenCVLoader;
 import org.opencv.android.Utils;
@@ -76,7 +77,7 @@ public class MainActivity extends AppCompatActivity implements CvCameraViewListe
     private static final Scalar WHITE = new Scalar(255, 255, 255);
     private static final Scalar BLACK = new Scalar(0, 0, 0);
 
-    private CameraBridgeViewBase mOpenCvCameraView;
+    private JavaCameraView mOpenCvCameraView;
     private ConstraintLayout mContainer;
     private FeatureDetector mFeatureDetector;
     private SURF surfDetector;
@@ -164,6 +165,7 @@ public class MainActivity extends AppCompatActivity implements CvCameraViewListe
         }
 
         mTextRecognizer = new TextRecognizer.Builder(getApplicationContext()).build();
+
     }
 
     @Override
@@ -287,8 +289,10 @@ public class MainActivity extends AppCompatActivity implements CvCameraViewListe
             if (!isQualChecked) {
                 System.gc();
 
+                //bluriness
                 Mat des = new Mat();
-                Imgproc.Laplacian(inputFrame.gray(), des, inputFrame.rgba().depth());
+                Imgproc.Laplacian(inputFrame.rgba(), des, inputFrame.rgba().type());
+                Log.d(TAG, String.format("DEPTH: %d", inputFrame.rgba().type()));
 
                 MatOfDouble median = new MatOfDouble();
                 MatOfDouble std= new MatOfDouble();
@@ -310,7 +314,9 @@ public class MainActivity extends AppCompatActivity implements CvCameraViewListe
                 Log.d(TAG, String.format("Bluriness: %.2f", bluriness));
 
 
-
+                median.release();
+                std.release();
+                des.release();
             }
             else {
                 //returnedMat = extractFeaturesWithORB(inputFrame.rgba(), mRefImg, mFeatureDetector, mExtractor, mMatcher, mRefDescriptor1, mRefKeypoints1);
