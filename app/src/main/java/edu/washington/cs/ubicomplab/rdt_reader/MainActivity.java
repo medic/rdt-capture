@@ -35,6 +35,7 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.hardware.Camera;
 import android.support.constraint.ConstraintLayout;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
@@ -77,7 +78,7 @@ public class MainActivity extends AppCompatActivity implements CvCameraViewListe
     private static final Scalar WHITE = new Scalar(255, 255, 255);
     private static final Scalar BLACK = new Scalar(0, 0, 0);
 
-    private JavaCameraView mOpenCvCameraView;
+    private RDTCameraView mOpenCvCameraView;
     private ConstraintLayout mContainer;
     private FeatureDetector mFeatureDetector;
     private SURF surfDetector;
@@ -165,7 +166,6 @@ public class MainActivity extends AppCompatActivity implements CvCameraViewListe
         }
 
         mTextRecognizer = new TextRecognizer.Builder(getApplicationContext()).build();
-
     }
 
     @Override

@@ -8,7 +8,8 @@
     android:layout_height="match_parent"
     tools:context="edu.washington.cs.ubicomplab.rdt_reader.MainActivity">
 
-    <org.opencv.android.JavaCameraView
+    <!--org.opencv.android.JavaCameraView-->
+    <edu.washington.cs.ubicomplab.rdt_reader.RDTCameraView
         android:id="@+id/opencv_camera_view"
         android:layout_width="fill_parent"
         android:layout_height="fill_parent"
