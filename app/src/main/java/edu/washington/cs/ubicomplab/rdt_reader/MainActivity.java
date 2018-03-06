@@ -43,7 +43,9 @@ import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
 import android.util.SparseArray;
+import android.view.MotionEvent;
 import android.view.SurfaceView;
+import android.view.View;
 import android.view.WindowManager;
 import android.widget.TextView;
 
@@ -69,7 +71,7 @@ import static com.google.android.gms.vision.Frame.ROTATION_90;
 import static org.opencv.core.CvType.CV_32F;
 import static org.opencv.core.CvType.CV_8UC1;
 
-public class MainActivity extends AppCompatActivity implements CvCameraViewListener2{
+public class MainActivity extends AppCompatActivity implements CvCameraViewListener2, View.OnTouchListener {
     private static final String TAG = "rdt-reader:MainActivity";
     private static final int MY_CAMERA_REQUEST_CODE = 100;
     private static final Scalar RED = new Scalar(255, 0, 0);
@@ -140,6 +142,8 @@ public class MainActivity extends AppCompatActivity implements CvCameraViewListe
         mOpenCvCameraView.setVisibility(SurfaceView.VISIBLE);
 
         mOpenCvCameraView.setCvCameraViewListener(this);
+
+        mOpenCvCameraView.setOnTouchListener(this);
 
         //mOpenCvCameraView.setMaxFrameSize(container.getMaxWidth(), container.getMinHeight());
 
@@ -221,6 +225,14 @@ public class MainActivity extends AppCompatActivity implements CvCameraViewListe
         Log.d(TAG, String.format("%d,%d %d.%d", mContainer.getHeight(), mContainer.getWidth(), inputFrame.rgba().height(), inputFrame.rgba().width()));
         Mat returnedMat = inputFrame.rgba();
 
+        Camera.Parameters parameters = mOpenCvCameraView.getCamera().getParameters();
+        if (parameters != null && parameters.getFocusAreas() != null && parameters.getFocusAreas().size() > 0) {
+            Camera.Area area = parameters.getFocusAreas().get(0);
+
+            Imgproc.rectangle(returnedMat, new Point(area.rect.left, area.rect.top), new Point(area.rect.right, area.rect.bottom), RED, 10);
+
+            Log.d(TAG, String.format("Focus Area: (%d, %d), (%d, %d)", area.rect.left, area.rect.top, area.rect.right, area.rect.bottom));
+        }
 
         if (!isExpChecked) {
             Bitmap tempBitmap = Bitmap.createBitmap(inputFrame.rgba().cols(), inputFrame.rgba().rows(), Bitmap.Config.ARGB_8888);;
@@ -784,5 +796,13 @@ public class MainActivity extends AppCompatActivity implements CvCameraViewListe
 
         return output;
 
+    }
+
+    @Override
+    public boolean onTouch(View arg0, MotionEvent arg1) {
+        // TODO Auto-generated method stub
+        //mOpenCvCameraView.focusOnTouch(arg1);
+        Log.d(TAG, String.format("Focus touched: (%.2f, %.2f)", arg1.getX(), arg1.getY()));
+        return true;
     }
 }
