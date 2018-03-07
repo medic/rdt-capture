@@ -95,7 +95,6 @@ public class MainActivity extends AppCompatActivity implements CvCameraViewListe
     private boolean isExpChecked = false;
     private boolean isQualChecked = false;
     private StepView mStepView;
-    private FREAK freakDetector;
 
     private BaseLoaderCallback mLoaderCallback = new BaseLoaderCallback(this) {
         @Override
