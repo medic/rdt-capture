@@ -95,6 +95,7 @@ public class MainActivity extends AppCompatActivity implements CvCameraViewListe
     private boolean isExpChecked = false;
     private boolean isQualChecked = false;
     private StepView mStepView;
+    private FREAK freakDetector;
 
     private BaseLoaderCallback mLoaderCallback = new BaseLoaderCallback(this) {
         @Override
@@ -344,15 +345,19 @@ public class MainActivity extends AppCompatActivity implements CvCameraViewListe
                 temp.release();
                 for(Mat c : colors)
                     c.release();
+                isQualChecked = true;
             }
             else {
                 //returnedMat = extractFeaturesWithORB(inputFrame.rgba(), mRefImg, mFeatureDetector, mExtractor, mMatcher, mRefDescriptor1, mRefKeypoints1);
                 long startTime = System.currentTimeMillis();
-                returnedMat = extractFeaturesWithSURFSIFT(inputFrame.rgba(), mRefImg, surfDetector, mMatcher, mRefDescriptor1, mRefKeypoints1);
+                Mat targetMat = new Mat(inputFrame.rgba(), new Rect(inputFrame.rgba().cols()/4, inputFrame.rgba().rows()/4, inputFrame.rgba().cols()/2, inputFrame.rgba().rows()/2));
+                //targetMat = extractFeaturesWithSURFSIFT(targetMat, mRefImg, surfDetector, mMatcher, mRefDescriptor1, mRefKeypoints1);
+                targetMat = extractFeaturesWithORB(targetMat, mRefImg, mFeatureDetector, mExtractor, mMatcher, mRefDescriptor1, mRefKeypoints1);
+                Imgproc.resize(targetMat, returnedMat, new Size(returnedMat.width(), returnedMat.height()));
                 Log.d(TAG, String.format("%d taken", System.currentTimeMillis() - startTime));
                 //returnedMat = extractFeaturesWithSURFSIFT(inputFrame.rgba());
 
-                if (mDetected) {
+                /*if (mDetected) {
                     mDetected = false;
                     try {
                         Bitmap resultBitmap = Bitmap.createBitmap(mCropped.cols(), mCropped.rows(), Bitmap.Config.ARGB_8888);
@@ -374,7 +379,7 @@ public class MainActivity extends AppCompatActivity implements CvCameraViewListe
                     } catch (Exception e) {
 
                     }
-                }
+                }*/
             }
         }
 
@@ -383,23 +388,24 @@ public class MainActivity extends AppCompatActivity implements CvCameraViewListe
 
     private void loadReference(int id){
         surfDetector = SURF.create();
-        mFeatureDetector = FeatureDetector.create(FeatureDetector.ORB);
-        mExtractor = DescriptorExtractor.create(DescriptorExtractor.ORB);
-        mMatcher = DescriptorMatcher.create(DescriptorMatcher.FLANNBASED);
+        mFeatureDetector = FeatureDetector.create(FeatureDetector.BRISK);
+        mExtractor = DescriptorExtractor.create(DescriptorExtractor.BRISK);
+        mMatcher = DescriptorMatcher.create(DescriptorMatcher.BRUTEFORCE_HAMMING);
         mRefImg = new Mat();
 
         Bitmap bitmap = BitmapFactory.decodeResource(getApplicationContext().getResources(), id);
         Utils.bitmapToMat(bitmap, mRefImg);
-        Imgproc.cvtColor(mRefImg, mRefImg, Imgproc.COLOR_RGB2GRAY);
-        //Imgproc.cvtColor(mRefImg, mRefImg, Imgproc.COLOR_BGR2RGB);
+        Imgproc.cvtColor(mRefImg, mRefImg, Imgproc.COLOR_RGB2BGR);
+        Imgproc.cvtColor(mRefImg, mRefImg, Imgproc.COLOR_BGR2RGB);
+        //Imgproc.cvtColor(mRefImg, mRefImg, Imgproc.COLOR_RGB2GRAY);
         //mRefImg.convertTo(mRefImg, 0); //converting the image to match with the type of the cameras image
         mRefDescriptor1 = new Mat();
 
         mRefKeypoints1 = new MatOfKeyPoint();
-        //mFeatureDetector.detect(mRefImg, mRefKeypoints1);
-        //mExtractor.compute(mRefImg, mRefKeypoints1, mRefDescriptor1);
-        surfDetector.detect(mRefImg, mRefKeypoints1);
-        surfDetector.compute(mRefImg, mRefKeypoints1, mRefDescriptor1);
+        mFeatureDetector.detect(mRefImg, mRefKeypoints1);
+        mExtractor.compute(mRefImg, mRefKeypoints1, mRefDescriptor1);
+        //surfDetector.detect(mRefImg, mRefKeypoints1);
+        //surfDetector.compute(mRefImg, mRefKeypoints1, mRefDescriptor1);
     }
 
     private Mat extractFeaturesWithORB(Mat input, Mat refImg, FeatureDetector featureDetector, DescriptorExtractor extractor, DescriptorMatcher matcher, Mat refDescriptor, MatOfKeyPoint refKeypoints) {
@@ -543,7 +549,7 @@ public class MainActivity extends AppCompatActivity implements CvCameraViewListe
                         checkRange = false;
                 }
 
-                if (area > 100000 && checkRange) { //TODO: change the threshold value
+                /*if (area > 100000 && checkRange) { //TODO: change the threshold value
                     mCropped = new Mat(refImg.size(), refImg.type());
                     Mat ref = new Mat(refImg.size(), refImg.type());
                     Mat cropped = new Mat(refImg.size(), refImg.type());
@@ -558,7 +564,7 @@ public class MainActivity extends AppCompatActivity implements CvCameraViewListe
                     mDetected = true;
 
                     return cropped;
-                }
+                }*/
             }
         }
 
@@ -721,7 +727,7 @@ public class MainActivity extends AppCompatActivity implements CvCameraViewListe
                         checkRange = false;
                 }
 
-                if (area > 100000 && checkRange) { //TODO: change the threshold value
+                /*if (area > 100000 && checkRange) { //TODO: change the threshold value
                     mCropped = new Mat(refImg.size(), refImg.type());
                     Mat ref = new Mat(refImg.size(), refImg.type());
                     Mat cropped = new Mat(refImg.size(), refImg.type());
@@ -736,7 +742,7 @@ public class MainActivity extends AppCompatActivity implements CvCameraViewListe
                     mDetected = true;
 
                     return cropped;
-                }
+                }*/
             }
         }
 
