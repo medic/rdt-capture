@@ -46,6 +46,7 @@ import android.util.SparseArray;
 import android.view.MotionEvent;
 import android.view.SurfaceView;
 import android.view.View;
+import android.view.ViewGroup;
 import android.view.WindowManager;
 import android.widget.TextView;
 
@@ -95,6 +96,7 @@ public class MainActivity extends AppCompatActivity implements CvCameraViewListe
     private boolean isExpChecked = false;
     private boolean isQualChecked = false;
     private StepView mStepView;
+    private Viewport viewport;
 
     private BaseLoaderCallback mLoaderCallback = new BaseLoaderCallback(this) {
         @Override
@@ -170,6 +172,9 @@ public class MainActivity extends AppCompatActivity implements CvCameraViewListe
         }
 
         mTextRecognizer = new TextRecognizer.Builder(getApplicationContext()).build();
+
+        viewport = findViewById(R.id.viewport);
+        viewport.setVisibility(View.INVISIBLE);
     }
 
     @Override
@@ -286,6 +291,7 @@ public class MainActivity extends AppCompatActivity implements CvCameraViewListe
 
                         if (now.before(finalExpDate)) {
                             isExpChecked = true;
+                            viewport.setVisibility(View.VISIBLE);
                             instructionView.setText("Open the RDT and run the test.");
                             mStepView.go(3, true);
                         } else {
