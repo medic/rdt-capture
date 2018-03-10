@@ -1,9 +1,40 @@
 <?xml version="1.0" encoding="utf-8"?>
 <android.support.constraint.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:custom="http://schemas.android.com/apk/res-auto"
+    xmlns:opencv="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     tools:context="edu.washington.cs.ubicomplab.rdt_reader.ImageQualityActivity">
+
+    <edu.washington.cs.ubicomplab.rdt_reader.RDTCameraView
+        android:id="@+id/img_quality_check_camera_view"
+        android:layout_width="fill_parent"
+        android:layout_height="fill_parent"
+        android:visibility="gone"
+        opencv:camera_id="any"
+        opencv:show_fps="true" />
+
+    <TextView
+        android:id="@+id/img_quality_feedback_view"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@color/gray_overlay"
+        android:gravity="bottom"
+        android:paddingHorizontal="10dp"
+        android:paddingVertical="20dp"
+        android:textAlignment="center"
+        android:textColor="@android:color/white"
+        android:textSize="30sp" />
+
+    <edu.washington.cs.ubicomplab.rdt_reader.Viewport
+        android:id="@+id/img_quality_check_viewport"
+        android:layout_width="fill_parent"
+        android:layout_height="fill_parent"
+        android:layout_weight=".5"
+        android:background="@color/black_overlay"
+        custom:heightScale="0.5"
+        custom:widthScale="0.5"/>
 
 </android.support.constraint.ConstraintLayout>
