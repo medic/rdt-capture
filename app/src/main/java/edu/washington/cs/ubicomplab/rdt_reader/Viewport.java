@@ -18,7 +18,8 @@ import android.view.ViewGroup;
  */
 
 public class Viewport extends ViewGroup {
-    private float area;
+    private float hScale;
+    private float wScale;
 
     public Viewport(Context context) {
         super(context);
@@ -31,7 +32,8 @@ public class Viewport extends ViewGroup {
     public Viewport(Context context, AttributeSet attrs, int defStyle) {
         super(context, attrs, defStyle);
         TypedArray ta = context.obtainStyledAttributes(attrs, R.styleable.Viewport, 0, 0);
-        area = ta.getFloat(R.styleable.Viewport_area, 0.25f);
+        hScale = ta.getFloat(R.styleable.Viewport_heightScale, hScale);
+        wScale = ta.getFloat(R.styleable.Viewport_widthScale, wScale);
     }
 
     @Override
@@ -57,10 +59,8 @@ public class Viewport extends ViewGroup {
         eraser.setAntiAlias(true);
         eraser.setXfermode(new PorterDuffXfermode(PorterDuff.Mode.CLEAR));
 
-        float scale = (float)Math.sqrt(area);
-
-        float width = ((float)getWidth())*scale;
-        float height = ((float)getHeight())*scale;
+        float width = ((float)getWidth())*wScale;
+        float height = ((float)getHeight())*hScale;
         float x = (getWidth() - width)/2;
         float y = (getHeight() - height)/2;
         RectF rect = new RectF(x, y, x+width, y+height);

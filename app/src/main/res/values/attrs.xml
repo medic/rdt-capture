@@ -1,5 +1,7 @@
 <resources>
     <declare-styleable name="Viewport">
         <attr name="area" format="float" />
+        <attr name="heightScale" format="float" />
+        <attr name="widthScale" format="float" />
     </declare-styleable>
 </resources>
