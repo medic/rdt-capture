@@ -49,10 +49,11 @@ public class JavaCamera2View extends CameraBridgeViewBase {
     private final android.util.Size FIXED_SIZE = new android.util.Size(1024, 768);
     private final boolean USE_FIXED_SIZE = true;
 
-    private CameraDevice mCameraDevice;
-    private CameraCaptureSession mCaptureSession;
-    private CaptureRequest.Builder mPreviewRequestBuilder;
-    private String mCameraID;
+    public CameraDevice mCameraDevice;
+    public CameraManager mCameraManager;
+    public CameraCaptureSession mCaptureSession;
+    public CaptureRequest.Builder mPreviewRequestBuilder;
+    public String mCameraID;
     private android.util.Size mPreviewSize = new android.util.Size(-1, -1);
 
     private HandlerThread mBackgroundThread;
@@ -90,9 +91,9 @@ public class JavaCamera2View extends CameraBridgeViewBase {
 
     protected boolean initializeCamera() {
         Log.i(LOGTAG, "initializeCamera");
-        CameraManager manager = (CameraManager) getContext().getSystemService(Context.CAMERA_SERVICE);
+        mCameraManager = (CameraManager) getContext().getSystemService(Context.CAMERA_SERVICE);
         try {
-            String camList[] = manager.getCameraIdList();
+            String camList[] = mCameraManager.getCameraIdList();
             if (camList.length == 0) {
                 Log.e(LOGTAG, "Error: camera isn't detected.");
                 return false;
@@ -101,7 +102,7 @@ public class JavaCamera2View extends CameraBridgeViewBase {
                 mCameraID = camList[0];
             } else {
                 for (String cameraID : camList) {
-                    CameraCharacteristics characteristics = manager.getCameraCharacteristics(cameraID);
+                    CameraCharacteristics characteristics = mCameraManager.getCameraCharacteristics(cameraID);
                     if ((mCameraIndex == CameraBridgeViewBase.CAMERA_ID_BACK &&
                             characteristics.get(CameraCharacteristics.LENS_FACING) == CameraCharacteristics.LENS_FACING_BACK) ||
                         (mCameraIndex == CameraBridgeViewBase.CAMERA_ID_FRONT &&
@@ -114,7 +115,7 @@ public class JavaCamera2View extends CameraBridgeViewBase {
             }
             if (mCameraID != null) {
                 Log.i(LOGTAG, "Opening camera: " + mCameraID);
-                manager.openCamera(mCameraID, mStateCallback, mBackgroundHandler);
+                mCameraManager.openCamera(mCameraID, mStateCallback, mBackgroundHandler);
             }
             return true;
         } catch (CameraAccessException e) {

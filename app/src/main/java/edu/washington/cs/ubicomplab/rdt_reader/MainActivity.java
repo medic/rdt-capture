@@ -17,6 +17,7 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
 
     private Button mExpDateButton;
     private Button mImageQualityButton;
+    private Button mTestCamera2Button;
     private Button mSettingsyButton;
 
     @Override
@@ -28,9 +29,11 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
 
         mExpDateButton = findViewById(R.id.expdateButton);
         mImageQualityButton = findViewById(R.id.imagequalButton);
+        mTestCamera2Button = findViewById(R.id.camera2TestButton);
 
         mExpDateButton.setOnTouchListener(this);
         mImageQualityButton.setOnTouchListener(this);
+        mTestCamera2Button.setOnTouchListener(this);
 
         if (ContextCompat.checkSelfPermission(this,
                 Manifest.permission.CAMERA)
@@ -56,6 +59,9 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
             startActivity(intent);
         } else if (view.getId() == R.id.imagequalButton) {
             Intent intent = new Intent(this, ImageQualityActivity.class);
+            startActivity(intent);
+        } else if (view.getId() == R.id.camera2TestButton) {
+            Intent intent = new Intent(this, Camera2TestActivity.class);
             startActivity(intent);
         }
 

@@ -41,6 +41,7 @@
         <activity android:name=".ResultActivity" />
         <activity android:name=".ExpirationDateActivity" />
         <activity android:name=".ImageQualityActivity" />
+        <activity android:name=".Camera2TestActivity"></activity>
     </application>
 
 </manifest>

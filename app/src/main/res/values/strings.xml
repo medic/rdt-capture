@@ -1,4 +1,5 @@
 <resources>
     <string name="app_name">rdt-reader</string>
     <string name="title_activity_result">ResultActivity</string>
+    <string name="title_activity_camera2_test">Camera2TestActivity</string>
 </resources>
