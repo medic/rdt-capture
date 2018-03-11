@@ -26,7 +26,7 @@ import org.opencv.features2d.DescriptorExtractor;
 import org.opencv.features2d.DescriptorMatcher;
 import org.opencv.features2d.FeatureDetector;
 import org.opencv.imgproc.Imgproc;
-import org.opencv.xfeatures2d.SURF;
+//import org.opencv.xfeatures2d.SURF;
 
 import android.Manifest;
 import android.content.pm.PackageManager;
@@ -77,7 +77,7 @@ public class CombiledActivity extends AppCompatActivity implements CvCameraViewL
     private RDTCameraView mOpenCvCameraView;
     private ConstraintLayout mContainer;
     private FeatureDetector mFeatureDetector;
-    private SURF surfDetector;
+    //private SURF surfDetector;
     private Mat mRefImg;
     private Mat mRefImgGray;
     private DescriptorExtractor mExtractor;
@@ -385,7 +385,7 @@ public class CombiledActivity extends AppCompatActivity implements CvCameraViewL
     }
 
     private void loadReference(int id){
-        surfDetector = SURF.create();
+        //surfDetector = SURF.create();
         mFeatureDetector = FeatureDetector.create(FeatureDetector.BRISK);
         mExtractor = DescriptorExtractor.create(DescriptorExtractor.BRISK);
         mMatcher = DescriptorMatcher.create(DescriptorMatcher.BRUTEFORCE_HAMMING);
@@ -578,7 +578,7 @@ public class CombiledActivity extends AppCompatActivity implements CvCameraViewL
     }
 
        //private Mat extractFeaturesWithSURFSIFT(Mat input) {
-    private Mat extractFeaturesWithSURFSIFT(Mat input, Mat refImg, SURF detector, DescriptorMatcher matcher, Mat refDescriptor, MatOfKeyPoint refKeypoints) {
+    /*private Mat extractFeaturesWithSURFSIFT(Mat input, Mat refImg, SURF detector, DescriptorMatcher matcher, Mat refDescriptor, MatOfKeyPoint refKeypoints) {
         Log.d(TAG, String.format("entering"));
         Imgproc.cvtColor(input, input, Imgproc.COLOR_RGB2GRAY);
         Mat descriptors = new Mat();
@@ -740,7 +740,7 @@ public class CombiledActivity extends AppCompatActivity implements CvCameraViewL
                     mDetected = true;
 
                     return cropped;
-                }*/
+                }
             }
         }
 
@@ -749,7 +749,7 @@ public class CombiledActivity extends AppCompatActivity implements CvCameraViewL
         } else {
             return input;
         }
-    }
+    }*/
 
     private Mat drawContourUsingSobel(Mat input) {
         Mat sobelx = new Mat();

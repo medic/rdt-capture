@@ -42,6 +42,6 @@ dependencies {
     compile 'com.shuhart.stepview:stepview:1.2.0'
     //compile 'org.nd4j:nd4j-native:0.9.1'
     //compile 'org.nd4j:nd4j-native:0.9.1:android-x86'
-    implementation project(':openCVLibrary340')
+    implementation project(':openCVLibrary341')
     implementation 'com.android.support:cardview-v7:26.1.0'
 }

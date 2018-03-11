@@ -29,7 +29,7 @@ import static edu.washington.cs.ubicomplab.rdt_reader.Constants.TAG;
 
 public class ImageQualityActivity extends AppCompatActivity implements CvCameraViewListener2{
 
-    private RDTCameraView mOpenCvCameraView;
+    private RDTCamera2View mOpenCvCameraView;
 
     private BaseLoaderCallback mLoaderCallback = new BaseLoaderCallback(this) {
         @Override

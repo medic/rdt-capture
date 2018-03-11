@@ -6,7 +6,10 @@ import static edu.washington.cs.ubicomplab.rdt_reader.Constants.*;
 import android.content.Intent;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.Color;
+import android.graphics.ImageFormat;
+import android.media.Image;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
@@ -31,6 +34,7 @@ import org.opencv.android.OpenCVLoader;
 import org.opencv.android.Utils;
 import org.opencv.core.Mat;
 
+import java.nio.ByteBuffer;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -39,7 +43,7 @@ import java.util.StringTokenizer;
 
 public class ExpirationDateActivity extends AppCompatActivity implements CvCameraViewListener2 {
 
-    private RDTCameraView mOpenCvCameraView;
+    private RDTCamera2View mOpenCvCameraView;
     private TextRecognizer mTextRecognizer;
     private TextView mExpDateResultView;
 
@@ -140,6 +144,17 @@ public class ExpirationDateActivity extends AppCompatActivity implements CvCamer
 
         final Date now = new Date();
         final Date expDate = readExpirationDate(inputFrame.gray());
+
+        /*Image image = inputFrame.image();
+
+        ByteBuffer buffer = image.getPlanes()[0].getBuffer();
+        byte[] bytes = new byte[buffer.remaining()];
+        buffer.get(bytes);
+        Bitmap myBitmap = BitmapFactory.decodeByteArray(bytes,0,bytes.length,null);*/
+
+        //final Date expDate = readExpirationDate(inputFrame.gray());
+        //final Date expDate = readExpirationDate(myBitmap);
+        //final Date expDate = readExpirationDate(inputFrame.image());
 
         runOnUiThread(new Runnable() {
             @Override
