@@ -19,12 +19,28 @@ import android.view.View;
 import android.view.WindowManager;
 import android.widget.Button;
 
+import com.github.mikephil.charting.charts.LineChart;
+import com.github.mikephil.charting.components.XAxis;
+import com.github.mikephil.charting.data.Entry;
+import com.github.mikephil.charting.data.LineData;
+import com.github.mikephil.charting.data.LineDataSet;
+
 import org.opencv.android.BaseLoaderCallback;
 import org.opencv.android.CameraBridgeViewBase;
 import org.opencv.android.CameraBridgeViewBase.CvCameraViewListener2;
 import org.opencv.android.LoaderCallbackInterface;
 import org.opencv.android.OpenCVLoader;
+import org.opencv.core.Core;
 import org.opencv.core.Mat;
+import org.opencv.core.MatOfFloat;
+import org.opencv.core.MatOfInt;
+import org.opencv.core.Scalar;
+import org.opencv.core.Size;
+import org.opencv.imgproc.Imgproc;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 import static edu.washington.cs.ubicomplab.rdt_reader.Constants.TAG;
 
@@ -33,6 +49,7 @@ public class Camera2TestActivity extends AppCompatActivity implements CvCameraVi
     private Button mAutoCenterButton;
     private Button mFocusChangeButton;
     private Button mExpChangeButton;
+    private LineChart mHistogramChart;
 
     private boolean mCenterAFAE = false;
     private boolean mManualFocus = false;
@@ -63,6 +80,12 @@ public class Camera2TestActivity extends AppCompatActivity implements CvCameraVi
         setTitle("Camera2 Test");
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN);
+
+        mHistogramChart = findViewById(R.id.histogram);
+        mHistogramChart.getLegend().setEnabled(false);
+        mHistogramChart.getAxisRight().setEnabled(false);
+        mHistogramChart.getDescription().setEnabled(false);
+        mHistogramChart.getXAxis().setPosition(XAxis.XAxisPosition.BOTTOM);
 
         mOpenCvCameraView = findViewById(R.id.camera2_test_view);
         mOpenCvCameraView.setVisibility(SurfaceView.VISIBLE);
@@ -142,7 +165,8 @@ public class Camera2TestActivity extends AppCompatActivity implements CvCameraVi
 
     @Override
     public Mat onCameraFrame(CameraBridgeViewBase.CvCameraViewFrame inputFrame) {
-        return inputFrame.rgba();
+        return showHistogram(inputFrame.rgba(), inputFrame.gray());
+        //return inputFrame.rgba();
     }
 
     /*Private methods*/
@@ -239,5 +263,43 @@ public class Camera2TestActivity extends AppCompatActivity implements CvCameraVi
         } catch (Exception e) {
             Log.e(TAG, "createCaptureSession failed", e);
         }
+    }
+
+    private Mat showHistogram (Mat image, Mat gray) {
+        int mHistSizeNum =256;
+        MatOfInt mHistSize = new MatOfInt(mHistSizeNum);
+        Mat hist = new Mat();
+        final float []mBuff = new float[mHistSizeNum];
+        MatOfFloat histogramRanges = new MatOfFloat(0f, 256f);
+        Scalar mColorsRGB[] = new Scalar[] { new Scalar(100, 100, 100, 255) };
+        org.opencv.core.Point mP1 = new org.opencv.core.Point();
+        org.opencv.core.Point mP2 = new org.opencv.core.Point();
+        int thikness = (int) (gray.width() / (mHistSizeNum+10)/3);
+        if(thikness> 3) thikness = 3;
+        MatOfInt mChannels[] = new MatOfInt[] { new MatOfInt(0)};
+        Size sizeRgba = gray.size();
+        int offset = (int) ((sizeRgba.width - (3*mHistSizeNum+30)*thikness));
+        // RGB
+        for(int c=0; c<1; c++) {
+            Imgproc.calcHist(Arrays.asList(gray), mChannels[c], new Mat(), hist,
+                    mHistSize, histogramRanges);
+            Core.normalize(hist, hist, sizeRgba.height/2, 0, Core.NORM_INF);
+            hist.get(0, 0, mBuff);
+        }
+
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                List<Entry> floatData = new ArrayList<>();
+                for(int h = 0; h < mBuff.length; h++)
+                    floatData.add(new Entry(h,mBuff[h]));
+
+                LineDataSet data = new LineDataSet(floatData, "Histogram");
+                mHistogramChart.setData(new LineData(data));
+                mHistogramChart.invalidate();
+            }
+        });
+
+        return image;
     }
 }
