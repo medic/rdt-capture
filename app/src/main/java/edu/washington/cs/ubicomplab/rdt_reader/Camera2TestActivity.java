@@ -50,11 +50,13 @@ public class Camera2TestActivity extends AppCompatActivity implements CvCameraVi
     private Button mAutoCenterButton;
     private Button mFocusChangeButton;
     private Button mExpChangeButton;
+    private Button mFlashButton;
     private LineChart mHistogramChart;
 
     private boolean mCenterAFAE = false;
     private boolean mManualFocus = false;
     private int mCurrentStep = 0;
+    private boolean mFlashOn = false;
 
     private BaseLoaderCallback mLoaderCallback = new BaseLoaderCallback(this) {
         @Override
@@ -98,10 +100,12 @@ public class Camera2TestActivity extends AppCompatActivity implements CvCameraVi
         mAutoCenterButton = findViewById(R.id.autoCenterButton);
         mFocusChangeButton = findViewById(R.id.focusChangeButton);
         mExpChangeButton = findViewById(R.id.exposureChangeButton);
+        mFlashButton = findViewById(R.id.flashButton);
 
         mAutoCenterButton.setOnClickListener(this);
         mFocusChangeButton.setOnClickListener(this);
         mExpChangeButton.setOnClickListener(this);
+        mFlashButton.setOnClickListener(this);
     }
 
     @Override
@@ -153,6 +157,8 @@ public class Camera2TestActivity extends AppCompatActivity implements CvCameraVi
             changeFocusDistance();
         } else if (view.getId() == R.id.exposureChangeButton) {
             changeExposure();
+        } else if (view.getId() == R.id.flashButton) {
+            changeFlashMode();
         }
     }
 
@@ -263,6 +269,26 @@ public class Camera2TestActivity extends AppCompatActivity implements CvCameraVi
                 Log.i(TAG, "CameraPreviewSession has been reset");
 
                 mCenterAFAE = false;
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "createCaptureSession failed", e);
+        }
+    }
+
+    private void changeFlashMode () {
+        try {
+            if (!mFlashOn) {
+                mOpenCvCameraView.mPreviewRequestBuilder.set(CaptureRequest.CONTROL_AE_MODE, CaptureRequest.CONTROL_AE_MODE_ON);
+                mOpenCvCameraView.mPreviewRequestBuilder.set(CaptureRequest.FLASH_MODE, CaptureRequest.FLASH_MODE_TORCH);
+                mOpenCvCameraView.mCaptureSession.setRepeatingRequest(mOpenCvCameraView.mPreviewRequestBuilder.build(), null, null);
+
+                mFlashOn = true;
+            } else {
+                mOpenCvCameraView.mPreviewRequestBuilder.set(CaptureRequest.FLASH_MODE, CaptureRequest.FLASH_MODE_OFF);
+                mOpenCvCameraView.mPreviewRequestBuilder.set(CaptureRequest.CONTROL_AE_MODE, CaptureRequest.CONTROL_AE_MODE_ON);
+                mOpenCvCameraView.mCaptureSession.setRepeatingRequest(mOpenCvCameraView.mPreviewRequestBuilder.build(), null, null);
+
+                mFlashOn = false;
             }
         } catch (Exception e) {
             Log.e(TAG, "createCaptureSession failed", e);
