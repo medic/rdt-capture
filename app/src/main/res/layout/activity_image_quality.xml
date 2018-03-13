@@ -22,7 +22,7 @@
         android:layout_height="match_parent"
         android:background="@color/gray_overlay"
         android:gravity="bottom"
-        android:paddingHorizontal="10dp"
+        android:paddingHorizontal="5dp"
         android:paddingVertical="20dp"
         android:textAlignment="center"
         android:textColor="@android:color/white"

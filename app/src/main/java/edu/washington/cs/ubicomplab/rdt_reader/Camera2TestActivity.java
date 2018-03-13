@@ -1,6 +1,7 @@
 package edu.washington.cs.ubicomplab.rdt_reader;
 
 import android.content.Intent;
+import android.graphics.Color;
 import android.graphics.Point;
 import android.graphics.Rect;
 import android.hardware.camera2.CameraCharacteristics;
@@ -86,6 +87,9 @@ public class Camera2TestActivity extends AppCompatActivity implements CvCameraVi
         mHistogramChart.getAxisRight().setEnabled(false);
         mHistogramChart.getDescription().setEnabled(false);
         mHistogramChart.getXAxis().setPosition(XAxis.XAxisPosition.BOTTOM);
+        mHistogramChart.getXAxis().setTextColor(Color.WHITE);
+        mHistogramChart.getXAxis().setGranularity(50f);
+        mHistogramChart.getAxisLeft().setTextColor(Color.WHITE);
 
         mOpenCvCameraView = findViewById(R.id.camera2_test_view);
         mOpenCvCameraView.setVisibility(SurfaceView.VISIBLE);
@@ -271,15 +275,10 @@ public class Camera2TestActivity extends AppCompatActivity implements CvCameraVi
         Mat hist = new Mat();
         final float []mBuff = new float[mHistSizeNum];
         MatOfFloat histogramRanges = new MatOfFloat(0f, 256f);
-        Scalar mColorsRGB[] = new Scalar[] { new Scalar(100, 100, 100, 255) };
-        org.opencv.core.Point mP1 = new org.opencv.core.Point();
-        org.opencv.core.Point mP2 = new org.opencv.core.Point();
-        int thikness = (int) (gray.width() / (mHistSizeNum+10)/3);
-        if(thikness> 3) thikness = 3;
         MatOfInt mChannels[] = new MatOfInt[] { new MatOfInt(0)};
         Size sizeRgba = gray.size();
-        int offset = (int) ((sizeRgba.width - (3*mHistSizeNum+30)*thikness));
-        // RGB
+
+        // GRAY
         for(int c=0; c<1; c++) {
             Imgproc.calcHist(Arrays.asList(gray), mChannels[c], new Mat(), hist,
                     mHistSize, histogramRanges);
