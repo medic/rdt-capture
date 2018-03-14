@@ -32,9 +32,12 @@ import org.opencv.android.CameraBridgeViewBase.CvCameraViewListener2;
 import org.opencv.android.LoaderCallbackInterface;
 import org.opencv.android.OpenCVLoader;
 import org.opencv.core.Core;
+import org.opencv.core.CvType;
 import org.opencv.core.Mat;
 import org.opencv.core.MatOfFloat;
 import org.opencv.core.MatOfInt;
+import org.opencv.core.MatOfPoint;
+import org.opencv.core.MatOfPoint2f;
 import org.opencv.core.Scalar;
 import org.opencv.core.Size;
 import org.opencv.imgproc.Imgproc;
@@ -58,6 +61,9 @@ public class Camera2TestActivity extends AppCompatActivity implements CvCameraVi
     private int mCurrentStep = 0;
     private boolean mFlashOn = false;
 
+    private ColorBlobDetector mDetector;
+    private final Scalar CONTOUR_COLOR = new Scalar(255,0,0,255);
+
     private BaseLoaderCallback mLoaderCallback = new BaseLoaderCallback(this) {
         @Override
         public void onManagerConnected(int status) {
@@ -66,6 +72,8 @@ public class Camera2TestActivity extends AppCompatActivity implements CvCameraVi
                 {
                     Log.i(TAG, "OpenCV loaded successfully");
                     mOpenCvCameraView.enableView();
+                    mDetector = new ColorBlobDetector();
+                    mDetector.setHsvColor(Constants.RDT_COLOR_HSV);
                 } break;
                 default:
                 {
@@ -175,7 +183,8 @@ public class Camera2TestActivity extends AppCompatActivity implements CvCameraVi
 
     @Override
     public Mat onCameraFrame(CameraBridgeViewBase.CvCameraViewFrame inputFrame) {
-        return showHistogram(inputFrame.rgba(), inputFrame.gray());
+        showHistogram(inputFrame.rgba(), inputFrame.gray());
+        return whiteDetection(inputFrame.rgba());
         //return inputFrame.rgba();
     }
 
@@ -326,5 +335,35 @@ public class Camera2TestActivity extends AppCompatActivity implements CvCameraVi
         });
 
         return image;
+    }
+
+    private Mat whiteDetection (Mat input) {
+        if (mDetector != null) {
+            mDetector.process(input);
+            List<MatOfPoint> contours = mDetector.getContours();
+            Log.e(TAG, "Contours count: " + contours.size());
+            Imgproc.drawContours(input, contours, -1, CONTOUR_COLOR);
+
+            for (int i = 0; i < contours.size(); i++) {
+                MatOfPoint2f this2f = new MatOfPoint2f();
+                MatOfPoint approx = new MatOfPoint();
+                MatOfPoint2f approx2f = new MatOfPoint2f();
+
+                contours.get(0).convertTo(this2f, CvType.CV_32FC2);
+
+                Imgproc.approxPolyDP(this2f, approx2f, 10, true);
+
+                approx2f.convertTo(approx, CvType.CV_32S);
+
+                Log.e(TAG, "Contours corners: " + approx.size());
+
+                //if (approx.size().height == 4) {
+                    org.opencv.core.Rect rect = Imgproc.boundingRect(approx);
+                    Imgproc.rectangle(input,rect.br(), rect.tl(), new Scalar(0,0,255,255), 5);
+                //}
+            }
+        }
+
+        return input;
     }
 }

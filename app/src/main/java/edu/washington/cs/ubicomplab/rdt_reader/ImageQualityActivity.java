@@ -168,6 +168,7 @@ public class ImageQualityActivity extends AppCompatActivity implements CvCameraV
 
         switch (mCurrentState) {
             case INITIALIZATION:
+                drawContourUsingSobel(inputFrame.rgba());
                 break;
             case ENV_FOCUS_INFINITY:
             case ENV_FOCUS_MACRO:
@@ -338,6 +339,8 @@ public class ImageQualityActivity extends AppCompatActivity implements CvCameraV
     }
 
     private Mat drawContourUsingSobel(Mat input) {
+        long start = System.currentTimeMillis();
+
         Mat sobelx = new Mat();
         Mat sobely = new Mat();
         Mat output = new Mat();
@@ -383,7 +386,13 @@ public class ImageQualityActivity extends AppCompatActivity implements CvCameraV
                 Imgproc.rectangle(input, rect.tl(), rect.br(), new Scalar(255, 255, 255));
         }
 
-        return input;
+        sobelx.release();
+        sobelx.release();
+        hierarchy.release();
+        output.release();
+        sharp.release();
 
+        Log.d(TAG, String.format("Sobel took %d ms", (System.currentTimeMillis()-start)));
+        return input;
     }
 }

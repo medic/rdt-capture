@@ -1,5 +1,7 @@
 package edu.washington.cs.ubicomplab.rdt_reader;
 
+import org.opencv.core.Scalar;
+
 /**
  * Created by cjparkuw on 3/9/2018.
  */
@@ -15,4 +17,6 @@ public final class Constants {
 
     public static String OK = "<font color='#00EE00'>✔</font>";
     public static String NOT_OK = "<font color='#EE0000'>✘</font>";
+
+    public static Scalar RDT_COLOR_HSV = new Scalar(30, 21, 204, 0.0);
 }
