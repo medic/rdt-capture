@@ -26,6 +26,8 @@ import org.opencv.core.MatOfDouble;
 import org.opencv.core.MatOfFloat;
 import org.opencv.core.MatOfInt;
 import org.opencv.core.MatOfPoint;
+import org.opencv.core.MatOfPoint2f;
+import org.opencv.core.Point;
 import org.opencv.core.Rect;
 import org.opencv.core.Scalar;
 import org.opencv.core.Size;
@@ -51,7 +53,8 @@ public class ImageQualityActivity extends AppCompatActivity implements CvCameraV
     private final String UNDER_EXP_MSG = "TOO DARK ";
     private final String SHADOW_MSG = "SHADOW IS VISIBLE!!<br>";
 
-    private final String QUALITY_MSG_FORMAT = "SHARPNESS: %s <br> " +
+    private final String QUALITY_MSG_FORMAT = "POSITION/SIZE: %s <br>" +
+                                                "SHARPNESS: %s <br> " +
                                                 "BRIGHTNESS: %s <br>" +
                                                 "NO SHADOW: %s ";
 
@@ -64,6 +67,8 @@ public class ImageQualityActivity extends AppCompatActivity implements CvCameraV
                 {
                     Log.i(TAG, "OpenCV loaded successfully");
                     mOpenCvCameraView.enableView();
+                    mDetector = new ColorBlobDetector();
+                    mDetector.setHsvColor(Constants.RDT_COLOR_HSV);
                 } break;
                 default:
                 {
@@ -74,7 +79,7 @@ public class ImageQualityActivity extends AppCompatActivity implements CvCameraV
     };
 
     private enum State {
-        INITIALIZATION, ENV_FOCUS_INFINITY, ENV_FOCUS_MACRO, ENV_FOCUS_AUTO_CENTER, QUALITY_CHECK
+        INITIALIZATION, ENV_FOCUS_INFINITY, ENV_FOCUS_MACRO, ENV_FOCUS_AUTO_CENTER, QUALITY_CHECK, FINAL_CHECK
     }
 
     private State mCurrentState = State.INITIALIZATION;
@@ -82,6 +87,11 @@ public class ImageQualityActivity extends AppCompatActivity implements CvCameraV
 
     private double minBlur = Double.MAX_VALUE;
     private double maxBlur = Double.MIN_VALUE;
+
+    private ColorBlobDetector mDetector;
+    private final Scalar CONTOUR_COLOR = new Scalar(255,0,0,255);
+
+    private int frameCounter = 0;
 
     /*Activity callbacks*/
     @Override
@@ -101,11 +111,11 @@ public class ImageQualityActivity extends AppCompatActivity implements CvCameraV
         mImageQualityFeedbackView = findViewById(R.id.img_quality_feedback_view);
 
         //test purposes
-        Timer uploadCheckerTimer = new Timer(true);
+        /*Timer uploadCheckerTimer = new Timer(true);
         uploadCheckerTimer.scheduleAtFixedRate(
                 new TimerTask() {
                     public void run() { setNextState(mCurrentState); }
-                }, 5*1000, 5 * 1000);
+                }, 5*1000, 5 * 1000);*/
     }
 
     @Override
@@ -168,7 +178,29 @@ public class ImageQualityActivity extends AppCompatActivity implements CvCameraV
 
         switch (mCurrentState) {
             case INITIALIZATION:
-                drawContourUsingSobel(inputFrame.rgba());
+                MatOfPoint approxInit = detectWhite(inputFrame.rgba());
+                final boolean isCorrectPosSizeInit = checkPositionAndSize(approxInit);
+
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        displayQualityResult(isCorrectPosSizeInit, false, false, false, false);
+                    }
+                });
+
+                if (isCorrectPosSizeInit) {
+                    if (frameCounter > 10) {
+                        setNextState(mCurrentState);
+                        frameCounter = 0;
+                    } else {
+                        frameCounter++;
+                    }
+                } else {
+                    frameCounter = 0;
+                }
+
+                approxInit.release();
+
                 break;
             case ENV_FOCUS_INFINITY:
             case ENV_FOCUS_MACRO:
@@ -180,6 +212,13 @@ public class ImageQualityActivity extends AppCompatActivity implements CvCameraV
 
                 if (currVal > maxBlur)
                     maxBlur = currVal* BLUR_THRESHOLD;
+
+                if (frameCounter > 10) {
+                    setNextState(mCurrentState);
+                    frameCounter = 0;
+                } else {
+                    frameCounter++;
+                }
 
                 break;
             case QUALITY_CHECK:
@@ -200,13 +239,20 @@ public class ImageQualityActivity extends AppCompatActivity implements CvCameraV
                 final boolean isOverExposed = maxWhite >= OVER_EXP_THRESHOLD;
                 final boolean isUnderExposed = maxWhite < UNDER_EXP_THRESHOLD;
 
+                MatOfPoint approx = detectWhite(inputFrame.rgba());
+                final boolean isCorrectPosSize = checkPositionAndSize(approx);
+                final boolean isShadow = checkShadow(approx);
 
                 runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
-                        displayQualityResult(isBlur, isOverExposed, isUnderExposed, false);
+                        displayQualityResult(isCorrectPosSize, isBlur, isOverExposed, isUnderExposed, isShadow);
                     }
                 });
+
+                approx.release();
+                break;
+            case FINAL_CHECK:
                 break;
         }
 
@@ -216,13 +262,42 @@ public class ImageQualityActivity extends AppCompatActivity implements CvCameraV
     }
 
     /*Private methods*/
-    private void displayQualityResult (boolean isBlur, boolean isOverExposed, boolean isUnderExposed, boolean isShadow) {
-        String message = String.format(QUALITY_MSG_FORMAT, !isBlur ? OK : NOT_OK,
+    private boolean checkShadow (MatOfPoint approx) {
+        Log.d(TAG, "SHADOW!!! " + approx.size().height);
+        if (approx.size().height > 10) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    private boolean checkPositionAndSize (MatOfPoint approx) {
+        Rect rect = Imgproc.boundingRect(approx);
+
+        Point center = new Point((rect.br().x+rect.tl().x)/2.0f, (rect.br().y+rect.tl().y)/2.0f);
+        double height = rect.br().x - rect.tl().x;
+
+        Point trueCenter = new Point(512, 384);
+
+        Log.d(TAG, String.format("POS: %.2f, %.2f, Height: %.2f", center.x, center.y, height));
+
+        if (height < 512*(1+SIZE_THRESHOLD) && height > 512*(1-SIZE_THRESHOLD)
+                && center.x < trueCenter.x *(1+POSITON_THRESHOLD) && center.x > trueCenter.x*(1-POSITON_THRESHOLD)
+                && center.y < trueCenter.y *(1+POSITON_THRESHOLD) && center.y > trueCenter.y*(1-POSITON_THRESHOLD)) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    private void displayQualityResult (boolean isCorrectPosSize, boolean isBlur, boolean isOverExposed, boolean isUnderExposed, boolean isShadow) {
+        String message = String.format(QUALITY_MSG_FORMAT, isCorrectPosSize? OK:NOT_OK,
+                !isBlur ? OK : NOT_OK,
                 !isOverExposed && !isUnderExposed ? OK : (isOverExposed ? OVER_EXP_MSG + NOT_OK : UNDER_EXP_MSG + NOT_OK),
                 !isShadow ? OK : NOT_OK);
 
         mImageQualityFeedbackView.setText(Html.fromHtml(message));
-        if (!isBlur && !isOverExposed && !isUnderExposed && !isShadow)
+        if (isCorrectPosSize && !isBlur && !isOverExposed && !isUnderExposed && !isShadow)
             mImageQualityFeedbackView.setBackgroundColor(getResources().getColor(R.color.green_overlay));
         else
             mImageQualityFeedbackView.setBackgroundColor(getResources().getColor(R.color.red_overlay));
@@ -237,6 +312,7 @@ public class ImageQualityActivity extends AppCompatActivity implements CvCameraV
             case ENV_FOCUS_INFINITY:
                 mCurrentState = State.ENV_FOCUS_MACRO;
                 mResetCameraNeeded = true;
+
                 break;
             case ENV_FOCUS_MACRO:
                 mCurrentState = State.ENV_FOCUS_AUTO_CENTER;
@@ -248,6 +324,10 @@ public class ImageQualityActivity extends AppCompatActivity implements CvCameraV
                 break;
             case QUALITY_CHECK:
                 mCurrentState = State.QUALITY_CHECK;
+                mResetCameraNeeded = false;
+                break;
+            case FINAL_CHECK:
+                mCurrentState = State.FINAL_CHECK;
                 mResetCameraNeeded = false;
                 break;
         }
@@ -394,5 +474,44 @@ public class ImageQualityActivity extends AppCompatActivity implements CvCameraV
 
         Log.d(TAG, String.format("Sobel took %d ms", (System.currentTimeMillis()-start)));
         return input;
+    }
+
+    private MatOfPoint detectWhite (Mat input) {
+        MatOfPoint maxRect = new MatOfPoint();;
+
+        if (mDetector != null) {
+            mDetector.process(input);
+            List<MatOfPoint> contours = mDetector.getContours();
+            Log.e(TAG, "Contours count: " + contours.size());
+            Imgproc.drawContours(input, contours, -1, CONTOUR_COLOR);
+
+            for (int i = 0; i < contours.size(); i++) {
+                MatOfPoint2f this2f = new MatOfPoint2f();
+                MatOfPoint approx = new MatOfPoint();
+                MatOfPoint2f approx2f = new MatOfPoint2f();
+
+                contours.get(0).convertTo(this2f, CvType.CV_32FC2);
+
+                Imgproc.approxPolyDP(this2f, approx2f, 10, true);
+
+                approx2f.convertTo(approx, CvType.CV_32S);
+
+                Log.e(TAG, "Contours corners: " + approx.size().height);
+
+                //if (approx.size().height < 10) {
+                    org.opencv.core.Rect rect = Imgproc.boundingRect(approx);
+                    //Imgproc.rectangle(input,rect.br(), rect.tl(), new Scalar(0,0,255,255), 5);
+
+                    if (rect.area() > Imgproc.boundingRect(maxRect).area())
+                        approx.copyTo(maxRect);
+                //}
+
+                this2f.release();
+                approx.release();
+                approx2f.release();
+            }
+        }
+
+        return maxRect;
     }
 }

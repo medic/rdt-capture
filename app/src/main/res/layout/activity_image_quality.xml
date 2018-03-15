@@ -23,10 +23,10 @@
         android:background="@color/gray_overlay"
         android:gravity="bottom"
         android:paddingHorizontal="5dp"
-        android:paddingVertical="20dp"
+        android:paddingVertical="5dp"
         android:textAlignment="center"
         android:textColor="@android:color/white"
-        android:textSize="30sp" />
+        android:textSize="25sp" />
 
     <edu.washington.cs.ubicomplab.rdt_reader.Viewport
         android:id="@+id/img_quality_check_viewport"
