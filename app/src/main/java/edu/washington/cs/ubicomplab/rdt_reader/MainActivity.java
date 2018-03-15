@@ -9,11 +9,12 @@ import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.Menu;
+import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
 import android.widget.Button;
 
-public class MainActivity extends AppCompatActivity implements View.OnTouchListener {
+public class MainActivity extends AppCompatActivity implements View.OnClickListener, SettingDialogFragment.SettingDialogListener {
 
     private Button mExpDateButton;
     private Button mImageQualityButton;
@@ -30,10 +31,12 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
         mExpDateButton = findViewById(R.id.expdateButton);
         mImageQualityButton = findViewById(R.id.imagequalButton);
         mTestCamera2Button = findViewById(R.id.camera2TestButton);
+        mSettingsyButton = findViewById(R.id.settingsButton);
 
-        mExpDateButton.setOnTouchListener(this);
-        mImageQualityButton.setOnTouchListener(this);
-        mTestCamera2Button.setOnTouchListener(this);
+        mExpDateButton.setOnClickListener(this);
+        mImageQualityButton.setOnClickListener(this);
+        mTestCamera2Button.setOnClickListener(this);
+        mSettingsyButton.setOnClickListener(this);
 
         if (ContextCompat.checkSelfPermission(this,
                 Manifest.permission.CAMERA)
@@ -52,7 +55,20 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
     }
 
     @Override
-    public boolean onTouch(View view, MotionEvent motionEvent) {
+    public boolean onOptionsItemSelected(MenuItem item) {
+        // Handle item selection
+        switch (item.getItemId()) {
+            case R.id.action_settings:
+                SettingDialogFragment dialog = new SettingDialogFragment();
+                dialog.show(getFragmentManager(), "Setting Dialog");
+                return true;
+            default:
+                return false;
+        }
+    }
+
+    @Override
+    public void onClick(View view) {
 
         if (view.getId() == R.id.expdateButton) {
             Intent intent = new Intent(this, ExpirationDateActivity.class);
@@ -63,8 +79,13 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
         } else if (view.getId() == R.id.camera2TestButton) {
             Intent intent = new Intent(this, Camera2TestActivity.class);
             startActivity(intent);
+        } else if (view.getId() == R.id.settingsButton) {
+            SettingDialogFragment dialog = new SettingDialogFragment();
+            dialog.show(getFragmentManager(), "Setting Dialog");
         }
+    }
 
-        return false;
+    @Override
+    public void onClickPositiveButton() {
     }
 }

@@ -34,7 +34,7 @@
         android:layout_height="fill_parent"
         android:layout_weight=".5"
         android:background="@color/black_overlay"
-        custom:heightScale="0.5"
-        custom:widthScale="0.5"/>
+        custom:heightScale="0.475"
+        custom:widthScale="0.475"/>
 
 </android.support.constraint.ConstraintLayout>

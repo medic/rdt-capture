@@ -21,7 +21,7 @@ public final class Constants {
     public static Scalar RDT_COLOR_HSV = new Scalar(30, 21, 204, 0.0);
 
     public static double SIZE_THRESHOLD = 0.1;
-    public static double POSITON_THRESHOLD = 0.1;
+    public static double POSITION_THRESHOLD = 0.1;
 
-    public static int CALIBRATION_FRAME_COUTER = 10;
+    public static int CALIBRATION_FRAME_COUNTER = 10;
 }

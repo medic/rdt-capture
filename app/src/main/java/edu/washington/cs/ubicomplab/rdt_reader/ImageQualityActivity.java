@@ -1,7 +1,6 @@
 package edu.washington.cs.ubicomplab.rdt_reader;
 
 import android.content.Intent;
-import android.graphics.Color;
 import android.hardware.camera2.CameraCharacteristics;
 import android.hardware.camera2.CaptureRequest;
 import android.hardware.camera2.params.MeteringRectangle;
@@ -10,6 +9,7 @@ import android.os.Bundle;
 import android.text.Html;
 import android.util.Log;
 import android.view.Menu;
+import android.view.MenuItem;
 import android.view.SurfaceView;
 import android.view.WindowManager;
 import android.widget.TextView;
@@ -36,12 +36,10 @@ import org.opencv.imgproc.Imgproc;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Timer;
-import java.util.TimerTask;
 
 import static edu.washington.cs.ubicomplab.rdt_reader.Constants.*;
 
-public class ImageQualityActivity extends AppCompatActivity implements CvCameraViewListener2{
+public class ImageQualityActivity extends AppCompatActivity implements CvCameraViewListener2, SettingDialogFragment.SettingDialogListener {
 
     private RDTCamera2View mOpenCvCameraView;
     private TextView mImageQualityFeedbackView;
@@ -159,6 +157,25 @@ public class ImageQualityActivity extends AppCompatActivity implements CvCameraV
         return true;
     }
 
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        // Handle item selection
+        switch (item.getItemId()) {
+            case R.id.action_settings:
+                SettingDialogFragment dialog = new SettingDialogFragment();
+                dialog.show(getFragmentManager(), "Setting Dialog");
+                return true;
+            default:
+                return false;
+        }
+    }
+
+
+    @Override
+    public void onClickPositiveButton() {
+        mCurrentState = State.INITIALIZATION;
+    }
+
     /*OpenCV JavaCameraView callbacks*/
 
     @Override
@@ -184,12 +201,12 @@ public class ImageQualityActivity extends AppCompatActivity implements CvCameraV
                 runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
-                        displayQualityResult(isCorrectPosSizeInit, false, false, false, false);
+                        displayQualityResult(isCorrectPosSizeInit, true, true, true, true);
                     }
                 });
 
                 if (isCorrectPosSizeInit) {
-                    if (frameCounter > 10) {
+                    if (frameCounter > CALIBRATION_FRAME_COUNTER) {
                         setNextState(mCurrentState);
                         frameCounter = 0;
                     } else {
@@ -213,7 +230,7 @@ public class ImageQualityActivity extends AppCompatActivity implements CvCameraV
                 if (currVal > maxBlur)
                     maxBlur = currVal* BLUR_THRESHOLD;
 
-                if (frameCounter > 10) {
+                if (frameCounter > CALIBRATION_FRAME_COUNTER) {
                     setNextState(mCurrentState);
                     frameCounter = 0;
                 } else {
@@ -282,8 +299,8 @@ public class ImageQualityActivity extends AppCompatActivity implements CvCameraV
         Log.d(TAG, String.format("POS: %.2f, %.2f, Height: %.2f", center.x, center.y, height));
 
         if (height < 512*(1+SIZE_THRESHOLD) && height > 512*(1-SIZE_THRESHOLD)
-                && center.x < trueCenter.x *(1+POSITON_THRESHOLD) && center.x > trueCenter.x*(1-POSITON_THRESHOLD)
-                && center.y < trueCenter.y *(1+POSITON_THRESHOLD) && center.y > trueCenter.y*(1-POSITON_THRESHOLD)) {
+                && center.x < trueCenter.x *(1+ POSITION_THRESHOLD) && center.x > trueCenter.x*(1- POSITION_THRESHOLD)
+                && center.y < trueCenter.y *(1+ POSITION_THRESHOLD) && center.y > trueCenter.y*(1- POSITION_THRESHOLD)) {
             return true;
         } else {
             return false;
