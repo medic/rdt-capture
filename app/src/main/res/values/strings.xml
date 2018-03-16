@@ -2,4 +2,7 @@
     <string name="app_name">rdt-reader</string>
     <string name="title_activity_result">ResultActivity</string>
     <string name="title_activity_camera2_test">Camera2TestActivity</string>
+    <string name="progress_initialization">"Checking… Stay still…"</string>
+    <string name="progress_final">"Captured! Analyzing the image…"</string>
+    <string name="instruction">"Position RDT at the Center.&#xA;Fit RDT into the rectangle.&#xA;And, stay still!"</string>
 </resources>

@@ -11,7 +11,9 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.SurfaceView;
+import android.view.View;
 import android.view.WindowManager;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 
 import org.opencv.android.BaseLoaderCallback;
@@ -43,6 +45,9 @@ public class ImageQualityActivity extends AppCompatActivity implements CvCameraV
 
     private RDTCamera2View mOpenCvCameraView;
     private TextView mImageQualityFeedbackView;
+    private TextView mProgressText;
+    private ProgressBar mProgress;
+    private View mProgressBackgroundView;
 
     private final String NO_MSG = "";
     private final String BLUR_MSG = "PLACE RDT IN THE BOX<br>TRY TO STAY STILL<br>";
@@ -107,6 +112,9 @@ public class ImageQualityActivity extends AppCompatActivity implements CvCameraV
         mOpenCvCameraView.setCvCameraViewListener(this);
 
         mImageQualityFeedbackView = findViewById(R.id.img_quality_feedback_view);
+        mProgress = findViewById(R.id.progressCircularBar);
+        mProgressBackgroundView = findViewById(R.id.progressBackground);
+        mProgressText = findViewById(R.id.progressText);
 
         //test purposes
         /*Timer uploadCheckerTimer = new Timer(true);
@@ -114,6 +122,8 @@ public class ImageQualityActivity extends AppCompatActivity implements CvCameraV
                 new TimerTask() {
                     public void run() { setNextState(mCurrentState); }
                 }, 5*1000, 5 * 1000);*/
+
+        setProgressUI(mCurrentState);
     }
 
     @Override
@@ -174,6 +184,7 @@ public class ImageQualityActivity extends AppCompatActivity implements CvCameraV
     @Override
     public void onClickPositiveButton() {
         mCurrentState = State.INITIALIZATION;
+        setProgressUI(mCurrentState);
     }
 
     /*OpenCV JavaCameraView callbacks*/
@@ -329,7 +340,6 @@ public class ImageQualityActivity extends AppCompatActivity implements CvCameraV
             case ENV_FOCUS_INFINITY:
                 mCurrentState = State.ENV_FOCUS_MACRO;
                 mResetCameraNeeded = true;
-
                 break;
             case ENV_FOCUS_MACRO:
                 mCurrentState = State.ENV_FOCUS_AUTO_CENTER;
@@ -348,6 +358,49 @@ public class ImageQualityActivity extends AppCompatActivity implements CvCameraV
                 mResetCameraNeeded = false;
                 break;
         }
+
+        setProgressUI(mCurrentState);
+    }
+
+    private void setProgressUI (State CurrentState) {
+        switch  (CurrentState) {
+            case INITIALIZATION:
+            case QUALITY_CHECK:
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        mProgress.setVisibility(View.GONE);
+                        mProgressBackgroundView.setVisibility(View.GONE);
+                        mProgressText.setVisibility(View.GONE);
+                    }
+                });
+                break;
+            case ENV_FOCUS_INFINITY:
+            case ENV_FOCUS_MACRO:
+            case ENV_FOCUS_AUTO_CENTER:
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        mProgress.setVisibility(View.VISIBLE);
+                        mProgressBackgroundView.setVisibility(View.VISIBLE);
+                        mProgressText.setText(R.string.progress_initialization);
+                        mProgressText.setVisibility(View.VISIBLE);
+                    }
+                });
+                break;
+            case FINAL_CHECK:
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        mProgress.setVisibility(View.VISIBLE);
+                        mProgressBackgroundView.setVisibility(View.VISIBLE);
+                        mProgressText.setText(R.string.progress_final);
+                        mProgressText.setVisibility(View.VISIBLE);
+                    }
+                });
+                break;
+        }
+
     }
 
     private void setupCameraParameters (State currentState) {
