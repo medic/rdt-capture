@@ -14,6 +14,8 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.widget.Button;
 
+import java.util.ArrayList;
+
 public class MainActivity extends AppCompatActivity implements View.OnClickListener, SettingDialogFragment.SettingDialogListener {
 
     private Button mExpDateButton;
@@ -38,12 +40,24 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         mTestCamera2Button.setOnClickListener(this);
         mSettingsyButton.setOnClickListener(this);
 
+        ArrayList<String> permissions = new ArrayList<>();
+
         if (ContextCompat.checkSelfPermission(this,
                 Manifest.permission.CAMERA)
                 != PackageManager.PERMISSION_GRANTED) {
+            permissions.add(Manifest.permission.CAMERA);
+        }
+
+        if (ContextCompat.checkSelfPermission(this,
+                Manifest.permission.WRITE_EXTERNAL_STORAGE)
+                != PackageManager.PERMISSION_GRANTED) {
+            permissions.add(Manifest.permission.WRITE_EXTERNAL_STORAGE);
+        }
+
+        if (permissions.size() > 0) {
             ActivityCompat.requestPermissions(this,
-                    new String[]{Manifest.permission.CAMERA},
-                    MY_CAMERA_REQUEST_CODE);
+                    permissions.toArray(new String[permissions.size()]),
+                    MY_PERMISSION_REQUEST_CODE);
         }
     }
 

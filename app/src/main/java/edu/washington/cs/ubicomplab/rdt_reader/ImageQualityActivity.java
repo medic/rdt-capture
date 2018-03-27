@@ -1,6 +1,7 @@
 package edu.washington.cs.ubicomplab.rdt_reader;
 
 import android.content.Intent;
+import android.graphics.Bitmap;
 import android.hardware.camera2.CameraCharacteristics;
 import android.hardware.camera2.CaptureRequest;
 import android.hardware.camera2.params.MeteringRectangle;
@@ -21,6 +22,7 @@ import org.opencv.android.LoaderCallbackInterface;
 import org.opencv.android.CameraBridgeViewBase.CvCameraViewListener2;
 import org.opencv.android.CameraBridgeViewBase.CvCameraViewFrame;
 import org.opencv.android.OpenCVLoader;
+import org.opencv.android.Utils;
 import org.opencv.core.Core;
 import org.opencv.core.CvType;
 import org.opencv.core.Mat;
@@ -35,6 +37,9 @@ import org.opencv.core.Scalar;
 import org.opencv.core.Size;
 import org.opencv.imgproc.Imgproc;
 
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileOutputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -95,6 +100,8 @@ public class ImageQualityActivity extends AppCompatActivity implements CvCameraV
     private final Scalar CONTOUR_COLOR = new Scalar(255,0,0,255);
 
     private int frameCounter = 0;
+
+    private boolean isCaptured = false;
 
     /*Activity callbacks*/
     @Override
@@ -250,6 +257,9 @@ public class ImageQualityActivity extends AppCompatActivity implements CvCameraV
 
                 break;
             case QUALITY_CHECK:
+                if (isCaptured)
+                    return null;
+
                 //result = drawContourUsingSobel(inputFrame.rgba());
                 double blurVal = calculateBurriness(inputFrame.rgba());
                 final boolean isBlur = blurVal < maxBlur;
@@ -278,9 +288,26 @@ public class ImageQualityActivity extends AppCompatActivity implements CvCameraV
                     }
                 });
 
+                synchronized (this) {
+
+                    if (isCorrectPosSize && !isBlur && !isOverExposed && !isUnderExposed && !isShadow && !isCaptured) {
+                        isCaptured = true;
+
+                        setNextState(mCurrentState);
+                        setProgressUI(mCurrentState);
+
+                        String RDTCaputrePath = saveTempRDTImage(inputFrame.rgba());
+                        Intent intent = new Intent(ImageQualityActivity.this, ImageResultActivity.class);
+                        intent.putExtra("RDTCapturePath", RDTCaputrePath);
+                        startActivity(intent);
+                    }
+                }
+
                 approx.release();
                 break;
             case FINAL_CHECK:
+                if (isCaptured)
+                    return null;
                 break;
         }
 
@@ -290,6 +317,26 @@ public class ImageQualityActivity extends AppCompatActivity implements CvCameraV
     }
 
     /*Private methods*/
+    private String saveTempRDTImage (Mat captureMat) {
+        try {
+            Bitmap resultBitmap = Bitmap.createBitmap(captureMat.cols(), captureMat.rows(), Bitmap.Config.ARGB_8888);
+            Utils.matToBitmap(captureMat, resultBitmap);
+            File outputDir = getApplicationContext().getCacheDir(); // context being the Activity pointer
+            File outputFile = File.createTempFile("temp_rdt_capture", ".png", outputDir);
+
+            ByteArrayOutputStream bs = new ByteArrayOutputStream();
+            resultBitmap.compress(Bitmap.CompressFormat.PNG, 100, bs);
+
+            FileOutputStream fos = new FileOutputStream(outputFile);
+            fos.write(bs.toByteArray());
+            fos.close();
+
+            return outputFile.getAbsolutePath();
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
     private boolean checkShadow (MatOfPoint approx) {
         Log.d(TAG, "SHADOW!!! " + approx.size().height);
         if (approx.size().height > 10) {
@@ -350,7 +397,7 @@ public class ImageQualityActivity extends AppCompatActivity implements CvCameraV
                 mResetCameraNeeded = true;
                 break;
             case QUALITY_CHECK:
-                mCurrentState = State.QUALITY_CHECK;
+                mCurrentState = State.FINAL_CHECK;
                 mResetCameraNeeded = false;
                 break;
             case FINAL_CHECK:

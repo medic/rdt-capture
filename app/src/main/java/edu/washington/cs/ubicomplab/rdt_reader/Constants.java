@@ -8,7 +8,7 @@ import org.opencv.core.Scalar;
 
 public final class Constants {
     public static final String TAG = "RDT-reader";
-    public static final int MY_CAMERA_REQUEST_CODE = 100;
+    public static final int MY_PERMISSION_REQUEST_CODE = 100;
     public static final String[] DATE_FORMATS = {"YYYY/MM/DD","YYYY.MM.DD","YYYY-MM-DD"};
 
     public static double BLUR_THRESHOLD = 0.75;
