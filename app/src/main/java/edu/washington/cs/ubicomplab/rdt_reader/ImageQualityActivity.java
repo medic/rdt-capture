@@ -296,9 +296,9 @@ public class ImageQualityActivity extends AppCompatActivity implements CvCameraV
                         setNextState(mCurrentState);
                         setProgressUI(mCurrentState);
 
-                        String RDTCaputrePath = saveTempRDTImage(inputFrame.rgba());
+                        String RDTCapturePath = saveTempRDTImage(inputFrame.rgba());
                         Intent intent = new Intent(ImageQualityActivity.this, ImageResultActivity.class);
-                        intent.putExtra("RDTCapturePath", RDTCaputrePath);
+                        intent.putExtra("RDTCapturePath", RDTCapturePath);
                         startActivity(intent);
                     }
                 }
