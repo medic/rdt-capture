@@ -33,6 +33,7 @@ import org.opencv.core.MatOfPoint;
 import org.opencv.core.MatOfPoint2f;
 import org.opencv.core.Point;
 import org.opencv.core.Rect;
+import org.opencv.core.RotatedRect;
 import org.opencv.core.Scalar;
 import org.opencv.core.Size;
 import org.opencv.imgproc.Imgproc;
@@ -208,13 +209,24 @@ public class ImageQualityActivity extends AppCompatActivity implements CvCameraV
 
     @Override
     public Mat onCameraFrame(CvCameraViewFrame inputFrame) {
+        Mat resultMat = inputFrame.rgba();
+
         if (mResetCameraNeeded)
             setupCameraParameters(mCurrentState);
 
         switch (mCurrentState) {
             case INITIALIZATION:
-                MatOfPoint approxInit = detectWhite(inputFrame.rgba());
+                MatOfPoint2f approxInit = detectWhite(inputFrame.rgba());
+                //MatOfPoint2f approxInit = drawContourUsingSobel(inputFrame.rgba());
                 final boolean isCorrectPosSizeInit = checkPositionAndSize(approxInit);
+
+                RotatedRect rRect = Imgproc.minAreaRect(approxInit);
+
+                Point[] vertices = new Point[4];
+                rRect.points(vertices);
+                for (int j = 0; j < 4; j++){
+                    Imgproc.line(resultMat, vertices[j], vertices[(j+1)%4], new Scalar(0,255,0));
+                }
 
                 runOnUiThread(new Runnable() {
                     @Override
@@ -277,7 +289,7 @@ public class ImageQualityActivity extends AppCompatActivity implements CvCameraV
                 final boolean isOverExposed = maxWhite >= OVER_EXP_THRESHOLD;
                 final boolean isUnderExposed = maxWhite < UNDER_EXP_THRESHOLD;
 
-                MatOfPoint approx = detectWhite(inputFrame.rgba());
+                MatOfPoint2f approx = detectWhite(inputFrame.rgba());
                 final boolean isCorrectPosSize = checkPositionAndSize(approx);
                 final boolean isShadow = checkShadow(approx);
 
@@ -313,7 +325,10 @@ public class ImageQualityActivity extends AppCompatActivity implements CvCameraV
 
         //setNextState(mCurrentState);
 
-        return inputFrame.rgba();
+
+        System.gc();
+        //return inputFrame.rgba();
+        return resultMat;
     }
 
     /*Private methods*/
@@ -337,7 +352,7 @@ public class ImageQualityActivity extends AppCompatActivity implements CvCameraV
         }
     }
 
-    private boolean checkShadow (MatOfPoint approx) {
+    private boolean checkShadow (MatOfPoint2f approx) {
         Log.d(TAG, "SHADOW!!! " + approx.size().height);
         if (approx.size().height > 10) {
             return true;
@@ -346,23 +361,32 @@ public class ImageQualityActivity extends AppCompatActivity implements CvCameraV
         }
     }
 
-    private boolean checkPositionAndSize (MatOfPoint approx) {
-        Rect rect = Imgproc.boundingRect(approx);
+    private boolean checkPositionAndSize (MatOfPoint2f approx) {
+        if (approx.total() < 1)
+            return false;
 
-        Point center = new Point((rect.br().x+rect.tl().x)/2.0f, (rect.br().y+rect.tl().y)/2.0f);
-        double height = rect.br().x - rect.tl().x;
+        RotatedRect rotatedRect = Imgproc.minAreaRect(approx);
 
+        Point center = rotatedRect.center;
         Point trueCenter = new Point(512, 384);
 
-        Log.d(TAG, String.format("POS: %.2f, %.2f, Height: %.2f", center.x, center.y, height));
+        boolean isUpright = rotatedRect.size.height > rotatedRect.size.width;
+        double angle = 0;
+        double height = 0;
 
-        if (height < 512*(1+SIZE_THRESHOLD) && height > 512*(1-SIZE_THRESHOLD)
-                && center.x < trueCenter.x *(1+ POSITION_THRESHOLD) && center.x > trueCenter.x*(1- POSITION_THRESHOLD)
-                && center.y < trueCenter.y *(1+ POSITION_THRESHOLD) && center.y > trueCenter.y*(1- POSITION_THRESHOLD)) {
-            return true;
+        if (isUpright) {
+            angle = 90 - Math.abs(rotatedRect.angle);
+            height = rotatedRect.size.height;
         } else {
-            return false;
+            angle = Math.abs(rotatedRect.angle);
+            height = rotatedRect.size.width;
         }
+
+        Log.d(TAG, String.format("POS: %.2f, %.2f, Angle: %.2f, Height: %.2f", center.x, center.y, angle, height));
+
+        return angle < 90.0*POSITION_THRESHOLD && height < 512*(1+SIZE_THRESHOLD) && height > 512*(1-SIZE_THRESHOLD)
+                && center.x < trueCenter.x *(1+ POSITION_THRESHOLD) && center.x > trueCenter.x*(1- POSITION_THRESHOLD)
+                && center.y < trueCenter.y *(1+ POSITION_THRESHOLD) && center.y > trueCenter.y*(1- POSITION_THRESHOLD);
     }
 
     private void displayQualityResult (boolean isCorrectPosSize, boolean isBlur, boolean isOverExposed, boolean isUnderExposed, boolean isShadow) {
@@ -535,7 +559,7 @@ public class ImageQualityActivity extends AppCompatActivity implements CvCameraV
         return blurriness;
     }
 
-    private Mat drawContourUsingSobel(Mat input) {
+    private MatOfPoint2f drawContourUsingSobel(Mat input) {
         long start = System.currentTimeMillis();
 
         Mat sobelx = new Mat();
@@ -575,12 +599,20 @@ public class ImageQualityActivity extends AppCompatActivity implements CvCameraV
 
         //output.convertTo(output, CV_32F);
 
+        MatOfPoint2f maxRect = new MatOfPoint2f(new Point(0,0));
+
         //for(int idx = 0; idx >= 0; idx = (int) hierarchy.get(0, idx)[0]) {
         for( int idx = 0; idx < contours.size(); idx++ ) {
-            MatOfPoint matOfPoint = contours.get(idx);
-            Rect rect = Imgproc.boundingRect(matOfPoint);
-            if(rect.size().width > 100 && rect.size().height > 100)
-                Imgproc.rectangle(input, rect.tl(), rect.br(), new Scalar(255, 255, 255));
+            MatOfPoint2f approx2f = new MatOfPoint2f();
+
+            contours.get(idx).convertTo(approx2f, CvType.CV_32F);
+            RotatedRect rect = Imgproc.minAreaRect(approx2f);
+            RotatedRect maxRotatedRect = Imgproc.minAreaRect(maxRect);
+
+            if (rect.size.height*rect.size.width < 1000 * 700 && rect.size.height*rect.size.width > maxRotatedRect.size.height*maxRotatedRect.size.width)
+                approx2f.copyTo(maxRect);
+
+            approx2f.release();
         }
 
         sobelx.release();
@@ -590,41 +622,38 @@ public class ImageQualityActivity extends AppCompatActivity implements CvCameraV
         sharp.release();
 
         Log.d(TAG, String.format("Sobel took %d ms", (System.currentTimeMillis()-start)));
-        return input;
+        return maxRect;
     }
 
-    private MatOfPoint detectWhite (Mat input) {
-        MatOfPoint maxRect = new MatOfPoint();;
+    private MatOfPoint2f detectWhite (Mat input) {
+
+        MatOfPoint2f maxRect = new MatOfPoint2f(new Point(0,0));
 
         if (mDetector != null) {
             mDetector.process(input);
             List<MatOfPoint> contours = mDetector.getContours();
             Log.e(TAG, "Contours count: " + contours.size());
-            Imgproc.drawContours(input, contours, -1, CONTOUR_COLOR);
+            //Imgproc.drawContours(input, contours, -1, CONTOUR_COLOR);
 
             for (int i = 0; i < contours.size(); i++) {
-                MatOfPoint2f this2f = new MatOfPoint2f();
-                MatOfPoint approx = new MatOfPoint();
                 MatOfPoint2f approx2f = new MatOfPoint2f();
 
-                contours.get(0).convertTo(this2f, CvType.CV_32FC2);
+                contours.get(0).convertTo(approx2f, CvType.CV_32F);
 
-                Imgproc.approxPolyDP(this2f, approx2f, 10, true);
+                Imgproc.approxPolyDP(approx2f, approx2f, 10, true);
 
-                approx2f.convertTo(approx, CvType.CV_32S);
-
-                Log.e(TAG, "Contours corners: " + approx.size().height);
+                Log.e(TAG, "Contours corners: " + approx2f.size().height);
 
                 //if (approx.size().height < 10) {
-                    org.opencv.core.Rect rect = Imgproc.boundingRect(approx);
+                    //org.opencv.core.Rect rect = Imgproc.boundingRect(approx);
+                    RotatedRect rotatedRect =  Imgproc.minAreaRect(approx2f);
+                    RotatedRect maxRotatedRect =  Imgproc.minAreaRect(maxRect);
                     //Imgproc.rectangle(input,rect.br(), rect.tl(), new Scalar(0,0,255,255), 5);
 
-                    if (rect.area() > Imgproc.boundingRect(maxRect).area())
-                        approx.copyTo(maxRect);
+                    if (rotatedRect.size.height * rotatedRect.size.width > maxRotatedRect.size.height * maxRotatedRect.size.width)
+                        approx2f.copyTo(maxRect);
                 //}
 
-                this2f.release();
-                approx.release();
                 approx2f.release();
             }
         }

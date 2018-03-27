@@ -79,6 +79,7 @@ public class SettingDialogFragment extends DialogFragment {
         Constants.UNDER_EXP_THRESHOLD = mUnderExpBar.getProgress();
         //Constants.SHADOW mShadowBar.getProgress();
         Constants.SIZE_THRESHOLD = 1.0/(double)mSizeBar.getProgress();
+        Constants.POSITION_THRESHOLD = 1.0/(double)mSizeBar.getProgress();
 
         Log.d(Constants.TAG, String.format("UODATED SETTINGS: BLUR: %.2f, SIZE: %.2f",  Constants.BLUR_THRESHOLD, Constants.SIZE_THRESHOLD));
     }
