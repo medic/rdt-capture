@@ -367,7 +367,7 @@ public class ImageQualityActivity extends AppCompatActivity implements CvCameraV
         mRefImg = new Mat();
 
 
-        Bitmap bitmap = BitmapFactory.decodeResource(getApplicationContext().getResources(), R.drawable.remel_flu_ref_small);
+        Bitmap bitmap = BitmapFactory.decodeResource(getApplicationContext().getResources(), R.drawable.sd_bioline_malaria);
         Utils.bitmapToMat(bitmap, mRefImg);
         Imgproc.cvtColor(mRefImg, mRefImg, Imgproc.COLOR_RGB2BGR);
         Imgproc.cvtColor(mRefImg, mRefImg, Imgproc.COLOR_BGR2RGB);
