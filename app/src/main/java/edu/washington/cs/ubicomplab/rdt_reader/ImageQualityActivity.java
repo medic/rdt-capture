@@ -2,6 +2,7 @@ package edu.washington.cs.ubicomplab.rdt_reader;
 
 import android.content.Intent;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.hardware.camera2.CameraCharacteristics;
 import android.hardware.camera2.CaptureRequest;
 import android.hardware.camera2.params.MeteringRectangle;
@@ -23,12 +24,17 @@ import org.opencv.android.CameraBridgeViewBase.CvCameraViewListener2;
 import org.opencv.android.CameraBridgeViewBase.CvCameraViewFrame;
 import org.opencv.android.OpenCVLoader;
 import org.opencv.android.Utils;
+import org.opencv.calib3d.Calib3d;
 import org.opencv.core.Core;
 import org.opencv.core.CvType;
+import org.opencv.core.DMatch;
+import org.opencv.core.KeyPoint;
 import org.opencv.core.Mat;
+import org.opencv.core.MatOfDMatch;
 import org.opencv.core.MatOfDouble;
 import org.opencv.core.MatOfFloat;
 import org.opencv.core.MatOfInt;
+import org.opencv.core.MatOfKeyPoint;
 import org.opencv.core.MatOfPoint;
 import org.opencv.core.MatOfPoint2f;
 import org.opencv.core.Point;
@@ -36,6 +42,9 @@ import org.opencv.core.Rect;
 import org.opencv.core.RotatedRect;
 import org.opencv.core.Scalar;
 import org.opencv.core.Size;
+import org.opencv.features2d.BRISK;
+import org.opencv.features2d.DescriptorMatcher;
+import org.opencv.features2d.Feature2D;
 import org.opencv.imgproc.Imgproc;
 
 import java.io.ByteArrayOutputStream;
@@ -43,6 +52,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.LinkedList;
 import java.util.List;
 
 import static edu.washington.cs.ubicomplab.rdt_reader.Constants.*;
@@ -80,6 +90,7 @@ public class ImageQualityActivity extends AppCompatActivity implements CvCameraV
                     mOpenCvCameraView.enableView();
                     mDetector = new ColorBlobDetector();
                     mDetector.setHsvColor(Constants.RDT_COLOR_HSV);
+                    loadReference();
                 } break;
                 default:
                 {
@@ -105,6 +116,12 @@ public class ImageQualityActivity extends AppCompatActivity implements CvCameraV
     private int frameCounter = 0;
 
     private boolean isCaptured = false;
+
+    private Feature2D mFeatureDetector;
+    private DescriptorMatcher mMatcher;
+    private Mat mRefImg;
+    private Mat mRefDescriptor;
+    private MatOfKeyPoint mRefKeypoints;
 
     /*Activity callbacks*/
     @Override
@@ -226,11 +243,13 @@ public class ImageQualityActivity extends AppCompatActivity implements CvCameraV
 
         switch (mCurrentState) {
             case INITIALIZATION:
-                MatOfPoint2f approxInit = detectWhite(inputFrame.rgba());
+                //MatOfPoint2f approxInit = detectWhite(inputFrame.rgba());
+                MatOfPoint2f approxInit = detectRDT(inputFrame.rgba().submat(new Rect((int)(PREVIEW_SIZE.width/4), (int)(PREVIEW_SIZE.height/4), (int)(PREVIEW_SIZE.width*VIEWPORT_SCALE), (int)(PREVIEW_SIZE.height*VIEWPORT_SCALE))));
                 //MatOfPoint2f approxInit = drawContourUsingSobel(inputFrame.rgba());
-                final boolean isCorrectPosSizeInit = checkPositionAndSize(approxInit);
+                final boolean isCorrectPosSizeInit = checkPositionAndSize(approxInit, true);
 
                 RotatedRect rRect = Imgproc.minAreaRect(approxInit);
+                rRect.center = new Point(PREVIEW_SIZE.width*VIEWPORT_SCALE, PREVIEW_SIZE.height*VIEWPORT_SCALE);
 
                 Point[] vertices = new Point[4];
                 rRect.points(vertices);
@@ -299,8 +318,8 @@ public class ImageQualityActivity extends AppCompatActivity implements CvCameraV
                 final boolean isOverExposed = maxWhite >= OVER_EXP_THRESHOLD;
                 final boolean isUnderExposed = maxWhite < UNDER_EXP_THRESHOLD;
 
-                MatOfPoint2f approx = detectWhite(inputFrame.rgba());
-                final boolean isCorrectPosSize = checkPositionAndSize(approx);
+                MatOfPoint2f approx = detectRDT(inputFrame.rgba().submat(new Rect((int)(PREVIEW_SIZE.width/4), (int)(PREVIEW_SIZE.height/4), (int)(PREVIEW_SIZE.width*VIEWPORT_SCALE), (int)(PREVIEW_SIZE.height*VIEWPORT_SCALE))));
+                final boolean isCorrectPosSize = checkPositionAndSize(approx, true);
                 final boolean isShadow = checkShadow(approx);
 
                 runOnUiThread(new Runnable() {
@@ -318,7 +337,7 @@ public class ImageQualityActivity extends AppCompatActivity implements CvCameraV
                         setNextState(mCurrentState);
                         setProgressUI(mCurrentState);
 
-                        String RDTCapturePath = saveTempRDTImage(inputFrame.rgba());
+                        String RDTCapturePath = saveTempRDTImage(inputFrame.rgba().submat(new Rect((int)(PREVIEW_SIZE.width/5), (int)(PREVIEW_SIZE.height/5), (int)(PREVIEW_SIZE.width*0.6), (int)(PREVIEW_SIZE.height*0.6))));
                         Intent intent = new Intent(ImageQualityActivity.this, ImageResultActivity.class);
                         intent.putExtra("RDTCapturePath", RDTCapturePath);
                         startActivity(intent);
@@ -342,6 +361,29 @@ public class ImageQualityActivity extends AppCompatActivity implements CvCameraV
     }
 
     /*Private methods*/
+    private void loadReference(){
+        mFeatureDetector = BRISK.create();
+        mMatcher = DescriptorMatcher.create(DescriptorMatcher.BRUTEFORCE_HAMMING);
+        mRefImg = new Mat();
+
+
+        Bitmap bitmap = BitmapFactory.decodeResource(getApplicationContext().getResources(), R.drawable.remel_flu_ref_small);
+        Utils.bitmapToMat(bitmap, mRefImg);
+        Imgproc.cvtColor(mRefImg, mRefImg, Imgproc.COLOR_RGB2BGR);
+        Imgproc.cvtColor(mRefImg, mRefImg, Imgproc.COLOR_BGR2RGB);
+        mRefDescriptor = new Mat();
+
+        mRefKeypoints = new MatOfKeyPoint();
+        mFeatureDetector.detect(mRefImg, mRefKeypoints);
+        mFeatureDetector.compute(mRefImg, mRefKeypoints, mRefDescriptor);
+    }
+
+    private void unloadReference(){
+        mRefImg.release();
+        mRefDescriptor.release();
+        mRefKeypoints.release();
+    }
+
     private String saveTempRDTImage (Mat captureMat) {
         try {
             Bitmap resultBitmap = Bitmap.createBitmap(captureMat.cols(), captureMat.rows(), Bitmap.Config.ARGB_8888);
@@ -371,11 +413,13 @@ public class ImageQualityActivity extends AppCompatActivity implements CvCameraV
         }
     }
 
-    private boolean checkPositionAndSize (MatOfPoint2f approx) {
+    private boolean checkPositionAndSize (MatOfPoint2f approx, boolean cropped) {
         if (approx.total() < 1)
             return false;
 
         RotatedRect rotatedRect = Imgproc.minAreaRect(approx);
+        if (cropped)
+            rotatedRect.center = new Point(PREVIEW_SIZE.width*VIEWPORT_SCALE, PREVIEW_SIZE.height*VIEWPORT_SCALE);
 
         Point center = rotatedRect.center;
         Point trueCenter = new Point(PREVIEW_SIZE.width/2, PREVIEW_SIZE.height/2);
@@ -574,6 +618,144 @@ public class ImageQualityActivity extends AppCompatActivity implements CvCameraV
         des.release();
 
         return blurriness;
+    }
+
+    private MatOfPoint2f detectRDT(Mat input) {
+        Imgproc.cvtColor(input, input, Imgproc.COLOR_RGB2BGR);
+        Imgproc.cvtColor(input, input, Imgproc.COLOR_BGR2RGB);
+
+        Mat descriptors = new Mat();
+        MatOfKeyPoint keypoints = new MatOfKeyPoint();
+
+        mFeatureDetector.detect(input, keypoints);
+        mFeatureDetector.compute(input, keypoints, descriptors);
+
+        Size size = descriptors.size();
+
+        if (size.equals(new Size(0,0))) {
+            Log.d(TAG, String.format("no features on input"));
+            return null;
+        }
+
+        // Matching
+        MatOfDMatch matches = new MatOfDMatch();
+        if (mRefImg.type() == input.type()) {
+            Log.d(TAG, String.format("type: %d, %d", mRefDescriptor.type(), descriptors.type()));
+            mMatcher.match(mRefDescriptor, descriptors, matches);
+            Log.d(TAG, String.format("matched"));
+        } else {
+            return null;
+        }
+        List<DMatch> matchesList = matches.toList();
+
+        Double max_dist = 0.0;
+        Double min_dist = 100.0;
+
+        for (int i = 0; i < matchesList.size(); i++) {
+            Double dist = (double) matchesList.get(i).distance;
+            if (dist < min_dist)
+                min_dist = dist;
+            if (dist > max_dist)
+                max_dist = dist;
+        }
+
+        LinkedList<DMatch> good_matches = new LinkedList<DMatch>();
+        for (int i = 0; i < matchesList.size(); i++) {
+            if (matchesList.get(i).distance <= (1.5 * min_dist))
+                good_matches.addLast(matchesList.get(i));
+        }
+
+        MatOfDMatch goodMatches = new MatOfDMatch();
+        goodMatches.fromList(good_matches);
+
+        //put keypoints mats into lists
+        List<KeyPoint> keypoints1_List = mRefKeypoints.toList();
+        List<KeyPoint> keypoints2_List = keypoints.toList();
+
+        //put keypoints into point2f mats so calib3d can use them to find homography
+        LinkedList<Point> objList = new LinkedList<Point>();
+        LinkedList<Point> sceneList = new LinkedList<Point>();
+        for(int i=0;i<good_matches.size();i++)
+        {
+            objList.addLast(keypoints1_List.get(good_matches.get(i).queryIdx).pt);
+            sceneList.addLast(keypoints2_List.get(good_matches.get(i).trainIdx).pt);
+        }
+
+        Log.d(TAG, String.format("Good match: %d", good_matches.size()));
+
+        MatOfPoint2f obj = new MatOfPoint2f();
+        MatOfPoint2f scene = new MatOfPoint2f();
+        obj.fromList(objList);
+        scene.fromList(sceneList);
+
+        MatOfPoint2f emptyResult = new MatOfPoint2f(new Point(0.0f, 0.0f));
+        emptyResult.convertTo(emptyResult, CvType.CV_32F);
+
+        if (good_matches.size() > 5) {
+            //run homography on object and scene points
+            Mat H = Calib3d.findHomography(obj, scene, Calib3d.RANSAC, 5);
+
+            if (H.cols() >= 3 && H.rows() >= 3) {
+                Mat obj_corners = new Mat(4, 1, CvType.CV_32FC2);
+                Mat scene_corners = new Mat(4, 1, CvType.CV_32FC2);
+                //Mat obj_corners = new Mat(4, 1, CvType.CV_32FC2);
+
+                double[] a = new double[]{0, 0};
+                double[] b = new double[]{mRefImg.cols() - 1, 0};
+                double[] c = new double[]{mRefImg.cols() - 1, mRefImg.rows() - 1};
+                double[] d = new double[]{0, mRefImg.rows() - 1};
+
+
+                //get corners from object
+                obj_corners.put(0, 0, a);
+                obj_corners.put(1, 0, b);
+                obj_corners.put(2, 0, c);
+                obj_corners.put(3, 0, d);
+
+                Log.d(TAG, String.format("H size: %d, %d", H.cols(), H.rows()));
+
+                Core.perspectiveTransform(obj_corners, scene_corners, H);
+
+                Log.d(TAG, String.format("transformed: (%.2f, %.2f) (%.2f, %.2f) (%.2f, %.2f) (%.2f, %.2f)",
+                        scene_corners.get(0, 0)[0], scene_corners.get(0, 0)[1],
+                        scene_corners.get(1, 0)[0], scene_corners.get(1, 0)[1],
+                        scene_corners.get(2, 0)[0], scene_corners.get(2, 0)[1],
+                        scene_corners.get(3, 0)[0], scene_corners.get(3, 0)[1]));
+
+                MatOfPoint2f boundary = new MatOfPoint2f();
+                ArrayList<Point> listOfBoundary = new ArrayList<>();
+                listOfBoundary.add(new Point(scene_corners.get(0, 0)));
+                listOfBoundary.add(new Point(scene_corners.get(1, 0)));
+                listOfBoundary.add(new Point(scene_corners.get(2, 0)));
+                listOfBoundary.add(new Point(scene_corners.get(3, 0)));
+                boundary.fromList(listOfBoundary);
+                boundary.convertTo(boundary, CvType.CV_32F);
+
+                Point topLeft = new Point(Integer.MAX_VALUE, Integer.MAX_VALUE);
+                Point bottomRight = new Point(Integer.MIN_VALUE, Integer.MIN_VALUE);
+
+                for (int i = 0; i < scene_corners.rows(); i++) {
+                    if (scene_corners.get(i, 0)[0] < topLeft.x)
+                        topLeft.x = scene_corners.get(i, 0)[0];
+                    if (scene_corners.get(i, 0)[1] < topLeft.y)
+                        topLeft.y = scene_corners.get(i, 0)[1];
+                    if (scene_corners.get(i, 0)[0] > bottomRight.x)
+                        bottomRight.x = scene_corners.get(i, 0)[0];
+                    if (scene_corners.get(i, 0)[1] > bottomRight.y)
+                        bottomRight.y = scene_corners.get(i, 0)[1];
+                }
+
+                double area = (bottomRight.x - topLeft.x) * (bottomRight.y - topLeft.y);
+
+                Log.d(TAG, String.format("(%.2f, %.2f), (%.2f, %.2f) Area: %.2f", topLeft.x, topLeft.y, bottomRight.x, bottomRight.y, area));
+
+                return boundary;
+            } else {
+                return emptyResult;
+            }
+        } else {
+            return emptyResult;
+        }
     }
 
     private MatOfPoint2f detectContoursUsingSobel(Mat input) {
