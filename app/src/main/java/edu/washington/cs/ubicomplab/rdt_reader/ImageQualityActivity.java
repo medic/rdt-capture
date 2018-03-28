@@ -175,6 +175,8 @@ public class ImageQualityActivity extends AppCompatActivity implements CvCameraV
         super.onPause();
         if (mOpenCvCameraView != null)
             mOpenCvCameraView.disableView();
+
+        unloadReference();
     }
 
     @Override
@@ -182,6 +184,8 @@ public class ImageQualityActivity extends AppCompatActivity implements CvCameraV
         super.onDestroy();
         if (mOpenCvCameraView != null)
             mOpenCvCameraView.disableView();
+
+        unloadReference();
     }
 
     @Override
@@ -246,7 +250,7 @@ public class ImageQualityActivity extends AppCompatActivity implements CvCameraV
         switch (mCurrentState) {
             case INITIALIZATION:
                 //MatOfPoint2f approxInit = detectWhite(inputFrame.rgba());
-                MatOfPoint2f approxInit = detectRDT(inputFrame.rgba().submat(new Rect((int)(PREVIEW_SIZE.width/4), (int)(PREVIEW_SIZE.height/4), (int)(PREVIEW_SIZE.width*VIEWPORT_SCALE), (int)(PREVIEW_SIZE.height*VIEWPORT_SCALE))));
+                MatOfPoint2f approxInit = detectRDT(resultMat.submat(new Rect((int)(PREVIEW_SIZE.width/4), (int)(PREVIEW_SIZE.height/4), (int)(PREVIEW_SIZE.width*VIEWPORT_SCALE), (int)(PREVIEW_SIZE.height*VIEWPORT_SCALE))));
                 //MatOfPoint2f approxInit = drawContourUsingSobel(inputFrame.rgba());
                 final boolean isCorrectPosSizeInit = checkPositionAndSize(approxInit, true);
 
@@ -283,7 +287,7 @@ public class ImageQualityActivity extends AppCompatActivity implements CvCameraV
             case ENV_FOCUS_INFINITY:
             case ENV_FOCUS_MACRO:
             case ENV_FOCUS_AUTO_CENTER:
-                final double currVal = calculateBurriness(inputFrame.rgba());
+                final double currVal = calculateBurriness(resultMat);
 
                 if (currVal < minBlur)
                     minBlur = currVal;
@@ -304,7 +308,7 @@ public class ImageQualityActivity extends AppCompatActivity implements CvCameraV
                     return null;
 
                 //result = drawContourUsingSobel(inputFrame.rgba());
-                double blurVal = calculateBurriness(inputFrame.rgba());
+                double blurVal = calculateBurriness(resultMat);
                 final boolean isBlur = blurVal < maxBlur;
 
                 float[] histogram = calculateHistogram(inputFrame.gray());
@@ -320,7 +324,7 @@ public class ImageQualityActivity extends AppCompatActivity implements CvCameraV
                 final boolean isOverExposed = maxWhite >= OVER_EXP_THRESHOLD;
                 final boolean isUnderExposed = maxWhite < UNDER_EXP_THRESHOLD;
 
-                MatOfPoint2f approx = detectRDT(inputFrame.rgba().submat(new Rect((int)(PREVIEW_SIZE.width/4), (int)(PREVIEW_SIZE.height/4), (int)(PREVIEW_SIZE.width*VIEWPORT_SCALE), (int)(PREVIEW_SIZE.height*VIEWPORT_SCALE))));
+                MatOfPoint2f approx = detectRDT(resultMat.submat(new Rect((int)(PREVIEW_SIZE.width/4), (int)(PREVIEW_SIZE.height/4), (int)(PREVIEW_SIZE.width*VIEWPORT_SCALE), (int)(PREVIEW_SIZE.height*VIEWPORT_SCALE))));
                 final boolean isCorrectPosSize = checkPositionAndSize(approx, true);
                 final boolean isShadow = checkShadow(approx);
 
@@ -696,8 +700,8 @@ public class ImageQualityActivity extends AppCompatActivity implements CvCameraV
         obj.fromList(objList);
         scene.fromList(sceneList);
 
-        MatOfPoint2f emptyResult = new MatOfPoint2f(new Point(0.0f, 0.0f));
-        emptyResult.convertTo(emptyResult, CvType.CV_32F);
+        MatOfPoint2f result = new MatOfPoint2f(new Point(0.0f, 0.0f));
+        result.convertTo(result, CvType.CV_32F);
 
         if (good_matches.size() > 5) {
             //run homography on object and scene points
@@ -737,33 +741,24 @@ public class ImageQualityActivity extends AppCompatActivity implements CvCameraV
                 listOfBoundary.add(new Point(scene_corners.get(2, 0)));
                 listOfBoundary.add(new Point(scene_corners.get(3, 0)));
                 boundary.fromList(listOfBoundary);
-                boundary.convertTo(boundary, CvType.CV_32F);
+                boundary.convertTo(result, CvType.CV_32F);
 
-                Point topLeft = new Point(Integer.MAX_VALUE, Integer.MAX_VALUE);
-                Point bottomRight = new Point(Integer.MIN_VALUE, Integer.MIN_VALUE);
-
-                for (int i = 0; i < scene_corners.rows(); i++) {
-                    if (scene_corners.get(i, 0)[0] < topLeft.x)
-                        topLeft.x = scene_corners.get(i, 0)[0];
-                    if (scene_corners.get(i, 0)[1] < topLeft.y)
-                        topLeft.y = scene_corners.get(i, 0)[1];
-                    if (scene_corners.get(i, 0)[0] > bottomRight.x)
-                        bottomRight.x = scene_corners.get(i, 0)[0];
-                    if (scene_corners.get(i, 0)[1] > bottomRight.y)
-                        bottomRight.y = scene_corners.get(i, 0)[1];
-                }
-
-                double area = (bottomRight.x - topLeft.x) * (bottomRight.y - topLeft.y);
-
-                Log.d(TAG, String.format("(%.2f, %.2f), (%.2f, %.2f) Area: %.2f", topLeft.x, topLeft.y, bottomRight.x, bottomRight.y, area));
-
-                return boundary;
-            } else {
-                return emptyResult;
+                boundary.release();
+                obj_corners.release();
+                scene_corners.release();
             }
-        } else {
-            return emptyResult;
+
+            H.release();
         }
+
+        obj.release();
+        scene.release();
+        goodMatches.release();
+        matches.release();
+        descriptors.release();
+        keypoints.release();
+
+        return result;
     }
 
     private MatOfPoint2f detectContoursUsingSobel(Mat input) {
