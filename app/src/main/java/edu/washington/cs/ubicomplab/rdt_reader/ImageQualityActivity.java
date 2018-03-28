@@ -47,7 +47,7 @@ import java.util.List;
 
 import static edu.washington.cs.ubicomplab.rdt_reader.Constants.*;
 
-public class ImageQualityActivity extends AppCompatActivity implements CvCameraViewListener2, SettingDialogFragment.SettingDialogListener {
+public class ImageQualityActivity extends AppCompatActivity implements CvCameraViewListener2, SettingDialogFragment.SettingDialogListener, View.OnClickListener {
 
     private RDTCamera2View mOpenCvCameraView;
     private TextView mImageQualityFeedbackView;
@@ -66,6 +66,8 @@ public class ImageQualityActivity extends AppCompatActivity implements CvCameraV
                                                 "SHARPNESS: %s <br> " +
                                                 "BRIGHTNESS: %s <br>" +
                                                 "NO SHADOW: %s ";
+
+    private int counter = 0;
 
 
     private BaseLoaderCallback mLoaderCallback = new BaseLoaderCallback(this) {
@@ -118,7 +120,8 @@ public class ImageQualityActivity extends AppCompatActivity implements CvCameraV
         mOpenCvCameraView = findViewById(R.id.img_quality_check_camera_view);
         mOpenCvCameraView.setVisibility(SurfaceView.VISIBLE);
         mOpenCvCameraView.setCvCameraViewListener(this);
-
+        mOpenCvCameraView.setOnClickListener(this);
+        findViewById(R.id.img_quality_check_viewport).setOnClickListener(this);
         mImageQualityFeedbackView = findViewById(R.id.img_quality_feedback_view);
         mProgress = findViewById(R.id.progressCircularBar);
         mProgressBackgroundView = findViewById(R.id.progressBackground);
@@ -193,6 +196,13 @@ public class ImageQualityActivity extends AppCompatActivity implements CvCameraV
     public void onClickPositiveButton() {
         mCurrentState = State.INITIALIZATION;
         setProgressUI(mCurrentState);
+    }
+
+
+    @Override
+    public void onClick(View view) {
+        Log.d(TAG, "Camera request reset!");
+        setupCameraParameters(mCurrentState);
     }
 
     /*OpenCV JavaCameraView callbacks*/
@@ -482,16 +492,22 @@ public class ImageQualityActivity extends AppCompatActivity implements CvCameraV
                 case INITIALIZATION:
                 case ENV_FOCUS_AUTO_CENTER:
                 case QUALITY_CHECK:
+                    //resetCaptureRequest();
                     final android.graphics.Rect sensor = characteristics.get(CameraCharacteristics.SENSOR_INFO_ACTIVE_ARRAY_SIZE);
+                    MeteringRectangle mr = new MeteringRectangle(sensor.width() / 2 - 50, sensor.height() / 2 - 50, 100, 100,
+                            MeteringRectangle.METERING_WEIGHT_MAX - 1);
+
+                    Log.d(TAG, String.format("Sensor Size (%d, %d), Metering %s", sensor.width(), sensor.height(), mr.toString()));
+                    Log.d(TAG, String.format("Regions AE %s", characteristics.get(CameraCharacteristics.CONTROL_MAX_REGIONS_AE).toString()));
 
                     mOpenCvCameraView.mPreviewRequestBuilder.set(CaptureRequest.CONTROL_AF_MODE, CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_PICTURE);
                     mOpenCvCameraView.mPreviewRequestBuilder.set(CaptureRequest.CONTROL_AF_REGIONS,
-                            new MeteringRectangle[]{new MeteringRectangle(sensor.width() / 2 - 50, sensor.height() / 2 - 50, 100, 100,
+                            new MeteringRectangle[]{new MeteringRectangle(sensor.width() / 2 - 50+(counter%2), sensor.height() / 2 - 50+(counter%2), 100+(counter%2), 100+(counter%2),
                                     MeteringRectangle.METERING_WEIGHT_MAX - 1)});
                     mOpenCvCameraView.mPreviewRequestBuilder.set(CaptureRequest.CONTROL_AE_REGIONS,
-                            new MeteringRectangle[]{new MeteringRectangle(sensor.width() / 2 - 50, sensor.height() / 2 - 50, 100, 100,
+                            new MeteringRectangle[]{new MeteringRectangle(sensor.width() / 2 - 50+(counter%2), sensor.height() / 2 - 50+(counter%2), 100+(counter%2), 100+(counter%2),
                                     MeteringRectangle.METERING_WEIGHT_MAX - 1)});
-                    mOpenCvCameraView.mPreviewRequestBuilder.setTag("CENTER_AF_AE_TAG");
+                    counter = counter <= Integer.MAX_VALUE ? 0 : counter++;
                     break;
                 case ENV_FOCUS_INFINITY:
                     mOpenCvCameraView.mPreviewRequestBuilder.set(CaptureRequest.CONTROL_AF_MODE, CaptureRequest.CONTROL_AF_MODE_OFF);
@@ -506,7 +522,8 @@ public class ImageQualityActivity extends AppCompatActivity implements CvCameraV
             }
             mOpenCvCameraView.mCaptureSession.setRepeatingRequest(mOpenCvCameraView.mPreviewRequestBuilder.build(), null, null);
         } catch (Exception e) {
-
+            Log.e(TAG, e.getStackTrace().toString());
+            Log.d(TAG, String.format("Preview Request Exception?"));
         }
     }
 
@@ -559,7 +576,7 @@ public class ImageQualityActivity extends AppCompatActivity implements CvCameraV
         return blurriness;
     }
 
-    private MatOfPoint2f drawContourUsingSobel(Mat input) {
+    private MatOfPoint2f detectContoursUsingSobel(Mat input) {
         long start = System.currentTimeMillis();
 
         Mat sobelx = new Mat();

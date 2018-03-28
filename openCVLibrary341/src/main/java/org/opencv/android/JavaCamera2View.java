@@ -46,7 +46,7 @@ public class JavaCamera2View extends CameraBridgeViewBase {
     private int mPreviewFormat = ImageFormat.YUV_420_888;
 
     //For RDT image capture, only need 1024x768
-    private final android.util.Size FIXED_SIZE = new android.util.Size(1024, 768);
+    private final android.util.Size FIXED_SIZE = new android.util.Size(800, 600);
     private final boolean USE_FIXED_SIZE = true;
 
     public CameraDevice mCameraDevice;
@@ -302,7 +302,7 @@ public class JavaCamera2View extends CameraBridgeViewBase {
 
     @Override
     protected boolean connectCamera(int width, int height) {
-        Log.i(LOGTAG, "setCameraPreviewSize(" + width + "x" + height + ")");
+        Log.i(LOGTAG, "calcPreviewSize(" + width + "x" + height + ")");
         startBackgroundThread();
         initializeCamera();
         try {
