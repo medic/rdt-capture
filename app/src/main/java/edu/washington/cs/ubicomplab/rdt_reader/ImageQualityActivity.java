@@ -378,7 +378,7 @@ public class ImageQualityActivity extends AppCompatActivity implements CvCameraV
         RotatedRect rotatedRect = Imgproc.minAreaRect(approx);
 
         Point center = rotatedRect.center;
-        Point trueCenter = new Point(512, 384);
+        Point trueCenter = new Point(PREVIEW_SIZE.width/2, PREVIEW_SIZE.height/2);
 
         boolean isUpright = rotatedRect.size.height > rotatedRect.size.width;
         double angle = 0;
@@ -394,7 +394,7 @@ public class ImageQualityActivity extends AppCompatActivity implements CvCameraV
 
         Log.d(TAG, String.format("POS: %.2f, %.2f, Angle: %.2f, Height: %.2f", center.x, center.y, angle, height));
 
-        return angle < 90.0*POSITION_THRESHOLD && height < 512*(1+SIZE_THRESHOLD) && height > 512*(1-SIZE_THRESHOLD)
+        return angle < 90.0*POSITION_THRESHOLD && height < PREVIEW_SIZE.width*VIEWPORT_SCALE*(1+SIZE_THRESHOLD) && height > PREVIEW_SIZE.height*VIEWPORT_SCALE*(1-SIZE_THRESHOLD)
                 && center.x < trueCenter.x *(1+ POSITION_THRESHOLD) && center.x > trueCenter.x*(1- POSITION_THRESHOLD)
                 && center.y < trueCenter.y *(1+ POSITION_THRESHOLD) && center.y > trueCenter.y*(1- POSITION_THRESHOLD);
     }
@@ -507,7 +507,7 @@ public class ImageQualityActivity extends AppCompatActivity implements CvCameraV
                     mOpenCvCameraView.mPreviewRequestBuilder.set(CaptureRequest.CONTROL_AE_REGIONS,
                             new MeteringRectangle[]{new MeteringRectangle(sensor.width() / 2 - 50+(counter%2), sensor.height() / 2 - 50+(counter%2), 100+(counter%2), 100+(counter%2),
                                     MeteringRectangle.METERING_WEIGHT_MAX - 1)});
-                    counter = counter <= Integer.MAX_VALUE ? 0 : counter++;
+                    counter++;
                     break;
                 case ENV_FOCUS_INFINITY:
                     mOpenCvCameraView.mPreviewRequestBuilder.set(CaptureRequest.CONTROL_AF_MODE, CaptureRequest.CONTROL_AF_MODE_OFF);

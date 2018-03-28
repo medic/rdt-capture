@@ -32,7 +32,7 @@
         android:paddingVertical="5dp"
         android:textAlignment="center"
         android:textColor="@android:color/white"
-        android:textSize="25sp" />
+        android:textSize="20sp" />
 
 
     <edu.washington.cs.ubicomplab.rdt_reader.Viewport

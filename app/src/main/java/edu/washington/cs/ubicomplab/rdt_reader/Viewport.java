@@ -64,7 +64,7 @@ public class Viewport extends ViewGroup {
         float x = (getWidth() - width)/2;
         float y = (getHeight() - height)/2;
         RectF rect = new RectF(x, y, x+width, y+height);
-        RectF frame = new RectF(x-2, y-2, x+width+4, y+height+4);
+        RectF frame = new RectF(x-1, y-1, x+width+2, y+height+2);
         Path path = new Path();
         Paint stroke = new Paint();
         stroke.setAntiAlias(true);

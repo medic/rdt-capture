@@ -1,6 +1,7 @@
 package edu.washington.cs.ubicomplab.rdt_reader;
 
 import org.opencv.core.Scalar;
+import org.opencv.core.Size;
 
 /**
  * Created by cjparkuw on 3/9/2018.
@@ -24,4 +25,7 @@ public final class Constants {
     public static double POSITION_THRESHOLD = 0.1;
 
     public static int CALIBRATION_FRAME_COUNTER = 10;
+
+    public static Size PREVIEW_SIZE = new Size(960, 720);
+    public static double VIEWPORT_SCALE = 0.50;
 }
