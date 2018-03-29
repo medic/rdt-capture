@@ -10,6 +10,7 @@ import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.graphics.ImageFormat;
 import android.media.Image;
+import android.os.AsyncTask;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
@@ -33,6 +34,7 @@ import org.opencv.android.LoaderCallbackInterface;
 import org.opencv.android.OpenCVLoader;
 import org.opencv.android.Utils;
 import org.opencv.core.Mat;
+import org.opencv.core.Rect;
 
 import java.nio.ByteBuffer;
 import java.text.ParseException;
@@ -43,7 +45,7 @@ import java.util.StringTokenizer;
 
 public class ExpirationDateActivity extends AppCompatActivity implements CvCameraViewListener2 {
 
-    private RDTCamera2View mOpenCvCameraView;
+    private RDTCameraView mOpenCvCameraView;
     private TextRecognizer mTextRecognizer;
     private TextView mExpDateResultView;
 
@@ -51,19 +53,23 @@ public class ExpirationDateActivity extends AppCompatActivity implements CvCamer
     private final String EXPIRED_MSG = "EXPIRED!\n DO NOT USE THIS RDT!";
     private final String VALID_MSG = "VALID!\n YOU CAN USE THIS RDT.";
 
+    private final int FRAME_COUNT = 20;
+
+    private int frameCount = 0;
+
     private BaseLoaderCallback mLoaderCallback = new BaseLoaderCallback(this) {
         @Override
         public void onManagerConnected(int status) {
             switch (status) {
-                case LoaderCallbackInterface.SUCCESS:
-                {
+                case LoaderCallbackInterface.SUCCESS: {
                     Log.i(TAG, "OpenCV loaded successfully");
                     mOpenCvCameraView.enableView();
-                } break;
-                default:
-                {
+                }
+                break;
+                default: {
                     super.onManagerConnected(status);
-                } break;
+                }
+                break;
             }
         }
     };
@@ -142,69 +148,56 @@ public class ExpirationDateActivity extends AppCompatActivity implements CvCamer
     public Mat onCameraFrame(CvCameraViewFrame inputFrame) {
         System.gc();
 
-        final Date now = new Date();
-        final Date expDate = readExpirationDate(inputFrame.gray());
-
-        /*Image image = inputFrame.image();
-
-        ByteBuffer buffer = image.getPlanes()[0].getBuffer();
-        byte[] bytes = new byte[buffer.remaining()];
-        buffer.get(bytes);
-        Bitmap myBitmap = BitmapFactory.decodeByteArray(bytes,0,bytes.length,null);*/
-
-        //final Date expDate = readExpirationDate(inputFrame.gray());
-        //final Date expDate = readExpirationDate(myBitmap);
-        //final Date expDate = readExpirationDate(inputFrame.image());
-
-        runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                if (expDate.getTime() == new Date(0).getTime()) {
-                    mExpDateResultView.setText(NOT_DETECTED_MSG);
-                    mExpDateResultView.setBackgroundColor(getResources().getColor(R.color.gray_overlay));
-                } else {
-                    if (now.before(expDate)) {
-                        mExpDateResultView.setText(VALID_MSG);
-                        mExpDateResultView.setBackgroundColor(getResources().getColor(R.color.green_overlay));
-                    } else {
-                        mExpDateResultView.setText(EXPIRED_MSG);
-                        mExpDateResultView.setBackgroundColor(getResources().getColor(R.color.red_overlay));
-                    }
-                }
-            }
-        });
+        if (frameCount < FRAME_COUNT) {
+            frameCount++;
+        } else {
+            new OCRTask().execute(inputFrame.rgba().clone());
+            frameCount = 0;
+        }
 
         return inputFrame.rgba();
     }
 
     /*Private methods*/
     private Date readExpirationDate(Mat inputFrame) {
-        Bitmap tempBitmap = Bitmap.createBitmap(inputFrame.cols(), inputFrame.rows(), Bitmap.Config.ARGB_8888);
-        Utils.matToBitmap(inputFrame, tempBitmap);
+        Log.d(TAG, "FRAME SIZE: " + inputFrame.size().toString());
+        Bitmap tempBitmap = Bitmap.createBitmap(inputFrame.cols() / 2, inputFrame.rows(), Bitmap.Config.ARGB_8888);
+        Utils.matToBitmap(inputFrame.submat(new Rect(inputFrame.cols() / 2, 0, inputFrame.cols() / 2, inputFrame.rows())), tempBitmap);
+
+        //Bitmap tempBitmap = Bitmap.createBitmap(inputFrame.cols(), inputFrame.rows(), Bitmap.Config.ARGB_8888);
+        //Utils.matToBitmap(inputFrame, tempBitmap);
         Frame frame = new Frame.Builder().setBitmap(tempBitmap).setRotation(ROTATION_90).build();
         SparseArray<TextBlock> items = mTextRecognizer.detect(frame);
 
         Date expDate = new Date(0);
 
+        ArrayList<SimpleDateFormat> dfs = new ArrayList<>();
+
+        for (String format : DATE_FORMATS) {
+            dfs.add(new SimpleDateFormat(format));
+        }
+
         for (int i = 0; i < items.size(); ++i) {
             TextBlock item = items.valueAt(i);
             for (Text currText : item.getComponents()) {
-                StringTokenizer st = new StringTokenizer(currText.getValue());
-                ArrayList<SimpleDateFormat> dfs = new ArrayList<>();
+                Log.d(TAG, "DETECTED LINE: " + currText.getValue());
+                String str = currText.getValue();
 
-                for (String format: DATE_FORMATS) {
-                    dfs.add(new SimpleDateFormat(format));
-                }
+                str = str.toLowerCase();
+                str = str.replaceAll(" ", "");
+                str = str.replace('o', '0');
+                str = str.replace('t', '1');
+                str = str.replace(',', '.');
+                str = str.replaceAll("\\.","");
 
-                while (st.hasMoreTokens()) {
-                    String str = st.nextToken();
-                    for (SimpleDateFormat df : dfs) {
-                        if (str.length() > 8) {
-                            try {
-                                expDate = df.parse(str).after(expDate) ? df.parse(str) : expDate;
-                            } catch (ParseException pe) {
+                Log.d(TAG, "DETECTED TEXT: " + str);
 
-                            }
+                for (SimpleDateFormat df : dfs) {
+                    if (str.length() > 7) {
+                        try {
+                            expDate = df.parse(str).after(expDate) ? df.parse(str) : expDate;
+                        } catch (ParseException pe) {
+                            Log.d(TAG, pe.getMessage());
                         }
                     }
                 }
@@ -212,5 +205,41 @@ public class ExpirationDateActivity extends AppCompatActivity implements CvCamer
         }
 
         return expDate;
+    }
+
+    private class OCRTask extends AsyncTask<Mat, Integer, Date> {
+
+        @Override
+        protected Date doInBackground(Mat... mats) {
+            Mat inputFrame = mats[0];
+
+            Date expDate = readExpirationDate(inputFrame);
+
+            inputFrame.release();
+
+            return expDate;
+        }
+
+        protected void onPostExecute(final Date expDate) {
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    Date now = new Date();
+
+                    if (expDate.getTime() == new Date(0).getTime()) {
+                        mExpDateResultView.setText(NOT_DETECTED_MSG);
+                        mExpDateResultView.setBackgroundColor(getResources().getColor(R.color.gray_overlay));
+                    } else {
+                        if (now.before(expDate)) {
+                            mExpDateResultView.setText(VALID_MSG);
+                            mExpDateResultView.setBackgroundColor(getResources().getColor(R.color.green_overlay));
+                        } else {
+                            mExpDateResultView.setText(EXPIRED_MSG);
+                            mExpDateResultView.setBackgroundColor(getResources().getColor(R.color.red_overlay));
+                        }
+                    }
+                }
+            });
+        }
     }
 }

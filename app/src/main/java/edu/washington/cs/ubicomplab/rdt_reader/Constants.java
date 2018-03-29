@@ -10,7 +10,7 @@ import org.opencv.core.Size;
 public final class Constants {
     public static final String TAG = "RDT-reader";
     public static final int MY_PERMISSION_REQUEST_CODE = 100;
-    public static final String[] DATE_FORMATS = {"YYYY/MM/DD","YYYY.MM.DD","YYYY-MM-DD"};
+    public static final String[] DATE_FORMATS = {"yyyy/MM/dd","yyyy.MM.dd","yyyy-MM-dd", "yyyyMMdd"};
 
     public static double BLUR_THRESHOLD = 0.75;
     public static double OVER_EXP_THRESHOLD = 255;
