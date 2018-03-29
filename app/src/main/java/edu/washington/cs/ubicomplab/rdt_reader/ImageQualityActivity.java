@@ -353,6 +353,8 @@ public class ImageQualityActivity extends AppCompatActivity implements CvCameraV
                         } else {
                             frameCounter++;
                         }
+                    } else {
+                        frameCounter = 0;
                     }
                 }
 
