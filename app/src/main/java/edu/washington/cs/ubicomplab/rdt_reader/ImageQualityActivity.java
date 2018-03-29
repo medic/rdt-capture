@@ -45,6 +45,7 @@ import org.opencv.core.Size;
 import org.opencv.features2d.BRISK;
 import org.opencv.features2d.DescriptorMatcher;
 import org.opencv.features2d.Feature2D;
+import org.opencv.features2d.Features2d;
 import org.opencv.imgproc.Imgproc;
 
 import java.io.ByteArrayOutputStream;
@@ -163,6 +164,7 @@ public class ImageQualityActivity extends AppCompatActivity implements CvCameraV
         } else {
             Log.d(TAG, "OpenCV library found inside package. Using it!");
             mLoaderCallback.onManagerConnected(LoaderCallbackInterface.SUCCESS);
+
         }
     }
 
@@ -249,7 +251,7 @@ public class ImageQualityActivity extends AppCompatActivity implements CvCameraV
                 final boolean isCorrectPosSizeInit = checkPositionAndSize(approxInit, true);
 
                 RotatedRect rRect = Imgproc.minAreaRect(approxInit);
-                rRect.center = new Point(PREVIEW_SIZE.width*VIEWPORT_SCALE, PREVIEW_SIZE.height*VIEWPORT_SCALE);
+                rRect.center = new Point(rRect.center.x + PREVIEW_SIZE.width/4, rRect.center.y + PREVIEW_SIZE.height/4);
 
                 Point[] vertices = new Point[4];
                 rRect.points(vertices);
@@ -265,7 +267,7 @@ public class ImageQualityActivity extends AppCompatActivity implements CvCameraV
                 });
 
                 if (isCorrectPosSizeInit) {
-                    if (frameCounter > CALIBRATION_FRAME_COUNTER) {
+                    if (frameCounter > FEATURE_MATCHING_FRAME_COUNTER) {
                         setNextState(mCurrentState);
                         frameCounter = 0;
                     } else {
@@ -332,15 +334,21 @@ public class ImageQualityActivity extends AppCompatActivity implements CvCameraV
                 synchronized (this) {
 
                     if (isCorrectPosSize && !isBlur && !isOverExposed && !isUnderExposed && !isShadow && !isCaptured) {
-                        isCaptured = true;
 
-                        setNextState(mCurrentState);
-                        setProgressUI(mCurrentState);
+                        if (frameCounter > FEATURE_MATCHING_FRAME_COUNTER) {
+                            isCaptured = true;
 
-                        String RDTCapturePath = saveTempRDTImage(inputFrame.rgba().submat(new Rect((int)(PREVIEW_SIZE.width/5), (int)(PREVIEW_SIZE.height/5), (int)(PREVIEW_SIZE.width*0.6), (int)(PREVIEW_SIZE.height*0.6))));
-                        Intent intent = new Intent(ImageQualityActivity.this, ImageResultActivity.class);
-                        intent.putExtra("RDTCapturePath", RDTCapturePath);
-                        startActivity(intent);
+                            setNextState(mCurrentState);
+                            setProgressUI(mCurrentState);
+
+                            String RDTCapturePath = saveTempRDTImage(inputFrame.rgba().submat(new Rect((int)(PREVIEW_SIZE.width/5), (int)(PREVIEW_SIZE.height/5), (int)(PREVIEW_SIZE.width*0.6), (int)(PREVIEW_SIZE.height*0.6))));
+                            Intent intent = new Intent(ImageQualityActivity.this, ImageResultActivity.class);
+                            intent.putExtra("RDTCapturePath", RDTCapturePath);
+                            startActivity(intent);
+                            frameCounter = 0;
+                        } else {
+                            frameCounter++;
+                        }
                     }
                 }
 
@@ -419,7 +427,7 @@ public class ImageQualityActivity extends AppCompatActivity implements CvCameraV
 
         RotatedRect rotatedRect = Imgproc.minAreaRect(approx);
         if (cropped)
-            rotatedRect.center = new Point(PREVIEW_SIZE.width*VIEWPORT_SCALE, PREVIEW_SIZE.height*VIEWPORT_SCALE);
+            rotatedRect.center = new Point(rotatedRect.center.x + PREVIEW_SIZE.width/4, rotatedRect.center.y + PREVIEW_SIZE.height/4);
 
         Point center = rotatedRect.center;
         Point trueCenter = new Point(PREVIEW_SIZE.width/2, PREVIEW_SIZE.height/2);
