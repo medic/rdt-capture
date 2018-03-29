@@ -50,7 +50,7 @@ public class ImageResultActivity extends AppCompatActivity implements View.OnCli
     @Override
     public void onBackPressed() {
         super.onBackPressed();
-        Intent intent = new Intent(this, ImageQualityActivity.class);
+        Intent intent = new Intent(this, MainActivity.class);
         startActivity(intent);
     }
 
@@ -85,6 +85,9 @@ public class ImageResultActivity extends AppCompatActivity implements View.OnCli
                 isImageSaved = true;
 
                 Toast.makeText(this,"Image is successfully saved!", Toast.LENGTH_SHORT).show();
+
+                Intent intent = new Intent(this, MainActivity.class);
+                startActivity(intent);
 
             } catch (Exception e) {
                 Log.w("TAG", "Error saving image file: " + e.getMessage());
