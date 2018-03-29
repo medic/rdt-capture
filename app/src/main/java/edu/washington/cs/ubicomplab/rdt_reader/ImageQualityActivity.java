@@ -242,15 +242,18 @@ public class ImageQualityActivity extends AppCompatActivity implements CvCameraV
 
     @Override
     public Mat onCameraFrame(CvCameraViewFrame inputFrame) {
-        Mat resultMat = inputFrame.rgba();
+        Mat rgbaMat = inputFrame.rgba();
+        Mat grayMat = inputFrame.gray();
 
-        if (mResetCameraNeeded)
+        if (mResetCameraNeeded) {
             setupCameraParameters(mCurrentState);
+            //mResetCameraNeeded = false;
+        }
 
         switch (mCurrentState) {
             case INITIALIZATION:
                 //MatOfPoint2f approxInit = detectWhite(inputFrame.rgba());
-                MatOfPoint2f approxInit = detectRDT(resultMat.submat(new Rect((int)(PREVIEW_SIZE.width/4), (int)(PREVIEW_SIZE.height/4), (int)(PREVIEW_SIZE.width*VIEWPORT_SCALE), (int)(PREVIEW_SIZE.height*VIEWPORT_SCALE))));
+                MatOfPoint2f approxInit = detectRDT(grayMat.submat(new Rect((int)(PREVIEW_SIZE.width/4), (int)(PREVIEW_SIZE.height/4), (int)(PREVIEW_SIZE.width*VIEWPORT_SCALE), (int)(PREVIEW_SIZE.height*VIEWPORT_SCALE))));
                 //MatOfPoint2f approxInit = drawContourUsingSobel(inputFrame.rgba());
                 final boolean isCorrectPosSizeInit = checkPositionAndSize(approxInit, true);
 
@@ -260,7 +263,7 @@ public class ImageQualityActivity extends AppCompatActivity implements CvCameraV
                 Point[] vertices = new Point[4];
                 rRect.points(vertices);
                 for (int j = 0; j < 4; j++){
-                    Imgproc.line(resultMat, vertices[j], vertices[(j+1)%4], new Scalar(0,255,0));
+                    Imgproc.line(rgbaMat, vertices[j], vertices[(j+1)%4], new Scalar(0,255,0));
                 }
 
                 runOnUiThread(new Runnable() {
@@ -287,7 +290,7 @@ public class ImageQualityActivity extends AppCompatActivity implements CvCameraV
             case ENV_FOCUS_INFINITY:
             case ENV_FOCUS_MACRO:
             case ENV_FOCUS_AUTO_CENTER:
-                final double currVal = calculateBurriness(resultMat);
+                final double currVal = calculateBurriness(rgbaMat);
 
                 if (currVal < minBlur)
                     minBlur = currVal;
@@ -308,10 +311,10 @@ public class ImageQualityActivity extends AppCompatActivity implements CvCameraV
                     return null;
 
                 //result = drawContourUsingSobel(inputFrame.rgba());
-                double blurVal = calculateBurriness(resultMat);
+                double blurVal = calculateBurriness(rgbaMat);
                 final boolean isBlur = blurVal < maxBlur;
 
-                float[] histogram = calculateHistogram(inputFrame.gray());
+                float[] histogram = calculateHistogram(grayMat);
 
                 int maxWhite = 0;
 
@@ -324,9 +327,19 @@ public class ImageQualityActivity extends AppCompatActivity implements CvCameraV
                 final boolean isOverExposed = maxWhite >= OVER_EXP_THRESHOLD;
                 final boolean isUnderExposed = maxWhite < UNDER_EXP_THRESHOLD;
 
-                MatOfPoint2f approx = detectRDT(resultMat.submat(new Rect((int)(PREVIEW_SIZE.width/4), (int)(PREVIEW_SIZE.height/4), (int)(PREVIEW_SIZE.width*VIEWPORT_SCALE), (int)(PREVIEW_SIZE.height*VIEWPORT_SCALE))));
+                MatOfPoint2f approx = detectRDT(grayMat.submat(new Rect((int)(PREVIEW_SIZE.width/4), (int)(PREVIEW_SIZE.height/4), (int)(PREVIEW_SIZE.width*VIEWPORT_SCALE), (int)(PREVIEW_SIZE.height*VIEWPORT_SCALE))));
                 final boolean isCorrectPosSize = checkPositionAndSize(approx, true);
-                final boolean isShadow = checkShadow(approx);
+                //final boolean isShadow = checkShadow(approx);
+                final boolean isShadow = false;
+
+                RotatedRect rect = Imgproc.minAreaRect(approx);
+                rect.center = new Point(rect.center.x + PREVIEW_SIZE.width/4, rect.center.y + PREVIEW_SIZE.height/4);
+
+                Point[] v = new Point[4];
+                rect.points(v);
+                for (int j = 0; j < 4; j++){
+                    Imgproc.line(rgbaMat, v[j], v[(j+1)%4], new Scalar(0,255,0));
+                }
 
                 runOnUiThread(new Runnable() {
                     @Override
@@ -348,6 +361,11 @@ public class ImageQualityActivity extends AppCompatActivity implements CvCameraV
                             String RDTCapturePath = saveTempRDTImage(inputFrame.rgba().submat(new Rect((int)(PREVIEW_SIZE.width/5), (int)(PREVIEW_SIZE.height/5), (int)(PREVIEW_SIZE.width*0.6), (int)(PREVIEW_SIZE.height*0.6))));
                             Intent intent = new Intent(ImageQualityActivity.this, ImageResultActivity.class);
                             intent.putExtra("RDTCapturePath", RDTCapturePath);
+
+                            grayMat.release();
+                            approx.release();
+                            System.gc();
+
                             startActivity(intent);
                             frameCounter = 0;
                         } else {
@@ -371,7 +389,8 @@ public class ImageQualityActivity extends AppCompatActivity implements CvCameraV
 
         System.gc();
         //return inputFrame.rgba();
-        return resultMat;
+        grayMat.release();
+        return rgbaMat;
     }
 
     /*Private methods*/
@@ -381,10 +400,10 @@ public class ImageQualityActivity extends AppCompatActivity implements CvCameraV
         mRefImg = new Mat();
 
 
-        Bitmap bitmap = BitmapFactory.decodeResource(getApplicationContext().getResources(), R.drawable.sd_bioline_malaria);
+        Bitmap bitmap = BitmapFactory.decodeResource(getApplicationContext().getResources(), R.drawable.sd_bioline_malaria_ag_pf);
         Utils.bitmapToMat(bitmap, mRefImg);
-        Imgproc.cvtColor(mRefImg, mRefImg, Imgproc.COLOR_RGB2BGR);
-        Imgproc.cvtColor(mRefImg, mRefImg, Imgproc.COLOR_BGR2RGB);
+        Imgproc.cvtColor(mRefImg, mRefImg, Imgproc.COLOR_RGB2GRAY);
+        //Imgproc.cvtColor(mRefImg, mRefImg, Imgproc.COLOR_BGR2RGB);
         mRefDescriptor = new Mat();
 
         mRefKeypoints = new MatOfKeyPoint();
@@ -565,17 +584,23 @@ public class ImageQualityActivity extends AppCompatActivity implements CvCameraV
                     mOpenCvCameraView.mPreviewRequestBuilder.set(CaptureRequest.CONTROL_AE_REGIONS,
                             new MeteringRectangle[]{new MeteringRectangle(sensor.width() / 2 - 50+(counter%2), sensor.height() / 2 - 50+(counter%2), 100+(counter%2), 100+(counter%2),
                                     MeteringRectangle.METERING_WEIGHT_MAX - 1)});
+                    mOpenCvCameraView.mPreviewRequestBuilder.set(CaptureRequest.CONTROL_AE_MODE, CaptureRequest.CONTROL_AE_MODE_ON);
+                    mOpenCvCameraView.mPreviewRequestBuilder.set(CaptureRequest.FLASH_MODE, CaptureRequest.FLASH_MODE_TORCH);
                     counter++;
                     break;
                 case ENV_FOCUS_INFINITY:
                     mOpenCvCameraView.mPreviewRequestBuilder.set(CaptureRequest.CONTROL_AF_MODE, CaptureRequest.CONTROL_AF_MODE_OFF);
                     mOpenCvCameraView.mPreviewRequestBuilder.set(CaptureRequest.LENS_FOCUS_DISTANCE, 0.0f);
+                    mOpenCvCameraView.mPreviewRequestBuilder.set(CaptureRequest.CONTROL_AE_MODE, CaptureRequest.CONTROL_AE_MODE_ON);
+                    mOpenCvCameraView.mPreviewRequestBuilder.set(CaptureRequest.FLASH_MODE, CaptureRequest.FLASH_MODE_TORCH);
                     break;
                 case ENV_FOCUS_MACRO:
                     float macroDistance = characteristics.get(CameraCharacteristics.LENS_INFO_MINIMUM_FOCUS_DISTANCE);
                     mOpenCvCameraView.mPreviewRequestBuilder.set(CaptureRequest.CONTROL_AF_MODE, CaptureRequest.CONTROL_AF_MODE_OFF);
                     //mOpenCvCameraView.mPreviewRequestBuilder.set(CaptureRequest.CONTROL_AF_MODE, CaptureRequest.CONTROL_AF_MODE_MACRO);
                     mOpenCvCameraView.mPreviewRequestBuilder.set(CaptureRequest.LENS_FOCUS_DISTANCE, macroDistance);
+                    mOpenCvCameraView.mPreviewRequestBuilder.set(CaptureRequest.CONTROL_AE_MODE, CaptureRequest.CONTROL_AE_MODE_ON);
+                    mOpenCvCameraView.mPreviewRequestBuilder.set(CaptureRequest.FLASH_MODE, CaptureRequest.FLASH_MODE_TORCH);
                     break;
             }
             mOpenCvCameraView.mCaptureSession.setRepeatingRequest(mOpenCvCameraView.mPreviewRequestBuilder.build(), null, null);
@@ -600,8 +625,11 @@ public class ImageQualityActivity extends AppCompatActivity implements CvCameraV
                     mHistSize, histogramRanges);
             Core.normalize(hist, hist, sizeRgba.height/2, 0, Core.NORM_INF);
             hist.get(0, 0, mBuff);
+            mChannels[c].release();
         }
 
+        mHistSize.release();
+        histogramRanges.release();
         hist.release();
         return mBuff;
     }
@@ -629,14 +657,18 @@ public class ImageQualityActivity extends AppCompatActivity implements CvCameraV
 
         Log.d(TAG, String.format("Blurriness for state %s: %.5f", mCurrentState.toString(), blurriness));
 
+        median.release();
+        std.release();
         des.release();
 
         return blurriness;
     }
 
     private MatOfPoint2f detectRDT(Mat input) {
-        Imgproc.cvtColor(input, input, Imgproc.COLOR_RGB2BGR);
-        Imgproc.cvtColor(input, input, Imgproc.COLOR_BGR2RGB);
+        //Imgproc.cvtColor(input, input, Imgproc.COLOR_RGB2GRAY);
+        //Imgproc.cvtColor(input, input, Imgproc.COLOR_BGR2RGB);
+
+        //Imgproc.GaussianBlur(input, input, new Size(3, 3), 3);
 
         Mat descriptors = new Mat();
         MatOfKeyPoint keypoints = new MatOfKeyPoint();
