@@ -32,18 +32,18 @@
         <activity
             android:name=".MainActivity"
             android:configChanges="keyboardHidden|orientation"
-            android:screenOrientation="portrait">
+            android:screenOrientation="portrait" android:noHistory="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity android:name=".ResultActivity" />
-        <activity android:name=".ExpirationDateActivity" />
-        <activity android:name=".ImageQualityActivity" />
-        <activity android:name=".Camera2TestActivity" />
-        <activity android:name=".ImageResultActivity"></activity>
+        <activity android:name=".ResultActivity" android:noHistory="true"/>
+        <activity android:name=".ExpirationDateActivity" android:noHistory="true"/>
+        <activity android:name=".ImageQualityActivity" android:noHistory="true"/>
+        <activity android:name=".Camera2TestActivity" android:noHistory="true"/>
+        <activity android:name=".ImageResultActivity" android:noHistory="true"></activity>
     </application>
 
 </manifest>
