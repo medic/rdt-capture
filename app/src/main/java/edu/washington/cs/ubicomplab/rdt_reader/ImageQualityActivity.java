@@ -6,6 +6,7 @@ import android.graphics.BitmapFactory;
 import android.hardware.camera2.CameraCharacteristics;
 import android.hardware.camera2.CaptureRequest;
 import android.hardware.camera2.params.MeteringRectangle;
+import android.os.AsyncTask;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.text.Html;
@@ -53,6 +54,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -124,6 +126,11 @@ public class ImageQualityActivity extends AppCompatActivity implements CvCameraV
     private Mat mRefDescriptor;
     private MatOfKeyPoint mRefKeypoints;
 
+    private FeatureMathchingTask initTask;
+    private ImageQualityCheckTask qualityCheckTask;
+
+    private Mat mCurrentMat;
+
     /*Activity callbacks*/
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -153,6 +160,9 @@ public class ImageQualityActivity extends AppCompatActivity implements CvCameraV
                 }, 5*1000, 5 * 1000);*/
 
         setProgressUI(mCurrentState);
+
+        initTask = new FeatureMathchingTask();
+        qualityCheckTask = new ImageQualityCheckTask();
     }
 
     @Override
@@ -252,18 +262,18 @@ public class ImageQualityActivity extends AppCompatActivity implements CvCameraV
 
         switch (mCurrentState) {
             case INITIALIZATION:
-                //MatOfPoint2f approxInit = detectWhite(inputFrame.rgba());
+                /*//MatOfPoint2f approxInit = detectWhite(inputFrame.rgba());
                 MatOfPoint2f approxInit = detectRDT(grayMat.submat(new Rect((int)(PREVIEW_SIZE.width/4), (int)(PREVIEW_SIZE.height/4), (int)(PREVIEW_SIZE.width*VIEWPORT_SCALE), (int)(PREVIEW_SIZE.height*VIEWPORT_SCALE))));
                 //MatOfPoint2f approxInit = drawContourUsingSobel(inputFrame.rgba());
                 final boolean isCorrectPosSizeInit = checkPositionAndSize(approxInit, true);
 
-                RotatedRect rRect = Imgproc.minAreaRect(approxInit);
-                rRect.center = new Point(rRect.center.x + PREVIEW_SIZE.width/4, rRect.center.y + PREVIEW_SIZE.height/4);
+                RotatedRect rectInit = Imgproc.minAreaRect(approxInit);
+                rectInit.center = new Point(rectInit.center.x + PREVIEW_SIZE.width/4, rectInit.center.y + PREVIEW_SIZE.height/4);
 
-                Point[] vertices = new Point[4];
-                rRect.points(vertices);
+                Point[] vertex = new Point[4];
+                rectInit.points(vertex);
                 for (int j = 0; j < 4; j++){
-                    Imgproc.line(rgbaMat, vertices[j], vertices[(j+1)%4], new Scalar(0,255,0));
+                    Imgproc.line(rgbaMat, vertex[j], vertex[(j+1)%4], new Scalar(0,255,0));
                 }
 
                 runOnUiThread(new Runnable() {
@@ -284,7 +294,19 @@ public class ImageQualityActivity extends AppCompatActivity implements CvCameraV
                     frameCounter = 0;
                 }
 
-                approxInit.release();
+                approxInit.release();*/
+
+                /*if (frameCount < FRAME_COUNT) {
+                    frameCount++;
+                } else {
+                    new FeatureMathchingTask().execute(grayMat);
+                    frameCount = 0;
+                }*/
+
+                if (initTask.getStatus() != AsyncTask.Status.RUNNING ) {
+                    initTask = new FeatureMathchingTask();
+                    initTask.execute(grayMat);
+                }
 
                 break;
             case ENV_FOCUS_INFINITY:
@@ -310,7 +332,7 @@ public class ImageQualityActivity extends AppCompatActivity implements CvCameraV
                 if (isCaptured)
                     return null;
 
-                //result = drawContourUsingSobel(inputFrame.rgba());
+                /*//result = drawContourUsingSobel(inputFrame.rgba());
                 double blurVal = calculateBurriness(rgbaMat);
                 final boolean isBlur = blurVal < maxBlur;
 
@@ -348,7 +370,7 @@ public class ImageQualityActivity extends AppCompatActivity implements CvCameraV
                     }
                 });
 
-                synchronized (this) {
+                //synchronized (this) {
 
                     if (isCorrectPosSize && !isBlur && !isOverExposed && !isUnderExposed && !isShadow && !isCaptured) {
 
@@ -374,9 +396,24 @@ public class ImageQualityActivity extends AppCompatActivity implements CvCameraV
                     } else {
                         frameCounter = 0;
                     }
+                //}
+
+                approx.release();*/
+
+                /*if (frameCount < FRAME_COUNT) {
+                    frameCount++;
+                } else {
+                    Log.d(TAG, "rgbaMat 0 Size: "+rgbaMat.size().toString() + ", grayMat 1 Size: "+grayMat.size().toString());
+                    new ImageQualityCheckTask().executeOnExecutor(AsyncTask.SERIAL_EXECUTOR, rgbaMat, grayMat);
+                    frameCount = 0;
+                }*/
+
+                if (qualityCheckTask.getStatus() != AsyncTask.Status.RUNNING) {
+                    qualityCheckTask = new ImageQualityCheckTask();
+                    Log.d(TAG, "rgbaMat 0 Size: "+rgbaMat.size().toString() + ", grayMat 1 Size: "+grayMat.size().toString());
+                    qualityCheckTask.execute(rgbaMat, grayMat);
                 }
 
-                approx.release();
                 break;
             case FINAL_CHECK:
                 if (isCaptured)
@@ -389,13 +426,13 @@ public class ImageQualityActivity extends AppCompatActivity implements CvCameraV
 
         System.gc();
         //return inputFrame.rgba();
-        grayMat.release();
-        return rgbaMat;
+        //grayMat.release();
+        return inputFrame.rgba();
     }
 
     /*Private methods*/
     private void loadReference(){
-        mFeatureDetector = BRISK.create();
+        mFeatureDetector = BRISK.create(60, 2, 1.0f);
         mMatcher = DescriptorMatcher.create(DescriptorMatcher.BRUTEFORCE_HAMMING);
         mRefImg = new Mat();
 
@@ -407,8 +444,10 @@ public class ImageQualityActivity extends AppCompatActivity implements CvCameraV
         mRefDescriptor = new Mat();
 
         mRefKeypoints = new MatOfKeyPoint();
+        long startTime = System.currentTimeMillis();
         mFeatureDetector.detect(mRefImg, mRefKeypoints);
         mFeatureDetector.compute(mRefImg, mRefKeypoints, mRefDescriptor);
+        Log.d(TAG, "REFERENCE LOAD/DETECT/COMPUTE: " + (System.currentTimeMillis() - startTime));
     }
 
     private void unloadReference(){
@@ -554,6 +593,7 @@ public class ImageQualityActivity extends AppCompatActivity implements CvCameraV
                         mProgressBackgroundView.setVisibility(View.VISIBLE);
                         mProgressText.setText(R.string.progress_final);
                         mProgressText.setVisibility(View.VISIBLE);
+
                     }
                 });
                 break;
@@ -665,6 +705,7 @@ public class ImageQualityActivity extends AppCompatActivity implements CvCameraV
     }
 
     private MatOfPoint2f detectRDT(Mat input) {
+        long veryStart = System.currentTimeMillis();
         //Imgproc.cvtColor(input, input, Imgproc.COLOR_RGB2GRAY);
         //Imgproc.cvtColor(input, input, Imgproc.COLOR_BGR2RGB);
 
@@ -673,8 +714,10 @@ public class ImageQualityActivity extends AppCompatActivity implements CvCameraV
         Mat descriptors = new Mat();
         MatOfKeyPoint keypoints = new MatOfKeyPoint();
 
+        long startTime = System.currentTimeMillis();
         mFeatureDetector.detect(input, keypoints);
         mFeatureDetector.compute(input, keypoints, descriptors);
+        Log.d(TAG, "detect/compute TIME: " + (System.currentTimeMillis()-startTime));
 
         Size size = descriptors.size();
 
@@ -684,6 +727,7 @@ public class ImageQualityActivity extends AppCompatActivity implements CvCameraV
         }
 
         // Matching
+        startTime = System.currentTimeMillis();
         MatOfDMatch matches = new MatOfDMatch();
         if (mRefImg.type() == input.type()) {
             Log.d(TAG, String.format("type: %d, %d", mRefDescriptor.type(), descriptors.type()));
@@ -693,6 +737,7 @@ public class ImageQualityActivity extends AppCompatActivity implements CvCameraV
             return null;
         }
         List<DMatch> matchesList = matches.toList();
+        Log.d(TAG, "matching TIME: " + (System.currentTimeMillis()-startTime));
 
         Double max_dist = 0.0;
         Double min_dist = 100.0;
@@ -791,6 +836,8 @@ public class ImageQualityActivity extends AppCompatActivity implements CvCameraV
         matches.release();
         descriptors.release();
         keypoints.release();
+
+        Log.d(TAG, "Detect RDT TIME: " + (System.currentTimeMillis()-veryStart));
 
         return result;
     }
@@ -895,5 +942,140 @@ public class ImageQualityActivity extends AppCompatActivity implements CvCameraV
         }
 
         return maxRect;
+    }
+
+    private class FeatureMathchingTask extends AsyncTask<Mat, Integer, Boolean> {
+
+        @Override
+        protected Boolean doInBackground(Mat... mats) {
+            long startTime = System.currentTimeMillis();
+            Mat grayMat = mats[0].submat(new Rect((int)(PREVIEW_SIZE.width/4), (int)(PREVIEW_SIZE.height/4), (int)(PREVIEW_SIZE.width*VIEWPORT_SCALE), (int)(PREVIEW_SIZE.height*VIEWPORT_SCALE)));
+
+            //MatOfPoint2f approx = detectRDT(mats[0].submat(new Rect((int)(PREVIEW_SIZE.width/4), (int)(PREVIEW_SIZE.height/4), (int)(PREVIEW_SIZE.width*VIEWPORT_SCALE), (int)(PREVIEW_SIZE.height*VIEWPORT_SCALE))));
+            MatOfPoint2f approx = detectRDT(grayMat);
+            mats[0].release();
+            grayMat.release();
+
+
+            final boolean isCorrectPosSizeInit = checkPositionAndSize(approx, true);
+
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    displayQualityResult(isCorrectPosSizeInit, true, true, true, true);
+                }
+            });
+
+            approx.release();
+
+            Log.d(TAG, String.format("FeatureMatchingTask TIME: %d", System.currentTimeMillis() - startTime));
+
+            return isCorrectPosSizeInit;
+        }
+
+        @Override
+        protected void onPostExecute(Boolean isCorrectPosSizeInit) {
+            super.onPostExecute(isCorrectPosSizeInit);
+
+            if (isCorrectPosSizeInit) {
+                if (frameCounter > FEATURE_MATCHING_FRAME_COUNTER) {
+                    setNextState(mCurrentState);
+                    frameCounter = 0;
+                } else {
+                    frameCounter++;
+                }
+            } else {
+                frameCounter = 0;
+            }
+        }
+    }
+
+    private class ImageQualityCheckTask extends AsyncTask<Mat, Integer, Mat> {
+
+        @Override
+        protected Mat doInBackground(Mat... mats) {
+            long startTime = System.currentTimeMillis();
+            Mat rgbaMat = mats[0].clone();
+            Mat grayMat = mats[1].clone();
+            Log.d(TAG, "rgbaMat 1 Size: "+rgbaMat.size().toString() + "grayMat 1 Size: "+grayMat.size().toString());
+
+            double blurVal = calculateBurriness(rgbaMat);
+            final boolean isBlur = blurVal < maxBlur;
+
+            float[] histogram = calculateHistogram(grayMat);
+
+            int maxWhite = 0;
+
+            for (int i = 0; i < histogram.length; i++) {
+                if (histogram[i] > 0) {
+                    maxWhite = i;
+                }
+            }
+            Log.d(TAG, "rgbaMat 2 Size: "+rgbaMat.size().toString());
+            final boolean isOverExposed = maxWhite >= OVER_EXP_THRESHOLD;
+            final boolean isUnderExposed = maxWhite < UNDER_EXP_THRESHOLD;
+
+            MatOfPoint2f approx = detectRDT(grayMat.submat(new Rect((int)(PREVIEW_SIZE.width/4), (int)(PREVIEW_SIZE.height/4), (int)(PREVIEW_SIZE.width*VIEWPORT_SCALE), (int)(PREVIEW_SIZE.height*VIEWPORT_SCALE))));
+            final boolean isCorrectPosSize = checkPositionAndSize(approx, true);
+            //final boolean isShadow = checkShadow(approx);
+            final boolean isShadow = false;
+
+            RotatedRect rect = Imgproc.minAreaRect(approx);
+            rect.center = new Point(rect.center.x + PREVIEW_SIZE.width/4, rect.center.y + PREVIEW_SIZE.height/4);
+
+            Point[] v = new Point[4];
+            rect.points(v);
+            for (int j = 0; j < 4; j++){
+                Imgproc.line(rgbaMat, v[j], v[(j+1)%4], new Scalar(0,255,0));
+            }
+            Log.d(TAG, "rgbaMat 3 Size: "+rgbaMat.size().toString());
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    displayQualityResult(isCorrectPosSize, isBlur, isOverExposed, isUnderExposed, isShadow);
+                }
+            });
+
+            mats[0].release();
+            mats[1].release();
+            grayMat.release();
+            approx.release();
+
+            Log.d(TAG, "rgbaMat 4 Size: "+rgbaMat.size().toString());
+            Log.d(TAG, "ImageQualityCheck TIME: " + (System.currentTimeMillis() - startTime));
+
+            if (isCorrectPosSize && !isBlur && !isOverExposed && !isUnderExposed && !isShadow) {
+                return rgbaMat;
+            } else {
+                return null;
+            }
+        }
+
+        @Override
+        protected void onPostExecute(Mat rgbaMat) {
+            super.onPostExecute(rgbaMat);
+
+            if (rgbaMat != null) {
+                if (frameCounter > FEATURE_MATCHING_FRAME_COUNTER) {
+                    isCaptured = true;
+
+                    setNextState(mCurrentState);
+                    setProgressUI(mCurrentState);
+
+                    Log.d(TAG, "rgbaMat 5 Size: "+rgbaMat.size().toString() + ", rect size: " + new Rect((int) (PREVIEW_SIZE.width / 5), (int) (PREVIEW_SIZE.height / 5), (int) (PREVIEW_SIZE.width * 0.6), (int) (PREVIEW_SIZE.height * 0.6)).size().toString());
+                    String RDTCapturePath = saveTempRDTImage(rgbaMat.submat(new Rect((int) (PREVIEW_SIZE.width / 5), (int) (PREVIEW_SIZE.height / 5), (int) (PREVIEW_SIZE.width * 0.6), (int) (PREVIEW_SIZE.height * 0.6))));
+                    Intent intent = new Intent(ImageQualityActivity.this, ImageResultActivity.class);
+                    intent.putExtra("RDTCapturePath", RDTCapturePath);
+
+                    //rgbaMat.release();
+                    startActivity(intent);
+                    frameCounter = 0;
+                } else {
+                    frameCounter++;
+                }
+            } else {
+                frameCounter = 0;
+            }
+        }
     }
 }
