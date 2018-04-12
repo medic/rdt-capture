@@ -71,13 +71,13 @@ public class ImageResultActivity extends AppCompatActivity implements View.OnCli
             SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS");
 
             try {
-                String filePath = sdIconStorageDir.toString() + String.format("/%s.png", sdf.format(new Date()));
+                String filePath = sdIconStorageDir.toString() + String.format("/%s.jpg", sdf.format(new Date()));
                 FileOutputStream fileOutputStream = new FileOutputStream(filePath);
 
                 BufferedOutputStream bos = new BufferedOutputStream(fileOutputStream);
 
                 //choose another format if PNG doesn't suit you
-                mBitmapToSave.compress(Bitmap.CompressFormat.PNG, 100, bos);
+                mBitmapToSave.compress(Bitmap.CompressFormat.JPEG, 100, bos);
 
                 bos.flush();
                 bos.close();

@@ -461,10 +461,10 @@ public class ImageQualityActivity extends AppCompatActivity implements CvCameraV
             Bitmap resultBitmap = Bitmap.createBitmap(captureMat.cols(), captureMat.rows(), Bitmap.Config.ARGB_8888);
             Utils.matToBitmap(captureMat, resultBitmap);
             File outputDir = getApplicationContext().getCacheDir(); // context being the Activity pointer
-            File outputFile = File.createTempFile("temp_rdt_capture", ".png", outputDir);
+            File outputFile = File.createTempFile("temp_rdt_capture", ".jpg", outputDir);
 
             ByteArrayOutputStream bs = new ByteArrayOutputStream();
-            resultBitmap.compress(Bitmap.CompressFormat.PNG, 100, bs);
+            resultBitmap.compress(Bitmap.CompressFormat.JPEG, 100, bs);
 
             FileOutputStream fos = new FileOutputStream(outputFile);
             fos.write(bs.toByteArray());
