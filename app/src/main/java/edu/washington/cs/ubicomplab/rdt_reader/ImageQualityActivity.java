@@ -537,6 +537,7 @@ public class ImageQualityActivity extends AppCompatActivity implements CvCameraV
             case ENV_FOCUS_INFINITY:
                 mCurrentState = State.ENV_FOCUS_MACRO;
                 mResetCameraNeeded = true;
+
                 break;
             case ENV_FOCUS_MACRO:
                 mCurrentState = State.ENV_FOCUS_AUTO_CENTER;
@@ -619,12 +620,16 @@ public class ImageQualityActivity extends AppCompatActivity implements CvCameraV
 
                     mOpenCvCameraView.mPreviewRequestBuilder.set(CaptureRequest.CONTROL_AF_MODE, CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_PICTURE);
                     mOpenCvCameraView.mPreviewRequestBuilder.set(CaptureRequest.CONTROL_AF_REGIONS,
-                            new MeteringRectangle[]{new MeteringRectangle(sensor.width() / 2 - 50+(counter%2), sensor.height() / 2 - 50+(counter%2), 100+(counter%2), 100+(counter%2),
+                            new MeteringRectangle[]{new MeteringRectangle(sensor.width() / 2 - 500+(counter%2), sensor.height() / 2 - 50+(counter%2), 1000+(counter%2), 100+(counter%2),
                                     MeteringRectangle.METERING_WEIGHT_MAX - 1)});
                     mOpenCvCameraView.mPreviewRequestBuilder.set(CaptureRequest.CONTROL_AE_REGIONS,
-                            new MeteringRectangle[]{new MeteringRectangle(sensor.width() / 2 - 50+(counter%2), sensor.height() / 2 - 50+(counter%2), 100+(counter%2), 100+(counter%2),
+                            new MeteringRectangle[]{new MeteringRectangle(sensor.width() / 2 - 500+(counter%2), sensor.height() / 2 - 50+(counter%2), 1000+(counter%2), 100+(counter%2),
                                     MeteringRectangle.METERING_WEIGHT_MAX - 1)});
                     mOpenCvCameraView.mPreviewRequestBuilder.set(CaptureRequest.CONTROL_AE_MODE, CaptureRequest.CONTROL_AE_MODE_ON);
+                    mOpenCvCameraView.mPreviewRequestBuilder.set(CaptureRequest.CONTROL_AWB_REGIONS,
+                            new MeteringRectangle[]{new MeteringRectangle(sensor.width() / 2 - 500+(counter%2), sensor.height() / 2 - 50+(counter%2), 1000+(counter%2), 100+(counter%2),
+                                    MeteringRectangle.METERING_WEIGHT_MAX - 1)});
+                    mOpenCvCameraView.mPreviewRequestBuilder.set(CaptureRequest.CONTROL_AWB_MODE, CaptureRequest.CONTROL_AWB_MODE_AUTO);
                     mOpenCvCameraView.mPreviewRequestBuilder.set(CaptureRequest.FLASH_MODE, CaptureRequest.FLASH_MODE_TORCH);
                     counter++;
                     break;
@@ -632,14 +637,17 @@ public class ImageQualityActivity extends AppCompatActivity implements CvCameraV
                     mOpenCvCameraView.mPreviewRequestBuilder.set(CaptureRequest.CONTROL_AF_MODE, CaptureRequest.CONTROL_AF_MODE_OFF);
                     mOpenCvCameraView.mPreviewRequestBuilder.set(CaptureRequest.LENS_FOCUS_DISTANCE, 0.0f);
                     mOpenCvCameraView.mPreviewRequestBuilder.set(CaptureRequest.CONTROL_AE_MODE, CaptureRequest.CONTROL_AE_MODE_ON);
+                    mOpenCvCameraView.mPreviewRequestBuilder.set(CaptureRequest.CONTROL_AWB_MODE, CaptureRequest.CONTROL_AWB_MODE_AUTO);
                     mOpenCvCameraView.mPreviewRequestBuilder.set(CaptureRequest.FLASH_MODE, CaptureRequest.FLASH_MODE_TORCH);
                     break;
                 case ENV_FOCUS_MACRO:
-                    float macroDistance = characteristics.get(CameraCharacteristics.LENS_INFO_MINIMUM_FOCUS_DISTANCE);
-                    mOpenCvCameraView.mPreviewRequestBuilder.set(CaptureRequest.CONTROL_AF_MODE, CaptureRequest.CONTROL_AF_MODE_OFF);
-                    //mOpenCvCameraView.mPreviewRequestBuilder.set(CaptureRequest.CONTROL_AF_MODE, CaptureRequest.CONTROL_AF_MODE_MACRO);
-                    mOpenCvCameraView.mPreviewRequestBuilder.set(CaptureRequest.LENS_FOCUS_DISTANCE, macroDistance);
+                    //float macroDistance = characteristics.get(CameraCharacteristics.LENS_INFO_MINIMUM_FOCUS_DISTANCE);
+                    //mOpenCvCameraView.mPreviewRequestBuilder.set(CaptureRequest.CONTROL_AF_MODE, CaptureRequest.CONTROL_AF_MODE_OFF);
+                    //mOpenCvCameraView.mPreviewRequestBuilder.set(CaptureRequest.LENS_FOCUS_DISTANCE, macroDistance);
+
+                    mOpenCvCameraView.mPreviewRequestBuilder.set(CaptureRequest.CONTROL_AF_MODE, CaptureRequest.CONTROL_AF_MODE_MACRO);
                     mOpenCvCameraView.mPreviewRequestBuilder.set(CaptureRequest.CONTROL_AE_MODE, CaptureRequest.CONTROL_AE_MODE_ON);
+                    mOpenCvCameraView.mPreviewRequestBuilder.set(CaptureRequest.CONTROL_AWB_MODE, CaptureRequest.CONTROL_AWB_MODE_AUTO);
                     mOpenCvCameraView.mPreviewRequestBuilder.set(CaptureRequest.FLASH_MODE, CaptureRequest.FLASH_MODE_TORCH);
                     break;
             }
