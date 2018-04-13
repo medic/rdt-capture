@@ -53,9 +53,7 @@ public class ExpirationDateActivity extends AppCompatActivity implements CvCamer
     private final String EXPIRED_MSG = "EXPIRED!\n DO NOT USE THIS RDT!";
     private final String VALID_MSG = "VALID!\n YOU CAN USE THIS RDT.";
 
-    private final int FRAME_COUNT = 20;
-
-    private int frameCount = 0;
+    private OCRTask ocrTask;
 
     private BaseLoaderCallback mLoaderCallback = new BaseLoaderCallback(this) {
         @Override
@@ -90,6 +88,8 @@ public class ExpirationDateActivity extends AppCompatActivity implements CvCamer
         mTextRecognizer = new TextRecognizer.Builder(getApplicationContext()).build();
 
         mExpDateResultView = findViewById(R.id.exp_date_result_view);
+
+        ocrTask = new OCRTask();
     }
 
     @Override
@@ -148,11 +148,9 @@ public class ExpirationDateActivity extends AppCompatActivity implements CvCamer
     public Mat onCameraFrame(CvCameraViewFrame inputFrame) {
         System.gc();
 
-        if (frameCount < FRAME_COUNT) {
-            frameCount++;
-        } else {
-            new OCRTask().execute(inputFrame.rgba().clone());
-            frameCount = 0;
+        if (ocrTask.getStatus() != AsyncTask.Status.RUNNING) {
+            ocrTask = new OCRTask();
+            ocrTask.execute(inputFrame.rgba().clone());
         }
 
         return inputFrame.rgba();
@@ -164,8 +162,6 @@ public class ExpirationDateActivity extends AppCompatActivity implements CvCamer
         Bitmap tempBitmap = Bitmap.createBitmap(inputFrame.cols() / 2, inputFrame.rows(), Bitmap.Config.ARGB_8888);
         Utils.matToBitmap(inputFrame.submat(new Rect(inputFrame.cols() / 2, 0, inputFrame.cols() / 2, inputFrame.rows())), tempBitmap);
 
-        //Bitmap tempBitmap = Bitmap.createBitmap(inputFrame.cols(), inputFrame.rows(), Bitmap.Config.ARGB_8888);
-        //Utils.matToBitmap(inputFrame, tempBitmap);
         Frame frame = new Frame.Builder().setBitmap(tempBitmap).setRotation(ROTATION_90).build();
         SparseArray<TextBlock> items = mTextRecognizer.detect(frame);
 
