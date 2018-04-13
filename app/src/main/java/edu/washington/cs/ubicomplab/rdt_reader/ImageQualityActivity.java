@@ -41,12 +41,10 @@ import org.opencv.core.MatOfPoint2f;
 import org.opencv.core.Point;
 import org.opencv.core.Rect;
 import org.opencv.core.RotatedRect;
-import org.opencv.core.Scalar;
 import org.opencv.core.Size;
 import org.opencv.features2d.BRISK;
 import org.opencv.features2d.DescriptorMatcher;
 import org.opencv.features2d.Feature2D;
-import org.opencv.features2d.Features2d;
 import org.opencv.imgproc.Imgproc;
 
 import java.io.ByteArrayOutputStream;
@@ -54,10 +52,8 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.concurrent.CountDownLatch;
 
 import static edu.washington.cs.ubicomplab.rdt_reader.Constants.*;
 
@@ -69,9 +65,6 @@ public class ImageQualityActivity extends AppCompatActivity implements CvCameraV
     private ProgressBar mProgress;
     private View mProgressBackgroundView;
 
-    private final String NO_MSG = "";
-    private final String BLUR_MSG = "PLACE RDT IN THE BOX<br>TRY TO STAY STILL<br>";
-    private final String GOOD_MSG = "LOOKS GOOD!<br>";
     private final String OVER_EXP_MSG = "TOO BRIGHT ";
     private final String UNDER_EXP_MSG = "TOO DARK ";
     private final String SHADOW_MSG = "SHADOW IS VISIBLE!!<br>";
@@ -119,7 +112,6 @@ public class ImageQualityActivity extends AppCompatActivity implements CvCameraV
     private double maxBlur = Double.MIN_VALUE;
 
     private ColorBlobDetector mDetector;
-    private final Scalar CONTOUR_COLOR = new Scalar(255,0,0,255);
 
     private int frameCounter = 0;
 
@@ -156,13 +148,6 @@ public class ImageQualityActivity extends AppCompatActivity implements CvCameraV
         mProgress = findViewById(R.id.progressCircularBar);
         mProgressBackgroundView = findViewById(R.id.progressBackground);
         mProgressText = findViewById(R.id.progressText);
-
-        //test purposes
-        /*Timer uploadCheckerTimer = new Timer(true);
-        uploadCheckerTimer.scheduleAtFixedRate(
-                new TimerTask() {
-                    public void run() { setNextState(mCurrentState); }
-                }, 5*1000, 5 * 1000);*/
 
         setProgressUI(mCurrentState);
 
@@ -267,52 +252,10 @@ public class ImageQualityActivity extends AppCompatActivity implements CvCameraV
 
         switch (mCurrentState) {
             case INITIALIZATION:
-                /*//MatOfPoint2f approxInit = detectWhite(inputFrame.rgba());
-                MatOfPoint2f approxInit = detectRDT(grayMat.submat(new Rect((int)(PREVIEW_SIZE.width/4), (int)(PREVIEW_SIZE.height/4), (int)(PREVIEW_SIZE.width*VIEWPORT_SCALE), (int)(PREVIEW_SIZE.height*VIEWPORT_SCALE))));
-                //MatOfPoint2f approxInit = drawContourUsingSobel(inputFrame.rgba());
-                final boolean isCorrectPosSizeInit = checkPositionAndSize(approxInit, true);
-
-                RotatedRect rectInit = Imgproc.minAreaRect(approxInit);
-                rectInit.center = new Point(rectInit.center.x + PREVIEW_SIZE.width/4, rectInit.center.y + PREVIEW_SIZE.height/4);
-
-                Point[] vertex = new Point[4];
-                rectInit.points(vertex);
-                for (int j = 0; j < 4; j++){
-                    Imgproc.line(rgbaMat, vertex[j], vertex[(j+1)%4], new Scalar(0,255,0));
-                }
-
-                runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        displayQualityResult(isCorrectPosSizeInit, true, true, true, true);
-                    }
-                });
-
-                if (isCorrectPosSizeInit) {
-                    if (frameCounter > FEATURE_MATCHING_FRAME_COUNTER) {
-                        setNextState(mCurrentState);
-                        frameCounter = 0;
-                    } else {
-                        frameCounter++;
-                    }
-                } else {
-                    frameCounter = 0;
-                }
-
-                approxInit.release();*/
-
-                /*if (frameCount < FRAME_COUNT) {
-                    frameCount++;
-                } else {
-                    new FeatureMathchingTask().execute(grayMat);
-                    frameCount = 0;
-                }*/
-
                 if (initTask.getStatus() != AsyncTask.Status.RUNNING ) {
                     initTask = new FeatureMathchingTask();
                     initTask.execute(grayMat);
                 }
-
                 break;
             case ENV_FOCUS_INFINITY:
             case ENV_FOCUS_MACRO:
@@ -337,82 +280,6 @@ public class ImageQualityActivity extends AppCompatActivity implements CvCameraV
                 if (isCaptured)
                     return null;
 
-                /*//result = drawContourUsingSobel(inputFrame.rgba());
-                double blurVal = calculateBurriness(rgbaMat);
-                final boolean isBlur = blurVal < maxBlur;
-
-                float[] histogram = calculateHistogram(grayMat);
-
-                int maxWhite = 0;
-
-                for (int i = 0; i < histogram.length; i++) {
-                    if (histogram[i] > 0) {
-                        maxWhite = i;
-                    }
-                }
-
-                final boolean isOverExposed = maxWhite >= OVER_EXP_THRESHOLD;
-                final boolean isUnderExposed = maxWhite < UNDER_EXP_THRESHOLD;
-
-                MatOfPoint2f approx = detectRDT(grayMat.submat(new Rect((int)(PREVIEW_SIZE.width/4), (int)(PREVIEW_SIZE.height/4), (int)(PREVIEW_SIZE.width*VIEWPORT_SCALE), (int)(PREVIEW_SIZE.height*VIEWPORT_SCALE))));
-                final boolean isCorrectPosSize = checkPositionAndSize(approx, true);
-                //final boolean isShadow = checkShadow(approx);
-                final boolean isShadow = false;
-
-                RotatedRect rect = Imgproc.minAreaRect(approx);
-                rect.center = new Point(rect.center.x + PREVIEW_SIZE.width/4, rect.center.y + PREVIEW_SIZE.height/4);
-
-                Point[] v = new Point[4];
-                rect.points(v);
-                for (int j = 0; j < 4; j++){
-                    Imgproc.line(rgbaMat, v[j], v[(j+1)%4], new Scalar(0,255,0));
-                }
-
-                runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        displayQualityResult(isCorrectPosSize, isBlur, isOverExposed, isUnderExposed, isShadow);
-                    }
-                });
-
-                //synchronized (this) {
-
-                    if (isCorrectPosSize && !isBlur && !isOverExposed && !isUnderExposed && !isShadow && !isCaptured) {
-
-                        if (frameCounter > FEATURE_MATCHING_FRAME_COUNTER) {
-                            isCaptured = true;
-
-                            setNextState(mCurrentState);
-                            setProgressUI(mCurrentState);
-
-                            String RDTCapturePath = saveTempRDTImage(inputFrame.rgba().submat(new Rect((int)(PREVIEW_SIZE.width/5), (int)(PREVIEW_SIZE.height/5), (int)(PREVIEW_SIZE.width*0.6), (int)(PREVIEW_SIZE.height*0.6))));
-                            Intent intent = new Intent(ImageQualityActivity.this, ImageResultActivity.class);
-                            intent.putExtra("RDTCapturePath", RDTCapturePath);
-
-                            grayMat.release();
-                            approx.release();
-                            System.gc();
-
-                            startActivity(intent);
-                            frameCounter = 0;
-                        } else {
-                            frameCounter++;
-                        }
-                    } else {
-                        frameCounter = 0;
-                    }
-                //}
-
-                approx.release();*/
-
-                /*if (frameCount < FRAME_COUNT) {
-                    frameCount++;
-                } else {
-                    Log.d(TAG, "rgbaMat 0 Size: "+rgbaMat.size().toString() + ", grayMat 1 Size: "+grayMat.size().toString());
-                    new ImageQualityCheckTask().executeOnExecutor(AsyncTask.SERIAL_EXECUTOR, rgbaMat, grayMat);
-                    frameCount = 0;
-                }*/
-
                 if (qualityCheckTask.getStatus() != AsyncTask.Status.RUNNING) {
                     qualityCheckTask = new ImageQualityCheckTask();
                     Log.d(TAG, "rgbaMat 0 Size: "+rgbaMat.size().toString() + ", grayMat 1 Size: "+grayMat.size().toString());
@@ -426,12 +293,7 @@ public class ImageQualityActivity extends AppCompatActivity implements CvCameraV
                 break;
         }
 
-        //setNextState(mCurrentState);
-
-
         System.gc();
-        //return inputFrame.rgba();
-        //grayMat.release();
         return inputFrame.rgba();
     }
 
@@ -445,7 +307,6 @@ public class ImageQualityActivity extends AppCompatActivity implements CvCameraV
         Bitmap bitmap = BitmapFactory.decodeResource(getApplicationContext().getResources(), R.drawable.sd_bioline_malaria_ag_pf);
         Utils.bitmapToMat(bitmap, mRefImg);
         Imgproc.cvtColor(mRefImg, mRefImg, Imgproc.COLOR_RGB2GRAY);
-        //Imgproc.cvtColor(mRefImg, mRefImg, Imgproc.COLOR_BGR2RGB);
         mRefDescriptor = new Mat();
 
         mRefKeypoints = new MatOfKeyPoint();
@@ -646,10 +507,6 @@ public class ImageQualityActivity extends AppCompatActivity implements CvCameraV
                     mOpenCvCameraView.mPreviewRequestBuilder.set(CaptureRequest.FLASH_MODE, CaptureRequest.FLASH_MODE_TORCH);
                     break;
                 case ENV_FOCUS_MACRO:
-                    //float macroDistance = characteristics.get(CameraCharacteristics.LENS_INFO_MINIMUM_FOCUS_DISTANCE);
-                    //mOpenCvCameraView.mPreviewRequestBuilder.set(CaptureRequest.CONTROL_AF_MODE, CaptureRequest.CONTROL_AF_MODE_OFF);
-                    //mOpenCvCameraView.mPreviewRequestBuilder.set(CaptureRequest.LENS_FOCUS_DISTANCE, macroDistance);
-
                     mOpenCvCameraView.mPreviewRequestBuilder.set(CaptureRequest.CONTROL_AF_MODE, CaptureRequest.CONTROL_AF_MODE_MACRO);
                     mOpenCvCameraView.mPreviewRequestBuilder.set(CaptureRequest.CONTROL_AE_MODE, CaptureRequest.CONTROL_AE_MODE_ON);
                     mOpenCvCameraView.mPreviewRequestBuilder.set(CaptureRequest.CONTROL_AWB_MODE, CaptureRequest.CONTROL_AWB_MODE_AUTO);
@@ -719,10 +576,6 @@ public class ImageQualityActivity extends AppCompatActivity implements CvCameraV
 
     private MatOfPoint2f detectRDT(Mat input) {
         long veryStart = System.currentTimeMillis();
-        //Imgproc.cvtColor(input, input, Imgproc.COLOR_RGB2GRAY);
-        //Imgproc.cvtColor(input, input, Imgproc.COLOR_BGR2RGB);
-
-        //Imgproc.GaussianBlur(input, input, new Size(3, 3), 3);
 
         Mat descriptors = new Mat();
         MatOfKeyPoint keypoints = new MatOfKeyPoint();
@@ -855,72 +708,6 @@ public class ImageQualityActivity extends AppCompatActivity implements CvCameraV
         return result;
     }
 
-    private MatOfPoint2f detectContoursUsingSobel(Mat input) {
-        long start = System.currentTimeMillis();
-
-        Mat sobelx = new Mat();
-        Mat sobely = new Mat();
-        Mat output = new Mat();
-        Mat sharp = new Mat();
-
-        //Imgproc.GaussianBlur(input, output, new Size(21, 21), 8);
-        Imgproc.GaussianBlur(input, output, new Size(21, 21), 3);
-        Imgproc.cvtColor(output, output, Imgproc.COLOR_RGB2GRAY);
-
-        Imgproc.Sobel(output, sobelx, CvType.CV_32F, 0, 1); //ksize=5
-        Imgproc.Sobel(output, sobely, CvType.CV_32F, 1, 0); //ksize=5
-
-        Core.pow(sobelx, 2, sobelx);
-        Core.pow(sobely, 2, sobely);
-
-        Core.add(sobelx, sobely, output);
-
-        output.convertTo(output, CvType.CV_32F);
-
-        Core.pow(output, 0.5, output);
-        Core.multiply(output, new Scalar(Math.pow(2, 0.5)),output);
-
-        output.convertTo(output, CvType.CV_8UC1);
-
-        Imgproc.GaussianBlur(output, sharp, new Size(0, 0), 3);
-        Core.addWeighted(output, 1.5, sharp, -0.5, 0, output);
-        Core.bitwise_not(output, output);
-
-        List<MatOfPoint> contours = new ArrayList<>();
-        Mat hierarchy = new Mat();
-
-        Imgproc.findContours(output, contours, hierarchy, Imgproc.RETR_TREE, Imgproc.CHAIN_APPROX_SIMPLE);
-
-        Log.d(TAG, "contours: " + contours.size());
-
-        //output.convertTo(output, CV_32F);
-
-        MatOfPoint2f maxRect = new MatOfPoint2f(new Point(0,0));
-
-        //for(int idx = 0; idx >= 0; idx = (int) hierarchy.get(0, idx)[0]) {
-        for( int idx = 0; idx < contours.size(); idx++ ) {
-            MatOfPoint2f approx2f = new MatOfPoint2f();
-
-            contours.get(idx).convertTo(approx2f, CvType.CV_32F);
-            RotatedRect rect = Imgproc.minAreaRect(approx2f);
-            RotatedRect maxRotatedRect = Imgproc.minAreaRect(maxRect);
-
-            if (rect.size.height*rect.size.width < 1000 * 700 && rect.size.height*rect.size.width > maxRotatedRect.size.height*maxRotatedRect.size.width)
-                approx2f.copyTo(maxRect);
-
-            approx2f.release();
-        }
-
-        sobelx.release();
-        sobelx.release();
-        hierarchy.release();
-        output.release();
-        sharp.release();
-
-        Log.d(TAG, String.format("Sobel took %d ms", (System.currentTimeMillis()-start)));
-        return maxRect;
-    }
-
     private MatOfPoint2f detectWhite (Mat input) {
 
         MatOfPoint2f maxRect = new MatOfPoint2f(new Point(0,0));
@@ -964,7 +751,6 @@ public class ImageQualityActivity extends AppCompatActivity implements CvCameraV
             long startTime = System.currentTimeMillis();
             Mat grayMat = mats[0].submat(new Rect((int)(PREVIEW_SIZE.width/4), (int)(PREVIEW_SIZE.height/4), (int)(PREVIEW_SIZE.width*VIEWPORT_SCALE), (int)(PREVIEW_SIZE.height*VIEWPORT_SCALE)));
 
-            //MatOfPoint2f approx = detectRDT(mats[0].submat(new Rect((int)(PREVIEW_SIZE.width/4), (int)(PREVIEW_SIZE.height/4), (int)(PREVIEW_SIZE.width*VIEWPORT_SCALE), (int)(PREVIEW_SIZE.height*VIEWPORT_SCALE))));
             MatOfPoint2f approx = detectRDT(grayMat);
             mats[0].release();
             grayMat.release();
@@ -1078,51 +864,6 @@ public class ImageQualityActivity extends AppCompatActivity implements CvCameraV
             Mat matchingMat = mats[1].clone();
             Mat blurMat = mats[0].clone();
             Mat exposureMat = mats[1].clone();
-            /*Log.d(TAG, "rgbaMat 1 Size: "+rgbaMat.size().toString() + "grayMat 1 Size: "+grayMat.size().toString());
-
-            double blurVal = calculateBurriness(rgbaMat);
-            final boolean isBlur = blurVal < maxBlur;
-
-            float[] histogram = calculateHistogram(grayMat);
-
-            int maxWhite = 0;
-
-            for (int i = 0; i < histogram.length; i++) {
-                if (histogram[i] > 0) {
-                    maxWhite = i;
-                }
-            }
-            Log.d(TAG, "rgbaMat 2 Size: "+rgbaMat.size().toString());
-            final boolean isOverExposed = maxWhite >= OVER_EXP_THRESHOLD;
-            final boolean isUnderExposed = maxWhite < UNDER_EXP_THRESHOLD;
-
-            MatOfPoint2f approx = detectRDT(grayMat.submat(new Rect((int)(PREVIEW_SIZE.width/4), (int)(PREVIEW_SIZE.height/4), (int)(PREVIEW_SIZE.width*VIEWPORT_SCALE), (int)(PREVIEW_SIZE.height*VIEWPORT_SCALE))));
-            final boolean isCorrectPosSize = checkPositionAndSize(approx, true);
-            //final boolean isShadow = checkShadow(approx);
-            final boolean isShadow = false;
-
-            RotatedRect rect = Imgproc.minAreaRect(approx);
-            rect.center = new Point(rect.center.x + PREVIEW_SIZE.width/4, rect.center.y + PREVIEW_SIZE.height/4);
-
-            Point[] v = new Point[4];
-            rect.points(v);
-            for (int j = 0; j < 4; j++){
-                Imgproc.line(rgbaMat, v[j], v[(j+1)%4], new Scalar(0,255,0));
-            }
-            Log.d(TAG, "rgbaMat 3 Size: "+rgbaMat.size().toString());
-
-            mats[0].release();
-            mats[1].release();
-            approx.release();
-
-            Log.d(TAG, "rgbaMat 4 Size: "+rgbaMat.size().toString());
-            Log.d(TAG, "ImageQualityCheck TIME: " + (System.currentTimeMillis() - startTime));
-
-            if (isCorrectPosSize && !isBlur && !isOverExposed && !isUnderExposed && !isShadow) {
-                return rgbaMat;
-            } else {
-                return null;
-            }*/
 
             machingTask.execute(matchingMat);
             blurTask.execute(blurMat);
