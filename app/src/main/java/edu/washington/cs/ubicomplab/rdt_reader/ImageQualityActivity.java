@@ -834,17 +834,22 @@ public class ImageQualityActivity extends AppCompatActivity implements CvCameraV
                 float[] histogram = calculateHistogram(mats[0]);
 
                 int maxWhite = 0;
+                float whiteCount = 0;
 
                 for (int i = 0; i < histogram.length; i++) {
                     if (histogram[i] > 0) {
                         maxWhite = i;
+                    }
+
+                    if (i == histogram.length-1) {
+                        whiteCount = histogram[i];
                     }
                 }
                 Log.d(TAG, "rgbaMat 2 Size: "+mats[0].size().toString());
 
                 mats[0].release();
 
-                if (maxWhite >= OVER_EXP_THRESHOLD)
+                if (maxWhite >= OVER_EXP_THRESHOLD && whiteCount > OVER_EXP_WHITE_COUNT)
                     return ExposureResult.OVER_EXPOSED;
                 else if (maxWhite < UNDER_EXP_THRESHOLD)
                     return ExposureResult.UNDER_EXPOSED;
