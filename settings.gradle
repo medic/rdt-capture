@@ -1,6 +1,4 @@
 include ':app'
-include ':openCVLibrary330'
 
 
-include ':openCVLibrary340'
 include ':openCVLibrary341'
