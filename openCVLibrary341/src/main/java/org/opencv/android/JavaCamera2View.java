@@ -46,7 +46,7 @@ public class JavaCamera2View extends CameraBridgeViewBase {
     private int mPreviewFormat = ImageFormat.YUV_420_888;
 
     //For RDT image capture, only need 1024x768
-    private final android.util.Size FIXED_SIZE = new android.util.Size(960, 720);
+    private final Size FIXED_SIZE = new Size(960, 720);
     private final boolean USE_FIXED_SIZE = true;
 
     public CameraDevice mCameraDevice;
@@ -275,11 +275,20 @@ public class JavaCamera2View extends CameraBridgeViewBase {
             bestHeight = sizes[0].getHeight();
             for (android.util.Size sz : sizes) {
                 int w = sz.getWidth(), h = sz.getHeight();
-                Log.d(LOGTAG, "trying size: " + w + "x" + h);
-                if (width >= w && height >= h && bestWidth <= w && bestHeight <= h
-                        && Math.abs(aspect - (float) w / h) < 0.2) {
-                    bestWidth = w;
-                    bestHeight = h;
+
+                if (USE_FIXED_SIZE) {
+                    Log.d(LOGTAG, "trying size: " + w + "x" + h);
+                    if (3*w == 4*h && Math.abs(FIXED_SIZE.width-w) < Math.abs(FIXED_SIZE.width-bestWidth)) {
+                        bestWidth = w;
+                        bestHeight = h;
+                    }
+                } else {
+                    Log.d(LOGTAG, "trying size: " + w + "x" + h);
+                    if (width >= w && height >= h && bestWidth <= w && bestHeight <= h
+                            && Math.abs(aspect - (float) w / h) < 0.2) {
+                        bestWidth = w;
+                        bestHeight = h;
+                    }
                 }
             }
             Log.i(LOGTAG, "best size: " + bestWidth + "x" + bestHeight);
@@ -310,11 +319,11 @@ public class JavaCamera2View extends CameraBridgeViewBase {
             mFrameWidth = mPreviewSize.getWidth();
             mFrameHeight = mPreviewSize.getHeight();
 
-            if (USE_FIXED_SIZE) {
+            /*if (USE_FIXED_SIZE) {
                 mPreviewSize = FIXED_SIZE;
                 mFrameWidth = mPreviewSize.getWidth();
                 mFrameHeight = mPreviewSize.getHeight();
-            }
+            }*/
 
             if ((getLayoutParams().width == LayoutParams.MATCH_PARENT) && (getLayoutParams().height == LayoutParams.MATCH_PARENT))
                 mScale = Math.min(((float)height)/mFrameHeight, ((float)width)/mFrameWidth);

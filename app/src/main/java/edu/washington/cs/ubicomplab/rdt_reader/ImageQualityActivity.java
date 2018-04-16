@@ -236,6 +236,9 @@ public class ImageQualityActivity extends AppCompatActivity implements CvCameraV
         Mat rgbaMat = inputFrame.rgba();
         Mat grayMat = inputFrame.gray();
 
+        if (PREVIEW_SIZE.width != rgbaMat.width() || PREVIEW_SIZE.height != rgbaMat.height())
+            PREVIEW_SIZE = new Size(rgbaMat.width(), rgbaMat.height());
+
         if (mResetCameraNeeded) {
             setupCameraParameters(mCurrentState);
             //mResetCameraNeeded = false;
@@ -252,6 +255,7 @@ public class ImageQualityActivity extends AppCompatActivity implements CvCameraV
             case ENV_FOCUS_MACRO:
             case ENV_FOCUS_AUTO_CENTER:
                 final double currVal = calculateBurriness(rgbaMat);
+                grayMat.release();
 
                 if (currVal < minBlur)
                     minBlur = currVal;
@@ -274,7 +278,7 @@ public class ImageQualityActivity extends AppCompatActivity implements CvCameraV
                 if (qualityCheckTask.getStatus() != AsyncTask.Status.RUNNING) {
                     qualityCheckTask = new ImageQualityCheckTask();
                     Log.d(TAG, "rgbaMat 0 Size: "+rgbaMat.size().toString() + ", grayMat 1 Size: "+grayMat.size().toString());
-                    qualityCheckTask.execute(rgbaMat, grayMat);
+                    qualityCheckTask.execute(rgbaMat.clone(), grayMat);
                 }
 
                 break;
@@ -528,6 +532,8 @@ public class ImageQualityActivity extends AppCompatActivity implements CvCameraV
             hist.get(0, 0, mBuff);
             mChannels[c].release();
         }
+
+        Log.d(TAG, String.format("Histogram for state %s", mCurrentState.toString()));
 
         mHistSize.release();
         histogramRanges.release();
