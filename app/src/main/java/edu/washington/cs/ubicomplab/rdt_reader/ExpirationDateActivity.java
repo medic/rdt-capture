@@ -49,10 +49,6 @@ public class ExpirationDateActivity extends AppCompatActivity implements CvCamer
     private TextRecognizer mTextRecognizer;
     private TextView mExpDateResultView;
 
-    private final String NOT_DETECTED_MSG = "EXP DATE NOT DETECTED.\n";
-    private final String EXPIRED_MSG = "EXPIRED!\n DO NOT USE THIS RDT!";
-    private final String VALID_MSG = "VALID!\n YOU CAN USE THIS RDT.";
-
     private OCRTask ocrTask;
 
     private BaseLoaderCallback mLoaderCallback = new BaseLoaderCallback(this) {
@@ -223,14 +219,14 @@ public class ExpirationDateActivity extends AppCompatActivity implements CvCamer
                     Date now = new Date();
 
                     if (expDate.getTime() == new Date(0).getTime()) {
-                        mExpDateResultView.setText(NOT_DETECTED_MSG);
+                        mExpDateResultView.setText(getResources().getText(R.string.exp_date_undetected));
                         mExpDateResultView.setBackgroundColor(getResources().getColor(R.color.gray_overlay));
                     } else {
                         if (now.before(expDate)) {
-                            mExpDateResultView.setText(VALID_MSG);
+                            mExpDateResultView.setText(getResources().getText(R.string.exp_date_valid));
                             mExpDateResultView.setBackgroundColor(getResources().getColor(R.color.green_overlay));
                         } else {
-                            mExpDateResultView.setText(EXPIRED_MSG);
+                            mExpDateResultView.setText(getResources().getText(R.string.exp_date_expired));
                             mExpDateResultView.setBackgroundColor(getResources().getColor(R.color.red_overlay));
                         }
                     }

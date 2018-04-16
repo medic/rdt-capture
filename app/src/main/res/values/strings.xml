@@ -2,7 +2,14 @@
     <string name="app_name">rdt-reader</string>
     <string name="title_activity_result">ResultActivity</string>
     <string name="title_activity_camera2_test">Camera2TestActivity</string>
-    <string name="progress_initialization">"Checking… Stay still…"</string>
+    <string name="progress_initialization">"Stay still…"</string>
     <string name="progress_final">"Captured! Analyzing the image…"</string>
     <string name="instruction">"Position RDT at the Center.&#xA;Fit RDT into the rectangle.&#xA;And, stay still!"</string>
+    <string name="over_exposed_msg">TOO BRIGHT </string>
+    <string name="under_exposed_msg">TOO DARK </string>
+    <string name="shadow_msg">SHADOW IS VISIBLE! </string>
+    <string name="quality_msg_format"> <![CDATA[POSITION/SIZE: %s <br> SHARPNESS: %s <br> BRIGHTNESS: %s <br> NO SHADOW: %s]]></string>
+    <string name="exp_date_undetected"><![CDATA[EXP DATE NOT DETECTED.\n ]]></string>
+    <string name="exp_date_expired"><![CDATA[EXPIRED!\n DO NOT USE THIS RDT! ]]></string>
+    <string name="exp_date_valid"><![CDATA[VALID!\n YOU CAN USE THIS RDT. ]]></string>
 </resources>

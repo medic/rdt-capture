@@ -65,15 +65,6 @@ public class ImageQualityActivity extends AppCompatActivity implements CvCameraV
     private ProgressBar mProgress;
     private View mProgressBackgroundView;
 
-    private final String OVER_EXP_MSG = "TOO BRIGHT ";
-    private final String UNDER_EXP_MSG = "TOO DARK ";
-    private final String SHADOW_MSG = "SHADOW IS VISIBLE!!<br>";
-
-    private final String QUALITY_MSG_FORMAT = "POSITION/SIZE: %s <br>" +
-                                                "SHARPNESS: %s <br> " +
-                                                "BRIGHTNESS: %s <br>" +
-                                                "NO SHADOW: %s ";
-
     private int counter = 0;
 
 
@@ -382,9 +373,9 @@ public class ImageQualityActivity extends AppCompatActivity implements CvCameraV
     }
 
     private void displayQualityResult (boolean isCorrectPosSize, boolean isBlur, boolean isOverExposed, boolean isUnderExposed, boolean isShadow) {
-        String message = String.format(QUALITY_MSG_FORMAT, isCorrectPosSize? OK:NOT_OK,
+        String message = String.format(getResources().getString(R.string.quality_msg_format), isCorrectPosSize? OK:NOT_OK,
                 !isBlur ? OK : NOT_OK,
-                !isOverExposed && !isUnderExposed ? OK : (isOverExposed ? OVER_EXP_MSG + NOT_OK : UNDER_EXP_MSG + NOT_OK),
+                !isOverExposed && !isUnderExposed ? OK : (isOverExposed ? getResources().getString(R.string.over_exposed_msg) + NOT_OK : getResources().getString(R.string.under_exposed_msg) + NOT_OK),
                 !isShadow ? OK : NOT_OK);
 
         mImageQualityFeedbackView.setText(Html.fromHtml(message));
