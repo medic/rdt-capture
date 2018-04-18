@@ -3,6 +3,7 @@ package edu.washington.cs.ubicomplab.rdt_reader;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Matrix;
 import android.hardware.camera2.CameraCharacteristics;
 import android.hardware.camera2.CaptureRequest;
 import android.hardware.camera2.params.MeteringRectangle;
@@ -48,8 +49,6 @@ import org.opencv.features2d.Feature2D;
 import org.opencv.imgproc.Imgproc;
 
 import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.FileOutputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedList;
@@ -317,24 +316,18 @@ public class ImageQualityActivity extends AppCompatActivity implements CvCameraV
         mRefKeypoints.release();
     }
 
-    private String saveTempRDTImage (Mat captureMat) {
-        try {
-            Bitmap resultBitmap = Bitmap.createBitmap(captureMat.cols(), captureMat.rows(), Bitmap.Config.ARGB_8888);
-            Utils.matToBitmap(captureMat, resultBitmap);
-            File outputDir = getApplicationContext().getCacheDir(); // context being the Activity pointer
-            File outputFile = File.createTempFile("temp_rdt_capture", ".jpg", outputDir);
+    private byte[] matToRotatedByteArray(Mat captureMat) {
+        Bitmap resultBitmap = Bitmap.createBitmap(captureMat.cols(), captureMat.rows(), Bitmap.Config.ARGB_8888);
+        Utils.matToBitmap(captureMat, resultBitmap);
 
-            ByteArrayOutputStream bs = new ByteArrayOutputStream();
-            resultBitmap.compress(Bitmap.CompressFormat.JPEG, 100, bs);
+        Matrix matrix = new Matrix();
+        matrix.postRotate(90);
+        resultBitmap = Bitmap.createBitmap(resultBitmap, 0, 0, resultBitmap.getWidth(), resultBitmap.getHeight(), matrix, true);
 
-            FileOutputStream fos = new FileOutputStream(outputFile);
-            fos.write(bs.toByteArray());
-            fos.close();
+        ByteArrayOutputStream bs = new ByteArrayOutputStream();
+        resultBitmap.compress(Bitmap.CompressFormat.JPEG, 100, bs);
 
-            return outputFile.getAbsolutePath();
-        } catch (Exception e) {
-            return null;
-        }
+        return bs.toByteArray();
     }
 
     private boolean checkShadow (MatOfPoint2f approx) {
@@ -905,11 +898,13 @@ public class ImageQualityActivity extends AppCompatActivity implements CvCameraV
                         setProgressUI(mCurrentState);
 
                         Log.d(TAG, "rgbaMat 5 Size: " + rgbaMat.size().toString() + ", rect size: " + new Rect((int) (PREVIEW_SIZE.width / 5), (int) (PREVIEW_SIZE.height / 5), (int) (PREVIEW_SIZE.width * 0.6), (int) (PREVIEW_SIZE.height * 0.6)).size().toString());
-                        String RDTCapturePath = saveTempRDTImage(rgbaMat.submat(new Rect((int) (PREVIEW_SIZE.width / 5), (int) (PREVIEW_SIZE.height / 5), (int) (PREVIEW_SIZE.width * 0.6), (int) (PREVIEW_SIZE.height * 0.6))));
-                        Intent intent = new Intent(ImageQualityActivity.this, ImageResultActivity.class);
-                        intent.putExtra("RDTCapturePath", RDTCapturePath);
+                        byte[] byteArray = matToRotatedByteArray(rgbaMat.submat(new Rect((int) (PREVIEW_SIZE.width / 5), (int) (PREVIEW_SIZE.height / 5), (int) (PREVIEW_SIZE.width * 0.6), (int) (PREVIEW_SIZE.height * 0.6))));
 
-                        //rgbaMat.release();
+                        Intent intent = new Intent(ImageQualityActivity.this, ImageResultActivity.class);
+                        intent.addFlags(Intent.FLAG_ACTIVITY_FORWARD_RESULT);
+                        intent.putExtra("RDTCaptureByteArray", byteArray);
+
+                        rgbaMat.release();
                         startActivity(intent);
                         frameCounter = 0;
                     } else {

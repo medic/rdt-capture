@@ -41,9 +41,9 @@
         </activity>
         <activity android:name=".ResultActivity" android:noHistory="true"/>
         <activity android:name=".ExpirationDateActivity" android:noHistory="true"/>
-        <activity android:name=".ImageQualityActivity" android:noHistory="true"/>
+        <activity android:name=".ImageQualityActivity" android:noHistory="true" android:exported="true"/>
         <activity android:name=".Camera2TestActivity" android:noHistory="true"/>
-        <activity android:name=".ImageResultActivity" android:noHistory="true"></activity>
+        <activity android:name=".ImageResultActivity" android:noHistory="true"/>
     </application>
 
 </manifest>

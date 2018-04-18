@@ -14,6 +14,7 @@ import android.widget.ImageView;
 import android.widget.Toast;
 
 import java.io.BufferedOutputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
@@ -26,6 +27,7 @@ import static java.text.DateFormat.getDateTimeInstance;
 public class ImageResultActivity extends AppCompatActivity implements View.OnClickListener{
 
     Bitmap mBitmapToSave;
+    byte[] mByteArray;
     boolean isImageSaved = false;
 
     @Override
@@ -33,18 +35,18 @@ public class ImageResultActivity extends AppCompatActivity implements View.OnCli
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_image_result);
 
-        if (getIntent().hasExtra("RDTCapturePath")) {
-            Bitmap bitmap = BitmapFactory.decodeFile(getIntent().getStringExtra("RDTCapturePath"));
-            Matrix matrix = new Matrix();
-            matrix.postRotate(90);
-            mBitmapToSave = Bitmap.createBitmap(bitmap, 0, 0, bitmap.getWidth(), bitmap.getHeight(), matrix, true);
+        if (getIntent().hasExtra("RDTCaptureByteArray")) {
+            mByteArray = getIntent().getExtras().getByteArray("RDTCaptureByteArray");
+            mBitmapToSave = BitmapFactory.decodeByteArray(mByteArray, 0, mByteArray.length);
 
             ImageView resultImageView = findViewById(R.id.RDTImageView);
-            resultImageView.setImageBitmap(mBitmapToSave);
+            resultImageView.setImageBitmap(BitmapFactory.decodeByteArray(mByteArray, 0, mByteArray.length));
         }
 
         Button saveImageButton = findViewById(R.id.saveButton);
         saveImageButton.setOnClickListener(this);
+        Button sendImageButton = findViewById(R.id.sendButton);
+        sendImageButton.setOnClickListener(this);
     }
 
     @Override
@@ -74,24 +76,24 @@ public class ImageResultActivity extends AppCompatActivity implements View.OnCli
                 String filePath = sdIconStorageDir.toString() + String.format("/%s.jpg", sdf.format(new Date()));
                 FileOutputStream fileOutputStream = new FileOutputStream(filePath);
 
-                BufferedOutputStream bos = new BufferedOutputStream(fileOutputStream);
+                fileOutputStream.write(mByteArray);
 
-                //choose another format if PNG doesn't suit you
-                mBitmapToSave.compress(Bitmap.CompressFormat.JPEG, 100, bos);
-
-                bos.flush();
-                bos.close();
+                fileOutputStream.flush();
+                fileOutputStream.close();
 
                 isImageSaved = true;
 
                 Toast.makeText(this,"Image is successfully saved!", Toast.LENGTH_SHORT).show();
-
-                Intent intent = new Intent(this, MainActivity.class);
-                startActivity(intent);
-
             } catch (Exception e) {
                 Log.w("TAG", "Error saving image file: " + e.getMessage());
             }
+        } else if (view.getId() == R.id.sendButton) {
+            Intent data = new Intent();
+            data.putExtra("RDTCaptureByteArray", mByteArray);
+            setResult(RESULT_OK, data);
+            finish();
+
+            Toast.makeText(this,"Image is successfully sent!", Toast.LENGTH_SHORT).show();
         }
     }
 }
