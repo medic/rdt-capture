@@ -62,7 +62,11 @@ public class ImageQualityActivity extends AppCompatActivity implements CvCameraV
     private TextView mImageQualityFeedbackView;
     private TextView mProgressText;
     private ProgressBar mProgress;
+    private ProgressBar mCaptureProgressBar;
     private View mProgressBackgroundView;
+    private Mat bestCapturedMat;
+    private double minDistance = Double.MAX_VALUE;
+    private boolean minDistanceUpdated = false;
 
     private int counter = 0;
 
@@ -138,6 +142,9 @@ public class ImageQualityActivity extends AppCompatActivity implements CvCameraV
         mProgress = findViewById(R.id.progressCircularBar);
         mProgressBackgroundView = findViewById(R.id.progressBackground);
         mProgressText = findViewById(R.id.progressText);
+        mCaptureProgressBar = findViewById(R.id.captureProgressBar);
+        mCaptureProgressBar.setMax(CAPTURE_COUNT);
+        mCaptureProgressBar.setProgress(0);
 
         setProgressUI(mCurrentState);
 
@@ -417,13 +424,24 @@ public class ImageQualityActivity extends AppCompatActivity implements CvCameraV
     private void setProgressUI (State CurrentState) {
         switch  (CurrentState) {
             case INITIALIZATION:
-            case QUALITY_CHECK:
                 runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
                         mProgress.setVisibility(View.GONE);
                         mProgressBackgroundView.setVisibility(View.GONE);
                         mProgressText.setVisibility(View.GONE);
+                        mCaptureProgressBar.setVisibility(View.GONE);
+                    }
+                });
+                break;
+                case QUALITY_CHECK:
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        mProgress.setVisibility(View.GONE);
+                        mProgressBackgroundView.setVisibility(View.GONE);
+                        mProgressText.setVisibility(View.GONE);
+                        mCaptureProgressBar.setVisibility(View.VISIBLE);
                     }
                 });
                 break;
@@ -437,6 +455,7 @@ public class ImageQualityActivity extends AppCompatActivity implements CvCameraV
                         mProgressBackgroundView.setVisibility(View.VISIBLE);
                         mProgressText.setText(R.string.progress_initialization);
                         mProgressText.setVisibility(View.VISIBLE);
+                        mCaptureProgressBar.setVisibility(View.GONE);
                     }
                 });
                 break;
@@ -448,7 +467,7 @@ public class ImageQualityActivity extends AppCompatActivity implements CvCameraV
                         mProgressBackgroundView.setVisibility(View.VISIBLE);
                         mProgressText.setText(R.string.progress_final);
                         mProgressText.setVisibility(View.VISIBLE);
-
+                        mCaptureProgressBar.setVisibility(View.VISIBLE);
                     }
                 });
                 break;
@@ -595,8 +614,8 @@ public class ImageQualityActivity extends AppCompatActivity implements CvCameraV
         List<DMatch> matchesList = matches.toList();
         Log.d(TAG, "matching TIME: " + (System.currentTimeMillis()-startTime));
 
-        Double max_dist = 0.0;
-        Double min_dist = 100.0;
+        Double max_dist = Double.MIN_VALUE;
+        Double min_dist = Double.MAX_VALUE;
 
         for (int i = 0; i < matchesList.size(); i++) {
             Double dist = (double) matchesList.get(i).distance;
@@ -606,10 +625,16 @@ public class ImageQualityActivity extends AppCompatActivity implements CvCameraV
                 max_dist = dist;
         }
 
+        double sum = 0;
+        int count = 0;
+
         LinkedList<DMatch> good_matches = new LinkedList<DMatch>();
         for (int i = 0; i < matchesList.size(); i++) {
-            if (matchesList.get(i).distance <= (1.5 * min_dist))
+            if (matchesList.get(i).distance <= (1.5 * min_dist)) {
                 good_matches.addLast(matchesList.get(i));
+                sum += matchesList.get(i).distance;
+                count++;
+            }
         }
 
         MatOfDMatch goodMatches = new MatOfDMatch();
@@ -681,6 +706,13 @@ public class ImageQualityActivity extends AppCompatActivity implements CvCameraV
                 boundary.release();
                 obj_corners.release();
                 scene_corners.release();
+
+                Log.d(TAG, String.format("Average DISTANCE: %.2f", sum/count));
+
+                if(mCurrentState == State.QUALITY_CHECK && sum/count < minDistance) {
+                    minDistance = sum/count;
+                    minDistanceUpdated = true;
+                }
             }
 
             H.release();
@@ -891,14 +923,22 @@ public class ImageQualityActivity extends AppCompatActivity implements CvCameraV
                 });
 
                 if (isCorrectPosSize && !isBlur && !isOverExposed && !isUnderExposed && !isShadow) {
-                    if (frameCounter > FEATURE_MATCHING_FRAME_COUNTER) {
+                    mCaptureProgressBar.incrementProgressBy(1);
+
+                    if (minDistanceUpdated) {
+                        bestCapturedMat = rgbaMat.clone();
+                        minDistanceUpdated = false;
+                    }
+
+                    if (mCaptureProgressBar.getProgress() >= CAPTURE_COUNT) {
+                        Log.d(TAG, String.format("Average DISTANCE (MIN): %.2f", minDistance));
                         isCaptured = true;
 
                         setNextState(mCurrentState);
                         setProgressUI(mCurrentState);
 
-                        Log.d(TAG, "rgbaMat 5 Size: " + rgbaMat.size().toString() + ", rect size: " + new Rect((int) (PREVIEW_SIZE.width / 5), (int) (PREVIEW_SIZE.height / 5), (int) (PREVIEW_SIZE.width * 0.6), (int) (PREVIEW_SIZE.height * 0.6)).size().toString());
-                        byte[] byteArray = matToRotatedByteArray(rgbaMat.submat(new Rect((int) (PREVIEW_SIZE.width / 5), (int) (PREVIEW_SIZE.height / 5), (int) (PREVIEW_SIZE.width * 0.6), (int) (PREVIEW_SIZE.height * 0.6))));
+                        Log.d(TAG, "rgbaMat 5 Size: " + bestCapturedMat.size().toString() + ", rect size: " + new Rect((int) (PREVIEW_SIZE.width / 5), (int) (PREVIEW_SIZE.height / 5), (int) (PREVIEW_SIZE.width * 0.6), (int) (PREVIEW_SIZE.height * 0.6)).size().toString());
+                        byte[] byteArray = matToRotatedByteArray(bestCapturedMat.submat(new Rect((int) (PREVIEW_SIZE.width / 5), (int) (PREVIEW_SIZE.height / 5), (int) (PREVIEW_SIZE.width * 0.6), (int) (PREVIEW_SIZE.height * 0.6))));
 
                         Intent intent = new Intent(ImageQualityActivity.this, ImageResultActivity.class);
                         intent.addFlags(Intent.FLAG_ACTIVITY_FORWARD_RESULT);
@@ -906,15 +946,14 @@ public class ImageQualityActivity extends AppCompatActivity implements CvCameraV
 
                         rgbaMat.release();
                         startActivity(intent);
-                        frameCounter = 0;
                     } else {
-                        frameCounter++;
+                        rgbaMat.release();
                     }
                 } else {
-                    frameCounter = 0;
+                    rgbaMat.release();
                 }
             } catch (Exception e) {
-
+                rgbaMat.release();
             }
         }
     }
