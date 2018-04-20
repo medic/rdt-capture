@@ -21,6 +21,7 @@ public class SettingDialogFragment extends DialogFragment {
     SeekBar mUnderExpBar;
     SeekBar mShadowBar;
     SeekBar mSizeBar;
+    SeekBar mPositionBar;
 
     public interface SettingDialogListener {
         void onClickPositiveButton();
@@ -40,6 +41,7 @@ public class SettingDialogFragment extends DialogFragment {
         mUnderExpBar = dialogView.findViewById(R.id.underExpBar);
         mShadowBar = dialogView.findViewById(R.id.shadowBar);
         mSizeBar = dialogView.findViewById(R.id.sizeBar);
+        mPositionBar = dialogView.findViewById(R.id.positionBar);
 
         mSharpnessBar.setMax(100);
         mSharpnessBar.setProgress((int)(Constants.BLUR_THRESHOLD*100));
@@ -52,6 +54,9 @@ public class SettingDialogFragment extends DialogFragment {
 
         mSizeBar.setMax(20);
         mSizeBar.setProgress((int)(1/Constants.SIZE_THRESHOLD));
+
+        mPositionBar.setMax(20);
+        mPositionBar.setProgress((int)(1/Constants.POSITION_THRESHOLD));
 
         // Inflate and set the layout for the dialog
         // Pass null as the parent view because its going in the dialog layout
@@ -79,7 +84,7 @@ public class SettingDialogFragment extends DialogFragment {
         Constants.UNDER_EXP_THRESHOLD = mUnderExpBar.getProgress();
         //Constants.SHADOW mShadowBar.getProgress();
         Constants.SIZE_THRESHOLD = 1.0/(double)mSizeBar.getProgress();
-        Constants.POSITION_THRESHOLD = 1.0/(double)mSizeBar.getProgress();
+        Constants.POSITION_THRESHOLD = 1.0/(double)mPositionBar.getProgress();
 
         Log.d(Constants.TAG, String.format("UODATED SETTINGS: BLUR: %.2f, SIZE: %.2f",  Constants.BLUR_THRESHOLD, Constants.SIZE_THRESHOLD));
     }
