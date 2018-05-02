@@ -1,12 +1,14 @@
 package edu.washington.cs.ubicomplab.rdt_reader;
 
 import android.content.Intent;
+import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Matrix;
 import android.os.Environment;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
@@ -21,10 +23,11 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.Locale;
 
 import static java.text.DateFormat.getDateTimeInstance;
 
-public class ImageResultActivity extends AppCompatActivity implements View.OnClickListener{
+public class ImageResultActivity extends AppCompatActivity implements View.OnClickListener, SettingDialogFragment.SettingDialogListener{
 
     Bitmap mBitmapToSave;
     byte[] mByteArray;
@@ -34,7 +37,10 @@ public class ImageResultActivity extends AppCompatActivity implements View.OnCli
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_image_result);
+        initViews();
+    }
 
+    private void initViews() {
         if (getIntent().hasExtra("RDTCaptureByteArray")) {
             mByteArray = getIntent().getExtras().getByteArray("RDTCaptureByteArray");
             mBitmapToSave = BitmapFactory.decodeByteArray(mByteArray, 0, mByteArray.length);
@@ -95,5 +101,19 @@ public class ImageResultActivity extends AppCompatActivity implements View.OnCli
 
             Toast.makeText(this,"Image is successfully sent!", Toast.LENGTH_SHORT).show();
         }
+    }
+
+    @Override
+    public void onClickPositiveButton() {
+        Resources res = getResources();
+        // Change locale settings in the app.
+        DisplayMetrics dm = res.getDisplayMetrics();
+        android.content.res.Configuration conf = res.getConfiguration();
+        conf.setLocale(new Locale(Constants.LANGUAGE)); // API 17+ only.
+        // Use conf.locale = new Locale(...) if targeting lower versions
+        res.updateConfiguration(conf, dm);
+
+        setContentView(R.layout.activity_image_quality);
+        initViews();
     }
 }

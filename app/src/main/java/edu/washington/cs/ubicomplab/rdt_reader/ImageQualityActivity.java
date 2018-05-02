@@ -1,6 +1,7 @@
 package edu.washington.cs.ubicomplab.rdt_reader;
 
 import android.content.Intent;
+import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Matrix;
@@ -11,6 +12,7 @@ import android.os.AsyncTask;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.text.Html;
+import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -53,6 +55,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Locale;
 
 import static edu.washington.cs.ubicomplab.rdt_reader.Constants.*;
 
@@ -127,7 +130,10 @@ public class ImageQualityActivity extends AppCompatActivity implements CvCameraV
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_image_quality);
+        initViews();
+    }
 
+    private void initViews() {
         setTitle("Image Quality Checker");
 
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
@@ -216,6 +222,17 @@ public class ImageQualityActivity extends AppCompatActivity implements CvCameraV
     public void onClickPositiveButton() {
         mCurrentState = State.INITIALIZATION;
         setProgressUI(mCurrentState);
+
+        Resources res = getResources();
+        // Change locale settings in the app.
+        DisplayMetrics dm = res.getDisplayMetrics();
+        android.content.res.Configuration conf = res.getConfiguration();
+        conf.setLocale(new Locale(Constants.LANGUAGE)); // API 17+ only.
+        // Use conf.locale = new Locale(...) if targeting lower versions
+        res.updateConfiguration(conf, dm);
+
+        setContentView(R.layout.activity_image_quality);
+        initViews();
     }
 
 

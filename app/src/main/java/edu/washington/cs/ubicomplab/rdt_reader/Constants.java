@@ -31,4 +31,6 @@ public final class Constants {
 
     public static Size PREVIEW_SIZE = new Size(960, 720);
     public static double VIEWPORT_SCALE = 0.50;
+
+    public static String LANGUAGE = "fr";
 }

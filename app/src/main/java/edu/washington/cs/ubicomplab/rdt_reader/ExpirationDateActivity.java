@@ -13,6 +13,7 @@ import android.media.Image;
 import android.os.AsyncTask;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.util.DisplayMetrics;
 import android.util.Log;
 import android.util.SparseArray;
 import android.view.Menu;
@@ -41,9 +42,10 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.Locale;
 import java.util.StringTokenizer;
 
-public class ExpirationDateActivity extends AppCompatActivity implements CvCameraViewListener2 {
+public class ExpirationDateActivity extends AppCompatActivity implements CvCameraViewListener2, SettingDialogFragment.SettingDialogListener {
 
     private RDTCameraView mOpenCvCameraView;
     private TextRecognizer mTextRecognizer;
@@ -72,7 +74,10 @@ public class ExpirationDateActivity extends AppCompatActivity implements CvCamer
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_expiration_date);
+        initViews();
+    }
 
+    private void initViews() {
         setTitle("Expiration Date Checker");
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN);
@@ -197,6 +202,20 @@ public class ExpirationDateActivity extends AppCompatActivity implements CvCamer
         }
 
         return expDate;
+    }
+
+    @Override
+    public void onClickPositiveButton() {
+        Resources res = getResources();
+        // Change locale settings in the app.
+        DisplayMetrics dm = res.getDisplayMetrics();
+        android.content.res.Configuration conf = res.getConfiguration();
+        conf.setLocale(new Locale(Constants.LANGUAGE)); // API 17+ only.
+        // Use conf.locale = new Locale(...) if targeting lower versions
+        res.updateConfiguration(conf, dm);
+
+        setContentView(R.layout.activity_expiration_date);
+        initViews();
     }
 
     private class OCRTask extends AsyncTask<Mat, Integer, Date> {
