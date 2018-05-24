@@ -7,7 +7,7 @@
     <string name="instruction">"Monter le TDR dans l'intérieur du rectangle."</string>
     <string name="over_exposed_msg">Trop de lumière</string>
     <string name="under_exposed_msg">Pas assez de lumière</string>
-    <string name="quality_msg_format"> <![CDATA[POSITION/Taille: %s <br> Netteté: %s <br> Luminosité: %s <br> Pas d\'ombre: %s]]></string>
+    <string name="quality_msg_format"> <![CDATA[Position/Taille: %s <br> Netteté: %s <br> Luminosité: %s <br> Pas d\'ombre: %s]]></string>
     <string name="exp_date_undetected"><![CDATA[Impossible de détecter la date de péremption.\n ]]></string>
     <string name="exp_date_expired"><![CDATA[Le TDR est périmé! Ne pas utiliser ce TDR! ]]></string>
     <string name="exp_date_valid"><![CDATA[Le TDR est prêt pour utiliser. ]]></string>

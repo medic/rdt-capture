@@ -4,7 +4,13 @@
     <string name="title_activity_camera2_test">Camera2TestActivity</string>
     <string name="progress_initialization">Stay still…</string>
     <string name="progress_final">"Captured! Analyzing the image…"</string>
-    <string name="instruction">Fit the RDT inside the rectangle.</string>
+    <string name="instruction">Place the RDT inside the rectangle.</string>
+    <string name="instruction_pos">Place RDT to the center of the rectangle.</string>
+    <string name="instruction_too_small"><![CDATA[Fit RDT to the rectangle. \nMove closer.]]></string>
+    <string name="instruction_too_large"><![CDATA[Fit RDT to the rectangle. \nMove further away.]]></string>
+    <string name="instruction_bright">Move RDT inside the rectangle. </string>
+    <string name="instruction_dark">Place the RDT inside the rectangle.</string>
+    <string name="instruction_blur">Place the RDT inside the rectangle.</string>
     <string name="over_exposed_msg">TOO BRIGHT </string>
     <string name="under_exposed_msg">TOO DARK </string>
     <string name="quality_msg_format"> <![CDATA[POSITION/SIZE: %s <br> SHARPNESS: %s <br> BRIGHTNESS: %s <br> NO SHADOW: %s]]></string>

@@ -64,6 +64,7 @@ public class ImageQualityActivity extends AppCompatActivity implements CvCameraV
     private RDTCamera2View mOpenCvCameraView;
     private TextView mImageQualityFeedbackView;
     private TextView mProgressText;
+    private TextView mInstructionText;
     private ProgressBar mProgress;
     private ProgressBar mCaptureProgressBar;
     private View mProgressBackgroundView;
@@ -151,6 +152,7 @@ public class ImageQualityActivity extends AppCompatActivity implements CvCameraV
         mCaptureProgressBar = findViewById(R.id.captureProgressBar);
         mCaptureProgressBar.setMax(CAPTURE_COUNT);
         mCaptureProgressBar.setProgress(0);
+        mInstructionText = findViewById(R.id.textInstruction);
 
         setProgressUI(mCurrentState);
 
@@ -363,9 +365,11 @@ public class ImageQualityActivity extends AppCompatActivity implements CvCameraV
         }
     }
 
-    private boolean checkPositionAndSize (MatOfPoint2f approx, boolean cropped) {
+    private boolean[] checkPositionAndSize (MatOfPoint2f approx, boolean cropped) {
+        boolean results[] = {false, false, false, false, false};
+
         if (approx.total() < 1)
-            return false;
+            return results;
 
         RotatedRect rotatedRect = Imgproc.minAreaRect(approx);
         if (cropped)
@@ -386,21 +390,43 @@ public class ImageQualityActivity extends AppCompatActivity implements CvCameraV
             height = rotatedRect.size.width;
         }
 
-        Log.d(TAG, String.format("POS: %.2f, %.2f, Angle: %.2f, Height: %.2f", center.x, center.y, angle, height));
-
-        return angle < 90.0*POSITION_THRESHOLD && height < PREVIEW_SIZE.width*VIEWPORT_SCALE*(1+SIZE_THRESHOLD) && height > PREVIEW_SIZE.height*VIEWPORT_SCALE*(1-SIZE_THRESHOLD)
-                && center.x < trueCenter.x *(1+ POSITION_THRESHOLD) && center.x > trueCenter.x*(1- POSITION_THRESHOLD)
+        boolean isCentered = center.x < trueCenter.x *(1+ POSITION_THRESHOLD) && center.x > trueCenter.x*(1- POSITION_THRESHOLD)
                 && center.y < trueCenter.y *(1+ POSITION_THRESHOLD) && center.y > trueCenter.y*(1- POSITION_THRESHOLD);
+        boolean isRightSize = height < PREVIEW_SIZE.width*VIEWPORT_SCALE*(1+SIZE_THRESHOLD) && height > PREVIEW_SIZE.height*VIEWPORT_SCALE*(1-SIZE_THRESHOLD);
+        boolean isOriented = angle < 90.0*POSITION_THRESHOLD;
+
+        results[0] = isCentered;
+        results[1] = isRightSize;
+        results[2] = isOriented;
+        results[3] = height > PREVIEW_SIZE.width*VIEWPORT_SCALE*(1+SIZE_THRESHOLD); //large
+        results[4] = height < PREVIEW_SIZE.height*VIEWPORT_SCALE*(1-SIZE_THRESHOLD); //small
+
+        if (results[0] && results[1])
+            Log.d(TAG, String.format("POS: %.2f, %.2f, Angle: %.2f, Height: %.2f", center.x, center.y, angle, height));
+
+        return results;
     }
 
-    private void displayQualityResult (boolean isCorrectPosSize, boolean isBlur, boolean isOverExposed, boolean isUnderExposed, boolean isShadow) {
-        String message = String.format(getResources().getString(R.string.quality_msg_format), isCorrectPosSize? OK:NOT_OK,
+    private void displayQualityResult (boolean[] isCorrectPosSize, boolean isBlur, boolean isOverExposed, boolean isUnderExposed, boolean isShadow) {
+        String message = String.format(getResources().getString(R.string.quality_msg_format), isCorrectPosSize[0] && isCorrectPosSize[1] && isCorrectPosSize[2] ? OK:NOT_OK,
                 !isBlur ? OK : NOT_OK,
                 !isOverExposed && !isUnderExposed ? OK : (isOverExposed ? getResources().getString(R.string.over_exposed_msg) + NOT_OK : getResources().getString(R.string.under_exposed_msg) + NOT_OK),
                 !isShadow ? OK : NOT_OK);
 
+        //mInstructionText.setText("");
+
+        if (isCorrectPosSize[1] && isCorrectPosSize[0] & isCorrectPosSize[2]) {
+            mInstructionText.setText("RDT at the center!");
+        } else if (!isCorrectPosSize[1] && isCorrectPosSize[3]) {
+            mInstructionText.setText(getResources().getString(R.string.instruction_too_large));
+        } else if (!isCorrectPosSize[1] && isCorrectPosSize[4]) {
+            mInstructionText.setText(getResources().getString(R.string.instruction_too_small));
+        } else if (isCorrectPosSize[1] && !isCorrectPosSize[0]) {
+            mInstructionText.setText(getResources().getString(R.string.instruction_pos));
+        }
+
         mImageQualityFeedbackView.setText(Html.fromHtml(message));
-        if (isCorrectPosSize && !isBlur && !isOverExposed && !isUnderExposed && !isShadow)
+        if (isCorrectPosSize[0] && isCorrectPosSize[1] && isCorrectPosSize[2] && !isBlur && !isOverExposed && !isUnderExposed && !isShadow)
             mImageQualityFeedbackView.setBackgroundColor(getResources().getColor(R.color.green_overlay));
         else
             mImageQualityFeedbackView.setBackgroundColor(getResources().getColor(R.color.red_overlay));
@@ -413,7 +439,7 @@ public class ImageQualityActivity extends AppCompatActivity implements CvCameraV
                 mResetCameraNeeded = true;
                 break;
             case ENV_FOCUS_INFINITY:
-                mCurrentState = State.ENV_FOCUS_MACRO;
+                mCurrentState = State.ENV_FOCUS_AUTO_CENTER;
                 mResetCameraNeeded = true;
 
                 break;
@@ -783,10 +809,10 @@ public class ImageQualityActivity extends AppCompatActivity implements CvCameraV
         return maxRect;
     }
 
-    private class FeatureMathchingTask extends AsyncTask<Mat, Integer, Boolean> {
+    private class FeatureMathchingTask extends AsyncTask<Mat, Integer, boolean[]> {
 
         @Override
-        protected Boolean doInBackground(Mat... mats) {
+        protected boolean[] doInBackground(Mat... mats) {
             long startTime = System.currentTimeMillis();
             Mat grayMat = mats[0].submat(new Rect((int)(PREVIEW_SIZE.width/4), (int)(PREVIEW_SIZE.height/4), (int)(PREVIEW_SIZE.width*VIEWPORT_SCALE), (int)(PREVIEW_SIZE.height*VIEWPORT_SCALE)));
 
@@ -795,7 +821,7 @@ public class ImageQualityActivity extends AppCompatActivity implements CvCameraV
             grayMat.release();
 
 
-            final boolean isCorrectPosSizeInit = checkPositionAndSize(approx, true);
+            final boolean[] isCorrectPosSizeInit = checkPositionAndSize(approx, true);
 
             runOnUiThread(new Runnable() {
                 @Override
@@ -812,10 +838,10 @@ public class ImageQualityActivity extends AppCompatActivity implements CvCameraV
         }
 
         @Override
-        protected void onPostExecute(Boolean isCorrectPosSizeInit) {
+        protected void onPostExecute(boolean[] isCorrectPosSizeInit) {
             super.onPostExecute(isCorrectPosSizeInit);
 
-            if (isCorrectPosSizeInit) {
+            if (isCorrectPosSizeInit[0] && isCorrectPosSizeInit[1] && isCorrectPosSizeInit[2]) {
                 if (frameCounter > FEATURE_MATCHING_FRAME_COUNTER) {
                     setNextState(mCurrentState);
                     frameCounter = 0;
@@ -833,10 +859,10 @@ public class ImageQualityActivity extends AppCompatActivity implements CvCameraV
         private BlurCheckTask blurTask = new BlurCheckTask();
         private ExposureCheckTask exposureCheckTask = new ExposureCheckTask();
 
-        private class RDTMathchingTask extends AsyncTask<Mat, Integer, Boolean> {
+        private class RDTMathchingTask extends AsyncTask<Mat, Integer, boolean[]> {
 
             @Override
-            protected Boolean doInBackground(Mat... mats) {
+            protected boolean[] doInBackground(Mat... mats) {
                 long startTime = System.currentTimeMillis();
                 Mat grayMat = mats[0].submat(new Rect((int)(PREVIEW_SIZE.width/4), (int)(PREVIEW_SIZE.height/4), (int)(PREVIEW_SIZE.width*VIEWPORT_SCALE), (int)(PREVIEW_SIZE.height*VIEWPORT_SCALE)));
 
@@ -846,14 +872,13 @@ public class ImageQualityActivity extends AppCompatActivity implements CvCameraV
                 grayMat.release();
 
 
-                boolean result = checkPositionAndSize(approx, true);
+                boolean[] results = checkPositionAndSize(approx, true);
 
                 approx.release();
 
                 Log.d(TAG, String.format("FeatureMatchingTask TIME: %d", System.currentTimeMillis() - startTime));
 
-
-                return result;
+                return results;
             }
         }
 
@@ -924,7 +949,7 @@ public class ImageQualityActivity extends AppCompatActivity implements CvCameraV
             super.onPostExecute(rgbaMat);
 
             try {
-                final boolean isCorrectPosSize = machingTask.get();
+                final boolean[] isCorrectPosSize = machingTask.get();
                 final boolean isBlur = blurTask.get();
                 ExposureResult exposureResult = exposureCheckTask.get();
                 final boolean isOverExposed = exposureResult == ExposureResult.OVER_EXPOSED;
@@ -939,7 +964,7 @@ public class ImageQualityActivity extends AppCompatActivity implements CvCameraV
                     }
                 });
 
-                if (isCorrectPosSize && !isBlur && !isOverExposed && !isUnderExposed && !isShadow) {
+                if (isCorrectPosSize[0] && isCorrectPosSize[1] && isCorrectPosSize[2] && !isBlur && !isOverExposed && !isUnderExposed) {
                     mCaptureProgressBar.incrementProgressBy(1);
 
                     if (minDistanceUpdated) {

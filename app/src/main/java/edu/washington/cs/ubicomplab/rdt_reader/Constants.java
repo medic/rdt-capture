@@ -22,12 +22,12 @@ public final class Constants {
 
     public static Scalar RDT_COLOR_HSV = new Scalar(30, 21, 204, 0.0);
 
-    public static double SIZE_THRESHOLD = 0.1;
+    public static double SIZE_THRESHOLD = 0.2;
     public static double POSITION_THRESHOLD = 0.2;
 
-    public static int CALIBRATION_FRAME_COUNTER = 2;
+    public static int CALIBRATION_FRAME_COUNTER = 1;
     public static int FEATURE_MATCHING_FRAME_COUNTER = 0;
-    public static int CAPTURE_COUNT = 5;
+    public static int CAPTURE_COUNT = 3;
 
     public static Size PREVIEW_SIZE = new Size(960, 720);
     public static double VIEWPORT_SCALE = 0.50;
