@@ -103,7 +103,7 @@ public class ImageQualityActivity extends AppCompatActivity implements CvCameraV
         UNDER_EXPOSED, NORMAL, OVER_EXPOSED
     }
 
-    private State mCurrentState = State.INITIALIZATION;
+    private State mCurrentState = State.QUALITY_CHECK;
     private boolean mResetCameraNeeded = true;
 
     private double minBlur = Double.MAX_VALUE;
