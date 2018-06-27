@@ -106,8 +106,8 @@ public class ImageQualityActivity extends AppCompatActivity implements CvCameraV
     private State mCurrentState = State.QUALITY_CHECK;
     private boolean mResetCameraNeeded = true;
 
-    private double minBlur = Double.MAX_VALUE;
-    private double maxBlur = Double.MIN_NORMAL;
+    private double minBlur = Double.MIN_VALUE;
+    private double maxBlur = Double.MAX_VALUE;
 
     private ColorBlobDetector mDetector;
 
@@ -890,7 +890,9 @@ public class ImageQualityActivity extends AppCompatActivity implements CvCameraV
 
                 mats[0].release();
 
-                return blurVal * Constants.BLUR_THRESHOLD < maxBlur;
+                Log.d(TAG, "BLUR CHECK: "+ blurVal*Constants.BLUR_THRESHOLD + ", " + maxBlur);
+
+                return blurVal < maxBlur * Constants.BLUR_THRESHOLD;
             }
         }
 
