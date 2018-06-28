@@ -5,6 +5,7 @@ import android.Manifest;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.res.Resources;
+import android.net.Uri;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
@@ -16,6 +17,7 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.widget.Button;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Locale;
 
@@ -39,6 +41,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         setContentView(R.layout.activity_main);
 
         setTitle("RDT Image Capture");
+
+        //create storage directories, if they don't exist
+        new File(Constants.RDT_IMAGE_DIR).mkdirs();
+        sendBroadcast(new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE, Uri.parse("file://" + Constants.RDT_IMAGE_DIR)));
 
         initViews();
     }
