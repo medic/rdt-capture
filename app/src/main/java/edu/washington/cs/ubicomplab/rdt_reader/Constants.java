@@ -34,7 +34,7 @@ public final class Constants {
     public static Size PREVIEW_SIZE = new Size(960, 720);
     public static double VIEWPORT_SCALE = 0.50;
 
-    public static String LANGUAGE = "fr";
+    public static String LANGUAGE = "en";
 
     public static String RDT_IMAGE_DIR = Environment.getExternalStorageDirectory() + "/Pictures/" +"/RDTImageCaptures/";
 }
