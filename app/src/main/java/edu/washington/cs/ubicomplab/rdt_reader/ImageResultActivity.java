@@ -33,11 +33,14 @@ public class ImageResultActivity extends AppCompatActivity implements View.OnCli
     Bitmap mBitmapToSave;
     byte[] mByteArray;
     boolean isImageSaved = false;
+    long timeTaken = 0;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_image_result);
+
+
         initViews();
     }
 
@@ -48,6 +51,10 @@ public class ImageResultActivity extends AppCompatActivity implements View.OnCli
 
             ImageView resultImageView = findViewById(R.id.RDTImageView);
             resultImageView.setImageBitmap(BitmapFactory.decodeByteArray(mByteArray, 0, mByteArray.length));
+        }
+
+        if (getIntent().hasExtra("timeTaken")) {
+            timeTaken = getIntent().getLongExtra("timeTaken", 0);
         }
 
         Button saveImageButton = findViewById(R.id.saveButton);
@@ -76,10 +83,10 @@ public class ImageResultActivity extends AppCompatActivity implements View.OnCli
             //create storage directories, if they don't exist
             sdIconStorageDir.mkdirs();
 
-            SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS");
+            SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH-mm-ss-SSS");
 
             try {
-                String filePath = sdIconStorageDir.toString() + String.format("/%s.jpg", sdf.format(new Date()));
+                String filePath = sdIconStorageDir.toString() + String.format("/%s-%08dms.jpg", sdf.format(new Date()), timeTaken);
                 FileOutputStream fileOutputStream = new FileOutputStream(filePath);
 
                 fileOutputStream.write(mByteArray);

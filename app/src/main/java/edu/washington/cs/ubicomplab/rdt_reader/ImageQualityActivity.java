@@ -74,6 +74,8 @@ public class ImageQualityActivity extends AppCompatActivity implements CvCameraV
 
     private int counter = 0;
 
+    private long timeTaken = 0;
+
 
     private BaseLoaderCallback mLoaderCallback = new BaseLoaderCallback(this) {
         @Override
@@ -132,6 +134,8 @@ public class ImageQualityActivity extends AppCompatActivity implements CvCameraV
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_image_quality);
         initViews();
+
+        timeTaken = System.currentTimeMillis();
     }
 
     private void initViews() {
@@ -987,6 +991,7 @@ public class ImageQualityActivity extends AppCompatActivity implements CvCameraV
                         Intent intent = new Intent(ImageQualityActivity.this, ImageResultActivity.class);
                         intent.addFlags(Intent.FLAG_ACTIVITY_FORWARD_RESULT);
                         intent.putExtra("RDTCaptureByteArray", byteArray);
+                        intent.putExtra("timeTaken", System.currentTimeMillis() - timeTaken);
 
                         rgbaMat.release();
                         startActivity(intent);
