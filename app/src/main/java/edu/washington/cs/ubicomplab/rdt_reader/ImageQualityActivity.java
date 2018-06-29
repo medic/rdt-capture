@@ -71,6 +71,7 @@ public class ImageQualityActivity extends AppCompatActivity implements CvCameraV
     private Mat bestCapturedMat;
     private double minDistance = Double.MAX_VALUE;
     private boolean minDistanceUpdated = false;
+    private Size previewSize = new Size(960, 720);
 
     private int counter = 0;
 
@@ -265,8 +266,8 @@ public class ImageQualityActivity extends AppCompatActivity implements CvCameraV
         Mat rgbaMat = inputFrame.rgba();
         Mat grayMat = inputFrame.gray();
 
-        if (PREVIEW_SIZE.width != rgbaMat.width() || PREVIEW_SIZE.height != rgbaMat.height())
-            PREVIEW_SIZE = new Size(rgbaMat.width(), rgbaMat.height());
+        if (previewSize.width != rgbaMat.width() || previewSize.height != rgbaMat.height())
+            previewSize = new Size(rgbaMat.width(), rgbaMat.height());
 
         if (mResetCameraNeeded) {
             setupCameraParameters(mCurrentState);
@@ -377,10 +378,10 @@ public class ImageQualityActivity extends AppCompatActivity implements CvCameraV
 
         RotatedRect rotatedRect = Imgproc.minAreaRect(approx);
         if (cropped)
-            rotatedRect.center = new Point(rotatedRect.center.x + PREVIEW_SIZE.width/4, rotatedRect.center.y + PREVIEW_SIZE.height/4);
+            rotatedRect.center = new Point(rotatedRect.center.x + previewSize.width/4, rotatedRect.center.y + previewSize.height/4);
 
         Point center = rotatedRect.center;
-        Point trueCenter = new Point(PREVIEW_SIZE.width/2, PREVIEW_SIZE.height/2);
+        Point trueCenter = new Point(previewSize.width/2, previewSize.height/2);
 
         boolean isUpright = rotatedRect.size.height > rotatedRect.size.width;
         double angle = 0;
@@ -396,14 +397,14 @@ public class ImageQualityActivity extends AppCompatActivity implements CvCameraV
 
         boolean isCentered = center.x < trueCenter.x *(1+ POSITION_THRESHOLD) && center.x > trueCenter.x*(1- POSITION_THRESHOLD)
                 && center.y < trueCenter.y *(1+ POSITION_THRESHOLD) && center.y > trueCenter.y*(1- POSITION_THRESHOLD);
-        boolean isRightSize = height < PREVIEW_SIZE.width*VIEWPORT_SCALE*(1+SIZE_THRESHOLD) && height > PREVIEW_SIZE.height*VIEWPORT_SCALE*(1-SIZE_THRESHOLD);
+        boolean isRightSize = height < previewSize.width*VIEWPORT_SCALE*(1+SIZE_THRESHOLD) && height > previewSize.height*VIEWPORT_SCALE*(1-SIZE_THRESHOLD);
         boolean isOriented = angle < 90.0*POSITION_THRESHOLD;
 
         results[0] = isCentered;
         results[1] = isRightSize;
         results[2] = isOriented;
-        results[3] = height > PREVIEW_SIZE.width*VIEWPORT_SCALE*(1+SIZE_THRESHOLD); //large
-        results[4] = height < PREVIEW_SIZE.height*VIEWPORT_SCALE*(1-SIZE_THRESHOLD); //small
+        results[3] = height > previewSize.width*VIEWPORT_SCALE*(1+SIZE_THRESHOLD); //large
+        results[4] = height < previewSize.height*VIEWPORT_SCALE*(1-SIZE_THRESHOLD); //small
 
         if (results[0] && results[1])
             Log.d(TAG, String.format("POS: %.2f, %.2f, Angle: %.2f, Height: %.2f", center.x, center.y, angle, height));
@@ -818,7 +819,7 @@ public class ImageQualityActivity extends AppCompatActivity implements CvCameraV
         @Override
         protected boolean[] doInBackground(Mat... mats) {
             long startTime = System.currentTimeMillis();
-            Mat grayMat = mats[0].submat(new Rect((int)(PREVIEW_SIZE.width/4), (int)(PREVIEW_SIZE.height/4), (int)(PREVIEW_SIZE.width*VIEWPORT_SCALE), (int)(PREVIEW_SIZE.height*VIEWPORT_SCALE)));
+            Mat grayMat = mats[0].submat(new Rect((int)(previewSize.width/4), (int)(previewSize.height/4), (int)(previewSize.width*VIEWPORT_SCALE), (int)(previewSize.height*VIEWPORT_SCALE)));
 
             MatOfPoint2f approx = detectRDT(grayMat);
             mats[0].release();
@@ -868,9 +869,9 @@ public class ImageQualityActivity extends AppCompatActivity implements CvCameraV
             @Override
             protected boolean[] doInBackground(Mat... mats) {
                 long startTime = System.currentTimeMillis();
-                Mat grayMat = mats[0].submat(new Rect((int)(PREVIEW_SIZE.width/4), (int)(PREVIEW_SIZE.height/4), (int)(PREVIEW_SIZE.width*VIEWPORT_SCALE), (int)(PREVIEW_SIZE.height*VIEWPORT_SCALE)));
+                Mat grayMat = mats[0].submat(new Rect((int)(previewSize.width/4), (int)(previewSize.height/4), (int)(previewSize.width*VIEWPORT_SCALE), (int)(previewSize.height*VIEWPORT_SCALE)));
 
-                //MatOfPoint2f approx = detectRDT(mats[0].submat(new Rect((int)(PREVIEW_SIZE.width/4), (int)(PREVIEW_SIZE.height/4), (int)(PREVIEW_SIZE.width*VIEWPORT_SCALE), (int)(PREVIEW_SIZE.height*VIEWPORT_SCALE))));
+                //MatOfPoint2f approx = detectRDT(mats[0].submat(new Rect((int)(previewSize.width/4), (int)(previewSize.height/4), (int)(previewSize.width*VIEWPORT_SCALE), (int)(previewSize.height*VIEWPORT_SCALE))));
                 MatOfPoint2f approx = detectRDT(grayMat);
                 mats[0].release();
                 grayMat.release();
@@ -985,8 +986,8 @@ public class ImageQualityActivity extends AppCompatActivity implements CvCameraV
                         setNextState(mCurrentState);
                         setProgressUI(mCurrentState);
 
-                        Log.d(TAG, "rgbaMat 5 Size: " + bestCapturedMat.size().toString() + ", rect size: " + new Rect((int) (PREVIEW_SIZE.width / 5), (int) (PREVIEW_SIZE.height / 5), (int) (PREVIEW_SIZE.width * 0.6), (int) (PREVIEW_SIZE.height * 0.6)).size().toString());
-                        byte[] byteArray = matToRotatedByteArray(bestCapturedMat.submat(new Rect((int) (PREVIEW_SIZE.width / 5), (int) (PREVIEW_SIZE.height / 5), (int) (PREVIEW_SIZE.width * 0.6), (int) (PREVIEW_SIZE.height * 0.6))));
+                        Log.d(TAG, "rgbaMat 5 Size: " + bestCapturedMat.size().toString() + ", rect size: " + new Rect((int) (previewSize.width / 5), (int) (previewSize.height / 5), (int) (previewSize.width * 0.6), (int) (previewSize.height * 0.6)).size().toString());
+                        byte[] byteArray = matToRotatedByteArray(bestCapturedMat.submat(new Rect((int) (previewSize.width / 5), (int) (previewSize.height / 5), (int) (previewSize.width * 0.6), (int) (previewSize.height * 0.6))));
 
                         Intent intent = new Intent(ImageQualityActivity.this, ImageResultActivity.class);
                         intent.addFlags(Intent.FLAG_ACTIVITY_FORWARD_RESULT);
