@@ -159,9 +159,6 @@ public class ImageQualityActivity extends AppCompatActivity implements CvCameraV
         mInstructionText = findViewById(R.id.textInstruction);
 
         setProgressUI(mCurrentState);
-
-        initTask = new FeatureMathchingTask();
-        qualityCheckTask = new ImageQualityCheckTask();
     }
 
     @Override
@@ -275,7 +272,7 @@ public class ImageQualityActivity extends AppCompatActivity implements CvCameraV
 
         switch (mCurrentState) {
             case INITIALIZATION:
-                if (initTask.getStatus() != AsyncTask.Status.RUNNING ) {
+                if (initTask == null || initTask.getStatus() == AsyncTask.Status.FINISHED ) {
                     initTask = new FeatureMathchingTask();
                     initTask.execute(grayMat);
                 }
@@ -303,8 +300,7 @@ public class ImageQualityActivity extends AppCompatActivity implements CvCameraV
             case QUALITY_CHECK:
                 if (isCaptured)
                     return null;
-
-                if (qualityCheckTask.getStatus() != AsyncTask.Status.RUNNING) {
+                if (qualityCheckTask == null || qualityCheckTask.getStatus() == AsyncTask.Status.FINISHED) {
                     qualityCheckTask = new ImageQualityCheckTask();
                     Log.d(TAG, "rgbaMat 0 Size: "+rgbaMat.size().toString() + ", grayMat 1 Size: "+grayMat.size().toString());
                     qualityCheckTask.execute(rgbaMat.clone(), grayMat);
