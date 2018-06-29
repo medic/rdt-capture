@@ -62,12 +62,6 @@ import static edu.washington.cs.ubicomplab.rdt_reader.Constants.*;
 public class ImageQualityActivity extends AppCompatActivity implements CvCameraViewListener2, View.OnClickListener {
 
     private RDTCamera2View mOpenCvCameraView;
-    private TextView mImageQualityFeedbackView;
-    private TextView mProgressText;
-    private TextView mInstructionText;
-    private ProgressBar mProgress;
-    private ProgressBar mCaptureProgressBar;
-    private View mProgressBackgroundView;
     private Mat bestCapturedMat;
     private double minDistance = Double.MAX_VALUE;
     private boolean minDistanceUpdated = false;
@@ -127,8 +121,6 @@ public class ImageQualityActivity extends AppCompatActivity implements CvCameraV
     private FeatureMathchingTask initTask;
     private ImageQualityCheckTask qualityCheckTask;
 
-    private Mat mCurrentMat;
-
     /*Activity callbacks*/
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -150,16 +142,6 @@ public class ImageQualityActivity extends AppCompatActivity implements CvCameraV
         mOpenCvCameraView.setCvCameraViewListener(this);
         mOpenCvCameraView.setOnClickListener(this);
         findViewById(R.id.img_quality_check_viewport).setOnClickListener(this);
-        mImageQualityFeedbackView = findViewById(R.id.img_quality_feedback_view);
-        mProgress = findViewById(R.id.progressCircularBar);
-        mProgressBackgroundView = findViewById(R.id.progressBackground);
-        mProgressText = findViewById(R.id.progressText);
-        mCaptureProgressBar = findViewById(R.id.captureProgressBar);
-        mCaptureProgressBar.setMax(CAPTURE_COUNT);
-        mCaptureProgressBar.setProgress(0);
-        mInstructionText = findViewById(R.id.textInstruction);
-
-        setProgressUI(mCurrentState);
     }
 
     @Override
@@ -222,8 +204,8 @@ public class ImageQualityActivity extends AppCompatActivity implements CvCameraV
     @Override
     public Mat onCameraFrame(CvCameraViewFrame inputFrame) {
         Mat rgbaMat = inputFrame.rgba();
+if(false) {
         Mat grayMat = inputFrame.gray();
-
         if (previewSize.width != rgbaMat.width() || previewSize.height != rgbaMat.height())
             previewSize = new Size(rgbaMat.width(), rgbaMat.height());
 
@@ -245,17 +227,12 @@ public class ImageQualityActivity extends AppCompatActivity implements CvCameraV
                 final double currVal = calculateBlurriness(rgbaMat);
                 grayMat.release();
 
-                if (currVal < minBlur)
-                    minBlur = currVal;
+                minBlur = Math.min(minBlur, currVal);
+                maxBlur = Math.max(maxBlur, currVal);
 
-                if (currVal > maxBlur)
-                    maxBlur = currVal;
-
-                if (frameCounter > CALIBRATION_FRAME_COUNTER) {
+                if (frameCounter++ > CALIBRATION_FRAME_COUNTER) {
                     setNextState(mCurrentState);
                     frameCounter = 0;
-                } else {
-                    frameCounter++;
                 }
 
                 break;
@@ -274,9 +251,8 @@ public class ImageQualityActivity extends AppCompatActivity implements CvCameraV
                     return null;
                 break;
         }
-
-        System.gc();
-        return inputFrame.rgba();
+}
+        return rgbaMat;
     }
 
     /*Private methods*/
@@ -369,31 +345,6 @@ public class ImageQualityActivity extends AppCompatActivity implements CvCameraV
         return results;
     }
 
-    private void displayQualityResult (boolean[] isCorrectPosSize, boolean isBlur, boolean isOverExposed, boolean isUnderExposed, boolean isShadow) {
-        String message = String.format(getResources().getString(R.string.quality_msg_format), isCorrectPosSize[0] && isCorrectPosSize[1] && isCorrectPosSize[2] ? OK:NOT_OK,
-                !isBlur ? OK : NOT_OK,
-                !isOverExposed && !isUnderExposed ? OK : (isOverExposed ? getResources().getString(R.string.over_exposed_msg) + NOT_OK : getResources().getString(R.string.under_exposed_msg) + NOT_OK),
-                !isShadow ? OK : NOT_OK);
-
-        //mInstructionText.setText("");
-
-        if (isCorrectPosSize[1] && isCorrectPosSize[0] & isCorrectPosSize[2]) {
-            mInstructionText.setText("RDT at the center!");
-        } else if (!isCorrectPosSize[1] && isCorrectPosSize[3]) {
-            mInstructionText.setText(getResources().getString(R.string.instruction_too_large));
-        } else if (!isCorrectPosSize[1] && isCorrectPosSize[4]) {
-            mInstructionText.setText(getResources().getString(R.string.instruction_too_small));
-        } else if (isCorrectPosSize[1] && !isCorrectPosSize[0]) {
-            mInstructionText.setText(getResources().getString(R.string.instruction_pos));
-        }
-
-        mImageQualityFeedbackView.setText(Html.fromHtml(message));
-        if (isCorrectPosSize[0] && isCorrectPosSize[1] && isCorrectPosSize[2] && !isBlur && !isOverExposed && !isUnderExposed && !isShadow)
-            mImageQualityFeedbackView.setBackgroundColor(getResources().getColor(R.color.green_overlay));
-        else
-            mImageQualityFeedbackView.setBackgroundColor(getResources().getColor(R.color.red_overlay));
-    }
-
     private void setNextState (State currentState) {
         switch (currentState) {
             case INITIALIZATION:
@@ -422,62 +373,6 @@ public class ImageQualityActivity extends AppCompatActivity implements CvCameraV
                 mResetCameraNeeded = false;
                 break;
         }
-
-        setProgressUI(mCurrentState);
-    }
-
-    private void setProgressUI (State CurrentState) {
-        switch  (CurrentState) {
-            case INITIALIZATION:
-                runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        mProgress.setVisibility(View.GONE);
-                        mProgressBackgroundView.setVisibility(View.GONE);
-                        mProgressText.setVisibility(View.GONE);
-                        mCaptureProgressBar.setVisibility(View.GONE);
-                    }
-                });
-                break;
-                case QUALITY_CHECK:
-                runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        mProgress.setVisibility(View.GONE);
-                        mProgressBackgroundView.setVisibility(View.GONE);
-                        mProgressText.setVisibility(View.GONE);
-                        mCaptureProgressBar.setVisibility(View.VISIBLE);
-                    }
-                });
-                break;
-            case ENV_FOCUS_INFINITY:
-            case ENV_FOCUS_MACRO:
-            case ENV_FOCUS_AUTO_CENTER:
-                runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        mProgress.setVisibility(View.VISIBLE);
-                        mProgressBackgroundView.setVisibility(View.VISIBLE);
-                        mProgressText.setText(R.string.progress_initialization);
-                        mProgressText.setVisibility(View.VISIBLE);
-                        mCaptureProgressBar.setVisibility(View.GONE);
-                    }
-                });
-                break;
-            case FINAL_CHECK:
-                runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        mProgress.setVisibility(View.VISIBLE);
-                        mProgressBackgroundView.setVisibility(View.VISIBLE);
-                        mProgressText.setText(R.string.progress_final);
-                        mProgressText.setVisibility(View.VISIBLE);
-                        mCaptureProgressBar.setVisibility(View.VISIBLE);
-                    }
-                });
-                break;
-        }
-
     }
 
     private void setupCameraParameters (State currentState) {
@@ -785,13 +680,6 @@ public class ImageQualityActivity extends AppCompatActivity implements CvCameraV
 
             final boolean[] isCorrectPosSizeInit = checkPositionAndSize(approx, true);
 
-            runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    displayQualityResult(isCorrectPosSizeInit, true, true, true, true);
-                }
-            });
-
             approx.release();
 
             Log.d(TAG, String.format("FeatureMatchingTask TIME: %d", System.currentTimeMillis() - startTime));
@@ -920,41 +808,10 @@ public class ImageQualityActivity extends AppCompatActivity implements CvCameraV
                 final boolean isUnderExposed = exposureResult == ExposureResult.UNDER_EXPOSED;
                 final boolean isShadow = false;
 
-
-                runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        displayQualityResult(isCorrectPosSize, isBlur, isOverExposed, isUnderExposed, isShadow);
-                    }
-                });
-
                 if (isCorrectPosSize[0] && isCorrectPosSize[1] && isCorrectPosSize[2] && !isBlur && !isOverExposed && !isUnderExposed) {
-                    mCaptureProgressBar.incrementProgressBy(1);
-
                     if (minDistanceUpdated) {
                         bestCapturedMat = rgbaMat.clone();
                         minDistanceUpdated = false;
-                    }
-
-                    if (mCaptureProgressBar.getProgress() >= CAPTURE_COUNT) {
-                        Log.d(TAG, String.format("Average DISTANCE (MIN): %.2f", minDistance));
-                        isCaptured = true;
-
-                        setNextState(mCurrentState);
-                        setProgressUI(mCurrentState);
-
-                        Log.d(TAG, "rgbaMat 5 Size: " + bestCapturedMat.size().toString() + ", rect size: " + new Rect((int) (previewSize.width / 5), (int) (previewSize.height / 5), (int) (previewSize.width * 0.6), (int) (previewSize.height * 0.6)).size().toString());
-                        byte[] byteArray = matToRotatedByteArray(bestCapturedMat.submat(new Rect((int) (previewSize.width / 5), (int) (previewSize.height / 5), (int) (previewSize.width * 0.6), (int) (previewSize.height * 0.6))));
-
-                        Intent intent = new Intent(ImageQualityActivity.this, ImageResultActivity.class);
-                        intent.addFlags(Intent.FLAG_ACTIVITY_FORWARD_RESULT);
-                        intent.putExtra("RDTCaptureByteArray", byteArray);
-                        intent.putExtra("timeTaken", System.currentTimeMillis() - timeTaken);
-
-                        rgbaMat.release();
-                        startActivity(intent);
-                    } else {
-                        rgbaMat.release();
                     }
                 } else {
                     rgbaMat.release();
