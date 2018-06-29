@@ -59,7 +59,7 @@ import java.util.Locale;
 
 import static edu.washington.cs.ubicomplab.rdt_reader.Constants.*;
 
-public class ImageQualityActivity extends AppCompatActivity implements CvCameraViewListener2, SettingDialogFragment.SettingDialogListener, View.OnClickListener {
+public class ImageQualityActivity extends AppCompatActivity implements CvCameraViewListener2, View.OnClickListener {
 
     private RDTCamera2View mOpenCvCameraView;
     private TextView mImageQualityFeedbackView;
@@ -202,45 +202,6 @@ public class ImageQualityActivity extends AppCompatActivity implements CvCameraV
     }
 
     @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        // Inflate the menu; this adds items to the action bar if it is present.
-        getMenuInflater().inflate(R.menu.menu, menu);
-        return true;
-    }
-
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        // Handle item selection
-        switch (item.getItemId()) {
-            case R.id.action_settings:
-                SettingDialogFragment dialog = new SettingDialogFragment();
-                dialog.show(getFragmentManager(), "Setting Dialog");
-                return true;
-            default:
-                return false;
-        }
-    }
-
-
-    @Override
-    public void onClickPositiveButton() {
-        mCurrentState = State.INITIALIZATION;
-        setProgressUI(mCurrentState);
-
-        Resources res = getResources();
-        // Change locale settings in the app.
-        DisplayMetrics dm = res.getDisplayMetrics();
-        android.content.res.Configuration conf = res.getConfiguration();
-        conf.setLocale(new Locale(Constants.LANGUAGE)); // API 17+ only.
-        // Use conf.locale = new Locale(...) if targeting lower versions
-        res.updateConfiguration(conf, dm);
-
-        setContentView(R.layout.activity_image_quality);
-        initViews();
-    }
-
-
-    @Override
     public void onClick(View view) {
         Log.d(TAG, "Camera request reset!");
         setupCameraParameters(mCurrentState);
@@ -260,11 +221,11 @@ public class ImageQualityActivity extends AppCompatActivity implements CvCameraV
 
     @Override
     public Mat onCameraFrame(CvCameraViewFrame inputFrame) {
-//        Mat rgbaMat = inputFrame.rgba();
+        Mat rgbaMat = inputFrame.rgba();
         Mat grayMat = inputFrame.gray();
 
-//        if (previewSize.width != rgbaMat.width() || previewSize.height != rgbaMat.height())
-//            previewSize = new Size(rgbaMat.width(), rgbaMat.height());
+        if (previewSize.width != rgbaMat.width() || previewSize.height != rgbaMat.height())
+            previewSize = new Size(rgbaMat.width(), rgbaMat.height());
 
         if (mResetCameraNeeded) {
             setupCameraParameters(mCurrentState);
