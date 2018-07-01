@@ -111,7 +111,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             Intent intent = new Intent(this, ImageQualityActivity.class);
             startActivity(intent);
         } else if (view.getId() == R.id.camera2TestButton) {
-            Intent intent = new Intent(this, Camera2TestActivity.class);
+            Intent intent = new Intent(this, ImageQualityCamera2Activity.class);
             startActivity(intent);
         } else if (view.getId() == R.id.settingsButton) {
             SettingDialogFragment dialog = new SettingDialogFragment();

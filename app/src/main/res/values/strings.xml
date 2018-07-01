@@ -36,4 +36,6 @@
     <string name="results_image_saved">Image is successfully saved!</string>
     <string name="results_image_already_saved">Image is already saved.</string>
     <string name="results_image_sent">Image is successfully sent!</string>
+    <string name="picture">Picture</string>
+    <string name="description_info">Info</string>
 </resources>
