@@ -331,13 +331,11 @@ public class ImageQualityCamera2Activity extends AppCompatActivity implements Vi
 
                         Log.d(TAG, "rgbaMat 0 Size: "+rgbaMat.size().toString() + ", grayMat 1 Size: "+grayMat.size().toString());
 
-                        Mat matchingMat = grayMat.clone();
-                        Mat blurMat = rgbaMat.clone();
-                        Mat exposureMat = grayMat.clone();
+                        Rect cropRect = new Rect((int)(Constants.PREVIEW_SIZE.height/4), (int)(Constants.PREVIEW_SIZE.width/4), (int)(Constants.PREVIEW_SIZE.height*Constants.VIEWPORT_SCALE), (int)(Constants.PREVIEW_SIZE.width*Constants.VIEWPORT_SCALE));
 
-
-
-                        matchingMat = matchingMat.submat(new Rect((int)(Constants.PREVIEW_SIZE.height/4), (int)(Constants.PREVIEW_SIZE.width/4), (int)(Constants.PREVIEW_SIZE.height*Constants.VIEWPORT_SCALE), (int)(Constants.PREVIEW_SIZE.width*Constants.VIEWPORT_SCALE)));
+                        Mat matchingMat = grayMat.submat(cropRect);
+                        Mat blurMat = rgbaMat.submat(cropRect);
+                        Mat exposureMat = grayMat.submat(cropRect);
 
 
                         //MatOfPoint2f approx = detectRDT(mats[0].submat(new Rect((int)(PREVIEW_SIZE.width/4), (int)(PREVIEW_SIZE.height/4), (int)(PREVIEW_SIZE.width*VIEWPORT_SCALE), (int)(PREVIEW_SIZE.height*VIEWPORT_SCALE))));
@@ -818,9 +816,8 @@ public class ImageQualityCamera2Activity extends AppCompatActivity implements Vi
                                         CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_PICTURE);
 
 
-                                int counter = 0;
                                 final android.graphics.Rect sensor = characteristics.get(CameraCharacteristics.SENSOR_INFO_ACTIVE_ARRAY_SIZE);
-                                MeteringRectangle mr = new MeteringRectangle(sensor.width() / 2 - 50, sensor.height() / 2 - 50, 100, 100,
+                                MeteringRectangle mr = new MeteringRectangle(sensor.width() / 2 - 5, sensor.height() / 2 - 5, 10, 10,
                                         MeteringRectangle.METERING_WEIGHT_MAX - 1);
 
                                 Log.d(TAG, String.format("Sensor Size (%d, %d), Metering %s", sensor.width(), sensor.height(), mr.toString()));
@@ -828,22 +825,18 @@ public class ImageQualityCamera2Activity extends AppCompatActivity implements Vi
 
                                 mPreviewRequestBuilder.set(CaptureRequest.CONTROL_AF_MODE, CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_PICTURE);
                                 mPreviewRequestBuilder.set(CaptureRequest.CONTROL_AF_REGIONS,
-                                        new MeteringRectangle[]{new MeteringRectangle(sensor.width() / 2 - 50+(counter%2), sensor.height() / 2 - 50+(counter%2), 100+(counter%2), 100+(counter%2),
-                                                MeteringRectangle.METERING_WEIGHT_MAX - 1)});
-                                mPreviewRequestBuilder.set(CaptureRequest.CONTROL_AE_REGIONS,
-                                        new MeteringRectangle[]{new MeteringRectangle(sensor.width() / 2 - 50+(counter%2), sensor.height() / 2 - 50+(counter%2), 100+(counter%2), 100+(counter%2),
-                                                MeteringRectangle.METERING_WEIGHT_MAX - 1)});
+                                        new MeteringRectangle[]{mr});
                                 mPreviewRequestBuilder.set(CaptureRequest.CONTROL_AE_MODE, CaptureRequest.CONTROL_AE_MODE_ON);
-                                mPreviewRequestBuilder.set(CaptureRequest.CONTROL_AWB_REGIONS,
-                                        new MeteringRectangle[]{new MeteringRectangle(sensor.width() / 2 - 50+(counter%2), sensor.height() / 2 - 50+(counter%2), 100+(counter%2), 100+(counter%2),
-                                                MeteringRectangle.METERING_WEIGHT_MAX - 1)});
+                                mPreviewRequestBuilder.set(CaptureRequest.CONTROL_AE_REGIONS,
+                                        new MeteringRectangle[]{mr});
                                 mPreviewRequestBuilder.set(CaptureRequest.CONTROL_AWB_MODE, CaptureRequest.CONTROL_AWB_MODE_AUTO);
-                                mPreviewRequestBuilder.set(CaptureRequest.FLASH_MODE, CaptureRequest.FLASH_MODE_TORCH);
+                                mPreviewRequestBuilder.set(CaptureRequest.CONTROL_AWB_REGIONS,
+                                        new MeteringRectangle[]{mr});
 
+                                mPreviewRequestBuilder.set(CaptureRequest.FLASH_MODE, CaptureRequest.FLASH_MODE_TORCH);
                                 mPreviewRequest = mPreviewRequestBuilder.build();
                                 mCaptureSession.setRepeatingRequest(mPreviewRequest,
                                         mCaptureCallback, mBackgroundHandler);
-
 
                             } catch (CameraAccessException e) {
                                 e.printStackTrace();
@@ -1005,7 +998,7 @@ public class ImageQualityCamera2Activity extends AppCompatActivity implements Vi
     }
 
     private void loadReference() {
-        mFeatureDetector = BRISK.create(60, 2, 1.0f);
+        mFeatureDetector = BRISK.create(120, 3, 1.0f);
         mMatcher = DescriptorMatcher.create(DescriptorMatcher.BRUTEFORCE_HAMMING);
         mRefImg = new Mat();
 
@@ -1183,7 +1176,7 @@ public class ImageQualityCamera2Activity extends AppCompatActivity implements Vi
         MatOfPoint2f result = new MatOfPoint2f(new Point(0.0f, 0.0f));
         result.convertTo(result, CvType.CV_32F);
 
-        if (good_matches.size() > 5) {
+        if (good_matches.size() > 19) {
             //run homography on object and scene points
             Mat H = Calib3d.findHomography(obj, scene, Calib3d.RANSAC, 5);
 
