@@ -181,7 +181,6 @@ public class ImageQualityActivity extends AppCompatActivity implements CvCameraV
     @Override
     protected void onPause() {
         super.onPause();
-        super.onPause();
         if (mOpenCvCameraView != null)
             mOpenCvCameraView.disableView();
 
