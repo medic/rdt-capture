@@ -37,4 +37,6 @@ public final class Constants {
     public static String LANGUAGE = "en";
 
     public static String RDT_IMAGE_DIR = Environment.getExternalStorageDirectory() + "/Pictures/" +"/RDTImageCaptures/";
+
+    public static int GOOD_MATCH_COUNT = 7;
 }

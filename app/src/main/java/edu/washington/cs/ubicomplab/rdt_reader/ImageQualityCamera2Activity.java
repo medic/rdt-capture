@@ -998,11 +998,11 @@ public class ImageQualityCamera2Activity extends AppCompatActivity implements Vi
     }
 
     private void loadReference() {
-        mFeatureDetector = BRISK.create(120, 3, 1.0f);
+        mFeatureDetector = BRISK.create(90, 2, 1.0f);
         mMatcher = DescriptorMatcher.create(DescriptorMatcher.BRUTEFORCE_HAMMING);
         mRefImg = new Mat();
 
-        Bitmap bitmap = BitmapFactory.decodeResource(getApplicationContext().getResources(), R.drawable.sd_bioline_malaria_ag_pf);
+        Bitmap bitmap = BitmapFactory.decodeResource(getApplicationContext().getResources(), R.drawable.sd_bioline_malaria_ag_pf_vertical);
         Utils.bitmapToMat(bitmap, mRefImg);
         Imgproc.cvtColor(mRefImg, mRefImg, Imgproc.COLOR_RGB2GRAY);
         mRefDescriptor = new Mat();
@@ -1176,7 +1176,7 @@ public class ImageQualityCamera2Activity extends AppCompatActivity implements Vi
         MatOfPoint2f result = new MatOfPoint2f(new Point(0.0f, 0.0f));
         result.convertTo(result, CvType.CV_32F);
 
-        if (good_matches.size() > 19) {
+        if (good_matches.size() > Constants.GOOD_MATCH_COUNT) {
             //run homography on object and scene points
             Mat H = Calib3d.findHomography(obj, scene, Calib3d.RANSAC, 5);
 

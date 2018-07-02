@@ -710,7 +710,7 @@ public class ImageQualityActivity extends AppCompatActivity implements CvCameraV
         MatOfPoint2f result = new MatOfPoint2f(new Point(0.0f, 0.0f));
         result.convertTo(result, CvType.CV_32F);
 
-        if (good_matches.size() > 5) {
+        if (good_matches.size() > Constants.GOOD_MATCH_COUNT) {
             //run homography on object and scene points
             Mat H = Calib3d.findHomography(obj, scene, Calib3d.RANSAC, 5);
 
