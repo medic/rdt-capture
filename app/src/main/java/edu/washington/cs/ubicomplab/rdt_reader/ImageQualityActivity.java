@@ -282,7 +282,7 @@ public class ImageQualityActivity extends AppCompatActivity implements CvCameraV
             case ENV_FOCUS_INFINITY:
             case ENV_FOCUS_MACRO:
             case ENV_FOCUS_AUTO_CENTER:
-                final double currVal = calculateBurriness(rgbaMat);
+                final double currVal = calculateBlurriness(rgbaMat);
                 grayMat.release();
 
                 if (currVal < minBlur)
@@ -599,7 +599,7 @@ public class ImageQualityActivity extends AppCompatActivity implements CvCameraV
         return mBuff;
     }
 
-    private double calculateBurriness (Mat input) {
+    private double calculateBlurriness(Mat input) {
         Mat des = new Mat();
         Imgproc.Laplacian(input, des, CvType.CV_64F);
 
@@ -889,7 +889,7 @@ public class ImageQualityActivity extends AppCompatActivity implements CvCameraV
 
             @Override
             protected Boolean doInBackground(Mat... mats) {
-                double blurVal = calculateBurriness(mats[0]);
+                double blurVal = calculateBlurriness(mats[0]);
 
                 mats[0].release();
 
