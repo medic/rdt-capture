@@ -1,5 +1,6 @@
 package edu.washington.cs.ubicomplab.rdt_reader;
 
+import android.app.Activity;
 import android.content.Intent;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
@@ -132,10 +133,16 @@ public class ImageQualityActivity extends AppCompatActivity implements CvCameraV
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
         setContentView(R.layout.activity_image_quality);
         initViews();
 
         timeTaken = System.currentTimeMillis();
+    }
+
+    private boolean isExternalIntent() {
+        Intent i = getIntent();
+        return i != null && "medic.mrdt.verify".equals(i.getAction());
     }
 
     private void initViews() {
@@ -983,13 +990,25 @@ public class ImageQualityActivity extends AppCompatActivity implements CvCameraV
                         Log.d(TAG, "rgbaMat 5 Size: " + bestCapturedMat.size().toString() + ", rect size: " + new Rect((int) (PREVIEW_SIZE.width / 5), (int) (PREVIEW_SIZE.height / 5), (int) (PREVIEW_SIZE.width * 0.6), (int) (PREVIEW_SIZE.height * 0.6)).size().toString());
                         byte[] byteArray = matToRotatedByteArray(bestCapturedMat.submat(new Rect((int) (PREVIEW_SIZE.width / 5), (int) (PREVIEW_SIZE.height / 5), (int) (PREVIEW_SIZE.width * 0.6), (int) (PREVIEW_SIZE.height * 0.6))));
 
-                        Intent intent = new Intent(ImageQualityActivity.this, ImageResultActivity.class);
-                        intent.addFlags(Intent.FLAG_ACTIVITY_FORWARD_RESULT);
-                        intent.putExtra("RDTCaptureByteArray", byteArray);
-                        intent.putExtra("timeTaken", System.currentTimeMillis() - timeTaken);
+                        // If this activity was triggered by an external
+                        // intent, then respond with the content of the image.
+                        // Otherwise, handle the result inside this app.
+                        if(isExternalIntent()) {
+                            Intent i = new Intent();
 
-                        rgbaMat.release();
-                        startActivity(intent);
+                            i.putExtra("data", byteArray);
+
+                            setResult(Activity.RESULT_OK, i);
+                            finish();
+                        } else {
+                            Intent intent = new Intent(ImageQualityActivity.this, ImageResultActivity.class);
+                            intent.addFlags(Intent.FLAG_ACTIVITY_FORWARD_RESULT);
+                            intent.putExtra("RDTCaptureByteArray", byteArray);
+                            intent.putExtra("timeTaken", System.currentTimeMillis() - timeTaken);
+
+                            rgbaMat.release();
+                            startActivity(intent);
+                        }
                     } else {
                         rgbaMat.release();
                     }
