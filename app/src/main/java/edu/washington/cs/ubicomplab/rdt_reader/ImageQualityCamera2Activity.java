@@ -509,8 +509,7 @@ public class ImageQualityCamera2Activity extends AppCompatActivity implements Vi
         private void process(CaptureResult result) {
             switch (mState) {
                 case STATE_PREVIEW: {
-
-
+                    updateRepeatingRequest();
                     break;
                 }
             }
@@ -770,6 +769,78 @@ public class ImageQualityCamera2Activity extends AppCompatActivity implements Vi
         }
     }
 
+    private CameraCaptureSession.StateCallback mCameraCaptureSessionStateCallback =  new CameraCaptureSession.StateCallback() {
+
+        @Override
+        public void onConfigured(@NonNull CameraCaptureSession cameraCaptureSession) {
+            // The camera is already closed
+            if (null == mCameraDevice) {
+                return;
+            }
+            mCaptureSession = cameraCaptureSession;
+
+            updateRepeatingRequest();
+        }
+
+        @Override
+        public void onConfigureFailed(
+                @NonNull CameraCaptureSession cameraCaptureSession) {
+            showToast("Failed");
+        }
+    };
+
+    private int mCounter = Integer.MIN_VALUE;
+
+    private void updateRepeatingRequest() {
+        // When the session is ready, we start displaying the preview.
+        try {
+            CameraManager manager = (CameraManager) getSystemService(Context.CAMERA_SERVICE);
+            CameraCharacteristics characteristics = manager.getCameraCharacteristics(mCameraId);
+
+            // Auto focus should be continuous for camera preview.
+            mPreviewRequestBuilder.set(CaptureRequest.CONTROL_AF_MODE,
+                    CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_PICTURE);
+
+
+            final android.graphics.Rect sensor = characteristics.get(CameraCharacteristics.SENSOR_INFO_ACTIVE_ARRAY_SIZE);
+            Log.d(TAG, "Sensor size: " + sensor.width() + ", " + sensor.height());
+            MeteringRectangle mr = new MeteringRectangle(sensor.width() / 2 - 50, sensor.height() / 2 - 50, 100+(mCounter%2), 100+(mCounter%2),
+                    MeteringRectangle.METERING_WEIGHT_MAX - 1);
+
+            Log.d(TAG, String.format("Sensor Size (%d, %d), Metering %s", sensor.width(), sensor.height(), mr.toString()));
+            Log.d(TAG, String.format("Regions AE %s", characteristics.get(CameraCharacteristics.CONTROL_MAX_REGIONS_AE).toString()));
+
+            mPreviewRequestBuilder.set(CaptureRequest.CONTROL_AF_MODE, CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_PICTURE);
+            mPreviewRequestBuilder.set(CaptureRequest.CONTROL_AF_REGIONS,
+                    new MeteringRectangle[]{mr});
+            mPreviewRequestBuilder.set(CaptureRequest.CONTROL_AE_MODE, CaptureRequest.CONTROL_AE_MODE_ON);
+            mPreviewRequestBuilder.set(CaptureRequest.CONTROL_AE_REGIONS,
+                    new MeteringRectangle[]{mr});
+            mPreviewRequestBuilder.set(CaptureRequest.CONTROL_AWB_MODE, CaptureRequest.CONTROL_AWB_MODE_AUTO);
+            mPreviewRequestBuilder.set(CaptureRequest.CONTROL_AWB_REGIONS,
+                    new MeteringRectangle[]{mr});
+
+            mPreviewRequestBuilder.set(CaptureRequest.FLASH_MODE, CaptureRequest.FLASH_MODE_TORCH);
+            mPreviewRequest = mPreviewRequestBuilder.build();
+
+            try {
+                mCameraOpenCloseLock.acquire();
+                if (mCaptureSession != null) {
+                    mCaptureSession.setRepeatingRequest(mPreviewRequest,
+                            mCaptureCallback, mBackgroundHandler);
+                }
+            } catch (InterruptedException e) {
+                throw new RuntimeException("Interrupted while trying to lock camera closing.", e);
+            } finally {
+                mCameraOpenCloseLock.release();
+            }
+
+            mCounter++;
+        } catch (CameraAccessException e) {
+            e.printStackTrace();
+        }
+    }
+
     /**
      * Creates a new {@link CameraCaptureSession} for camera preview.
      */
@@ -797,58 +868,7 @@ public class ImageQualityCamera2Activity extends AppCompatActivity implements Vi
 
             // Here, we create a CameraCaptureSession for camera preview.
             mCameraDevice.createCaptureSession(Arrays.asList(surface, mImageReader.getSurface()),
-                    new CameraCaptureSession.StateCallback() {
-
-                        @Override
-                        public void onConfigured(@NonNull CameraCaptureSession cameraCaptureSession) {
-                            // The camera is already closed
-                            if (null == mCameraDevice) {
-                                return;
-                            }
-                            // When the session is ready, we start displaying the preview.
-                            mCaptureSession = cameraCaptureSession;
-                            try {
-                                CameraManager manager = (CameraManager) getSystemService(Context.CAMERA_SERVICE);
-                                CameraCharacteristics characteristics = manager.getCameraCharacteristics(mCameraId);
-
-                                // Auto focus should be continuous for camera preview.
-                                mPreviewRequestBuilder.set(CaptureRequest.CONTROL_AF_MODE,
-                                        CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_PICTURE);
-
-
-                                final android.graphics.Rect sensor = characteristics.get(CameraCharacteristics.SENSOR_INFO_ACTIVE_ARRAY_SIZE);
-                                MeteringRectangle mr = new MeteringRectangle(sensor.width() / 2 - 5, sensor.height() / 2 - 5, 10, 10,
-                                        MeteringRectangle.METERING_WEIGHT_MAX - 1);
-
-                                Log.d(TAG, String.format("Sensor Size (%d, %d), Metering %s", sensor.width(), sensor.height(), mr.toString()));
-                                Log.d(TAG, String.format("Regions AE %s", characteristics.get(CameraCharacteristics.CONTROL_MAX_REGIONS_AE).toString()));
-
-                                mPreviewRequestBuilder.set(CaptureRequest.CONTROL_AF_MODE, CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_PICTURE);
-                                mPreviewRequestBuilder.set(CaptureRequest.CONTROL_AF_REGIONS,
-                                        new MeteringRectangle[]{mr});
-                                mPreviewRequestBuilder.set(CaptureRequest.CONTROL_AE_MODE, CaptureRequest.CONTROL_AE_MODE_ON);
-                                mPreviewRequestBuilder.set(CaptureRequest.CONTROL_AE_REGIONS,
-                                        new MeteringRectangle[]{mr});
-                                mPreviewRequestBuilder.set(CaptureRequest.CONTROL_AWB_MODE, CaptureRequest.CONTROL_AWB_MODE_AUTO);
-                                mPreviewRequestBuilder.set(CaptureRequest.CONTROL_AWB_REGIONS,
-                                        new MeteringRectangle[]{mr});
-
-                                mPreviewRequestBuilder.set(CaptureRequest.FLASH_MODE, CaptureRequest.FLASH_MODE_TORCH);
-                                mPreviewRequest = mPreviewRequestBuilder.build();
-                                mCaptureSession.setRepeatingRequest(mPreviewRequest,
-                                        mCaptureCallback, mBackgroundHandler);
-
-                            } catch (CameraAccessException e) {
-                                e.printStackTrace();
-                            }
-                        }
-
-                        @Override
-                        public void onConfigureFailed(
-                                @NonNull CameraCaptureSession cameraCaptureSession) {
-                            showToast("Failed");
-                        }
-                    }, null
+                    mCameraCaptureSessionStateCallback, null
             );
         } catch (CameraAccessException e) {
             e.printStackTrace();
