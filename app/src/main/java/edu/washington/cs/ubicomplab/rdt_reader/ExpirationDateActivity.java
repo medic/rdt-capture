@@ -89,8 +89,6 @@ public class ExpirationDateActivity extends AppCompatActivity implements CvCamer
         mTextRecognizer = new TextRecognizer.Builder(getApplicationContext()).build();
 
         mExpDateResultView = findViewById(R.id.exp_date_result_view);
-
-        ocrTask = new OCRTask();
     }
 
     @Override
@@ -149,7 +147,7 @@ public class ExpirationDateActivity extends AppCompatActivity implements CvCamer
     public Mat onCameraFrame(CvCameraViewFrame inputFrame) {
         System.gc();
 
-        if (ocrTask.getStatus() != AsyncTask.Status.RUNNING) {
+        if (ocrTask == null || ocrTask.getStatus() == AsyncTask.Status.FINISHED) {
             ocrTask = new OCRTask();
             ocrTask.execute(inputFrame.rgba().clone());
         }
