@@ -201,16 +201,6 @@ public class ImageQualityActivity extends AppCompatActivity implements CvCameraV
     }
 
     @Override
-    public void onBackPressed() {
-        if(isExternalIntent()) {
-            super.onBackPressed();
-        } else {
-            Intent intent = new Intent(this, MainActivity.class);
-            startActivity(intent);
-        }
-    }
-
-    @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the menu; this adds items to the action bar if it is present.
         getMenuInflater().inflate(R.menu.menu, menu);
