@@ -64,13 +64,6 @@ public class ImageResultActivity extends AppCompatActivity implements View.OnCli
     }
 
     @Override
-    public void onBackPressed() {
-        super.onBackPressed();
-        Intent intent = new Intent(this, MainActivity.class);
-        startActivity(intent);
-    }
-
-    @Override
     public void onClick(View view) {
         if (view.getId() == R.id.saveButton) {
             if (isImageSaved) {
