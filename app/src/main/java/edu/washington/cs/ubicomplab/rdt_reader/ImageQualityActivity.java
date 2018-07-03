@@ -202,8 +202,12 @@ public class ImageQualityActivity extends AppCompatActivity implements CvCameraV
 
     @Override
     public void onBackPressed() {
-        Intent intent = new Intent(this, MainActivity.class);
-        startActivity(intent);
+        if(isExternalIntent()) {
+            super.onBackPressed();
+        } else {
+            Intent intent = new Intent(this, MainActivity.class);
+            startActivity(intent);
+        }
     }
 
     @Override
