@@ -108,7 +108,6 @@ public class ImageQualityCamera2Activity extends AppCompatActivity implements Vi
     private ProgressBar mCaptureProgressBar;
     private View mProgressBackgroundView;
     private State mCurrentState = State.QUALITY_CHECK;
-    private ImageQualityCheckTask mQualityCheckTask;
     private Mat bestCapturedMat;
     private double minDistance = Double.MAX_VALUE;
     private boolean minDistanceUpdated = false;
@@ -133,13 +132,11 @@ public class ImageQualityCamera2Activity extends AppCompatActivity implements Vi
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_image_quality_camera2);
 
-        findViewById(R.id.picture).setOnClickListener(this);
         mTextureView = findViewById(R.id.texture);
 
         mFile = new File(getExternalFilesDir(null), "pic.jpg");
 
         timeTaken = System.currentTimeMillis();
-        mQualityCheckTask = new ImageQualityCheckTask();
 
         initViews();
     }
@@ -172,20 +169,6 @@ public class ImageQualityCamera2Activity extends AppCompatActivity implements Vi
      */
     private static final int STATE_WAITING_LOCK = 1;
 
-    /**
-     * Camera state: Waiting for the exposure to be precapture state.
-     */
-    private static final int STATE_WAITING_PRECAPTURE = 2;
-
-    /**
-     * Camera state: Waiting for the exposure state to be something other than precapture.
-     */
-    private static final int STATE_WAITING_NON_PRECAPTURE = 3;
-
-    /**
-     * Camera state: Picture was taken.
-     */
-    private static final int STATE_PICTURE_TAKEN = 4;
 
     /**
      * {@link TextureView.SurfaceTextureListener} handles several lifecycle events on a
@@ -293,7 +276,6 @@ public class ImageQualityCamera2Activity extends AppCompatActivity implements Vi
      */
     private ImageReader mImageReader;
 
-    private boolean mCapture;
     private boolean inProcess = false;
     Object lock = new Object();
 
@@ -306,83 +288,54 @@ public class ImageQualityCamera2Activity extends AppCompatActivity implements Vi
 
         @Override
         public void onImageAvailable(ImageReader reader) {
-
-            final Image image = mImageReader.acquireLatestImage();
-
             final boolean running;
 
             synchronized (lock) {
                 running = inProcess;
             }
 
-            Log.d(TAG, "OnImageAvailableListener: " + System.currentTimeMillis());
-            if (mCapture) {
-                mBackgroundHandler.post(new Runnable() {
-                    @Override
-                    public void run() {
-                        Mat rgbMat = ImageUtil.imageToRGBMat(image);
-
-                        //byte[] byteArray = ImageUtil.imageToByteArray(image);
-
-                        //byte[] nv21 = ImageUtil.YUV_420_888toI420SemiPlanar(image.getPlanes()[0].getBuffer(), image.getPlanes()[1].getBuffer(), image.getPlanes()[2].getBuffer(), image.getWidth(), image.getHeight(), false);
-                        //byte[] byteArray = ImageUtil.NV21toJPEG(nv21, image.getWidth(), image.getHeight(), 100);
-
-                        //save the image to see
-                        try {
-                            byte[] byteArray = ImageUtil.matToRotatedByteArray(rgbMat);
-                            FileOutputStream fileOutputStream = new FileOutputStream(mFile);
-
-                            fileOutputStream.write(byteArray);
-
-                            fileOutputStream.flush();
-                            fileOutputStream.close();
-
-                            Toast.makeText(mActivity, "Image is successfully saved!", Toast.LENGTH_SHORT).show();
-                        } catch (Exception e) {
-                            Log.w("TAG", "Error saving image file: " + e.getMessage());
-                        }
-
-                    }
-                });
-                mCapture = false;
-
-                Log.d(TAG, "OnImageAvailableListener: captured");
-            } else if (!running) {
+            if (!running) {
                 mOnImageAvailableHandler.post(new Runnable() {
                     @Override
                     public void run() {
-                        //mQualityCheckTask = new ImageQualityCheckTask();
-                        //mQualityCheckTask.execute(image);
-                        if (image == null) {
-                            return;
-                        }
-
                         synchronized (lock) {
                             inProcess = true;
                         }
 
+                        if (mImageReader == null) {
+                            synchronized (lock) {
+                                inProcess = false;
+                            }
+                            return;
+                        }
+
+                        Image image = mImageReader.acquireLatestImage();
+                        Log.d(TAG, "OnImageAvailableListener: image acquired! " + System.currentTimeMillis());
+
+                        if (image == null) {
+                            synchronized (lock) {
+                                inProcess = false;
+                            }
+                            return;
+                        }
+
+                        //image pre-processing
                         Mat rgbaMat = ImageUtil.imageToRGBMat(image);
                         Mat grayMat = new Mat();
                         Imgproc.cvtColor(rgbaMat, grayMat, Imgproc.COLOR_RGBA2GRAY);
 
                         Rect cropRect = new Rect((int)(Constants.CAMERA2_IMAGE_SIZE.width/4), (int)(Constants.CAMERA2_IMAGE_SIZE.height/4), (int)(Constants.CAMERA2_IMAGE_SIZE.width*Constants.VIEWPORT_SCALE), (int)(Constants.CAMERA2_IMAGE_SIZE.height*Constants.VIEWPORT_SCALE));
 
-                        Log.d(TAG, "rgbaMat 0 Size: "+rgbaMat.size().toString() + ", grayMat 1 Size: "+grayMat.size().toString() + ", " + cropRect.toString());
-
                         Mat matchingMat = grayMat.submat(cropRect);
                         Mat blurMat = rgbaMat.submat(cropRect);
                         Mat exposureMat = grayMat.submat(cropRect);
 
-
-                        //MatOfPoint2f approx = detectRDT(mats[0].submat(new Rect((int)(CAMERA2_IMAGE_SIZE.width/4), (int)(CAMERA2_IMAGE_SIZE.height/4), (int)(CAMERA2_IMAGE_SIZE.width*VIEWPORT_SCALE), (int)(CAMERA2_IMAGE_SIZE.height*VIEWPORT_SCALE))));
+                        //size and position check
                         MatOfPoint2f approx = detectRDT(matchingMat);
-                        matchingMat.release();
-                        grayMat.release();
-
-
                         final boolean[] isCorrectPosSize = checkPositionAndSize(approx, true);
 
 
+                        //exposure check
                         float[] histogram = calculateHistogram(exposureMat);
 
                         int maxWhite = 0;
@@ -399,7 +352,6 @@ public class ImageQualityCamera2Activity extends AppCompatActivity implements Vi
                         }
                         Log.d(TAG, "rgbaMat 2 Size: "+exposureMat.size().toString());
 
-                        exposureMat.release();
 
                         ExposureResult exposureResult;
 
@@ -410,16 +362,15 @@ public class ImageQualityCamera2Activity extends AppCompatActivity implements Vi
                         else
                             exposureResult = ExposureResult.NORMAL;
 
-
+                        //blur check
                         double blurVal = calculateBurriness(blurMat);
-
-                        blurMat.release();
-
                         Log.d(TAG, "BLUR CHECK: "+ blurVal*Constants.BLUR_THRESHOLD + ", " + maxBlur);
-
                         final boolean isBlur = blurVal < maxBlur * Constants.BLUR_THRESHOLD;
 
 
+                        matchingMat.release();
+                        exposureMat.release();
+                        blurMat.release();
                         grayMat.release();
 
 
@@ -444,6 +395,7 @@ public class ImageQualityCamera2Activity extends AppCompatActivity implements Vi
                                     minDistanceUpdated = false;
                                 }
 
+                                //post-processing
                                 if (mCaptureProgressBar.getProgress() >= CAPTURE_COUNT) {
                                     Log.d(TAG, String.format("Average DISTANCE (MIN): %.2f", minDistance));
 
@@ -458,17 +410,16 @@ public class ImageQualityCamera2Activity extends AppCompatActivity implements Vi
                                     intent.putExtra("RDTCaptureByteArray", byteArray);
                                     intent.putExtra("timeTaken", System.currentTimeMillis() - timeTaken);
 
+                                    bestCapturedMat.release();
                                     rgbaMat.release();
                                     startActivity(intent);
-                                } else {
-                                    rgbaMat.release();
                                 }
-                            } else {
-                                rgbaMat.release();
                             }
                         } catch (Exception e) {
-                            rgbaMat.release();
+                            Log.d(TAG, e.getMessage());
                         }
+
+                        rgbaMat.release();
 
                         synchronized (lock) {
                             inProcess = false;
@@ -476,9 +427,6 @@ public class ImageQualityCamera2Activity extends AppCompatActivity implements Vi
                         }
                     }
                 });
-            } else {
-                Log.d(TAG, "OnImageAvailableListener: closed");
-                image.close();
             }
         }
 
@@ -634,17 +582,17 @@ public class ImageQualityCamera2Activity extends AppCompatActivity implements Vi
                 for (Size size: Arrays.asList(map.getOutputSizes(ImageFormat.YUV_420_888))) {
                     Log.d(TAG, "Available Sizes: " + size.toString());
                     if (size.getWidth()*9 == size.getHeight()*16) { //Preview surface ratio is 16:9
-                        double currDiff = (CAMERA2_PREVIEW_SIZE.height * CAMERA2_PREVIEW_SIZE.width) - closestPreviewSize.getHeight() * closestPreviewSize.getWidth();
-                        double newDiff = (CAMERA2_PREVIEW_SIZE.height * CAMERA2_PREVIEW_SIZE.width) - size.getHeight() * size.getWidth();
+                        double currPreviewDiff = (CAMERA2_PREVIEW_SIZE.height * CAMERA2_PREVIEW_SIZE.width) - closestPreviewSize.getHeight() * closestPreviewSize.getWidth();
+                        double newPreviewDiff = (CAMERA2_PREVIEW_SIZE.height * CAMERA2_PREVIEW_SIZE.width) - size.getHeight() * size.getWidth();
 
-                        if (Math.abs(currDiff) > Math.abs(newDiff)) {
+                        double currImageDiff = (CAMERA2_IMAGE_SIZE.height * CAMERA2_IMAGE_SIZE.width) - closestImageSize.getHeight() * closestImageSize.getWidth();
+                        double newImageDiff = (CAMERA2_IMAGE_SIZE.height * CAMERA2_IMAGE_SIZE.width) - size.getHeight() * size.getWidth();
+
+                        if (Math.abs(currPreviewDiff) > Math.abs(newPreviewDiff)) {
                             closestPreviewSize = size;
                         }
-                    } else if (size.getWidth()*3 == size.getHeight()*4) { //image surface ratio is 4:3
-                        double currDiff = (CAMERA2_IMAGE_SIZE.height * CAMERA2_IMAGE_SIZE.width) - closestImageSize.getHeight() * closestImageSize.getWidth();
-                        double newDiff = (CAMERA2_IMAGE_SIZE.height * CAMERA2_IMAGE_SIZE.width) - size.getHeight() * size.getWidth();
 
-                        if (Math.abs(currDiff) > Math.abs(newDiff)) {
+                        if (Math.abs(currImageDiff) > Math.abs(newImageDiff)) {
                             closestImageSize = size;
                         }
                     }
@@ -955,8 +903,8 @@ public class ImageQualityCamera2Activity extends AppCompatActivity implements Vi
     @Override
     public void onClick(View view) {
         switch (view.getId()) {
-            case R.id.picture: {
-                mCapture = true;
+            case R.id.viewport: {
+                updateRepeatingRequest();
                 break;
             }
         }
@@ -1028,6 +976,7 @@ public class ImageQualityCamera2Activity extends AppCompatActivity implements Vi
         mRefImg.release();
         mRefDescriptor.release();
         mRefKeypoints.release();
+        bestCapturedMat.release();
     }
 
     private void setProgressUI (State CurrentState) {
@@ -1355,159 +1304,5 @@ public class ImageQualityCamera2Activity extends AppCompatActivity implements Vi
         histogramRanges.release();
         hist.release();
         return mBuff;
-    }
-
-    private class ImageQualityCheckTask extends AsyncTask<Image, Integer, Mat> {
-        private RDTMathchingTask machingTask = new RDTMathchingTask();
-        private BlurCheckTask blurTask = new BlurCheckTask();
-        private ExposureCheckTask exposureCheckTask = new ExposureCheckTask();
-
-        private class RDTMathchingTask extends AsyncTask<Mat, Integer, boolean[]> {
-
-            @Override
-            protected boolean[] doInBackground(Mat... mats) {
-                Mat grayMat = mats[0];
-                long startTime = System.currentTimeMillis();
-                //Mat grayMat = mats[0].submat(new Rect((int)(Constants.CAMERA2_IMAGE_SIZE.width/4), (int)(Constants.CAMERA2_IMAGE_SIZE.height/4), (int)(Constants.CAMERA2_IMAGE_SIZE.width*Constants.VIEWPORT_SCALE), (int)(Constants.CAMERA2_IMAGE_SIZE.height*Constants.VIEWPORT_SCALE)));
-                grayMat = grayMat.submat(new Rect((int)(Constants.CAMERA2_IMAGE_SIZE.height/4), (int)(Constants.CAMERA2_IMAGE_SIZE.width/4), (int)(Constants.CAMERA2_IMAGE_SIZE.height*Constants.VIEWPORT_SCALE), (int)(Constants.CAMERA2_IMAGE_SIZE.width*Constants.VIEWPORT_SCALE)));
-
-
-                //MatOfPoint2f approx = detectRDT(mats[0].submat(new Rect((int)(CAMERA2_IMAGE_SIZE.width/4), (int)(CAMERA2_IMAGE_SIZE.height/4), (int)(CAMERA2_IMAGE_SIZE.width*VIEWPORT_SCALE), (int)(CAMERA2_IMAGE_SIZE.height*VIEWPORT_SCALE))));
-                MatOfPoint2f approx = detectRDT(grayMat);
-                mats[0].release();
-                grayMat.release();
-
-
-                boolean[] results = checkPositionAndSize(approx, true);
-
-                approx.release();
-
-                Log.d(TAG, String.format("FeatureMatchingTask TIME: %d", System.currentTimeMillis() - startTime));
-
-                return results;
-            }
-        }
-
-        private class BlurCheckTask extends AsyncTask<Mat, Integer, Boolean> {
-
-            @Override
-            protected Boolean doInBackground(Mat... mats) {
-                double blurVal = calculateBurriness(mats[0]);
-
-                mats[0].release();
-
-                Log.d(TAG, "BLUR CHECK: "+ blurVal*Constants.BLUR_THRESHOLD + ", " + maxBlur);
-
-                return blurVal < maxBlur * Constants.BLUR_THRESHOLD;
-            }
-        }
-
-        private class ExposureCheckTask extends AsyncTask<Mat, Integer, ExposureResult> {
-
-            @Override
-            protected ExposureResult doInBackground(Mat... mats) {
-                float[] histogram = calculateHistogram(mats[0]);
-
-                int maxWhite = 0;
-                float whiteCount = 0;
-
-                for (int i = 0; i < histogram.length; i++) {
-                    if (histogram[i] > 0) {
-                        maxWhite = i;
-                    }
-
-                    if (i == histogram.length-1) {
-                        whiteCount = histogram[i];
-                    }
-                }
-                Log.d(TAG, "rgbaMat 2 Size: "+mats[0].size().toString());
-
-                mats[0].release();
-
-                if (maxWhite >= Constants.OVER_EXP_THRESHOLD && whiteCount > Constants.OVER_EXP_WHITE_COUNT)
-                    return ExposureResult.OVER_EXPOSED;
-                else if (maxWhite < Constants.UNDER_EXP_THRESHOLD)
-                    return ExposureResult.UNDER_EXPOSED;
-                else
-                    return ExposureResult.NORMAL;
-            }
-        }
-
-
-        @Override
-        protected Mat doInBackground(Image... images) {
-            Mat rgbaMat = ImageUtil.imageToRGBMat(images[0]);
-            Mat grayMat = new Mat();
-            Imgproc.cvtColor(rgbaMat, grayMat, Imgproc.COLOR_RGBA2GRAY);
-
-            Log.d(TAG, "rgbaMat 0 Size: "+rgbaMat.size().toString() + ", grayMat 1 Size: "+grayMat.size().toString());
-
-            Mat matchingMat = grayMat.clone();
-            Mat blurMat = rgbaMat.clone();
-            Mat exposureMat = grayMat.clone();
-
-            machingTask.execute(matchingMat);
-            blurTask.execute(blurMat);
-            exposureCheckTask.execute(exposureMat);
-
-            grayMat.release();
-
-            return rgbaMat;
-        }
-
-        @Override
-        protected void onPostExecute(Mat rgbaMat) {
-            super.onPostExecute(rgbaMat);
-
-            try {
-                final boolean[] isCorrectPosSize = machingTask.get();
-                final boolean isBlur = blurTask.get();
-                ExposureResult exposureResult = exposureCheckTask.get();
-                final boolean isOverExposed = exposureResult == ExposureResult.OVER_EXPOSED;
-                final boolean isUnderExposed = exposureResult == ExposureResult.UNDER_EXPOSED;
-                final boolean isShadow = false;
-
-
-                runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        displayQualityResult(isCorrectPosSize, isBlur, isOverExposed, isUnderExposed, isShadow);
-                    }
-                });
-
-                if (isCorrectPosSize[0] && isCorrectPosSize[1] && isCorrectPosSize[2] && !isBlur && !isOverExposed && !isUnderExposed) {
-                    mCaptureProgressBar.incrementProgressBy(1);
-
-                    if (minDistanceUpdated) {
-                        bestCapturedMat = rgbaMat.clone();
-                        minDistanceUpdated = false;
-                    }
-
-                    if (mCaptureProgressBar.getProgress() >= CAPTURE_COUNT) {
-                        Log.d(TAG, String.format("Average DISTANCE (MIN): %.2f", minDistance));
-
-                        setNextState(mCurrentState);
-                        setProgressUI(mCurrentState);
-
-                        Log.d(TAG, "rgbaMat 5 Size: " + bestCapturedMat.size().toString() + ", rect size: " + new Rect((int) (Constants.CAMERA2_IMAGE_SIZE.width / 5), (int) (Constants.CAMERA2_IMAGE_SIZE.height / 5), (int) (Constants.CAMERA2_IMAGE_SIZE.width * 0.6), (int) (Constants.CAMERA2_IMAGE_SIZE.height * 0.6)).size().toString());
-                        byte[] byteArray = ImageUtil.matToRotatedByteArray(bestCapturedMat.submat(new Rect((int) (Constants.CAMERA2_IMAGE_SIZE.width / 5), (int) (Constants.CAMERA2_IMAGE_SIZE.height / 5), (int) (Constants.CAMERA2_IMAGE_SIZE.width * 0.6), (int) (Constants.CAMERA2_IMAGE_SIZE.height * 0.6))));
-
-                        Intent intent = new Intent(ImageQualityCamera2Activity.this, ImageResultActivity.class);
-                        intent.addFlags(Intent.FLAG_ACTIVITY_FORWARD_RESULT);
-                        intent.putExtra("RDTCaptureByteArray", byteArray);
-                        intent.putExtra("timeTaken", System.currentTimeMillis() - timeTaken);
-
-                        rgbaMat.release();
-                        startActivity(intent);
-                    } else {
-                        rgbaMat.release();
-                    }
-                } else {
-                    rgbaMat.release();
-                }
-            } catch (Exception e) {
-                rgbaMat.release();
-            }
-        }
     }
 }

@@ -25,7 +25,7 @@ public final class Constants {
     public static Scalar RDT_COLOR_HSV = new Scalar(30, 21, 204, 0.0);
 
     public static double SIZE_THRESHOLD = 0.2;
-    public static double POSITION_THRESHOLD = 0.2;
+    public static double POSITION_THRESHOLD = 0.1;
 
     public static int CALIBRATION_FRAME_COUNTER = 1;
     public static int FEATURE_MATCHING_FRAME_COUNTER = 0;
@@ -33,7 +33,7 @@ public final class Constants {
 
     public static Size PREVIEW_SIZE = new Size(960, 720);
     public static Size CAMERA2_PREVIEW_SIZE = new Size(1280, 720);
-    public static Size CAMERA2_IMAGE_SIZE = new Size(800, 600);
+    public static Size CAMERA2_IMAGE_SIZE = new Size(960, 540);
     public static double VIEWPORT_SCALE = 0.50;
 
     public static String LANGUAGE = "en";
