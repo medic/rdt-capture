@@ -32,6 +32,8 @@ public final class Constants {
     public static int CAPTURE_COUNT = 3;
 
     public static Size PREVIEW_SIZE = new Size(960, 720);
+    public static Size CAMERA2_PREVIEW_SIZE = new Size(1280, 720);
+    public static Size CAMERA2_IMAGE_SIZE = new Size(800, 600);
     public static double VIEWPORT_SCALE = 0.50;
 
     public static String LANGUAGE = "en";

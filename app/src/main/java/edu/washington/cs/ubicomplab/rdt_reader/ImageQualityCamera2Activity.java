@@ -28,6 +28,7 @@ import android.media.Image;
 import android.media.ImageReader;
 import android.net.Uri;
 import android.os.AsyncTask;
+import android.os.Build;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.support.annotation.NonNull;
@@ -86,7 +87,9 @@ import java.util.List;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 
+import static edu.washington.cs.ubicomplab.rdt_reader.Constants.CAMERA2_PREVIEW_SIZE;
 import static edu.washington.cs.ubicomplab.rdt_reader.Constants.CAPTURE_COUNT;
+import static edu.washington.cs.ubicomplab.rdt_reader.Constants.CAMERA2_IMAGE_SIZE;
 import static edu.washington.cs.ubicomplab.rdt_reader.Constants.TAG;
 
 public class ImageQualityCamera2Activity extends AppCompatActivity implements View.OnClickListener, ActivityCompat.OnRequestPermissionsResultCallback {
@@ -313,13 +316,46 @@ public class ImageQualityCamera2Activity extends AppCompatActivity implements Vi
             }
 
             Log.d(TAG, "OnImageAvailableListener: " + System.currentTimeMillis());
+            if (mCapture) {
+                mBackgroundHandler.post(new Runnable() {
+                    @Override
+                    public void run() {
+                        Mat rgbMat = ImageUtil.imageToRGBMat(image);
 
-            if (!running) {
+                        //byte[] byteArray = ImageUtil.imageToByteArray(image);
+
+                        //byte[] nv21 = ImageUtil.YUV_420_888toI420SemiPlanar(image.getPlanes()[0].getBuffer(), image.getPlanes()[1].getBuffer(), image.getPlanes()[2].getBuffer(), image.getWidth(), image.getHeight(), false);
+                        //byte[] byteArray = ImageUtil.NV21toJPEG(nv21, image.getWidth(), image.getHeight(), 100);
+
+                        //save the image to see
+                        try {
+                            byte[] byteArray = ImageUtil.matToRotatedByteArray(rgbMat);
+                            FileOutputStream fileOutputStream = new FileOutputStream(mFile);
+
+                            fileOutputStream.write(byteArray);
+
+                            fileOutputStream.flush();
+                            fileOutputStream.close();
+
+                            Toast.makeText(mActivity, "Image is successfully saved!", Toast.LENGTH_SHORT).show();
+                        } catch (Exception e) {
+                            Log.w("TAG", "Error saving image file: " + e.getMessage());
+                        }
+
+                    }
+                });
+                mCapture = false;
+
+                Log.d(TAG, "OnImageAvailableListener: captured");
+            } else if (!running) {
                 mOnImageAvailableHandler.post(new Runnable() {
                     @Override
                     public void run() {
                         //mQualityCheckTask = new ImageQualityCheckTask();
                         //mQualityCheckTask.execute(image);
+                        if (image == null) {
+                            return;
+                        }
 
                         synchronized (lock) {
                             inProcess = true;
@@ -329,16 +365,16 @@ public class ImageQualityCamera2Activity extends AppCompatActivity implements Vi
                         Mat grayMat = new Mat();
                         Imgproc.cvtColor(rgbaMat, grayMat, Imgproc.COLOR_RGBA2GRAY);
 
-                        Log.d(TAG, "rgbaMat 0 Size: "+rgbaMat.size().toString() + ", grayMat 1 Size: "+grayMat.size().toString());
+                        Rect cropRect = new Rect((int)(Constants.CAMERA2_IMAGE_SIZE.width/4), (int)(Constants.CAMERA2_IMAGE_SIZE.height/4), (int)(Constants.CAMERA2_IMAGE_SIZE.width*Constants.VIEWPORT_SCALE), (int)(Constants.CAMERA2_IMAGE_SIZE.height*Constants.VIEWPORT_SCALE));
 
-                        Rect cropRect = new Rect((int)(Constants.PREVIEW_SIZE.height/4), (int)(Constants.PREVIEW_SIZE.width/4), (int)(Constants.PREVIEW_SIZE.height*Constants.VIEWPORT_SCALE), (int)(Constants.PREVIEW_SIZE.width*Constants.VIEWPORT_SCALE));
+                        Log.d(TAG, "rgbaMat 0 Size: "+rgbaMat.size().toString() + ", grayMat 1 Size: "+grayMat.size().toString() + ", " + cropRect.toString());
 
                         Mat matchingMat = grayMat.submat(cropRect);
                         Mat blurMat = rgbaMat.submat(cropRect);
                         Mat exposureMat = grayMat.submat(cropRect);
 
 
-                        //MatOfPoint2f approx = detectRDT(mats[0].submat(new Rect((int)(PREVIEW_SIZE.width/4), (int)(PREVIEW_SIZE.height/4), (int)(PREVIEW_SIZE.width*VIEWPORT_SCALE), (int)(PREVIEW_SIZE.height*VIEWPORT_SCALE))));
+                        //MatOfPoint2f approx = detectRDT(mats[0].submat(new Rect((int)(CAMERA2_IMAGE_SIZE.width/4), (int)(CAMERA2_IMAGE_SIZE.height/4), (int)(CAMERA2_IMAGE_SIZE.width*VIEWPORT_SCALE), (int)(CAMERA2_IMAGE_SIZE.height*VIEWPORT_SCALE))));
                         MatOfPoint2f approx = detectRDT(matchingMat);
                         matchingMat.release();
                         grayMat.release();
@@ -414,8 +450,8 @@ public class ImageQualityCamera2Activity extends AppCompatActivity implements Vi
                                     setNextState(mCurrentState);
                                     setProgressUI(mCurrentState);
 
-                                    Log.d(TAG, "rgbaMat 5 Size: " + bestCapturedMat.size().toString() + ", rect size: " + new Rect((int) (Constants.PREVIEW_SIZE.width / 5), (int) (Constants.PREVIEW_SIZE.height / 5), (int) (Constants.PREVIEW_SIZE.width * 0.6), (int) (Constants.PREVIEW_SIZE.height * 0.6)).size().toString());
-                                    byte[] byteArray = ImageUtil.matToRotatedByteArray(bestCapturedMat.submat(new Rect((int) (Constants.PREVIEW_SIZE.width / 5), (int) (Constants.PREVIEW_SIZE.height / 5), (int) (Constants.PREVIEW_SIZE.width * 0.6), (int) (Constants.PREVIEW_SIZE.height * 0.6))));
+                                    Log.d(TAG, "rgbaMat 5 Size: " + bestCapturedMat.size().toString() + ", rect size: " + new Rect((int) (Constants.CAMERA2_IMAGE_SIZE.width / 5), (int) (Constants.CAMERA2_IMAGE_SIZE.height / 5), (int) (Constants.CAMERA2_IMAGE_SIZE.width * 0.6), (int) (Constants.CAMERA2_IMAGE_SIZE.height * 0.6)).size().toString());
+                                    byte[] byteArray = ImageUtil.matToRotatedByteArray(bestCapturedMat.submat(new Rect((int) (Constants.CAMERA2_IMAGE_SIZE.width / 5), (int) (Constants.CAMERA2_IMAGE_SIZE.height / 5), (int) (Constants.CAMERA2_IMAGE_SIZE.width * 0.6), (int) (Constants.CAMERA2_IMAGE_SIZE.height * 0.6))));
 
                                     Intent intent = new Intent(ImageQualityCamera2Activity.this, ImageResultActivity.class);
                                     intent.addFlags(Intent.FLAG_ACTIVITY_FORWARD_RESULT);
@@ -440,37 +476,6 @@ public class ImageQualityCamera2Activity extends AppCompatActivity implements Vi
                         }
                     }
                 });
-            } else if (mCapture) {
-                mBackgroundHandler.post(new Runnable() {
-                    @Override
-                    public void run() {
-                        Mat rgbMat = ImageUtil.imageToRGBMat(image);
-
-                        //byte[] byteArray = ImageUtil.imageToByteArray(image);
-
-                        //byte[] nv21 = ImageUtil.YUV_420_888toI420SemiPlanar(image.getPlanes()[0].getBuffer(), image.getPlanes()[1].getBuffer(), image.getPlanes()[2].getBuffer(), image.getWidth(), image.getHeight(), false);
-                        //byte[] byteArray = ImageUtil.NV21toJPEG(nv21, image.getWidth(), image.getHeight(), 100);
-
-                        //save the image to see
-                        try {
-                            byte[] byteArray = ImageUtil.matToRotatedByteArray(rgbMat);
-                            FileOutputStream fileOutputStream = new FileOutputStream(mFile);
-
-                            fileOutputStream.write(byteArray);
-
-                            fileOutputStream.flush();
-                            fileOutputStream.close();
-
-                            Toast.makeText(mActivity,"Image is successfully saved!", Toast.LENGTH_SHORT).show();
-                        } catch (Exception e) {
-                            Log.w("TAG", "Error saving image file: " + e.getMessage());
-                        }
-
-                    }
-                });
-                mCapture = false;
-
-                Log.d(TAG, "OnImageAvailableListener: captured");
             } else {
                 Log.d(TAG, "OnImageAvailableListener: closed");
                 image.close();
@@ -503,13 +508,18 @@ public class ImageQualityCamera2Activity extends AppCompatActivity implements Vi
     /**
      * A {@link CameraCaptureSession.CaptureCallback} that handles events related to JPEG capture.
      */
+
+    private int counter = 0;
     private CameraCaptureSession.CaptureCallback mCaptureCallback
             = new CameraCaptureSession.CaptureCallback() {
 
         private void process(CaptureResult result) {
             switch (mState) {
                 case STATE_PREVIEW: {
-                    updateRepeatingRequest();
+                    if (!Build.MODEL.equals("TECNO-W3")) {
+                        if (counter++%10 == 0)
+                        updateRepeatingRequest();
+                    }
                     break;
                 }
             }
@@ -545,38 +555,6 @@ public class ImageQualityCamera2Activity extends AppCompatActivity implements Vi
                     Toast.makeText(activity, text, Toast.LENGTH_SHORT).show();
                 }
             });
-        }
-    }
-
-    /**
-     * Given {@code choices} of {@code Size}s supported by a camera, chooses the smallest one whose
-     * width and height are at least as large as the respective requested values, and whose aspect
-     * ratio matches with the specified value.
-     *
-     * @param choices     The list of sizes that the camera supports for the intended output class
-     * @param width       The minimum desired width
-     * @param height      The minimum desired height
-     * @param aspectRatio The aspect ratio
-     * @return The optimal {@code Size}, or an arbitrary one if none were big enough
-     */
-    private static Size chooseOptimalSize(Size[] choices, int width, int height, Size aspectRatio) {
-        // Collect the supported resolutions that are at least as big as the preview Surface
-        List<Size> bigEnough = new ArrayList<>();
-        int w = aspectRatio.getWidth();
-        int h = aspectRatio.getHeight();
-        for (Size option : choices) {
-            if (option.getHeight() == option.getWidth() * h / w &&
-                    option.getWidth() >= width && option.getHeight() >= height) {
-                bigEnough.add(option);
-            }
-        }
-
-        // Pick the smallest of those, assuming we found any
-        if (bigEnough.size() > 0) {
-            return Collections.min(bigEnough, new CompareSizesByArea());
-        } else {
-            Log.e(TAG, "Couldn't find any suitable preview size");
-            return choices[0];
         }
     }
 
@@ -650,28 +628,41 @@ public class ImageQualityCamera2Activity extends AppCompatActivity implements Vi
                     continue;
                 }
 
+                // choose optimal size
+                Size closestPreviewSize = new Size(Integer.MAX_VALUE, (int)(Integer.MAX_VALUE*(9.0/16.0)));
+                Size closestImageSize = new Size(Integer.MAX_VALUE, (int)(Integer.MAX_VALUE*(3.0/4.0)));
+                for (Size size: Arrays.asList(map.getOutputSizes(ImageFormat.YUV_420_888))) {
+                    Log.d(TAG, "Available Sizes: " + size.toString());
+                    if (size.getWidth()*9 == size.getHeight()*16) { //Preview surface ratio is 16:9
+                        double currDiff = (CAMERA2_PREVIEW_SIZE.height * CAMERA2_PREVIEW_SIZE.width) - closestPreviewSize.getHeight() * closestPreviewSize.getWidth();
+                        double newDiff = (CAMERA2_PREVIEW_SIZE.height * CAMERA2_PREVIEW_SIZE.width) - size.getHeight() * size.getWidth();
 
-                // For still image captures, we use the largest available size.
-                Size largest = Collections.max(
-                        Arrays.asList(map.getOutputSizes(ImageFormat.JPEG)),
-                        new CompareSizesByArea());
+                        if (Math.abs(currDiff) > Math.abs(newDiff)) {
+                            closestPreviewSize = size;
+                        }
+                    } else if (size.getWidth()*3 == size.getHeight()*4) { //image surface ratio is 4:3
+                        double currDiff = (CAMERA2_IMAGE_SIZE.height * CAMERA2_IMAGE_SIZE.width) - closestImageSize.getHeight() * closestImageSize.getWidth();
+                        double newDiff = (CAMERA2_IMAGE_SIZE.height * CAMERA2_IMAGE_SIZE.width) - size.getHeight() * size.getWidth();
 
-                // For still image captures, we use the largest available size.
-                Size smallest = Collections.min(
-                        Arrays.asList(map.getOutputSizes(ImageFormat.JPEG)),
-                        new CompareSizesByArea());
+                        if (Math.abs(currDiff) > Math.abs(newDiff)) {
+                            closestImageSize = size;
+                        }
+                    }
+                }
 
-                // Danger, W.R.! Attempting to use too large a preview size could  exceed the camera
-                // bus' bandwidth limitation, resulting in gorgeous previews but the storage of
-                // garbage capture data.
-                //mPreviewSize = chooseOptimalSize(map.getOutputSizes(SurfaceTexture.class),
-                //        width, height, smallest);
+                Log.d(TAG, "Selected sizes: " + closestPreviewSize.toString() + ", " + closestImageSize.toString());
 
-                mPreviewSize = new Size(1280, 720);
-                mImageReader = ImageReader.newInstance(960, 720,
+                mPreviewSize = closestPreviewSize;
+                mImageReader = ImageReader.newInstance(closestImageSize.getWidth(), closestImageSize.getHeight(),
                         ImageFormat.YUV_420_888, /*maxImages*/2);
                 mImageReader.setOnImageAvailableListener(
                         mOnImageAvailableListener, mOnImageAvailableHandler);
+
+                Constants.CAMERA2_IMAGE_SIZE.width = closestImageSize.getWidth();
+                Constants.CAMERA2_IMAGE_SIZE.height = closestImageSize.getHeight();
+
+                Constants.CAMERA2_PREVIEW_SIZE.width = closestPreviewSize.getWidth();
+                Constants.CAMERA2_PREVIEW_SIZE.height = closestPreviewSize.getHeight();
 
                 // We fit the aspect ratio of TextureView to the size of preview we picked.
                 int orientation = getResources().getConfiguration().orientation;
@@ -965,7 +956,6 @@ public class ImageQualityCamera2Activity extends AppCompatActivity implements Vi
     public void onClick(View view) {
         switch (view.getId()) {
             case R.id.picture: {
-                //takePicture();
                 mCapture = true;
                 break;
             }
@@ -1022,7 +1012,7 @@ public class ImageQualityCamera2Activity extends AppCompatActivity implements Vi
         mMatcher = DescriptorMatcher.create(DescriptorMatcher.BRUTEFORCE_HAMMING);
         mRefImg = new Mat();
 
-        Bitmap bitmap = BitmapFactory.decodeResource(getApplicationContext().getResources(), R.drawable.sd_bioline_malaria_ag_pf_vertical);
+        Bitmap bitmap = BitmapFactory.decodeResource(getApplicationContext().getResources(), R.drawable.sd_bioline_malaria_ag_pf);
         Utils.bitmapToMat(bitmap, mRefImg);
         Imgproc.cvtColor(mRefImg, mRefImg, Imgproc.COLOR_RGB2GRAY);
         mRefDescriptor = new Mat();
@@ -1271,37 +1261,43 @@ public class ImageQualityCamera2Activity extends AppCompatActivity implements Vi
 
         RotatedRect rotatedRect = Imgproc.minAreaRect(approx);
         if (cropped)
-            rotatedRect.center = new Point(rotatedRect.center.x + Constants.PREVIEW_SIZE.width/4, rotatedRect.center.y + Constants.PREVIEW_SIZE.height/4);
+            rotatedRect.center = new Point(rotatedRect.center.x + Constants.CAMERA2_IMAGE_SIZE.width/4, rotatedRect.center.y + Constants.CAMERA2_IMAGE_SIZE.height/4);
 
         Point center = rotatedRect.center;
-        Point trueCenter = new Point(Constants.PREVIEW_SIZE.width/2, Constants.PREVIEW_SIZE.height/2);
+        Point trueCenter = new Point(Constants.CAMERA2_IMAGE_SIZE.width/2, Constants.CAMERA2_IMAGE_SIZE.height/2);
 
         boolean isUpright = rotatedRect.size.height > rotatedRect.size.width;
         double angle = 0;
         double height = 0;
+        double width = 0;
 
         if (isUpright) {
             angle = 90 - Math.abs(rotatedRect.angle);
             height = rotatedRect.size.height;
+            width = rotatedRect.size.width;
         } else {
             angle = Math.abs(rotatedRect.angle);
             height = rotatedRect.size.width;
+            width = rotatedRect.size.height;
         }
 
         boolean isCentered = center.x < trueCenter.x *(1+ Constants.POSITION_THRESHOLD) && center.x > trueCenter.x*(1- Constants.POSITION_THRESHOLD)
                 && center.y < trueCenter.y *(1+ Constants.POSITION_THRESHOLD) && center.y > trueCenter.y*(1- Constants.POSITION_THRESHOLD);
-        boolean isRightSize = height < Constants.PREVIEW_SIZE.width*Constants.VIEWPORT_SCALE*(1+Constants.SIZE_THRESHOLD) && height > Constants.PREVIEW_SIZE.height*Constants.VIEWPORT_SCALE*(1-Constants.SIZE_THRESHOLD);
+        boolean isRightSize = height < Constants.CAMERA2_IMAGE_SIZE.width*Constants.VIEWPORT_SCALE*(1+Constants.SIZE_THRESHOLD) && height > Constants.CAMERA2_IMAGE_SIZE.width*Constants.VIEWPORT_SCALE*(1-Constants.SIZE_THRESHOLD);
         boolean isOriented = angle < 90.0*Constants.POSITION_THRESHOLD;
 
         results[0] = isCentered;
         results[1] = isRightSize;
         results[2] = isOriented;
-        results[3] = height > Constants.PREVIEW_SIZE.width*Constants.VIEWPORT_SCALE*(1+Constants.SIZE_THRESHOLD); //large
-        results[4] = height < Constants.PREVIEW_SIZE.height*Constants.VIEWPORT_SCALE*(1-Constants.SIZE_THRESHOLD); //small
+        results[3] = height > Constants.CAMERA2_IMAGE_SIZE.width*Constants.VIEWPORT_SCALE*(1+Constants.SIZE_THRESHOLD); //large
+        results[4] = height < Constants.CAMERA2_IMAGE_SIZE.width*Constants.VIEWPORT_SCALE*(1-Constants.SIZE_THRESHOLD); //small
 
-        if (results[0] && results[1])
-            Log.d(TAG, String.format("POS: %.2f, %.2f, Angle: %.2f, Height: %.2f", center.x, center.y, angle, height));
-
+        if (height != 0) {
+            if (results[0] && results[1])
+                Log.d(TAG, String.format("------POS: %.2f, %.2f, Angle: %.2f, Height: %.2f, %.2f", center.x, center.y, angle, height, width));
+            else
+                Log.d(TAG, String.format("POS: %.2f, %.2f, Angle: %.2f, Height: %.2f, %.2f", center.x, center.y, angle, height, width));
+        }
         return results;
     }
 
@@ -1372,11 +1368,11 @@ public class ImageQualityCamera2Activity extends AppCompatActivity implements Vi
             protected boolean[] doInBackground(Mat... mats) {
                 Mat grayMat = mats[0];
                 long startTime = System.currentTimeMillis();
-                //Mat grayMat = mats[0].submat(new Rect((int)(Constants.PREVIEW_SIZE.width/4), (int)(Constants.PREVIEW_SIZE.height/4), (int)(Constants.PREVIEW_SIZE.width*Constants.VIEWPORT_SCALE), (int)(Constants.PREVIEW_SIZE.height*Constants.VIEWPORT_SCALE)));
-                grayMat = grayMat.submat(new Rect((int)(Constants.PREVIEW_SIZE.height/4), (int)(Constants.PREVIEW_SIZE.width/4), (int)(Constants.PREVIEW_SIZE.height*Constants.VIEWPORT_SCALE), (int)(Constants.PREVIEW_SIZE.width*Constants.VIEWPORT_SCALE)));
+                //Mat grayMat = mats[0].submat(new Rect((int)(Constants.CAMERA2_IMAGE_SIZE.width/4), (int)(Constants.CAMERA2_IMAGE_SIZE.height/4), (int)(Constants.CAMERA2_IMAGE_SIZE.width*Constants.VIEWPORT_SCALE), (int)(Constants.CAMERA2_IMAGE_SIZE.height*Constants.VIEWPORT_SCALE)));
+                grayMat = grayMat.submat(new Rect((int)(Constants.CAMERA2_IMAGE_SIZE.height/4), (int)(Constants.CAMERA2_IMAGE_SIZE.width/4), (int)(Constants.CAMERA2_IMAGE_SIZE.height*Constants.VIEWPORT_SCALE), (int)(Constants.CAMERA2_IMAGE_SIZE.width*Constants.VIEWPORT_SCALE)));
 
 
-                //MatOfPoint2f approx = detectRDT(mats[0].submat(new Rect((int)(PREVIEW_SIZE.width/4), (int)(PREVIEW_SIZE.height/4), (int)(PREVIEW_SIZE.width*VIEWPORT_SCALE), (int)(PREVIEW_SIZE.height*VIEWPORT_SCALE))));
+                //MatOfPoint2f approx = detectRDT(mats[0].submat(new Rect((int)(CAMERA2_IMAGE_SIZE.width/4), (int)(CAMERA2_IMAGE_SIZE.height/4), (int)(CAMERA2_IMAGE_SIZE.width*VIEWPORT_SCALE), (int)(CAMERA2_IMAGE_SIZE.height*VIEWPORT_SCALE))));
                 MatOfPoint2f approx = detectRDT(grayMat);
                 mats[0].release();
                 grayMat.release();
@@ -1493,8 +1489,8 @@ public class ImageQualityCamera2Activity extends AppCompatActivity implements Vi
                         setNextState(mCurrentState);
                         setProgressUI(mCurrentState);
 
-                        Log.d(TAG, "rgbaMat 5 Size: " + bestCapturedMat.size().toString() + ", rect size: " + new Rect((int) (Constants.PREVIEW_SIZE.width / 5), (int) (Constants.PREVIEW_SIZE.height / 5), (int) (Constants.PREVIEW_SIZE.width * 0.6), (int) (Constants.PREVIEW_SIZE.height * 0.6)).size().toString());
-                        byte[] byteArray = ImageUtil.matToRotatedByteArray(bestCapturedMat.submat(new Rect((int) (Constants.PREVIEW_SIZE.width / 5), (int) (Constants.PREVIEW_SIZE.height / 5), (int) (Constants.PREVIEW_SIZE.width * 0.6), (int) (Constants.PREVIEW_SIZE.height * 0.6))));
+                        Log.d(TAG, "rgbaMat 5 Size: " + bestCapturedMat.size().toString() + ", rect size: " + new Rect((int) (Constants.CAMERA2_IMAGE_SIZE.width / 5), (int) (Constants.CAMERA2_IMAGE_SIZE.height / 5), (int) (Constants.CAMERA2_IMAGE_SIZE.width * 0.6), (int) (Constants.CAMERA2_IMAGE_SIZE.height * 0.6)).size().toString());
+                        byte[] byteArray = ImageUtil.matToRotatedByteArray(bestCapturedMat.submat(new Rect((int) (Constants.CAMERA2_IMAGE_SIZE.width / 5), (int) (Constants.CAMERA2_IMAGE_SIZE.height / 5), (int) (Constants.CAMERA2_IMAGE_SIZE.width * 0.6), (int) (Constants.CAMERA2_IMAGE_SIZE.height * 0.6))));
 
                         Intent intent = new Intent(ImageQualityCamera2Activity.this, ImageResultActivity.class);
                         intent.addFlags(Intent.FLAG_ACTIVITY_FORWARD_RESULT);
