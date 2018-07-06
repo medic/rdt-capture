@@ -2,31 +2,28 @@
 <android.support.constraint.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:custom="http://schemas.android.com/apk/res-auto"
-    xmlns:opencv="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     tools:context="edu.washington.cs.ubicomplab.rdt_reader.ImageQualityActivity">
 
-    <edu.washington.cs.ubicomplab.rdt_reader.RDTCamera2View
-        android:id="@+id/img_quality_check_camera_view"
-        android:layout_width="fill_parent"
-        android:layout_height="fill_parent"
-        android:visibility="gone"
-        opencv:camera_id="any"
-        opencv:show_fps="true" />
+    <edu.washington.cs.ubicomplab.rdt_reader.AutoFitTextureView
 
-    <View
-        android:id="@+id/cameraBackground"
+        android:id="@+id/texture"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:background="@color/gray_overlay"
-        android:visibility="visible" />
+        android:layout_alignParentStart="true"
+        android:layout_alignParentTop="true"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
 
     <TextView
         android:id="@+id/img_quality_feedback_view"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
+        android:background="@color/transparent_overlay"
         android:gravity="bottom"
         android:paddingHorizontal="5dp"
         android:paddingVertical="5dp"
@@ -34,14 +31,13 @@
         android:textColor="@android:color/white"
         android:textSize="20sp" />
 
-
-    <edu.washington.cs.ubicomplab.rdt_reader.Viewport
+    <edu.washington.cs.ubicomplab.rdt_reader.ViewportUsingBitmap
         android:id="@+id/img_quality_check_viewport"
         android:layout_width="fill_parent"
         android:layout_height="fill_parent"
         android:layout_weight=".5"
-        android:background="@color/black_overlay"
-        custom:heightScale="0.55"
+        android:background="@color/transparent_overlay"
+        custom:heightScale="0.5"
         custom:widthScale="0.35" />
 
     <View

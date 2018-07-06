@@ -13,7 +13,6 @@ import android.os.Bundle;
 import android.util.DisplayMetrics;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.view.MotionEvent;
 import android.view.View;
 import android.widget.Button;
 
@@ -111,7 +110,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             Intent intent = new Intent(this, ImageQualityActivity.class);
             startActivity(intent);
         } else if (view.getId() == R.id.camera2TestButton) {
-            Intent intent = new Intent(this, ImageQualityCamera2Activity.class);
+            Intent intent = new Intent(this, ImageQualityOpencvActivity.class);
             startActivity(intent);
         } else if (view.getId() == R.id.settingsButton) {
             SettingDialogFragment dialog = new SettingDialogFragment();
