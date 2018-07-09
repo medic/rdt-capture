@@ -32,25 +32,34 @@
         <activity
             android:name=".MainActivity"
             android:configChanges="keyboardHidden|orientation"
-            android:screenOrientation="portrait" android:noHistory="true">
+            android:noHistory="true"
+            android:screenOrientation="portrait">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity android:name=".ResultActivity" android:noHistory="true"/>
-        <activity android:name=".ExpirationDateActivity" android:noHistory="true"/>
-        <activity android:name=".ImageQualityActivity" android:noHistory="true" android:exported="true" android:configChanges="keyboardHidden|orientation"
-                android:screenOrientation="portrait">
+        <activity
+            android:name=".ExpirationDateActivity"
+            android:noHistory="true" />
+        <activity
+            android:name=".ImageQualityActivity"
+            android:theme="@style/Theme.AppCompat.NoActionBar"
+            android:configChanges="keyboardHidden|orientation"
+            android:exported="true"
+            android:noHistory="true"
+            android:screenOrientation="portrait">
             <intent-filter>
                 <category android:name="android.intent.category.DEFAULT"/>
                 <action android:name="medic.mrdt.verify"/>
             </intent-filter>
         </activity>
-        <activity android:name=".Camera2TestActivity" android:noHistory="true" />
-        <activity android:name=".ImageResultActivity" android:noHistory="true" android:configChanges="keyboardHidden|orientation"
-            android:screenOrientation="portrait"/>
+        <activity
+            android:name=".ImageResultActivity"
+            android:configChanges="keyboardHidden|orientation"
+            android:noHistory="true"
+            android:screenOrientation="portrait" />
     </application>
 
 </manifest>
