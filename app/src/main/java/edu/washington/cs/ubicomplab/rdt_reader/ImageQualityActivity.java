@@ -103,8 +103,14 @@ public class ImageQualityActivity extends AppCompatActivity implements View.OnCl
     private double maxBlur = Double.MAX_VALUE;
     private ViewportUsingBitmap mViewport;
 
+    private FocusState mFocusState = FocusState.INACTIVE;
+
     private enum State {
         QUALITY_CHECK, FINAL_CHECK
+    }
+
+    private enum FocusState {
+        INACTIVE, FOCUSING, FOCUSED, UNFOCUSED
     }
 
     private enum ExposureResult {
@@ -154,10 +160,6 @@ public class ImageQualityActivity extends AppCompatActivity implements View.OnCl
      */
     private static final int STATE_PREVIEW = 0;
 
-    /**
-     * Camera state: Waiting for the focus to be locked.
-     */
-    private static final int STATE_WAITING_LOCK = 1;
 
 
     /**
@@ -267,7 +269,8 @@ public class ImageQualityActivity extends AppCompatActivity implements View.OnCl
     private ImageReader mImageReader;
 
     private boolean inProcess = false;
-    Object lock = new Object();
+    final Object lock = new Object();
+    final Object focusStateLock = new Object();
 
     /**
      * This a callback object for the {@link ImageReader}. "onImageAvailable" will be called when a
@@ -278,158 +281,159 @@ public class ImageQualityActivity extends AppCompatActivity implements View.OnCl
 
         @Override
         public void onImageAvailable(ImageReader reader) {
-            final boolean running;
+            if (reader == null) {
+                return;
+            }
+
+            final Image image = reader.acquireLatestImage();
+            Log.d(TAG, "OnImageAvailableListener: image acquired! " + System.currentTimeMillis());
+
+            if (image == null) {
+                return;
+            }
+
+            synchronized (focusStateLock) {
+                Log.d(TAG, "LOCAL FOCUS STATE: " + mFocusState + ", " + FocusState.FOCUSED);
+                if (mFocusState != FocusState.FOCUSED) {
+                    image.close();
+                    return;
+                }
+            }
 
             synchronized (lock) {
-                running = inProcess;
+                if (inProcess) {
+                    image.close();
+                    return;
+                }
             }
 
-            if (!running) {
-                mOnImageAvailableHandler.post(new Runnable() {
-                    @Override
-                    public void run() {
-                        synchronized (lock) {
-                            inProcess = true;
+            mOnImageAvailableHandler.post(new Runnable() {
+                @Override
+                public void run() {
+                    synchronized (lock) {
+                        inProcess = true;
+                    }
+
+                    //image pre-processing
+                    Mat rgbaMat = ImageUtil.imageToRGBMat(image);
+                    Mat grayMat = new Mat();
+                    Imgproc.cvtColor(rgbaMat, grayMat, Imgproc.COLOR_RGBA2GRAY);
+
+                    Rect cropRect = new Rect((int)(Constants.CAMERA2_IMAGE_SIZE.width/4), (int)(Constants.CAMERA2_IMAGE_SIZE.height/4), (int)(Constants.CAMERA2_IMAGE_SIZE.width*Constants.VIEWPORT_SCALE), (int)(Constants.CAMERA2_IMAGE_SIZE.height*Constants.VIEWPORT_SCALE));
+
+                    Mat matchingMat = grayMat.submat(cropRect);
+                    Mat blurMat = rgbaMat.submat(cropRect);
+                    Mat exposureMat = grayMat.submat(cropRect);
+
+                    //size and position check
+                    MatOfPoint2f approx = detectRDT(matchingMat);
+                    final boolean[] isCorrectPosSize = checkPositionAndSize(approx, true);
+
+
+                    //exposure check
+                    float[] histogram = calculateHistogram(exposureMat);
+
+                    int maxWhite = 0;
+                    float whiteCount = 0;
+
+                    for (int i = 0; i < histogram.length; i++) {
+                        if (histogram[i] > 0) {
+                            maxWhite = i;
                         }
 
-                        if (mImageReader == null) {
-                            synchronized (lock) {
-                                inProcess = false;
-                            }
-                            return;
-                        }
-
-                        Image image = mImageReader.acquireLatestImage();
-                        Log.d(TAG, "OnImageAvailableListener: image acquired! " + System.currentTimeMillis());
-
-                        if (image == null) {
-                            synchronized (lock) {
-                                inProcess = false;
-                            }
-                            return;
-                        }
-
-                        //image pre-processing
-                        Mat rgbaMat = ImageUtil.imageToRGBMat(image);
-                        Mat grayMat = new Mat();
-                        Imgproc.cvtColor(rgbaMat, grayMat, Imgproc.COLOR_RGBA2GRAY);
-
-                        Rect cropRect = new Rect((int)(Constants.CAMERA2_IMAGE_SIZE.width/4), (int)(Constants.CAMERA2_IMAGE_SIZE.height/4), (int)(Constants.CAMERA2_IMAGE_SIZE.width*Constants.VIEWPORT_SCALE), (int)(Constants.CAMERA2_IMAGE_SIZE.height*Constants.VIEWPORT_SCALE));
-
-                        Mat matchingMat = grayMat.submat(cropRect);
-                        Mat blurMat = rgbaMat.submat(cropRect);
-                        Mat exposureMat = grayMat.submat(cropRect);
-
-                        //size and position check
-                        MatOfPoint2f approx = detectRDT(matchingMat);
-                        final boolean[] isCorrectPosSize = checkPositionAndSize(approx, true);
-
-
-                        //exposure check
-                        float[] histogram = calculateHistogram(exposureMat);
-
-                        int maxWhite = 0;
-                        float whiteCount = 0;
-
-                        for (int i = 0; i < histogram.length; i++) {
-                            if (histogram[i] > 0) {
-                                maxWhite = i;
-                            }
-
-                            if (i == histogram.length-1) {
-                                whiteCount = histogram[i];
-                            }
-                        }
-                        Log.d(TAG, "rgbaMat 2 Size: "+exposureMat.size().toString());
-
-
-                        ExposureResult exposureResult;
-
-                        if (maxWhite >= Constants.OVER_EXP_THRESHOLD && whiteCount > Constants.OVER_EXP_WHITE_COUNT)
-                            exposureResult = ExposureResult.OVER_EXPOSED;
-                        else if (maxWhite < Constants.UNDER_EXP_THRESHOLD)
-                            exposureResult = ExposureResult.UNDER_EXPOSED;
-                        else
-                            exposureResult = ExposureResult.NORMAL;
-
-                        //blur check
-                        double blurVal = calculateBlurriness(blurMat);
-                        Log.d(TAG, "BLUR CHECK: "+ blurVal*Constants.BLUR_THRESHOLD + ", " + maxBlur);
-                        final boolean isBlur = blurVal < maxBlur * Constants.BLUR_THRESHOLD;
-
-
-                        matchingMat.release();
-                        exposureMat.release();
-                        blurMat.release();
-                        grayMat.release();
-
-
-                        try {
-                            final boolean isOverExposed = exposureResult == ExposureResult.OVER_EXPOSED;
-                            final boolean isUnderExposed = exposureResult == ExposureResult.UNDER_EXPOSED;
-                            final boolean isShadow = false;
-
-
-                            runOnUiThread(new Runnable() {
-                                @Override
-                                public void run() {
-                                    displayQualityResult(isCorrectPosSize, isBlur, isOverExposed, isUnderExposed, isShadow);
-                                }
-                            });
-
-                            if (isCorrectPosSize[0] && isCorrectPosSize[1] && isCorrectPosSize[2] && !isBlur && !isOverExposed && !isUnderExposed) {
-                                mCaptureProgressBar.incrementProgressBy(1);
-
-                                if (minDistanceUpdated) {
-                                    bestCapturedMat = rgbaMat.clone();
-                                    minDistanceUpdated = false;
-                                }
-
-                                //post-processing
-                                if (mCaptureProgressBar.getProgress() >= CAPTURE_COUNT) {
-                                    Log.d(TAG, String.format("Average DISTANCE (MIN): %.2f", minDistance));
-
-                                    setNextState(mCurrentState);
-                                    setProgressUI(mCurrentState);
-
-                                    Log.d(TAG, "rgbaMat 5 Size: " + bestCapturedMat.size().toString() + ", rect size: " + new Rect((int) (Constants.CAMERA2_IMAGE_SIZE.width / 5), (int) (Constants.CAMERA2_IMAGE_SIZE.height / 5), (int) (Constants.CAMERA2_IMAGE_SIZE.width * 0.6), (int) (Constants.CAMERA2_IMAGE_SIZE.height * 0.6)).size().toString());
-                                    byte[] byteArray = ImageUtil.matToRotatedByteArray(bestCapturedMat.submat(new Rect((int) (Constants.CAMERA2_IMAGE_SIZE.width / 5), (int) (Constants.CAMERA2_IMAGE_SIZE.height / 5), (int) (Constants.CAMERA2_IMAGE_SIZE.width * 0.6), (int) (Constants.CAMERA2_IMAGE_SIZE.height * 0.6))));
-
-                                    // If this activity was triggered by an external
-                                    // intent, then respond with the content of the image.
-                                    // Otherwise, handle the result inside this app.
-                                    if(isExternalIntent()) {
-                                        Intent i = new Intent();
-
-                                        i.putExtra("data", byteArray);
-
-                                        setResult(Activity.RESULT_OK, i);
-                                        finish();
-                                    } else {
-                                        Intent intent = new Intent(ImageQualityActivity.this, ImageResultActivity.class);
-                                        intent.addFlags(Intent.FLAG_ACTIVITY_FORWARD_RESULT);
-                                        intent.putExtra("RDTCaptureByteArray", byteArray);
-                                        intent.putExtra("timeTaken", System.currentTimeMillis() - timeTaken);
-
-                                        bestCapturedMat.release();
-                                        rgbaMat.release();
-                                        startActivity(intent);
-                                    }
-                                }
-                            }
-                        } catch (Exception e) {
-                            Log.d(TAG, e.getMessage());
-                        }
-
-                        rgbaMat.release();
-
-                        synchronized (lock) {
-                            inProcess = false;
-                            Log.d(TAG, "OnImageAvailableListener: computed");
+                        if (i == histogram.length-1) {
+                            whiteCount = histogram[i];
                         }
                     }
-                });
-            }
+                    Log.d(TAG, "rgbaMat 2 Size: "+exposureMat.size().toString());
+
+
+                    ExposureResult exposureResult;
+
+                    if (maxWhite >= Constants.OVER_EXP_THRESHOLD && whiteCount > Constants.OVER_EXP_WHITE_COUNT)
+                        exposureResult = ExposureResult.OVER_EXPOSED;
+                    else if (maxWhite < Constants.UNDER_EXP_THRESHOLD)
+                        exposureResult = ExposureResult.UNDER_EXPOSED;
+                    else
+                        exposureResult = ExposureResult.NORMAL;
+
+                    //blur check
+                    double blurVal = calculateBlurriness(blurMat);
+                    Log.d(TAG, "BLUR CHECK: "+ blurVal*Constants.BLUR_THRESHOLD + ", " + maxBlur);
+                    final boolean isBlur = blurVal < maxBlur * Constants.BLUR_THRESHOLD;
+
+
+                    matchingMat.release();
+                    exposureMat.release();
+                    blurMat.release();
+                    grayMat.release();
+
+
+                    try {
+                        final boolean isOverExposed = exposureResult == ExposureResult.OVER_EXPOSED;
+                        final boolean isUnderExposed = exposureResult == ExposureResult.UNDER_EXPOSED;
+                        final boolean isShadow = false;
+
+
+                        runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                displayQualityResult(isCorrectPosSize, isBlur, isOverExposed, isUnderExposed, isShadow);
+                            }
+                        });
+
+                        if (isCorrectPosSize[0] && isCorrectPosSize[1] && isCorrectPosSize[2] && !isBlur && !isOverExposed && !isUnderExposed) {
+                            mCaptureProgressBar.incrementProgressBy(1);
+
+                            if (minDistanceUpdated) {
+                                bestCapturedMat = rgbaMat.clone();
+                                minDistanceUpdated = false;
+                            }
+
+                            //post-processing
+                            if (mCaptureProgressBar.getProgress() >= CAPTURE_COUNT) {
+                                Log.d(TAG, String.format("Average DISTANCE (MIN): %.2f", minDistance));
+
+                                setNextState(mCurrentState);
+                                setProgressUI(mCurrentState);
+
+                                Log.d(TAG, "rgbaMat 5 Size: " + bestCapturedMat.size().toString() + ", rect size: " + new Rect((int) (Constants.CAMERA2_IMAGE_SIZE.width / 5), (int) (Constants.CAMERA2_IMAGE_SIZE.height / 5), (int) (Constants.CAMERA2_IMAGE_SIZE.width * 0.6), (int) (Constants.CAMERA2_IMAGE_SIZE.height * 0.6)).size().toString());
+                                byte[] byteArray = ImageUtil.matToRotatedByteArray(bestCapturedMat.submat(new Rect((int) (Constants.CAMERA2_IMAGE_SIZE.width / 5), (int) (Constants.CAMERA2_IMAGE_SIZE.height / 5), (int) (Constants.CAMERA2_IMAGE_SIZE.width * 0.6), (int) (Constants.CAMERA2_IMAGE_SIZE.height * 0.6))));
+
+                                // If this activity was triggered by an external
+                                // intent, then respond with the content of the image.
+                                // Otherwise, handle the result inside this app.
+                                if(isExternalIntent()) {
+                                    Intent i = new Intent();
+
+                                    i.putExtra("data", byteArray);
+
+                                    setResult(Activity.RESULT_OK, i);
+                                    finish();
+                                } else {
+                                    Intent intent = new Intent(ImageQualityActivity.this, ImageResultActivity.class);
+                                    intent.addFlags(Intent.FLAG_ACTIVITY_FORWARD_RESULT);
+                                    intent.putExtra("RDTCaptureByteArray", byteArray);
+                                    intent.putExtra("timeTaken", System.currentTimeMillis() - timeTaken);
+
+                                    bestCapturedMat.release();
+                                    rgbaMat.release();
+                                    startActivity(intent);
+                                }
+                            }
+                        }
+                    } catch (Exception e) {
+                        Log.d(TAG, e.getMessage());
+                    }
+
+                    rgbaMat.release();
+
+                    synchronized (lock) {
+                        inProcess = false;
+                        Log.d(TAG, "OnImageAvailableListener: computed");
+                    }
+                }
+            });
         }
 
     };
@@ -444,11 +448,6 @@ public class ImageQualityActivity extends AppCompatActivity implements View.OnCl
      */
     private CaptureRequest mPreviewRequest;
 
-    /**
-     * The current state of camera state for taking pictures.
-     *
-     */
-    private int mState = STATE_PREVIEW;
 
     /**
      * A {@link Semaphore} to prevent the app from exiting before closing the camera.
@@ -464,14 +463,40 @@ public class ImageQualityActivity extends AppCompatActivity implements View.OnCl
             = new CameraCaptureSession.CaptureCallback() {
 
         private void process(CaptureResult result) {
-            switch (mState) {
-                case STATE_PREVIEW: {
-                    if (!Build.MODEL.equals("TECNO-W3")) {
-                        if (counter++%10 == 0)
-                        updateRepeatingRequest();
+            synchronized (focusStateLock) {
+                FocusState previousFocusState = mFocusState;
+
+                if (result.get(CaptureResult.CONTROL_AF_MODE) == CaptureResult.CONTROL_AF_MODE_CONTINUOUS_PICTURE) {
+                    if (result.get(CaptureResult.CONTROL_AF_STATE) == CaptureResult.CONTROL_AF_STATE_PASSIVE_FOCUSED) {
+                        Log.d(TAG, "FOCUS STATE: focused");
+                        mFocusState = FocusState.FOCUSED;
+                    } else if (result.get(CaptureResult.CONTROL_AF_STATE) == CaptureResult.CONTROL_AF_STATE_PASSIVE_UNFOCUSED) {
+                        Log.d(TAG, "FOCUS STATE: unfocused");
+                        mFocusState = FocusState.UNFOCUSED;
+                    } else if (result.get(CaptureResult.CONTROL_AF_STATE) == CaptureResult.CONTROL_AF_STATE_INACTIVE) {
+                        Log.d(TAG, "FOCUS STATE: inactive");
+                        mFocusState = FocusState.INACTIVE;
+                    } else if (result.get(CaptureResult.CONTROL_AF_STATE) == CaptureResult.CONTROL_AF_STATE_PASSIVE_SCAN) {
+                        Log.d(TAG, "FOCUS STATE: focusing");
+                        mFocusState = FocusState.FOCUSING;
+                    } else {
+                        Log.d(TAG, "FOCUS STATE: unknown state " + result.get(CaptureResult.CONTROL_AF_STATE).toString());
                     }
-                    break;
+
+                    if (previousFocusState != mFocusState) {
+                        runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                displayQualityResult(new boolean[]{false, false, false, false, false, true}, true, true, true, true);
+                            }
+                        });
+                    }
                 }
+            }
+
+            if (!Build.MODEL.equals("TECNO-W3")) {
+                if (counter++%10 == 0)
+                    updateRepeatingRequest();
             }
         }
 
@@ -750,10 +775,6 @@ public class ImageQualityActivity extends AppCompatActivity implements View.OnCl
             CameraManager manager = (CameraManager) getSystemService(Context.CAMERA_SERVICE);
             CameraCharacteristics characteristics = manager.getCameraCharacteristics(mCameraId);
 
-            // Auto focus should be continuous for camera preview.
-            mPreviewRequestBuilder.set(CaptureRequest.CONTROL_AF_MODE,
-                    CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_PICTURE);
-
 
             final android.graphics.Rect sensor = characteristics.get(CameraCharacteristics.SENSOR_INFO_ACTIVE_ARRAY_SIZE);
             Log.d(TAG, "Sensor size: " + sensor.width() + ", " + sensor.height());
@@ -918,7 +939,7 @@ public class ImageQualityActivity extends AppCompatActivity implements View.OnCl
     }
 
     private void loadReference() {
-        mFeatureDetector = BRISK.create(90, 2, 1.0f);
+        mFeatureDetector = BRISK.create(90, 4, 1.0f);
         mMatcher = DescriptorMatcher.create(DescriptorMatcher.BRUTEFORCE_HAMMING);
         mRefImg = new Mat();
 
@@ -972,32 +993,49 @@ public class ImageQualityActivity extends AppCompatActivity implements View.OnCl
     }
 
     private void displayQualityResult (boolean[] isCorrectPosSize, boolean isBlur, boolean isOverExposed, boolean isUnderExposed, boolean isShadow) {
-        String message = String.format(getResources().getString(R.string.quality_msg_format), isCorrectPosSize[0] && isCorrectPosSize[1] && isCorrectPosSize[2] ? Constants.OK: Constants.NOT_OK,
-                !isBlur ? Constants.OK : Constants.NOT_OK,
-                !isOverExposed && !isUnderExposed ? Constants.OK : (isOverExposed ? getResources().getString(R.string.over_exposed_msg) + Constants.NOT_OK : getResources().getString(R.string.under_exposed_msg) + Constants.NOT_OK),
-                !isShadow ? Constants.OK : Constants.NOT_OK);
+        FocusState currFocusState;
 
-        //mInstructionText.setText("");
-
-        if (isCorrectPosSize[1] && isCorrectPosSize[0] & isCorrectPosSize[2]) {
-            mInstructionText.setText("RDT at the center!");
-        } else if (!isCorrectPosSize[1] && isCorrectPosSize[3]) {
-            mInstructionText.setText(getResources().getString(R.string.instruction_too_large));
-        } else if (!isCorrectPosSize[1] && isCorrectPosSize[4]) {
-            mInstructionText.setText(getResources().getString(R.string.instruction_too_small));
-        } else if (isCorrectPosSize[1] && !isCorrectPosSize[0]) {
-            mInstructionText.setText(getResources().getString(R.string.instruction_pos));
+        synchronized (focusStateLock) {
+            currFocusState = mFocusState;
         }
 
-        mImageQualityFeedbackView.setText(Html.fromHtml(message));
-        if (isCorrectPosSize[0] && isCorrectPosSize[1] && isCorrectPosSize[2] && !isBlur && !isOverExposed && !isUnderExposed && !isShadow) {
-            if (mViewport.getBackgroundColorId() != R.color.green_overlay) {
-                mViewport.setBackgroundColoId(R.color.green_overlay);
+        if (currFocusState == FocusState.FOCUSED) {
+            String message = String.format(getResources().getString(R.string.quality_msg_format), isCorrectPosSize[0] && isCorrectPosSize[1] && isCorrectPosSize[2] ? Constants.OK : Constants.NOT_OK,
+                    !isBlur ? Constants.OK : Constants.NOT_OK,
+                    !isOverExposed && !isUnderExposed ? Constants.OK : (isOverExposed ? getResources().getString(R.string.over_exposed_msg) + Constants.NOT_OK : getResources().getString(R.string.under_exposed_msg) + Constants.NOT_OK),
+                    !isShadow ? Constants.OK : Constants.NOT_OK);
+
+            if (!isCorrectPosSize[5]) {
+                if (isCorrectPosSize[1] && isCorrectPosSize[0] & isCorrectPosSize[2]) {
+                    mInstructionText.setText(getResources().getText(R.string.instruction_detected));
+                } else if (!isCorrectPosSize[0] || (!isCorrectPosSize[1] && isCorrectPosSize[3])) {
+                    mInstructionText.setText(getResources().getString(R.string.instruction_pos));
+                } else if (!isCorrectPosSize[1] && isCorrectPosSize[4]) {
+                    mInstructionText.setText(getResources().getString(R.string.instruction_too_small));
+                }
+            } else {
+                mInstructionText.setText(getResources().getString(R.string.instruction_pos));
             }
-        } else {
-            if (mViewport.getBackgroundColorId() != R.color.red_overlay) {
-                mViewport.setBackgroundColoId(R.color.red_overlay);
+
+            mImageQualityFeedbackView.setText(Html.fromHtml(message));
+            if (isCorrectPosSize[0] && isCorrectPosSize[1] && isCorrectPosSize[2] && !isBlur && !isOverExposed && !isUnderExposed && !isShadow) {
+                if (mViewport.getBackgroundColorId() != R.color.green_overlay) {
+                    mViewport.setBackgroundColoId(R.color.green_overlay);
+                }
+            } else {
+                if (mViewport.getBackgroundColorId() != R.color.red_overlay) {
+                    mViewport.setBackgroundColoId(R.color.red_overlay);
+                }
             }
+        } else if (currFocusState == FocusState.INACTIVE) {
+            mInstructionText.setText(getResources().getString(R.string.instruction_pos));
+            mViewport.setBackgroundColoId(R.color.red_overlay);
+        } else if (currFocusState == FocusState.UNFOCUSED) {
+            mInstructionText.setText(getResources().getString(R.string.instruction_unfocused));
+            mViewport.setBackgroundColoId(R.color.red_overlay);
+        } else if (currFocusState == FocusState.FOCUSING) {
+            mInstructionText.setText(getResources().getString(R.string.instruction_focusing));
+            mViewport.setBackgroundColoId(R.color.red_overlay);
         }
     }
 
@@ -1166,7 +1204,7 @@ public class ImageQualityActivity extends AppCompatActivity implements View.OnCl
     }
 
     private boolean[] checkPositionAndSize (MatOfPoint2f approx, boolean cropped) {
-        boolean results[] = {false, false, false, false, false};
+        boolean results[] = {false, false, false, false, false, true};
 
         if (approx.total() < 1)
             return results;
@@ -1198,11 +1236,12 @@ public class ImageQualityActivity extends AppCompatActivity implements View.OnCl
         boolean isRightSize = height < Constants.CAMERA2_IMAGE_SIZE.width*Constants.VIEWPORT_SCALE*(1+Constants.SIZE_THRESHOLD) && height > Constants.CAMERA2_IMAGE_SIZE.width*Constants.VIEWPORT_SCALE*(1-Constants.SIZE_THRESHOLD);
         boolean isOriented = angle < 90.0*Constants.POSITION_THRESHOLD;
 
-        results[0] = isCentered;
+        results[0] = isCentered && height > Constants.CAMERA2_IMAGE_SIZE.width*Constants.VIEWPORT_SCALE/5;
         results[1] = isRightSize;
         results[2] = isOriented;
         results[3] = height > Constants.CAMERA2_IMAGE_SIZE.width*Constants.VIEWPORT_SCALE*(1+Constants.SIZE_THRESHOLD); //large
         results[4] = height < Constants.CAMERA2_IMAGE_SIZE.width*Constants.VIEWPORT_SCALE*(1-Constants.SIZE_THRESHOLD); //small
+        results[5] = height == 0;
 
         if (height != 0) {
             if (results[0] && results[1])

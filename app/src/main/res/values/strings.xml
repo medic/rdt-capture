@@ -5,9 +5,12 @@
     <string name="progress_initialization">Stay still…</string>
     <string name="progress_final">"Captured! Analyzing the image…"</string>
     <string name="instruction">Place the RDT inside the rectangle.</string>
+    <string name="instruction_detected">RDT at the center!</string>
     <string name="instruction_pos"><![CDATA[Fit RDT to the rectangle. \nPlace RDT at the center.]]></string>
     <string name="instruction_too_small"><![CDATA[Fit RDT to the rectangle. \nMove closer.]]></string>
     <string name="instruction_too_large"><![CDATA[Fit RDT to the rectangle. \nMove further away.]]></string>
+    <string name="instruction_focusing"><![CDATA[Fit RDT to the rectangle. \nCamera is focusing. \nStay still.]]></string>
+    <string name="instruction_unfocused"><![CDATA[Fit RDT to the rectangle. \nCamera is not focused. \nMove further away.]]></string>
     <string name="instruction_bright">Move RDT inside the rectangle. </string>
     <string name="instruction_dark">Place the RDT inside the rectangle.</string>
     <string name="instruction_blur">Place the RDT inside the rectangle.</string>
