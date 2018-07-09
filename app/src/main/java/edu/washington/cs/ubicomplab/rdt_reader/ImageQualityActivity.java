@@ -938,7 +938,8 @@ public class ImageQualityActivity extends AppCompatActivity implements View.OnCl
         mRefImg.release();
         mRefDescriptor.release();
         mRefKeypoints.release();
-        bestCapturedMat.release();
+        if (bestCapturedMat != null)
+            bestCapturedMat.release();
     }
 
     private void setProgressUI (State CurrentState) {
