@@ -104,6 +104,8 @@ public class ImageQualityActivity extends AppCompatActivity implements View.OnCl
     private ViewportUsingBitmap mViewport;
 
     private FocusState mFocusState = FocusState.INACTIVE;
+    private int mMoveCloserCount = 0;
+    public boolean isPostProcessed = false;
 
     private enum State {
         QUALITY_CHECK, FINAL_CHECK
@@ -370,55 +372,58 @@ public class ImageQualityActivity extends AppCompatActivity implements View.OnCl
 
 
                     try {
-                        final boolean isOverExposed = exposureResult == ExposureResult.OVER_EXPOSED;
-                        final boolean isUnderExposed = exposureResult == ExposureResult.UNDER_EXPOSED;
-                        final boolean isShadow = false;
+                        if (!isPostProcessed) {
+                            final boolean isOverExposed = exposureResult == ExposureResult.OVER_EXPOSED;
+                            final boolean isUnderExposed = exposureResult == ExposureResult.UNDER_EXPOSED;
+                            final boolean isShadow = false;
 
 
-                        runOnUiThread(new Runnable() {
-                            @Override
-                            public void run() {
-                                displayQualityResult(isCorrectPosSize, isBlur, isOverExposed, isUnderExposed, isShadow);
-                            }
-                        });
+                            runOnUiThread(new Runnable() {
+                                @Override
+                                public void run() {
+                                    displayQualityResult(isCorrectPosSize, isBlur, isOverExposed, isUnderExposed, isShadow);
+                                }
+                            });
 
-                        if (isCorrectPosSize[0] && isCorrectPosSize[1] && isCorrectPosSize[2] && !isBlur && !isOverExposed && !isUnderExposed) {
-                            mCaptureProgressBar.incrementProgressBy(1);
+                            if (isCorrectPosSize[0] && isCorrectPosSize[1] && isCorrectPosSize[2] && !isBlur && !isOverExposed && !isUnderExposed) {
+                                mCaptureProgressBar.incrementProgressBy(1);
 
-                            if (minDistanceUpdated) {
-                                bestCapturedMat = rgbaMat.clone();
-                                minDistanceUpdated = false;
-                            }
+                                if (minDistanceUpdated) {
+                                    bestCapturedMat = rgbaMat.clone();
+                                    minDistanceUpdated = false;
+                                }
 
-                            //post-processing
-                            if (mCaptureProgressBar.getProgress() >= CAPTURE_COUNT) {
-                                Log.d(TAG, String.format("Average DISTANCE (MIN): %.2f", minDistance));
+                                //post-processing
+                                if (mCaptureProgressBar.getProgress() >= CAPTURE_COUNT) {
+                                    isPostProcessed = true;
+                                    Log.d(TAG, String.format("Average DISTANCE (MIN): %.2f", minDistance));
 
-                                setNextState(mCurrentState);
-                                setProgressUI(mCurrentState);
+                                    setNextState(mCurrentState);
+                                    setProgressUI(mCurrentState);
 
-                                Log.d(TAG, "rgbaMat 5 Size: " + bestCapturedMat.size().toString() + ", rect size: " + new Rect((int) (Constants.CAMERA2_IMAGE_SIZE.width / 5), (int) (Constants.CAMERA2_IMAGE_SIZE.height / 5), (int) (Constants.CAMERA2_IMAGE_SIZE.width * 0.6), (int) (Constants.CAMERA2_IMAGE_SIZE.height * 0.6)).size().toString());
-                                byte[] byteArray = ImageUtil.matToRotatedByteArray(bestCapturedMat.submat(new Rect((int) (Constants.CAMERA2_IMAGE_SIZE.width / 5), (int) (Constants.CAMERA2_IMAGE_SIZE.height / 5), (int) (Constants.CAMERA2_IMAGE_SIZE.width * 0.6), (int) (Constants.CAMERA2_IMAGE_SIZE.height * 0.6))));
+                                    Log.d(TAG, "rgbaMat 5 Size: " + bestCapturedMat.size().toString() + ", rect size: " + new Rect((int) (Constants.CAMERA2_IMAGE_SIZE.width / 5), (int) (Constants.CAMERA2_IMAGE_SIZE.height / 5), (int) (Constants.CAMERA2_IMAGE_SIZE.width * 0.6), (int) (Constants.CAMERA2_IMAGE_SIZE.height * 0.6)).size().toString());
+                                    byte[] byteArray = ImageUtil.matToRotatedByteArray(bestCapturedMat.submat(new Rect((int) (Constants.CAMERA2_IMAGE_SIZE.width / 5), (int) (Constants.CAMERA2_IMAGE_SIZE.height / 5), (int) (Constants.CAMERA2_IMAGE_SIZE.width * 0.6), (int) (Constants.CAMERA2_IMAGE_SIZE.height * 0.6))));
 
-                                // If this activity was triggered by an external
-                                // intent, then respond with the content of the image.
-                                // Otherwise, handle the result inside this app.
-                                if(isExternalIntent()) {
-                                    Intent i = new Intent();
+                                    // If this activity was triggered by an external
+                                    // intent, then respond with the content of the image.
+                                    // Otherwise, handle the result inside this app.
+                                    if (isExternalIntent()) {
+                                        Intent i = new Intent();
 
-                                    i.putExtra("data", byteArray);
+                                        i.putExtra("data", byteArray);
 
-                                    setResult(Activity.RESULT_OK, i);
-                                    finish();
-                                } else {
-                                    Intent intent = new Intent(ImageQualityActivity.this, ImageResultActivity.class);
-                                    intent.addFlags(Intent.FLAG_ACTIVITY_FORWARD_RESULT);
-                                    intent.putExtra("RDTCaptureByteArray", byteArray);
-                                    intent.putExtra("timeTaken", System.currentTimeMillis() - timeTaken);
+                                        setResult(Activity.RESULT_OK, i);
+                                        finish();
+                                    } else {
+                                        Intent intent = new Intent(ImageQualityActivity.this, ImageResultActivity.class);
+                                        intent.addFlags(Intent.FLAG_ACTIVITY_FORWARD_RESULT);
+                                        intent.putExtra("RDTCaptureByteArray", byteArray);
+                                        intent.putExtra("timeTaken", System.currentTimeMillis() - timeTaken);
 
-                                    bestCapturedMat.release();
-                                    rgbaMat.release();
-                                    startActivity(intent);
+                                        rgbaMat.release();
+                                        startActivity(intent);
+                                        mOnImageAvailableThread.interrupt();
+                                    }
                                 }
                             }
                         }
@@ -641,7 +646,7 @@ public class ImageQualityActivity extends AppCompatActivity implements View.OnCl
 
                 mPreviewSize = closestPreviewSize;
                 mImageReader = ImageReader.newInstance(closestImageSize.getWidth(), closestImageSize.getHeight(),
-                        ImageFormat.YUV_420_888, /*maxImages*/2);
+                        ImageFormat.YUV_420_888, /*maxImages*/5);
                 mImageReader.setOnImageAvailableListener(
                         mOnImageAvailableListener, mOnImageAvailableHandler);
 
@@ -737,11 +742,17 @@ public class ImageQualityActivity extends AppCompatActivity implements View.OnCl
      * Stops the background thread and its {@link Handler}.
      */
     private void stopBackgroundThread() {
+        Log.d(TAG, "Thread Quit Safely.");
         mBackgroundThread.quitSafely();
+        mOnImageAvailableThread.quitSafely();
         try {
             mBackgroundThread.join();
             mBackgroundThread = null;
             mBackgroundHandler = null;
+
+            mOnImageAvailableThread.join();
+            mOnImageAvailableThread = null;
+            mOnImageAvailableHandler = null;
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
@@ -959,8 +970,7 @@ public class ImageQualityActivity extends AppCompatActivity implements View.OnCl
         mRefImg.release();
         mRefDescriptor.release();
         mRefKeypoints.release();
-        if (bestCapturedMat != null)
-            bestCapturedMat.release();
+        bestCapturedMat.release();
     }
 
     private void setProgressUI (State CurrentState) {
@@ -1005,16 +1015,22 @@ public class ImageQualityActivity extends AppCompatActivity implements View.OnCl
                     !isOverExposed && !isUnderExposed ? Constants.OK : (isOverExposed ? getResources().getString(R.string.over_exposed_msg) + Constants.NOT_OK : getResources().getString(R.string.under_exposed_msg) + Constants.NOT_OK),
                     !isShadow ? Constants.OK : Constants.NOT_OK);
 
-            if (!isCorrectPosSize[5]) {
-                if (isCorrectPosSize[1] && isCorrectPosSize[0] & isCorrectPosSize[2]) {
-                    mInstructionText.setText(getResources().getText(R.string.instruction_detected));
-                } else if (!isCorrectPosSize[0] || (!isCorrectPosSize[1] && isCorrectPosSize[3])) {
+            if (isCorrectPosSize[1] && isCorrectPosSize[0] & isCorrectPosSize[2]) {
+                mInstructionText.setText(getResources().getText(R.string.instruction_detected));
+            } else if (mMoveCloserCount > Constants.MOVE_CLOSER_COUNT)
+                if (!isCorrectPosSize[5]) {
+                    if (!isCorrectPosSize[0] || (!isCorrectPosSize[1] && isCorrectPosSize[3])) {
+                        mInstructionText.setText(getResources().getString(R.string.instruction_pos));
+                    } else if (!isCorrectPosSize[1] && isCorrectPosSize[4]) {
+                        mInstructionText.setText(getResources().getString(R.string.instruction_too_small));
+                        mMoveCloserCount = 0;
+                    }
+                } else {
                     mInstructionText.setText(getResources().getString(R.string.instruction_pos));
-                } else if (!isCorrectPosSize[1] && isCorrectPosSize[4]) {
-                    mInstructionText.setText(getResources().getString(R.string.instruction_too_small));
                 }
-            } else {
-                mInstructionText.setText(getResources().getString(R.string.instruction_pos));
+            else {
+                mInstructionText.setText(getResources().getString(R.string.instruction_too_small));
+                mMoveCloserCount++;
             }
 
             mImageQualityFeedbackView.setText(Html.fromHtml(message));
