@@ -413,6 +413,7 @@ public class ImageQualityActivity extends AppCompatActivity implements View.OnCl
                                         i.putExtra("data", byteArray);
 
                                         setResult(Activity.RESULT_OK, i);
+                                        mOnImageAvailableThread.interrupt();
                                         finish();
                                     } else {
                                         Intent intent = new Intent(ImageQualityActivity.this, ImageResultActivity.class);
