@@ -1,5 +1,6 @@
 package edu.washington.cs.ubicomplab.rdt_reader;
 
+import android.Manifest;
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
@@ -28,6 +29,7 @@ import android.os.Handler;
 import android.os.HandlerThread;
 import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
+import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.text.Html;
@@ -76,6 +78,7 @@ import java.util.concurrent.TimeUnit;
 import static edu.washington.cs.ubicomplab.rdt_reader.Constants.CAMERA2_PREVIEW_SIZE;
 import static edu.washington.cs.ubicomplab.rdt_reader.Constants.CAPTURE_COUNT;
 import static edu.washington.cs.ubicomplab.rdt_reader.Constants.CAMERA2_IMAGE_SIZE;
+import static edu.washington.cs.ubicomplab.rdt_reader.Constants.MY_PERMISSION_REQUEST_CODE;
 
 public class ImageQualityActivity extends AppCompatActivity implements View.OnClickListener, ActivityCompat.OnRequestPermissionsResultCallback {
 
@@ -590,8 +593,6 @@ public class ImageQualityActivity extends AppCompatActivity implements View.OnCl
             if (grantResults.length != 1 || grantResults[0] != PackageManager.PERMISSION_GRANTED) {
                 showToast("This sample needs camera permission.");
             }
-        } else {
-            openCamera(mTextureView.getWidth(), mTextureView.getHeight());
         }
     }
 
@@ -679,11 +680,19 @@ public class ImageQualityActivity extends AppCompatActivity implements View.OnCl
         }
     }
 
+    private void requestCameraPermission() {
+        ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.CAMERA}, MY_PERMISSION_REQUEST_CODE);
+    }
+
     /**
      * Opens the camera specified by {@link #mCameraId}.
      */
     private void openCamera(int width, int height) throws SecurityException {
-
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA)
+                != PackageManager.PERMISSION_GRANTED) {
+            requestCameraPermission();
+            return;
+        }
 
         setUpCameraOutputs(width, height);
         configureTransform(width, height);
