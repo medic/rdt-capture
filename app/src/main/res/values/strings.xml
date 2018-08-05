@@ -3,7 +3,7 @@
     <string name="title_activity_result">ResultActivity</string>
     <string name="title_activity_camera2_test">Camera2TestActivity</string>
     <string name="progress_initialization">Stay still…</string>
-    <string name="progress_final">"Captured! Analyzing the image…"</string>
+    <string name="progress_final">Captured! Analyzing the image…</string>
     <string name="instruction">Place the RDT inside the rectangle.</string>
     <string name="instruction_detected"><![CDATA[RDT detected at the center!]]></string>
     <string name="instruction_pos"><![CDATA[Place RDT at the center.\nFit RDT to the rectangle.]]></string>
@@ -11,9 +11,6 @@
     <string name="instruction_too_large"><![CDATA[Place RDT at the center.\nFit RDT to the rectangle.\nMove further away.]]></string>
     <string name="instruction_focusing"><![CDATA[Place RDT at the center.\nFit RDT to the rectangle.\nCamera is focusing. \nStay still.]]></string>
     <string name="instruction_unfocused"><![CDATA[Place RDT at the center.\n Fit RDT to the rectangle.\nCamera is not focused. \nMove further away.]]></string>
-    <string name="instruction_bright">Move RDT inside the rectangle. </string>
-    <string name="instruction_dark">Place the RDT inside the rectangle.</string>
-    <string name="instruction_blur">Place the RDT inside the rectangle.</string>
     <string name="over_exposed_msg">TOO BRIGHT </string>
     <string name="under_exposed_msg">TOO DARK </string>
     <string name="quality_msg_format"> <![CDATA[POSITION/SIZE: %s <br> SHARPNESS: %s <br> BRIGHTNESS: %s <br> NO SHADOW: %s]]></string>
@@ -36,9 +33,18 @@
     <string name="settings_language">Language</string>
     <string name="settings_english">English</string>
     <string name="settings_french">Français</string>
+    <string name="settings_bambara">Bamanankan</string>
     <string name="results_image_saved">Image is successfully saved!</string>
     <string name="results_image_already_saved">Image is already saved.</string>
     <string name="results_image_sent">Image is successfully sent!</string>
-    <string name="picture">Picture</string>
-    <string name="description_info">Info</string>
+    <string name="preference_language">language</string>
+    <string name="preference_sharpness">sharpness</string>
+    <string name="preference_over_exposure">over_exposure</string>
+    <string name="preference_under_exposure">under_exposure</string>
+    <string name="preference_size">size</string>
+    <string name="preference_position">position</string>
+    <string name="preference_shadow">shadow</string>
+    <string name="preference_file_key">rdt-capture-pref</string>
+    <string name="cancel">Cancel</string>
+
 </resources>

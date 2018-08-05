@@ -2,9 +2,15 @@
     <string name="app_name">rdt-reader</string>
     <string name="title_activity_result">ResultActivity</string>
     <string name="title_activity_camera2_test">Camera2TestActivity</string>
-    <string name="progress_initialization">"Rester immobile…"</string>
-    <string name="progress_final">"En cours d\'analyse…"</string>
-    <string name="instruction">"Monter le TDR dans l'intérieur du rectangle."</string>
+    <string name="progress_initialization">Maintenir...</string>
+    <string name="progress_final">le TDR est prise, analyse en cours…</string>
+    <string name="instruction">Placer le TDR dans l\'intérieur du rectangle.</string>
+    <string name="instruction_detected"><![CDATA[Le TDR est détecté au centre!]]></string>
+    <string name="instruction_pos"><![CDATA[Placer le TDR au centre.\nPlacer le TDR dans l\'intérieur du rectangle.]]></string>
+    <string name="instruction_too_small"><![CDATA[Placer le TDR au centre.\nPlacer le TDR dans l\'intérieur du rectangle.\nRapprocher.]]></string>
+    <string name="instruction_too_large"><![CDATA[Placer le TDR au centre.\nPlacer le TDR dans l\'intérieur du rectangle.\nEloigner.]]></string>
+    <string name="instruction_focusing"><![CDATA[Placer le TDR au centre.\nPlacer le TDR dans l\'intérieur du rectangle.\nRéglage en cours.\nMaintenir.]]></string>
+    <string name="instruction_unfocused"><![CDATA[Placer le TDR au centre.\nPlacer le TDR dans l\'intérieur du rectangle.\nCaméra pas réglé.\nEloigner.]]></string>
     <string name="over_exposed_msg">Trop de lumière</string>
     <string name="under_exposed_msg">Pas assez de lumière</string>
     <string name="quality_msg_format"> <![CDATA[Position/Taille: %s <br> Netteté: %s <br> Luminosité: %s <br> Pas d\'ombre: %s]]></string>
@@ -27,7 +33,9 @@
     <string name="settings_language">Language</string>
     <string name="settings_english">English</string>
     <string name="settings_french">Français</string>
+    <string name="settings_bambara">Bamanankan</string>
     <string name="results_image_saved">Image enregistrée avec succès!</string>
     <string name="results_image_already_saved">Image déjà enregistrée.</string>
     <string name="results_image_sent">Image is successfully sent!</string>
+    <string name="cancel">Annuler</string>
 </resources>
