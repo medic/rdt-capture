@@ -4,8 +4,10 @@ import android.Manifest;
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.content.res.Configuration;
+import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.ImageFormat;
@@ -33,6 +35,7 @@ import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.text.Html;
+import android.util.DisplayMetrics;
 import android.util.Log;
 import android.util.Size;
 import android.util.SparseIntArray;
@@ -72,6 +75,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Locale;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 
@@ -127,6 +131,9 @@ public class ImageQualityActivity extends AppCompatActivity implements View.OnCl
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_image_quality);
+
+        loadPref();
+
 
         mTextureView = findViewById(R.id.texture);
 
@@ -1333,5 +1340,60 @@ public class ImageQualityActivity extends AppCompatActivity implements View.OnCl
         histogramRanges.release();
         hist.release();
         return mBuff;
+    }
+
+    private void loadPref() {
+        Context context = getApplicationContext();
+        SharedPreferences sharedPref = context.getSharedPreferences(
+                getString(R.string.preference_file_key), Context.MODE_PRIVATE);
+
+        SharedPreferences.Editor editor = sharedPref.edit();
+
+        if (sharedPref.contains(getString(R.string.preference_language))) {
+            Constants.LANGUAGE = sharedPref.getString(getString(R.string.preference_language),Constants.LANGUAGE);
+        } else {
+            editor.putString(getString(R.string.preference_language), Constants.LANGUAGE);
+        }
+
+        if (sharedPref.contains(getString(R.string.preference_over_exposure))) {
+            Constants.OVER_EXP_THRESHOLD = sharedPref.getFloat(getString(R.string.preference_over_exposure),(float)Constants.OVER_EXP_THRESHOLD);
+        } else {
+            editor.putFloat(getString(R.string.preference_over_exposure), (float)Constants.OVER_EXP_THRESHOLD);
+        }
+
+        if (sharedPref.contains(getString(R.string.preference_under_exposure))) {
+            Constants.UNDER_EXP_THRESHOLD = sharedPref.getFloat(getString(R.string.preference_under_exposure),(float)Constants.UNDER_EXP_THRESHOLD);
+        } else {
+            editor.putFloat(getString(R.string.preference_under_exposure), (float)Constants.UNDER_EXP_THRESHOLD);
+        }
+
+        if (sharedPref.contains(getString(R.string.preference_sharpness))) {
+            Constants.BLUR_THRESHOLD = sharedPref.getFloat(getString(R.string.preference_sharpness),(float)Constants.BLUR_THRESHOLD);
+        } else {
+            editor.putFloat(getString(R.string.preference_sharpness), (float)Constants.BLUR_THRESHOLD);
+        }
+
+        if (sharedPref.contains(getString(R.string.preference_position))) {
+            Constants.POSITION_THRESHOLD = sharedPref.getFloat(getString(R.string.preference_position),(float)Constants.POSITION_THRESHOLD);
+        } else {
+            editor.putFloat(getString(R.string.preference_position), (float)Constants.POSITION_THRESHOLD);
+        }
+
+        if (sharedPref.contains(getString(R.string.preference_size))) {
+            Constants.SIZE_THRESHOLD = sharedPref.getFloat(getString(R.string.preference_size),(float)Constants.SIZE_THRESHOLD);
+        } else {
+            editor.putFloat(getString(R.string.preference_size), (float)Constants.SIZE_THRESHOLD);
+        }
+
+        editor.apply();
+
+        Resources res = getResources();
+        // Change locale settings in the app.
+        DisplayMetrics dm = res.getDisplayMetrics();
+        android.content.res.Configuration conf = res.getConfiguration();
+        conf.setLocale(new Locale(Constants.LANGUAGE)); // API 17+ only.
+        // Use conf.locale = new Locale(...) if targeting lower versions
+        res.updateConfiguration(conf, dm);
+        setContentView(R.layout.activity_image_quality);
     }
 }
