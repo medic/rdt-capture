@@ -107,7 +107,7 @@ public class ImageQualityActivity extends AppCompatActivity implements View.OnCl
     private long timeTaken = 0;
 
     private double minBlur = Double.MIN_VALUE;
-    private double maxBlur = Double.MAX_VALUE;
+    private double maxBlur = Double.MIN_VALUE; //this value is set to min because blur check is not needed.
     private ViewportUsingBitmap mViewport;
 
     private FocusState mFocusState = FocusState.INACTIVE;
@@ -371,8 +371,8 @@ public class ImageQualityActivity extends AppCompatActivity implements View.OnCl
 
                     //blur check
                     double blurVal = calculateBlurriness(blurMat);
-                    Log.d(TAG, "BLUR CHECK: "+ blurVal*Constants.BLUR_THRESHOLD + ", " + maxBlur);
-                    final boolean isBlur = blurVal < maxBlur * Constants.BLUR_THRESHOLD;
+                    Log.d(TAG, "BLUR CHECK: "+ blurVal + ", " + maxBlur);
+                    final boolean isBlur = blurVal < (maxBlur * Constants.BLUR_THRESHOLD);
 
 
                     matchingMat.release();
@@ -1356,9 +1356,9 @@ public class ImageQualityActivity extends AppCompatActivity implements View.OnCl
         }
 
         if (sharedPref.contains(getString(R.string.preference_over_exposure))) {
-            Constants.OVER_EXP_THRESHOLD = sharedPref.getFloat(getString(R.string.preference_over_exposure),(float)Constants.OVER_EXP_THRESHOLD);
+            Constants.OVER_EXP_WHITE_COUNT = sharedPref.getFloat(getString(R.string.preference_over_exposure),(float)Constants.OVER_EXP_WHITE_COUNT);
         } else {
-            editor.putFloat(getString(R.string.preference_over_exposure), (float)Constants.OVER_EXP_THRESHOLD);
+            editor.putFloat(getString(R.string.preference_over_exposure), (float)Constants.OVER_EXP_WHITE_COUNT);
         }
 
         if (sharedPref.contains(getString(R.string.preference_under_exposure))) {

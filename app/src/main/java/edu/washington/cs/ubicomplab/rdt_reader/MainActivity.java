@@ -147,9 +147,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         }
 
         if (sharedPref.contains(getString(R.string.preference_over_exposure))) {
-            Constants.OVER_EXP_THRESHOLD = sharedPref.getFloat(getString(R.string.preference_over_exposure),(float)Constants.OVER_EXP_THRESHOLD);
+            Constants.OVER_EXP_WHITE_COUNT = sharedPref.getFloat(getString(R.string.preference_over_exposure),(float)Constants.OVER_EXP_WHITE_COUNT);
         } else {
-            editor.putFloat(getString(R.string.preference_over_exposure), (float)Constants.OVER_EXP_THRESHOLD);
+            editor.putFloat(getString(R.string.preference_over_exposure), (float)Constants.OVER_EXP_WHITE_COUNT);
         }
 
         if (sharedPref.contains(getString(R.string.preference_under_exposure))) {
