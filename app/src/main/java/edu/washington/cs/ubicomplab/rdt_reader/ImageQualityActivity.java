@@ -57,17 +57,22 @@ import org.opencv.core.CvType;
 import org.opencv.core.DMatch;
 import org.opencv.core.KeyPoint;
 import org.opencv.core.Mat;
+import org.opencv.core.MatOfByte;
 import org.opencv.core.MatOfDMatch;
 import org.opencv.core.MatOfDouble;
 import org.opencv.core.MatOfFloat;
 import org.opencv.core.MatOfInt;
 import org.opencv.core.MatOfKeyPoint;
+import org.opencv.core.MatOfPoint;
 import org.opencv.core.MatOfPoint2f;
 import org.opencv.core.Point;
 import org.opencv.core.Rect;
 import org.opencv.core.RotatedRect;
+import org.opencv.core.Scalar;
+import org.opencv.features2d.BFMatcher;
 import org.opencv.features2d.BRISK;
 import org.opencv.features2d.DescriptorMatcher;
+import org.opencv.features2d.Features2d;
 import org.opencv.imgproc.Imgproc;
 
 import java.io.File;
@@ -89,7 +94,7 @@ public class ImageQualityActivity extends AppCompatActivity implements View.OnCl
     private Activity mActivity = this;
     private File mFile;
     private BRISK mFeatureDetector;
-    private DescriptorMatcher mMatcher;
+    private BFMatcher mMatcher;
     private Mat mRefImg;
     private Mat mRefDescriptor;
     private MatOfKeyPoint mRefKeypoints;
@@ -331,15 +336,23 @@ public class ImageQualityActivity extends AppCompatActivity implements View.OnCl
                     Mat grayMat = new Mat();
                     Imgproc.cvtColor(rgbaMat, grayMat, Imgproc.COLOR_RGBA2GRAY);
 
-                    Rect cropRect = new Rect((int)(Constants.CAMERA2_IMAGE_SIZE.width/4), (int)(Constants.CAMERA2_IMAGE_SIZE.height/4), (int)(Constants.CAMERA2_IMAGE_SIZE.width*Constants.VIEWPORT_SCALE), (int)(Constants.CAMERA2_IMAGE_SIZE.height*Constants.VIEWPORT_SCALE));
+                    //Rect cropRect = new Rect((int)(Constants.CAMERA2_IMAGE_SIZE.width/4), (int)(Constants.CAMERA2_IMAGE_SIZE.height/4), (int)(Constants.CAMERA2_IMAGE_SIZE.width*Constants.VIEWPORT_SCALE), (int)(Constants.CAMERA2_IMAGE_SIZE.height*Constants.VIEWPORT_SCALE));
+                    Rect cropRect = new Rect(0, 0, (int)(Constants.CAMERA2_IMAGE_SIZE.width), (int)(Constants.CAMERA2_IMAGE_SIZE.height));
 
                     Mat matchingMat = grayMat.submat(cropRect);
                     Mat blurMat = rgbaMat.submat(cropRect);
                     Mat exposureMat = grayMat.submat(cropRect);
 
                     //size and position check
-                    MatOfPoint2f approx = detectRDT(matchingMat);
-                    final boolean[] isCorrectPosSize = checkPositionAndSize(approx, true);
+                    Mat output = new Mat();
+                    MatOfPoint2f approx = detectRDT(matchingMat, output);
+                    final boolean[] isCorrectPosSize = checkPositionAndSize(approx, false);
+
+                    MatOfPoint approxf1 = new MatOfPoint();
+                    approx.convertTo(approxf1, CvType.CV_32S);
+                    List<MatOfPoint> contour = new ArrayList<>();
+                    contour.add(approxf1);
+                    Imgproc.polylines(rgbaMat, contour, true, new Scalar(255,255,255), 10);
 
 
                     //exposure check
@@ -377,6 +390,8 @@ public class ImageQualityActivity extends AppCompatActivity implements View.OnCl
 
                     matchingMat.release();
                     exposureMat.release();
+                    approxf1.release();
+                    approx.release();
                     blurMat.release();
                     grayMat.release();
 
@@ -412,7 +427,9 @@ public class ImageQualityActivity extends AppCompatActivity implements View.OnCl
                                     setProgressUI(mCurrentState);
 
                                     Log.d(TAG, "rgbaMat 5 Size: " + bestCapturedMat.size().toString() + ", rect size: " + new Rect((int) (Constants.CAMERA2_IMAGE_SIZE.width / 5), (int) (Constants.CAMERA2_IMAGE_SIZE.height / 5), (int) (Constants.CAMERA2_IMAGE_SIZE.width * 0.6), (int) (Constants.CAMERA2_IMAGE_SIZE.height * 0.6)).size().toString());
-                                    byte[] byteArray = ImageUtil.matToRotatedByteArray(bestCapturedMat.submat(new Rect((int) (Constants.CAMERA2_IMAGE_SIZE.width / 5), (int) (Constants.CAMERA2_IMAGE_SIZE.height / 5), (int) (Constants.CAMERA2_IMAGE_SIZE.width * 0.6), (int) (Constants.CAMERA2_IMAGE_SIZE.height * 0.6))));
+                                    //byte[] byteArray = ImageUtil.matToRotatedByteArray(bestCapturedMat.submat(new Rect((int) (Constants.CAMERA2_IMAGE_SIZE.width / 5), (int) (Constants.CAMERA2_IMAGE_SIZE.height / 5), (int) (Constants.CAMERA2_IMAGE_SIZE.width * 0.6), (int) (Constants.CAMERA2_IMAGE_SIZE.height * 0.6))));
+                                    //byte[] byteArray = ImageUtil.matToRotatedByteArray(bestCapturedMat.submat(new Rect(0,0, (int) (Constants.CAMERA2_IMAGE_SIZE.width), (int) (Constants.CAMERA2_IMAGE_SIZE.height))));
+                                    byte[] byteArray = ImageUtil.matToRotatedByteArray(output);
 
                                     // If this activity was triggered by an external
                                     // intent, then respond with the content of the image.
@@ -438,11 +455,13 @@ public class ImageQualityActivity extends AppCompatActivity implements View.OnCl
                                 }
                             }
                         }
+
+                        rgbaMat.release();
                     } catch (Exception e) {
                         Log.d(TAG, e.getMessage());
                     }
 
-                    rgbaMat.release();
+
 
                     synchronized (lock) {
                         inProcess = false;
@@ -481,7 +500,10 @@ public class ImageQualityActivity extends AppCompatActivity implements View.OnCl
         private void process(CaptureResult result) {
             synchronized (focusStateLock) {
                 FocusState previousFocusState = mFocusState;
-
+                if (result.get(CaptureResult.CONTROL_AF_MODE) == null) {
+                    Log.d(TAG, "FOCUS STATE: is null");
+                    return;
+                }
                 if (result.get(CaptureResult.CONTROL_AF_MODE) == CaptureResult.CONTROL_AF_MODE_CONTINUOUS_PICTURE) {
                     if (result.get(CaptureResult.CONTROL_AF_STATE) == CaptureResult.CONTROL_AF_STATE_PASSIVE_FOCUSED) {
                         Log.d(TAG, "FOCUS STATE: focused");
@@ -760,8 +782,8 @@ public class ImageQualityActivity extends AppCompatActivity implements View.OnCl
      */
     private void stopBackgroundThread() {
         Log.d(TAG, "Thread Quit Safely.");
-        mBackgroundThread.quitSafely();
-        mOnImageAvailableThread.quitSafely();
+        mBackgroundThread.quit();
+        mOnImageAvailableThread.quit();
         try {
             mBackgroundThread.join();
             mBackgroundThread = null;
@@ -806,7 +828,7 @@ public class ImageQualityActivity extends AppCompatActivity implements View.OnCl
 
             final android.graphics.Rect sensor = characteristics.get(CameraCharacteristics.SENSOR_INFO_ACTIVE_ARRAY_SIZE);
             Log.d(TAG, "Sensor size: " + sensor.width() + ", " + sensor.height());
-            MeteringRectangle mr = new MeteringRectangle(sensor.width() / 2 - 50, sensor.height() / 2 - 50, 100+(mCounter%2), 100+(mCounter%2),
+            MeteringRectangle mr = new MeteringRectangle(sensor.width() / 2 - 5, sensor.height() / 2 - 5, 10+(mCounter%2), 10+(mCounter%2),
                     MeteringRectangle.METERING_WEIGHT_MAX - 1);
 
             Log.d(TAG, String.format("Sensor Size (%d, %d), Metering %s", sensor.width(), sensor.height(), mr.toString()));
@@ -967,11 +989,11 @@ public class ImageQualityActivity extends AppCompatActivity implements View.OnCl
     }
 
     private void loadReference() {
-        mFeatureDetector = BRISK.create(90, 4, 1.0f);
-        mMatcher = DescriptorMatcher.create(DescriptorMatcher.BRUTEFORCE_HAMMING);
+        mFeatureDetector = BRISK.create(45, 4, 1.0f);
+        mMatcher = BFMatcher.create(BFMatcher.BRUTEFORCE_HAMMING, true);
         mRefImg = new Mat();
 
-        Bitmap bitmap = BitmapFactory.decodeResource(getApplicationContext().getResources(), R.drawable.sd_bioline_malaria_ag_pf);
+        Bitmap bitmap = BitmapFactory.decodeResource(getApplicationContext().getResources(), R.drawable.sd_bioline_malaria_ag_pf_evernote1);
         Utils.bitmapToMat(bitmap, mRefImg);
         Imgproc.cvtColor(mRefImg, mRefImg, Imgproc.COLOR_RGB2GRAY);
         mRefDescriptor = new Mat();
@@ -1090,13 +1112,18 @@ public class ImageQualityActivity extends AppCompatActivity implements View.OnCl
     }
 
 
-    private MatOfPoint2f detectRDT(Mat input) {
+    private MatOfPoint2f detectRDT(Mat input, Mat output) {
         long veryStart = System.currentTimeMillis();
+
+        //Imgproc.GaussianBlur(input, input, new org.opencv.core.Size(3,3), 2, 2);
 
         Mat descriptors = new Mat();
         MatOfKeyPoint keypoints = new MatOfKeyPoint();
 
         long startTime = System.currentTimeMillis();
+        Mat mask = new Mat(input.size(), CvType.CV_8U, Scalar.all(0));
+        Imgproc.rectangle(mask, new Point(input.width()/5, input.height()/5), new Point(input.width()-input.width()/5, input.height()-input.height()/5), Scalar.all(255), -1);
+
         mFeatureDetector.detect(input, keypoints);
         mFeatureDetector.compute(input, keypoints, descriptors);
         Log.d(TAG, "detect/compute TIME: " + (System.currentTimeMillis()-startTime));
@@ -1109,7 +1136,6 @@ public class ImageQualityActivity extends AppCompatActivity implements View.OnCl
         }
 
         // Matching
-        startTime = System.currentTimeMillis();
         MatOfDMatch matches = new MatOfDMatch();
         if (mRefImg.type() == input.type()) {
             Log.d(TAG, String.format("type: %d, %d", mRefDescriptor.type(), descriptors.type()));
@@ -1119,7 +1145,7 @@ public class ImageQualityActivity extends AppCompatActivity implements View.OnCl
             return null;
         }
         List<DMatch> matchesList = matches.toList();
-        Log.d(TAG, "matching TIME: " + (System.currentTimeMillis()-startTime));
+        Log.d(TAG, "matching TIME: " + (System.currentTimeMillis()-veryStart));
 
         Double max_dist = Double.MIN_VALUE;
         Double min_dist = Double.MAX_VALUE;
@@ -1132,17 +1158,22 @@ public class ImageQualityActivity extends AppCompatActivity implements View.OnCl
                 max_dist = dist;
         }
 
+        Log.d(TAG, "DISTANCE Min dist: " + min_dist + "Max dist: " + max_dist);
+
         double sum = 0;
         int count = 0;
 
-        LinkedList<DMatch> good_matches = new LinkedList<DMatch>();
+        ArrayList<DMatch> good_matches = new ArrayList<>();
         for (int i = 0; i < matchesList.size(); i++) {
             if (matchesList.get(i).distance <= (1.5 * min_dist)) {
-                good_matches.addLast(matchesList.get(i));
+                good_matches.add(matchesList.get(i));
                 sum += matchesList.get(i).distance;
                 count++;
+                Log.d(TAG, String.format("queryIdx: %d, trainIdx: %d, distance: %.2f", matchesList.get(i).queryIdx, matchesList.get(i).trainIdx, matchesList.get(i).distance));
             }
         }
+
+        Log.d(TAG, "good matching TIME: " + (System.currentTimeMillis()-veryStart));
 
         MatOfDMatch goodMatches = new MatOfDMatch();
         goodMatches.fromList(good_matches);
@@ -1169,10 +1200,13 @@ public class ImageQualityActivity extends AppCompatActivity implements View.OnCl
 
         MatOfPoint2f result = new MatOfPoint2f(new Point(0.0f, 0.0f));
         result.convertTo(result, CvType.CV_32F);
+        Log.d(TAG, "prepare homography TIME: " + (System.currentTimeMillis()-veryStart));
 
         if (good_matches.size() > Constants.GOOD_MATCH_COUNT) {
             //run homography on object and scene points
-            Mat H = Calib3d.findHomography(obj, scene, Calib3d.RANSAC, 5);
+            Mat homographyMask = new Mat();
+            Mat H = Calib3d.findHomography(obj, scene, Calib3d.RANSAC, 100, homographyMask, 1000, 0.995);
+            Log.d(TAG, "find homography TIME: " + (System.currentTimeMillis()-veryStart));
 
             if (H.cols() >= 3 && H.rows() >= 3) {
                 Mat obj_corners = new Mat(4, 1, CvType.CV_32FC2);
@@ -1195,13 +1229,14 @@ public class ImageQualityActivity extends AppCompatActivity implements View.OnCl
 
                 Core.perspectiveTransform(obj_corners, scene_corners, H);
 
-                Log.d(TAG, String.format("transformed: (%.2f, %.2f) (%.2f, %.2f) (%.2f, %.2f) (%.2f, %.2f)",
+                Log.d(TAG, String.format("transformed: (%.2f, %.2f) (%.2f, %.2f) (%.2f, %.2f) (%.2f, %.2f), width: %d, height: %d",
                         scene_corners.get(0, 0)[0], scene_corners.get(0, 0)[1],
                         scene_corners.get(1, 0)[0], scene_corners.get(1, 0)[1],
                         scene_corners.get(2, 0)[0], scene_corners.get(2, 0)[1],
-                        scene_corners.get(3, 0)[0], scene_corners.get(3, 0)[1]));
+                        scene_corners.get(3, 0)[0], scene_corners.get(3, 0)[1], scene_corners.width(), scene_corners.height()));
 
                 MatOfPoint2f boundary = new MatOfPoint2f();
+                MatOfPoint boundaryMat = new MatOfPoint();
                 ArrayList<Point> listOfBoundary = new ArrayList<>();
                 listOfBoundary.add(new Point(scene_corners.get(0, 0)));
                 listOfBoundary.add(new Point(scene_corners.get(1, 0)));
@@ -1209,12 +1244,17 @@ public class ImageQualityActivity extends AppCompatActivity implements View.OnCl
                 listOfBoundary.add(new Point(scene_corners.get(3, 0)));
                 boundary.fromList(listOfBoundary);
                 boundary.convertTo(result, CvType.CV_32F);
+                boundaryMat.fromList(listOfBoundary);
+                ArrayList<MatOfPoint> list = new ArrayList<>();
+                list.add(boundaryMat);
+
+                Imgproc.polylines(input, list, true, Scalar.all(0),10);
 
                 boundary.release();
                 obj_corners.release();
                 scene_corners.release();
 
-                Log.d(TAG, String.format("Average DISTANCE: %.2f", sum/count));
+                Log.d(TAG, String.format("Average DISTANCE: %.2f, good matches: %d", sum/count, count));
 
                 if(mCurrentState == State.QUALITY_CHECK && sum/count < minDistance) {
                     minDistance = sum/count;
@@ -1222,6 +1262,10 @@ public class ImageQualityActivity extends AppCompatActivity implements View.OnCl
                 }
             }
 
+            Log.d(TAG, "draw homography TIME: " + (System.currentTimeMillis()-veryStart));
+
+            Features2d.drawMatches(mRefImg, mRefKeypoints, input, keypoints, goodMatches, output, Scalar.all(-1), new Scalar(255,0,0), new MatOfByte(homographyMask), 2);
+            homographyMask.release();
             H.release();
         }
 
@@ -1231,6 +1275,7 @@ public class ImageQualityActivity extends AppCompatActivity implements View.OnCl
         matches.release();
         descriptors.release();
         keypoints.release();
+        mask.release();
 
         Log.d(TAG, "Detect RDT TIME: " + (System.currentTimeMillis()-veryStart));
 

@@ -37,7 +37,7 @@
         android:layout_height="fill_parent"
         android:layout_weight=".5"
         android:background="@color/transparent_overlay"
-        custom:heightScale="0.5"
+        custom:heightScale="0.6"
         custom:widthScale="0.35" />
 
     <View
