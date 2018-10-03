@@ -481,6 +481,10 @@ public class ImageQualityActivity extends AppCompatActivity implements View.OnCl
         private void process(CaptureResult result) {
             synchronized (focusStateLock) {
                 FocusState previousFocusState = mFocusState;
+                if (result.get(CaptureResult.CONTROL_AF_MODE) == null) {
+                    Log.d(TAG, "FOCUS STATE: is null");
+                    return;
+                }
 
                 if (result.get(CaptureResult.CONTROL_AF_MODE) == CaptureResult.CONTROL_AF_MODE_CONTINUOUS_PICTURE) {
                     if (result.get(CaptureResult.CONTROL_AF_STATE) == CaptureResult.CONTROL_AF_STATE_PASSIVE_FOCUSED) {
