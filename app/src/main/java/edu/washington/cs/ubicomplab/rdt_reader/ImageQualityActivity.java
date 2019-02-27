@@ -250,7 +250,10 @@ public class ImageQualityActivity extends AppCompatActivity implements View.OnCl
         @Override
         public void onDisconnected(@NonNull CameraDevice cameraDevice) {
             mCameraOpenCloseLock.release();
-            cameraDevice.close();
+            if (null != cameraDevice && null != mCameraDevice) {
+                cameraDevice.close();
+                mCameraDevice = null;
+            }
             mCameraDevice = null;
         }
 
@@ -324,6 +327,8 @@ public class ImageQualityActivity extends AppCompatActivity implements View.OnCl
                 }
             }
 
+            final Mat rgbaMat = ImageUtil.imageToRGBMat(image);
+
             mOnImageAvailableHandler.post(new Runnable() {
                 @Override
                 public void run() {
@@ -332,7 +337,7 @@ public class ImageQualityActivity extends AppCompatActivity implements View.OnCl
                     }
 
                     //image pre-processing
-                    Mat rgbaMat = ImageUtil.imageToRGBMat(image);
+
                     Mat grayMat = new Mat();
                     Imgproc.cvtColor(rgbaMat, grayMat, Imgproc.COLOR_RGBA2GRAY);
 
@@ -346,13 +351,16 @@ public class ImageQualityActivity extends AppCompatActivity implements View.OnCl
                     //size and position check
                     Mat output = new Mat();
                     MatOfPoint2f approx = detectRDT(matchingMat, output);
+                    if (approx == null)
+                        return;
+
                     final boolean[] isCorrectPosSize = checkPositionAndSize(approx, false);
 
                     MatOfPoint approxf1 = new MatOfPoint();
                     approx.convertTo(approxf1, CvType.CV_32S);
                     List<MatOfPoint> contour = new ArrayList<>();
                     contour.add(approxf1);
-                    Imgproc.polylines(rgbaMat, contour, true, new Scalar(255,255,255), 10);
+                    //Imgproc.polylines(rgbaMat, contour, true, new Scalar(255,255,255), 10);
 
 
                     //exposure check
@@ -427,9 +435,9 @@ public class ImageQualityActivity extends AppCompatActivity implements View.OnCl
                                     setProgressUI(mCurrentState);
 
                                     Log.d(TAG, "rgbaMat 5 Size: " + bestCapturedMat.size().toString() + ", rect size: " + new Rect((int) (Constants.CAMERA2_IMAGE_SIZE.width / 5), (int) (Constants.CAMERA2_IMAGE_SIZE.height / 5), (int) (Constants.CAMERA2_IMAGE_SIZE.width * 0.6), (int) (Constants.CAMERA2_IMAGE_SIZE.height * 0.6)).size().toString());
-                                    //byte[] byteArray = ImageUtil.matToRotatedByteArray(bestCapturedMat.submat(new Rect((int) (Constants.CAMERA2_IMAGE_SIZE.width / 5), (int) (Constants.CAMERA2_IMAGE_SIZE.height / 5), (int) (Constants.CAMERA2_IMAGE_SIZE.width * 0.6), (int) (Constants.CAMERA2_IMAGE_SIZE.height * 0.6))));
+                                    byte[] byteArray = ImageUtil.matToRotatedByteArray(bestCapturedMat.submat(new Rect((int) (Constants.CAMERA2_IMAGE_SIZE.width / 5), (int) (Constants.CAMERA2_IMAGE_SIZE.height / 5), (int) (Constants.CAMERA2_IMAGE_SIZE.width * 0.6), (int) (Constants.CAMERA2_IMAGE_SIZE.height * 0.6))));
                                     //byte[] byteArray = ImageUtil.matToRotatedByteArray(bestCapturedMat.submat(new Rect(0,0, (int) (Constants.CAMERA2_IMAGE_SIZE.width), (int) (Constants.CAMERA2_IMAGE_SIZE.height))));
-                                    byte[] byteArray = ImageUtil.matToRotatedByteArray(output);
+                                    //byte[] byteArray = ImageUtil.matToRotatedByteArray(output);
 
                                     // If this activity was triggered by an external
                                     // intent, then respond with the content of the image.
@@ -789,7 +797,7 @@ public class ImageQualityActivity extends AppCompatActivity implements View.OnCl
             mBackgroundThread = null;
             mBackgroundHandler = null;
 
-            mOnImageAvailableThread.join();
+            //mOnImageAvailableThread.join();
             mOnImageAvailableThread = null;
             mOnImageAvailableHandler = null;
         } catch (InterruptedException e) {
@@ -993,7 +1001,7 @@ public class ImageQualityActivity extends AppCompatActivity implements View.OnCl
         mMatcher = BFMatcher.create(BFMatcher.BRUTEFORCE_HAMMING, true);
         mRefImg = new Mat();
 
-        Bitmap bitmap = BitmapFactory.decodeResource(getApplicationContext().getResources(), R.drawable.sd_bioline_malaria_ag_pf_evernote1);
+        Bitmap bitmap = BitmapFactory.decodeResource(getApplicationContext().getResources(), R.drawable.quickvue_ref);
         Utils.bitmapToMat(bitmap, mRefImg);
         Imgproc.cvtColor(mRefImg, mRefImg, Imgproc.COLOR_RGB2GRAY);
         mRefDescriptor = new Mat();
@@ -1138,9 +1146,13 @@ public class ImageQualityActivity extends AppCompatActivity implements View.OnCl
         // Matching
         MatOfDMatch matches = new MatOfDMatch();
         if (mRefImg.type() == input.type()) {
-            Log.d(TAG, String.format("type: %d, %d", mRefDescriptor.type(), descriptors.type()));
-            mMatcher.match(mRefDescriptor, descriptors, matches);
-            Log.d(TAG, String.format("matched"));
+            try {
+                Log.d(TAG, String.format("type: %d, %d", mRefDescriptor.type(), descriptors.type()));
+                mMatcher.match(mRefDescriptor, descriptors, matches);
+                Log.d(TAG, String.format("matched"));
+            } catch (Exception e) {
+                return null;
+            }
         } else {
             return null;
         }
@@ -1264,7 +1276,7 @@ public class ImageQualityActivity extends AppCompatActivity implements View.OnCl
 
             Log.d(TAG, "draw homography TIME: " + (System.currentTimeMillis()-veryStart));
 
-            Features2d.drawMatches(mRefImg, mRefKeypoints, input, keypoints, goodMatches, output, Scalar.all(-1), new Scalar(255,0,0), new MatOfByte(homographyMask), 2);
+            //Features2d.drawMatches(mRefImg, mRefKeypoints, input, keypoints, goodMatches, output, Scalar.all(-1), new Scalar(255,0,0), new MatOfByte(homographyMask), 2);
             homographyMask.release();
             H.release();
         }
@@ -1284,6 +1296,9 @@ public class ImageQualityActivity extends AppCompatActivity implements View.OnCl
 
     private boolean[] checkPositionAndSize (MatOfPoint2f approx, boolean cropped) {
         boolean results[] = {false, false, false, false, false, true};
+
+        if (approx == null)
+            return results;
 
         if (approx.total() < 1)
             return results;
