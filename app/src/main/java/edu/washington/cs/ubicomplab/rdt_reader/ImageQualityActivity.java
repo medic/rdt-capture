@@ -90,7 +90,7 @@ import static edu.washington.cs.ubicomplab.rdt_reader.Constants.CAMERA2_IMAGE_SI
 import static edu.washington.cs.ubicomplab.rdt_reader.Constants.MY_PERMISSION_REQUEST_CODE;
 
 public class ImageQualityActivity extends AppCompatActivity implements View.OnClickListener, ActivityCompat.OnRequestPermissionsResultCallback {
-
+    private ImageProcessor processor;
     private Activity mActivity = this;
     private File mFile;
     private BRISK mFeatureDetector;
@@ -139,6 +139,7 @@ public class ImageQualityActivity extends AppCompatActivity implements View.OnCl
 
         loadPref();
 
+        processor = ImageProcessor.getInstance(this);
 
         mTextureView = findViewById(R.id.texture);
 
