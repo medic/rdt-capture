@@ -12,6 +12,10 @@ import org.opencv.features2d.BFMatcher;
 import org.opencv.features2d.BRISK;
 import org.opencv.imgproc.Imgproc;
 
+import static java.lang.Math.pow;
+import static org.opencv.core.CvType.CV_64F;
+import static org.opencv.imgproc.Imgproc.Laplacian;
+
 /**
  * Created by cjparkuw on 2/27/2019.
  */
@@ -101,7 +105,7 @@ public class ImageProcessor {
     private boolean checkSharpness(Mat inputMat) {
         double sharpness = calculateSharpness(inputMat);
 
-        bool isSharp = sharpness > (minSharpness * SHARPNESS_THRESHOLD);
+        boolean isSharp = sharpness > (minSharpness * SHARPNESS_THRESHOLD);
 
         return isSharp;
 
@@ -111,13 +115,13 @@ public class ImageProcessor {
         Mat des = Mat();
         Laplacian(input, des, CV_64F);
 
-        vector<double> median;
-        vector<double> std;
+        vector<double> median = 0;
+        vector<double> std = 0;
 
         meanStdDev(des, median, std);
 
 
-        double sharpness = pow(std[0],2);
+        double sharpness = pow(0,2);
         des.release();
         return sharpness;
     }
