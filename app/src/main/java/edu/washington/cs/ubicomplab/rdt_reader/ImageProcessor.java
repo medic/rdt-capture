@@ -8,11 +8,16 @@ import android.util.Log;
 import org.opencv.android.Utils;
 import org.opencv.core.Mat;
 import org.opencv.core.MatOfKeyPoint;
+import org.opencv.core.Point;
+import org.opencv.core.RotatedRect;
+import org.opencv.core.Size;
 import org.opencv.features2d.BFMatcher;
 import org.opencv.features2d.BRISK;
 import org.opencv.imgproc.Imgproc;
 
 import static java.lang.Math.pow;
+import static java.lang.StrictMath.abs;
+import static org.opencv.core.Core.NORM_INF;
 import static org.opencv.core.CvType.CV_64F;
 import static org.opencv.imgproc.Imgproc.Laplacian;
 
@@ -177,7 +182,7 @@ public class ImageProcessor {
 
     }
 
-    private SizeResult checkSize(vector<Point2f> boundary, (cv::Size) size) {
+    private SizeResult checkSize(vector<Point2f> boundary, Size size) {
 
         double height = [self measureSize:boundary];
         bool isRightSize = height < size.height*VIEWPORT_SCALE*(1+SIZE_THRESHOLD) && height > size.height*VIEWPORT_SCALE*(1-SIZE_THRESHOLD);
@@ -202,9 +207,9 @@ public class ImageProcessor {
 
     private boolean checkIfCentered() {
 
-        cv::Point center = [self measureCentering:boundary];
-        cv::Point trueCenter = cv::Point(size.width/2, size.height/2);
-        bool isCentered = center.x < trueCenter.x + (size.width*POSITION_THRESHOLD) && center.x > trueCenter.x-(size.width*POSITION_THRESHOLD)
+        Point center = measureCentering(boundary);
+        Point trueCenter = Point(size.width/2, size.height/2);
+        boolean isCentered = center.x < trueCenter.x + (size.width*POSITION_THRESHOLD) && center.x > trueCenter.x-(size.width*POSITION_THRESHOLD)
                 && center.y < trueCenter.y+(size.height*POSITION_THRESHOLD) && center.y > trueCenter.y-(size.height*POSITION_THRESHOLD);
 
         return isCentered;
@@ -230,7 +235,7 @@ public class ImageProcessor {
     private boolean checkOrientation() {
         double angle = measureOrientation(boudary);
 
-        bool isOriented = angle < 90.0*POSITION_THRESHOLD;
+        boolean isOriented = angle < 90.0*POSITION_THRESHOLD;
 
         return isOriented;
     }
