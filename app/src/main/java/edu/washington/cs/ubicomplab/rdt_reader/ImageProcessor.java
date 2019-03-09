@@ -73,19 +73,83 @@ public class ImageProcessor {
 
     }
 
-    private void checkSharpness() {
+    // The brightness and sharpness methods have been
+    // filled with the iOS code for now, until
+    // I am able to make sense of the android code
+    // once I do then I will be able to change
+    // syntax of the code and fix it up
+    
+    private bool checkSharpness(Mat inputMat) {
+        double sharpness = [self calculateSharpness:inputMat];
+
+        bool isSharp = sharpness > (minSharpness * SHARPNESS_THRESHOLD);
+
+        return isSharp;
 
     }
 
-    private void calculateSharpness() {
+    private double calculateSharpness(Mat input) {
+        Mat des = Mat();
+        Laplacian(input, des, CV_64F);
 
+        vector<double> median;
+        vector<double> std;
+
+        meanStdDev(des, median, std);
+
+
+        double sharpness = pow(std[0],2);
+        des.release();
+        return sharpness;
     }
 
-    private void checkBrightness() {
+    private ExposureResult checkBrightness(Mat inputMat) {
 
+        // Brightness Calculation
+        vector<float> histograms = [self calculateBrightness:inputMat];
+
+        int maxWhite = 0;
+        float whiteCount = 0;
+
+        for (int i = 0; i < histograms.size(); i++) {
+            if (histograms[i] > 0) {
+                maxWhite = i;
+            }
+            if (i == histograms.size() - 1) {
+                whiteCount = histograms[i];
+            }
+        }
+
+        // Check Brightness starts
+        ExposureResult exposureResult;
+        if (maxWhite >= OVER_EXP_THRESHOLD && whiteCount > OVER_EXP_WHITE_COUNT) {
+            exposureResult = OVER_EXPOSED;
+            return exposureResult;
+        } else if (maxWhite < UNDER_EXP_THRESHOLD) {
+            exposureResult = UNDER_EXPOSED;
+            return exposureResult;
+        } else {
+            exposureResult = NORMAL;
+            return exposureResult;
+        }
     }
 
-    private void calculateBrightness() {
+    private double calculateBrightness(Vector<float> input) {
+        int mHistSizeNum =256;
+        vector<int> mHistSize;
+        mHistSize.push_back(mHistSizeNum);
+        Mat hist = Mat();
+        vector<float> mBuff;
+        vector<float> histogramRanges;
+        histogramRanges.push_back(0.0);
+        histogramRanges.push_back(256.0);
+        cv::Size sizeRgba = input.size();
+        vector<int> channel = {0};
+        vector<Mat> allMat = {input};
+        calcHist(allMat, channel, Mat(), hist, mHistSize, histogramRanges);
+        normalize(hist, hist, sizeRgba.height/2, 0, NORM_INF);
+        mBuff.assign((float*)hist.datastart, (float*)hist.dataend);
+        return mBuff;
 
     }
 
