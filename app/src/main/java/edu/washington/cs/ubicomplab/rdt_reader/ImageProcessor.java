@@ -25,6 +25,26 @@ public class ImageProcessor {
     private Mat mRefDescriptor;
     private MatOfKeyPoint mRefKeypoints;
 
+
+    // The hard coded values for the reader
+
+    private TextView mInstructionText;
+    private float SHARPNESS_THRESHOLD = 0.0;
+    private float OVER_EXP_THRESHOLD = 255;
+    private float UNDER_EXP_THRESHOLD = 120;
+    private float OVER_EXP_WHITE_COUNT = 100;
+    private double SIZE_THRESHOLD = 0.3;
+    private double POSITION_THRESHOLD = 0.2;
+    private double VIEWPORT_SCALE = 0.60;
+    private int GOOD_MATCH_COUNT = 7;
+    private double minSharpness = FLT_MIN;
+    private double maxSharpness = FLT_MAX; //this value is set to min because blur check is not needed.
+    private int MOVE_CLOSER_COUNT = 5;
+    private double CROP_RATIO = 0.6;
+    private double VIEW_FINDER_SCALE_W = 0.35;
+    private double VIEW_FINDER_SCALE_H = 0.50;
+
+
     private ImageProcessor(Activity activity) {
         mFeatureDetector = BRISK.create(45, 4, 1.0f);
         mMatcher = BFMatcher.create(BFMatcher.BRUTEFORCE_HAMMING, true);
@@ -57,7 +77,7 @@ public class ImageProcessor {
 
     }
 
-    public void generageViewFinder() {
+    public void generateViewFinder() {
 
     }
 
@@ -73,14 +93,13 @@ public class ImageProcessor {
 
     }
 
-    // The brightness and sharpness methods have been
-    // filled with the iOS code for now, until
-    // I am able to make sense of the android code
-    // once I do then I will be able to change
-    // syntax of the code and fix it up
-    
-    private bool checkSharpness(Mat inputMat) {
-        double sharpness = [self calculateSharpness:inputMat];
+    // I have went ahead and added all the iOS code,
+    // fixed some of it up, will fix the rest sometime
+    // tommorrow.
+
+
+    private boolean checkSharpness(Mat inputMat) {
+        double sharpness = calculateSharpness(inputMat);
 
         bool isSharp = sharpness > (minSharpness * SHARPNESS_THRESHOLD);
 
@@ -106,7 +125,7 @@ public class ImageProcessor {
     private ExposureResult checkBrightness(Mat inputMat) {
 
         // Brightness Calculation
-        vector<float> histograms = [self calculateBrightness:inputMat];
+        vector<float> histograms = calculateBrightness(inputMat);
 
         int maxWhite = 0;
         float whiteCount = 0;
@@ -148,32 +167,112 @@ public class ImageProcessor {
         vector<Mat> allMat = {input};
         calcHist(allMat, channel, Mat(), hist, mHistSize, histogramRanges);
         normalize(hist, hist, sizeRgba.height/2, 0, NORM_INF);
-        mBuff.assign((float*)hist.datastart, (float*)hist.dataend);
+        mBuff.assign((float)hist.datastart, (float)hist.dataend);
+
         return mBuff;
 
     }
 
-    private void checkSize() {
+    private SizeResult checkSize(vector<Point2f> boundary, (cv::Size) size) {
+
+        double height = [self measureSize:boundary];
+        bool isRightSize = height < size.height*VIEWPORT_SCALE*(1+SIZE_THRESHOLD) && height > size.height*VIEWPORT_SCALE*(1-SIZE_THRESHOLD);
+
+        SizeResult sizeResult = INVALID;
+
+        if (isRightSize) {
+            sizeResult = RIGHT_SIZE;
+        } else {
+            if (height > size.height*VIEWPORT_SCALE*(1+SIZE_THRESHOLD)) {
+                sizeResult = LARGE;
+            } else if (height < size.height*VIEWPORT_SCALE*(1-SIZE_THRESHOLD)) {
+                sizeResult = SMALL;
+            } else {
+                sizeResult = INVALID;
+            }
+        }
+
+        return sizeResult;
 
     }
 
-    private void checkIfCentered() {
+    private boolean checkIfCentered() {
+
+        cv::Point center = [self measureCentering:boundary];
+        cv::Point trueCenter = cv::Point(size.width/2, size.height/2);
+        bool isCentered = center.x < trueCenter.x + (size.width*POSITION_THRESHOLD) && center.x > trueCenter.x-(size.width*POSITION_THRESHOLD)
+                && center.y < trueCenter.y+(size.height*POSITION_THRESHOLD) && center.y > trueCenter.y-(size.height*POSITION_THRESHOLD);
+
+        return isCentered;
 
     }
 
-    private void checkOrientation() {
+     private double measureOrientation(vector<Point2f> boundary) {
+        RotatedRect rotatedRect = minAreaRect(boundary);
 
+        boolean isUpright = rotatedRect.size.height > rotatedRect.size.width;
+        double angle = 0;
+        double height = 0;
+
+        if (isUpright) {
+            angle = 90 - abs(rotatedRect.angle);
+        } else {
+            angle = abs(rotatedRect.angle);
+        }
+
+        return angle;
+    }
+
+    private boolean checkOrientation() {
+        double angle = measureOrientation(boudary);
+
+        bool isOriented = angle < 90.0*POSITION_THRESHOLD;
+
+        return isOriented;
     }
 
     private void cropRDT() {
 
     }
 
-    private void getInstructionText() {
+    private String getInstructionText(SizeResult sizeResult, boolean isCentered, boolean isRightOrientation) {
+
+        if (sizeResult == RIGHT_SIZE && isCentered && isRightOrientation){
+            instructions = instruction_detected;
+            mMoveCloserCount = 0;
+        } else if (mMoveCloserCount > MOVE_CLOSER_COUNT) {
+            if (sizeResult != INVALID && sizeResult == SMALL) {
+                instructions = instruction_too_small;
+                mMoveCloserCount = 0;
+            }
+        } else {
+            instructions = instruction_too_small;
+            mMoveCloserCount++;
+        }
+
+        return instructions;
+
 
     }
 
-    private void getQualityCheckText() {
+    private Array<texts> getQualityCheckText(SizeResult sizeResult, boolean isCentered, boolean isRightOrientation, boolean isSharp, ExposureResult exposureResult) {
+
+        // Find java version of code
+        NSMutableArray texts = [[NSMutableArray alloc] init];
+
+        texts[0] = isSharp ? @"Sharpness: PASSED": @"Sharpness: FAILED";
+        if (exposureResult == NORMAL) {
+            texts[1] = @"Brightness: PASSED";
+        } else if (exposureResult == OVER_EXPOSED) {
+            texts[1] = @"Brightness: TOO BRIGHT";
+        } else if (exposureResult == UNDER_EXPOSED) {
+            texts[1] = @"Brightness: TOO DARK";
+        }
+
+        texts[2] = sizeResult==RIGHT_SIZE && isCentered && isRightOrientation ? @"POSITION/SIZE: PASSED": @"POSITION/SIZE: FAILED";
+        texts[3] = @"Shadow: PASSED";
+
+        return texts;
 
     }
 }

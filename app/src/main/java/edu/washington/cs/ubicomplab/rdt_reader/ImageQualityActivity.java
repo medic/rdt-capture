@@ -100,7 +100,7 @@ public class ImageQualityActivity extends AppCompatActivity implements View.OnCl
     private MatOfKeyPoint mRefKeypoints;
     private TextView mImageQualityFeedbackView;
     private TextView mProgressText;
-    private TextView mInstructionText;
+//    private TextView mInstructionText;
     private ProgressBar mProgress;
     private ProgressBar mCaptureProgressBar;
     private View mProgressBackgroundView;
@@ -364,45 +364,48 @@ public class ImageQualityActivity extends AppCompatActivity implements View.OnCl
                     //Imgproc.polylines(rgbaMat, contour, true, new Scalar(255,255,255), 10);
 
 
-                    //exposure check
-                    float[] histogram = calculateHistogram(exposureMat);
 
-                    int maxWhite = 0;
-                    float whiteCount = 0;
+                      // Gets checks the brightnesss
 
-                    for (int i = 0; i < histogram.length; i++) {
-                        if (histogram[i] > 0) {
-                            maxWhite = i;
-                        }
+//                    float[] histogram = calculateHistogram(exposureMat);
+//
+//                    int maxWhite = 0;
+//                    float whiteCount = 0;
+//
+//                    for (int i = 0; i < histogram.length; i++) {
+//                        if (histogram[i] > 0) {
+//                            maxWhite = i;
+//                        }
+//
+//                        if (i == histogram.length-1) {
+//                            whiteCount = histogram[i];
+//                        }
+//                    }
+//                    Log.d(TAG, "rgbaMat 2 Size: "+exposureMat.size().toString());
+//
+//
+//                    ExposureResult exposureResult;
+//
+//                    if (maxWhite >= Constants.OVER_EXP_THRESHOLD && whiteCount > Constants.OVER_EXP_WHITE_COUNT)
+//                        exposureResult = ExposureResult.OVER_EXPOSED;
+//                    else if (maxWhite < Constants.UNDER_EXP_THRESHOLD)
+//                        exposureResult = ExposureResult.UNDER_EXPOSED;
+//                    else
+//                        exposureResult = ExposureResult.NORMAL;
 
-                        if (i == histogram.length-1) {
-                            whiteCount = histogram[i];
-                        }
-                    }
-                    Log.d(TAG, "rgbaMat 2 Size: "+exposureMat.size().toString());
+                    // Checks the blurness blurness
 
-
-                    ExposureResult exposureResult;
-
-                    if (maxWhite >= Constants.OVER_EXP_THRESHOLD && whiteCount > Constants.OVER_EXP_WHITE_COUNT)
-                        exposureResult = ExposureResult.OVER_EXPOSED;
-                    else if (maxWhite < Constants.UNDER_EXP_THRESHOLD)
-                        exposureResult = ExposureResult.UNDER_EXPOSED;
-                    else
-                        exposureResult = ExposureResult.NORMAL;
-
-                    //blur check
-                    double blurVal = calculateBlurriness(blurMat);
-                    Log.d(TAG, "BLUR CHECK: "+ blurVal + ", " + maxBlur);
-                    final boolean isBlur = blurVal < (maxBlur * Constants.BLUR_THRESHOLD);
-
-
-                    matchingMat.release();
-                    exposureMat.release();
-                    approxf1.release();
-                    approx.release();
-                    blurMat.release();
-                    grayMat.release();
+//                    double blurVal = calculateBlurriness(blurMat);
+//                    Log.d(TAG, "BLUR CHECK: "+ blurVal + ", " + maxBlur);
+//                    final boolean isBlur = blurVal < (maxBlur * Constants.BLUR_THRESHOLD);
+//
+//
+//                    matchingMat.release();
+//                    exposureMat.release();
+//                    approxf1.release();
+//                    approx.release();
+//                    blurMat.release();
+//                    grayMat.release();
 
 
                     try {
@@ -983,6 +986,8 @@ public class ImageQualityActivity extends AppCompatActivity implements View.OnCl
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN);
 
+        // Instructions are set here
+
         mViewport = findViewById(R.id.img_quality_check_viewport);
         mViewport.setOnClickListener(this);
         mImageQualityFeedbackView = findViewById(R.id.img_quality_feedback_view);
@@ -992,7 +997,7 @@ public class ImageQualityActivity extends AppCompatActivity implements View.OnCl
         mCaptureProgressBar = findViewById(R.id.captureProgressBar);
         mCaptureProgressBar.setMax(CAPTURE_COUNT);
         mCaptureProgressBar.setProgress(0);
-        mInstructionText = findViewById(R.id.textInstruction);
+//        mInstructionText = findViewById(R.id.textInstruction);
 
         setProgressUI(mCurrentState);
     }
@@ -1064,44 +1069,47 @@ public class ImageQualityActivity extends AppCompatActivity implements View.OnCl
                     !isOverExposed && !isUnderExposed ? Constants.OK : (isOverExposed ? getResources().getString(R.string.over_exposed_msg) + Constants.NOT_OK : getResources().getString(R.string.under_exposed_msg) + Constants.NOT_OK),
                     !isShadow ? Constants.OK : Constants.NOT_OK);
 
-            if (isCorrectPosSize[1] && isCorrectPosSize[0] & isCorrectPosSize[2]) {
-                mInstructionText.setText(getResources().getText(R.string.instruction_detected));
-            } else if (mMoveCloserCount > Constants.MOVE_CLOSER_COUNT)
-                if (!isCorrectPosSize[5]) {
-                    if (!isCorrectPosSize[0] || (!isCorrectPosSize[1] && isCorrectPosSize[3])) {
-                        mInstructionText.setText(getResources().getString(R.string.instruction_pos));
-                    } else if (!isCorrectPosSize[1] && isCorrectPosSize[4]) {
-                        mInstructionText.setText(getResources().getString(R.string.instruction_too_small));
-                        mMoveCloserCount = 0;
-                    }
-                } else {
-                    mInstructionText.setText(getResources().getString(R.string.instruction_pos));
-                }
-            else {
-                mInstructionText.setText(getResources().getString(R.string.instruction_too_small));
-                mMoveCloserCount++;
-            }
 
-            mImageQualityFeedbackView.setText(Html.fromHtml(message));
-            if (isCorrectPosSize[0] && isCorrectPosSize[1] && isCorrectPosSize[2] && !isBlur && !isOverExposed && !isUnderExposed && !isShadow) {
-                if (mViewport.getBackgroundColorId() != R.color.green_overlay) {
-                    mViewport.setBackgroundColoId(R.color.green_overlay);
-                }
-            } else {
-                if (mViewport.getBackgroundColorId() != R.color.red_overlay) {
-                    mViewport.setBackgroundColoId(R.color.red_overlay);
-                }
-            }
-        } else if (currFocusState == FocusState.INACTIVE) {
-            mInstructionText.setText(getResources().getString(R.string.instruction_pos));
-            mViewport.setBackgroundColoId(R.color.red_overlay);
-        } else if (currFocusState == FocusState.UNFOCUSED) {
-            mInstructionText.setText(getResources().getString(R.string.instruction_unfocused));
-            mViewport.setBackgroundColoId(R.color.red_overlay);
-        } else if (currFocusState == FocusState.FOCUSING) {
-            mInstructionText.setText(getResources().getString(R.string.instruction_focusing));
-            mViewport.setBackgroundColoId(R.color.red_overlay);
-        }
+            // sets the instructions for the code
+//
+//            if (isCorrectPosSize[1] && isCorrectPosSize[0] & isCorrectPosSize[2]) {
+//                mInstructionText.setText(getResources().getText(R.string.instruction_detected));
+//            } else if (mMoveCloserCount > Constants.MOVE_CLOSER_COUNT)
+//                if (!isCorrectPosSize[5]) {
+//                    if (!isCorrectPosSize[0] || (!isCorrectPosSize[1] && isCorrectPosSize[3])) {
+//                        mInstructionText.setText(getResources().getString(R.string.instruction_pos));
+//                    } else if (!isCorrectPosSize[1] && isCorrectPosSize[4]) {
+//                        mInstructionText.setText(getResources().getString(R.string.instruction_too_small));
+//                        mMoveCloserCount = 0;
+//                    }
+//                } else {
+//                    mInstructionText.setText(getResources().getString(R.string.instruction_pos));
+//                }
+//            else {
+//                mInstructionText.setText(getResources().getString(R.string.instruction_too_small));
+//                mMoveCloserCount++;
+//            }
+//
+//            mImageQualityFeedbackView.setText(Html.fromHtml(message));
+//            if (isCorrectPosSize[0] && isCorrectPosSize[1] && isCorrectPosSize[2] && !isBlur && !isOverExposed && !isUnderExposed && !isShadow) {
+//                if (mViewport.getBackgroundColorId() != R.color.green_overlay) {
+//                    mViewport.setBackgroundColoId(R.color.green_overlay);
+//                }
+//            } else {
+//                if (mViewport.getBackgroundColorId() != R.color.red_overlay) {
+//                    mViewport.setBackgroundColoId(R.color.red_overlay);
+//                }
+//            }
+//        } else if (currFocusState == FocusState.INACTIVE) {
+//            mInstructionText.setText(getResources().getString(R.string.instruction_pos));
+//            mViewport.setBackgroundColoId(R.color.red_overlay);
+//        } else if (currFocusState == FocusState.UNFOCUSED) {
+//            mInstructionText.setText(getResources().getString(R.string.instruction_unfocused));
+//            mViewport.setBackgroundColoId(R.color.red_overlay);
+//        } else if (currFocusState == FocusState.FOCUSING) {
+//            mInstructionText.setText(getResources().getString(R.string.instruction_focusing));
+//            mViewport.setBackgroundColoId(R.color.red_overlay);
+//        }
     }
 
 
