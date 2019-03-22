@@ -131,6 +131,11 @@ public class ImageQualityActivity extends AppCompatActivity implements View.OnCl
         UNDER_EXPOSED, NORMAL, OVER_EXPOSED
     }
 
+    public enum SizeResult{
+        RIGHT_SIZE, LARGE, SMALL, INVALID
+
+    }
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -364,7 +369,7 @@ public class ImageQualityActivity extends AppCompatActivity implements View.OnCl
 //
 //
 //
-//                      // Gets checks the brightnesss
+//                     // Gets checks the brightnesss
 //
 //                    float[] histogram = calculateHistogram(exposureMat);
 //
@@ -392,7 +397,7 @@ public class ImageQualityActivity extends AppCompatActivity implements View.OnCl
 //                    else
 //                        exposureResult = ExposureResult.NORMAL;
 //
-////                     Checks the blurness blurness
+//                    // Checks the blurness blurness
 //
 //                    double blurVal = calculateBlurriness(blurMat);
 //                    Log.d(TAG, "BLUR CHECK: "+ blurVal + ", " + maxBlur);
