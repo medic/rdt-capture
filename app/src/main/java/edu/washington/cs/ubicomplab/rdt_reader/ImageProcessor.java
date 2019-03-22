@@ -87,6 +87,13 @@ public class ImageProcessor {
     private double VIEW_FINDER_SCALE_W = 0.35;
     private double VIEW_FINDER_SCALE_H = 0.50;
 
+    String instruction_detected = "RDT detected at the center!";
+    String instruction_pos = "Place RDT at the center.\nFit RDT to the rectangle.";
+    String instruction_too_small = "Place RDT at the center.\nFit RDT to the rectangle.\nMove closer.";
+    String instruction_too_large = "Place RDT at the center.\nFit RDT to the rectangle.\nMove further away.";
+    String instruction_focusing = "Place RDT at the center.\nFit RDT to the rectangle.\nCamera is focusing. \nStay still.";
+    String instruction_unfocused = "Place RDT at the center.\n Fit RDT to the rectangle.\nCamera is not focused. \nMove further away.";
+
 
 
 
@@ -461,7 +468,7 @@ public class ImageProcessor {
 
     private String getInstructionText(ImageQualityActivity.SizeResult sizeResult, boolean isCentered, boolean isRightOrientation) {
         int mMoveCloserCount = 0;
-        String instructions = "";
+        String instructions = instruction_pos;
 
         if (sizeResult == RIGHT_SIZE && isCentered && isRightOrientation){
             instructions = instruction_detected;
