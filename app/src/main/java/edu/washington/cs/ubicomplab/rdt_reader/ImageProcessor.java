@@ -29,12 +29,14 @@ import org.opencv.features2d.BRISK;
 import org.opencv.imgproc.Imgproc;
 import org.opencv.core.Scalar;
 
+import java.nio.channels.CompletionHandler;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Vector;
 
+import static android.icu.text.Normalizer.YES;
 import static edu.washington.cs.ubicomplab.rdt_reader.ImageQualityActivity.ExposureResult.NORMAL;
 import static edu.washington.cs.ubicomplab.rdt_reader.ImageQualityActivity.ExposureResult.OVER_EXPOSED;
 import static edu.washington.cs.ubicomplab.rdt_reader.ImageQualityActivity.ExposureResult.UNDER_EXPOSED;
@@ -131,10 +133,47 @@ public class ImageProcessor {
 
     public void generateViewFinder() {
 
-
     }
 
     public void captureRDT() {
+        Mat inputMat = new Mat();
+        Mat greyMat = new Mat();
+        cvtColor(inputMat, greyMat, CV_BGRA2GRAY);
+        double matchDistance = 0.0;
+        boolean passed = false;
+
+        //check brightness (refactored)
+        ImageQualityActivity.ExposureResult exposureResult = (checkBrightness(greyMat));
+
+        //check sharpness (refactored)
+        boolean isSharp = checkSharpness(greyMat);
+
+        //preform detectRDT only if those two quality checks are passed
+        if (exposureResult == NORMAL && isSharp) {
+            //CJ: detectRDT starts
+
+            //CJ: detectRDT ends inside of "performBRISKSearchOnMat". Check "performBRISKSearchOnMat" for the end of detectRDT.
+            MatOfPoint2f boundary = new MatOfPoint2f();
+            matchDistance = detectRDT(greyMat).andReturn(boundary);
+            boolean isCentered = false;
+            ImageQualityActivity.SizeResult sizeResult = INVALID;
+            boolean isRightOrientation = false;
+
+            //[self checkPositionAndSize:boundary isCropped:false inside:greyMat.size()];
+
+            if (boundary.size() > 0) {
+                isCentered = checkIfCentered(boundary).inside(greyMat.size());
+                sizeResult = checkSize(boundary).inside(greyMat.size());
+                isRightOrientation = checkOrientation(boundary);
+            }
+
+            passed = sizeResult == RIGHT_SIZE && isCentered && isRightOrientation;
+
+            CompletionHandler(passed, MatToUIImage(cropRDT(inputMat)), matchDistance, exposureResult, sizeResult, isCentered, isRightOrientation, isSharp, false);
+            //completion(passed, MatToUIImage(inputMat), matchDistance, exposureResult, sizeResult, isCentered, isRightOrientation, isSharp, false);
+        } else {
+            CompletionHandler(passed, null, matchDistance, exposureResult, INVALID, false, false, isSharp, false);
+        }
 
     }
 
@@ -485,25 +524,25 @@ public class ImageProcessor {
 
 
     }
-
-    private Array<texts> getQualityCheckText(ImageQualityActivity.SizeResult sizeResult, boolean isCentered, boolean isRightOrientation, boolean isSharp, ImageQualityActivity.ExposureResult exposureResult) {
-
-        // Find java version of code
-        ArrayList texts = [[NSMutableArray alloc] init];
-
-        texts[0] = isSharp ? @"Sharpness: PASSED": @"Sharpness: FAILED";
-        if (exposureResult == NORMAL) {
-            texts[1] = @"Brightness: PASSED";
-        } else if (exposureResult == OVER_EXPOSED) {
-            texts[1] = @"Brightness: TOO BRIGHT";
-        } else if (exposureResult == UNDER_EXPOSED) {
-            texts[1] = @"Brightness: TOO DARK";
-        }
-
-        texts[2] = sizeResult==RIGHT_SIZE && isCentered && isRightOrientation ? "POSITION/SIZE: PASSED": "POSITION/SIZE: FAILED";
-        texts[3] = @"Shadow: PASSED";
-
-        return texts;
-
-    }
+//
+//    private Array<texts> getQualityCheckText(ImageQualityActivity.SizeResult sizeResult, boolean isCentered, boolean isRightOrientation, boolean isSharp, ImageQualityActivity.ExposureResult exposureResult) {
+//
+//        // Find java version of code
+//        ArrayList texts = [[NSMutableArray alloc] init];
+//
+//        texts[0] = isSharp ? @"Sharpness: PASSED": @"Sharpness: FAILED";
+//        if (exposureResult == NORMAL) {
+//            texts[1] = @"Brightness: PASSED";
+//        } else if (exposureResult == OVER_EXPOSED) {
+//            texts[1] = @"Brightness: TOO BRIGHT";
+//        } else if (exposureResult == UNDER_EXPOSED) {
+//            texts[1] = @"Brightness: TOO DARK";
+//        }
+//
+//        texts[2] = sizeResult==RIGHT_SIZE && isCentered && isRightOrientation ? "POSITION/SIZE: PASSED": "POSITION/SIZE: FAILED";
+//        texts[3] = @"Shadow: PASSED";
+//
+//        return texts;
+//
+//    }
 }
