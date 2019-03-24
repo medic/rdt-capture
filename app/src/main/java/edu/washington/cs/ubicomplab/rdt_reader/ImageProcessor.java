@@ -49,6 +49,8 @@ import static org.opencv.core.Core.normalize;
 import static org.opencv.core.CvType.CV_64F;
 import static org.opencv.imgproc.Imgproc.Laplacian;
 import static org.opencv.imgproc.Imgproc.minAreaRect;
+import org.opencv.imgproc.Imgproc;
+
 
 
 /**
@@ -130,7 +132,7 @@ public class ImageProcessor {
     public void captureRDT() {
         Mat inputMat = new Mat();
         Mat greyMat = new Mat();
-        cvtColor(inputMat, greyMat, CV_BGRA2GRAY);
+        Imgproc.cvtColor(inputMat, greyMat, Imgproc.COLOR_BGRA2GRAY);
         double matchDistance = 0.0;
         boolean passed = false;
 
@@ -153,7 +155,7 @@ public class ImageProcessor {
 
             //[self checkPositionAndSize:boundary isCropped:false inside:greyMat.size()];
 
-            if (boundary.size() > 0) {
+            if (boundary.size().width > 0 && boundary.size().height >0) {
                 isCentered = checkIfCentered(boundary).inside(greyMat.size());
                 sizeResult = checkSize(boundary).inside(greyMat.size());
                 isRightOrientation = checkOrientation(boundary);
@@ -161,6 +163,8 @@ public class ImageProcessor {
 
             passed = sizeResult == RIGHT_SIZE && isCentered && isRightOrientation;
 
+
+            //MatToUIImage --> Utils.matToBitmap()
             CompletionHandler(passed, MatToUIImage(cropRDT(inputMat)), matchDistance, exposureResult, sizeResult, isCentered, isRightOrientation, isSharp, false);
             //completion(passed, MatToUIImage(inputMat), matchDistance, exposureResult, sizeResult, isCentered, isRightOrientation, isSharp, false);
         } else {
