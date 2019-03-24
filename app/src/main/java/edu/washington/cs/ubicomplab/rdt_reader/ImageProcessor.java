@@ -30,13 +30,10 @@ import org.opencv.imgproc.Imgproc;
 import org.opencv.core.Scalar;
 
 import java.nio.channels.CompletionHandler;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Vector;
 
-import static android.icu.text.Normalizer.YES;
 import static edu.washington.cs.ubicomplab.rdt_reader.ImageQualityActivity.ExposureResult.NORMAL;
 import static edu.washington.cs.ubicomplab.rdt_reader.ImageQualityActivity.ExposureResult.OVER_EXPOSED;
 import static edu.washington.cs.ubicomplab.rdt_reader.ImageQualityActivity.ExposureResult.UNDER_EXPOSED;
@@ -49,13 +46,10 @@ import static java.lang.StrictMath.abs;
 import static org.opencv.core.Core.NORM_INF;
 import static org.opencv.core.Core.meanStdDev;
 import static org.opencv.core.Core.normalize;
-import static org.opencv.core.Core.perspectiveTransform;
-import static org.opencv.core.CvType.CV_32FC2;
 import static org.opencv.core.CvType.CV_64F;
-import static org.opencv.core.CvType.CV_8U;
 import static org.opencv.imgproc.Imgproc.Laplacian;
 import static org.opencv.imgproc.Imgproc.minAreaRect;
-import static org.opencv.imgproc.Imgproc.rectangle;
+
 
 /**
  * Created by cjparkuw on 2/27/2019.
@@ -70,8 +64,6 @@ public class ImageProcessor {
     private Mat mRefDescriptor;
     private MatOfKeyPoint mRefKeypoints;
 
-
-    // The hard coded values for the reader
 
     private TextView mInstructionText;
     private double SHARPNESS_THRESHOLD = 0.0;
