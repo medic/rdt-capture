@@ -100,7 +100,6 @@ public class ImageQualityActivity extends AppCompatActivity implements View.OnCl
     private MatOfKeyPoint mRefKeypoints;
     private TextView mImageQualityFeedbackView;
     private TextView mProgressText;
-    //    private TextView mInstructionText;
     private ProgressBar mProgress;
     private ProgressBar mCaptureProgressBar;
     private View mProgressBackgroundView;

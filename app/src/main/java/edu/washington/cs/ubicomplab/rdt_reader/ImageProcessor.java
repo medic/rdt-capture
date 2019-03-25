@@ -6,6 +6,8 @@ import android.graphics.BitmapFactory;
 import android.util.Log;
 import android.widget.TextView;
 
+import org.opencv.android.LoaderCallbackInterface;
+import org.opencv.android.OpenCVLoader;
 import org.opencv.android.Utils;
 import org.opencv.calib3d.Calib3d;
 import org.opencv.core.Core;
@@ -117,7 +119,9 @@ public class ImageProcessor {
         return instance;
     }
 
+
     public void loadOpenCV() {
+
 
     }
 
@@ -148,16 +152,17 @@ public class ImageProcessor {
 
             //CJ: detectRDT ends inside of "performBRISKSearchOnMat". Check "performBRISKSearchOnMat" for the end of detectRDT.
             MatOfPoint2f boundary = new MatOfPoint2f();
-            matchDistance = detectRDT(greyMat).andReturn(boundary);
+            matchDistance = detectRDT(greyMat, boundary).(boundary);
             boolean isCentered = false;
             ImageQualityActivity.SizeResult sizeResult = INVALID;
             boolean isRightOrientation = false;
 
             //[self checkPositionAndSize:boundary isCropped:false inside:greyMat.size()];
 
-            if (boundary.size().width > 0 && boundary.size().height >0) {
-                isCentered = checkIfCentered(boundary).inside(greyMat.size());
-                sizeResult = checkSize(boundary).inside(greyMat.size());
+            Size size = new Size()
+            if (boundary.size().width > 0 && boundary.size().height > 0) {
+                isCentered = checkIfCentered(boundary, size).inside(greyMat.size());
+                sizeResult = checkSize(boundary, size).inside(greyMat.size());
                 isRightOrientation = checkOrientation(boundary);
             }
 
@@ -165,10 +170,10 @@ public class ImageProcessor {
 
 
             //MatToUIImage --> Utils.matToBitmap()
-            CompletionHandler(passed, MatToUIImage(cropRDT(inputMat)), matchDistance, exposureResult, sizeResult, isCentered, isRightOrientation, isSharp, false);
+            CompletionHandler(passed, Utils.matToBitmap((cropRDT(inputMat)), matchDistance, exposureResult, sizeResult, isCentered, isRightOrientation, isSharp, false));
             //completion(passed, MatToUIImage(inputMat), matchDistance, exposureResult, sizeResult, isCentered, isRightOrientation, isSharp, false);
         } else {
-            CompletionHandler(passed, null, matchDistance, exposureResult, INVALID, false, false, isSharp, false);
+            CompletionHandler((passed, null, matchDistance, exposureResult, INVALID, false, false, isSharp, false);
         }
 
     }
@@ -383,11 +388,11 @@ public class ImageProcessor {
         int maxWhite = 0;
         float whiteCount = 0;
 
-        for (int i = 0; i < histograms.size(); i++) {
+        for (int i = 0; i < histograms.size().height; i++) {
             if (histograms[i] > 0) {
                 maxWhite = i;
             }
-            if (i == histograms.size() - 1) {
+            if (i == histograms.size().height - 1) {
                 whiteCount = histograms[i];
             }
         }
@@ -413,14 +418,14 @@ public class ImageProcessor {
         Mat hist = new Mat();
         MatOfFloat mBuff = new MatOfFloat(0);
         MatOfFloat histogramRanges = new MatOfFloat();
-        histogramRanges.push_back(0.0);
-        histogramRanges.push_back(256.0);
+        histogramRanges.push_back(null);
+        histogramRanges.push_back(null);
         Size sizeRgba = input.size();
         MatOfInt channel = new MatOfInt(0);
         Mat allMat =  input;
-        calcHist(allMat, channel, new Mat(), hist, mHistSize, histogramRanges);
+        Imgproc.calcHist((allMat, channel, new Mat(), hist, mHistSize, histogramRanges);
         normalize(hist, hist, sizeRgba.height/2, 0, NORM_INF);
-        mBuff.assign((float)hist.datastart, (float)hist.dataend);
+        mBuff.assignTo((float)hist.datastart, (float)hist.dataend);
 
         return mBuff;
 
