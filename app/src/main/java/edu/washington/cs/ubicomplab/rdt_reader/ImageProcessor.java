@@ -159,7 +159,7 @@ public class ImageProcessor {
 
             //[self checkPositionAndSize:boundary isCropped:false inside:greyMat.size()];
 
-            Size size = new Size()
+            Size size = new Size();
             if (boundary.size().width > 0 && boundary.size().height > 0) {
                 isCentered = checkIfCentered(boundary, size).inside(greyMat.size());
                 sizeResult = checkSize(boundary, size).inside(greyMat.size());
@@ -170,7 +170,7 @@ public class ImageProcessor {
 
 
             //MatToUIImage --> Utils.matToBitmap()
-            CompletionHandler(passed, Utils.matToBitmap((cropRDT(inputMat)), matchDistance, exposureResult, sizeResult, isCentered, isRightOrientation, isSharp, false));
+            CompletionHandler(passed, Utils.matToBitmap(cropRDT(inputMat), matchDistance, exposureResult, sizeResult, isCentered, isRightOrientation, isSharp, false));
             //completion(passed, MatToUIImage(inputMat), matchDistance, exposureResult, sizeResult, isCentered, isRightOrientation, isSharp, false);
         } else {
             CompletionHandler((passed, null, matchDistance, exposureResult, INVALID, false, false, isSharp, false);
@@ -525,25 +525,24 @@ public class ImageProcessor {
 
 
     }
-//
-//    private Array<texts> getQualityCheckText(ImageQualityActivity.SizeResult sizeResult, boolean isCentered, boolean isRightOrientation, boolean isSharp, ImageQualityActivity.ExposureResult exposureResult) {
-//
-//        // Find java version of code
-//        ArrayList texts = [[NSMutableArray alloc] init];
-//
-//        texts[0] = isSharp ? @"Sharpness: PASSED": @"Sharpness: FAILED";
-//        if (exposureResult == NORMAL) {
-//            texts[1] = @"Brightness: PASSED";
-//        } else if (exposureResult == OVER_EXPOSED) {
-//            texts[1] = @"Brightness: TOO BRIGHT";
-//        } else if (exposureResult == UNDER_EXPOSED) {
-//            texts[1] = @"Brightness: TOO DARK";
-//        }
-//
-//        texts[2] = sizeResult==RIGHT_SIZE && isCentered && isRightOrientation ? "POSITION/SIZE: PASSED": "POSITION/SIZE: FAILED";
-//        texts[3] = @"Shadow: PASSED";
-//
-//        return texts;
-//
-//    }
+
+    private String[] getQualityCheckText(ImageQualityActivity.SizeResult sizeResult, boolean isCentered, boolean isRightOrientation, boolean isSharp, ImageQualityActivity.ExposureResult exposureResult) {
+
+        String[] texts = new String[0];
+
+        texts[0] = isSharp ? "Sharpness: PASSED": "Sharpness: FAILED";
+        if (exposureResult == NORMAL) {
+            texts[1] = "Brightness: PASSED";
+        } else if (exposureResult == OVER_EXPOSED) {
+            texts[1] = "Brightness: TOO BRIGHT";
+        } else if (exposureResult == UNDER_EXPOSED) {
+            texts[1] = "Brightness: TOO DARK";
+        }
+
+        texts[2] = sizeResult==RIGHT_SIZE && isCentered && isRightOrientation ? "POSITION/SIZE: PASSED": "POSITION/SIZE: FAILED";
+        texts[3] = "Shadow: PASSED";
+
+        return texts;
+
+    }
 }
