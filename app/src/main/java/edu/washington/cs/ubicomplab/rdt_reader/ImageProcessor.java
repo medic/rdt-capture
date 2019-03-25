@@ -33,6 +33,7 @@ import org.opencv.core.Scalar;
 
 import java.nio.channels.CompletionHandler;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -383,16 +384,16 @@ public class ImageProcessor {
     private ImageQualityActivity.ExposureResult checkBrightness(Mat inputMat) {
 
         // Brightness Calculation
-        MatOfDouble histograms = new MatOfDouble(calculateBrightness(inputMat));
+        float[] histograms = calculateBrightness(inputMat);
 
         int maxWhite = 0;
         float whiteCount = 0;
 
-        for (int i = 0; i < histograms.size().height; i++) {
+        for (int i = 0; i < histograms.length; i++) {
             if (histograms[i] > 0) {
                 maxWhite = i;
             }
-            if (i == histograms.size().height - 1) {
+            if (i == histograms.length - 1) {
                 whiteCount = histograms[i];
             }
         }
@@ -411,24 +412,28 @@ public class ImageProcessor {
         }
     }
 
-    private double calculateBrightness(Mat input) {
-        MatOfInt mHistSizeNum = new MatOfInt(256);
-        MatOfInt mHistSize = new MatOfInt();
-        mHistSize.push_back(mHistSizeNum);
+    private float[] calculateBrightness(Mat input) {
+        int mHistSizeNum =256;
+        MatOfInt mHistSize = new MatOfInt(mHistSizeNum);
         Mat hist = new Mat();
-        MatOfFloat mBuff = new MatOfFloat(0);
-        MatOfFloat histogramRanges = new MatOfFloat();
-        histogramRanges.push_back(null);
-        histogramRanges.push_back(null);
-        Size sizeRgba = input.size();
-        MatOfInt channel = new MatOfInt(0);
-        Mat allMat =  input;
-        Imgproc.calcHist((allMat, channel, new Mat(), hist, mHistSize, histogramRanges);
-        normalize(hist, hist, sizeRgba.height/2, 0, NORM_INF);
-        mBuff.assignTo((float)hist.datastart, (float)hist.dataend);
+        final float []mBuff = new float[mHistSizeNum];
+        MatOfFloat histogramRanges = new MatOfFloat(0f, 256f);
+        MatOfInt mChannels[] = new MatOfInt[] { new MatOfInt(0)};
+        org.opencv.core.Size sizeRgba = input.size();
 
+        // GRAY
+        for(int c=0; c<1; c++) {
+            Imgproc.calcHist(Arrays.asList(input), mChannels[c], new Mat(), hist,
+                    mHistSize, histogramRanges);
+            Core.normalize(hist, hist, sizeRgba.height/2, 0, Core.NORM_INF);
+            hist.get(0, 0, mBuff);
+            mChannels[c].release();
+        }
+
+        mHistSize.release();
+        histogramRanges.release();
+        hist.release();
         return mBuff;
-
     }
 
     private ImageQualityActivity.SizeResult checkSize(MatOfPoint2f boundary, Size size) {
