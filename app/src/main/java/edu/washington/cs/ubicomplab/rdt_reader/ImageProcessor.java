@@ -138,7 +138,7 @@ public class ImageProcessor {
         Mat inputMat = new Mat();
         Mat greyMat = new Mat();
         Imgproc.cvtColor(inputMat, greyMat, Imgproc.COLOR_BGRA2GRAY);
-        double matchDistance = 0.0;
+        MatOfPoint2f matchDistance = new MatOfPoint2f();
         boolean passed = false;
 
         //check brightness (refactored)
@@ -153,7 +153,7 @@ public class ImageProcessor {
 
             //CJ: detectRDT ends inside of "performBRISKSearchOnMat". Check "performBRISKSearchOnMat" for the end of detectRDT.
             MatOfPoint2f boundary = new MatOfPoint2f();
-            matchDistance = detectRDT(greyMat, boundary).(boundary);
+            matchDistance = detectRDT(greyMat, boundary);
             boolean isCentered = false;
             ImageQualityActivity.SizeResult sizeResult = INVALID;
             boolean isRightOrientation = false;
@@ -162,8 +162,8 @@ public class ImageProcessor {
 
             Size size = new Size();
             if (boundary.size().width > 0 && boundary.size().height > 0) {
-                isCentered = checkIfCentered(boundary, size).inside(greyMat.size());
-                sizeResult = checkSize(boundary, size).inside(greyMat.size());
+                isCentered = checkIfCentered(boundary, size);
+                sizeResult = checkSize(boundary, size);
                 isRightOrientation = checkOrientation(boundary);
             }
 
@@ -171,7 +171,7 @@ public class ImageProcessor {
 
 
             //MatToUIImage --> Utils.matToBitmap()
-            CompletionHandler(passed, Utils.matToBitmap(cropRDT(inputMat), matchDistance, exposureResult, sizeResult, isCentered, isRightOrientation, isSharp, false));
+            CompletionHandler(passed, Utils.matToBitmap(cropRDT(inputMat)), matchDistance, exposureResult, sizeResult, isCentered, isRightOrientation, isSharp, false);
             //completion(passed, MatToUIImage(inputMat), matchDistance, exposureResult, sizeResult, isCentered, isRightOrientation, isSharp, false);
         } else {
             CompletionHandler((passed, null, matchDistance, exposureResult, INVALID, false, false, isSharp, false);
