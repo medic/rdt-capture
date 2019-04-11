@@ -171,10 +171,11 @@ public class ImageProcessor {
 
 
             //MatToUIImage --> Utils.matToBitmap()
-//            CompletionHandler(passed, Utils.matToBitmap(cropRDT(inputMat)), matchDistance, exposureResult, sizeResult, isCentered, isRightOrientation, isSharp, false);
+            // CompletionHandler seems to not the right method to use in this case
+            CompletionHandler(passed, Utils.bitmapToMat((cropRDT(inputMat), matchDistance, exposureResult, sizeResult, isCentered, isRightOrientation, isSharp, false));
             //completion(passed, MatToUIImage(inputMat), matchDistance, exposureResult, sizeResult, isCentered, isRightOrientation, isSharp, false);
         } else {
-//            CompletionHandler((passed, null, matchDistance, exposureResult, INVALID, false, false, isSharp, true);
+//            CompletionHandler(passed, null, matchDistance, exposureResult, INVALID, false, false, isSharp, false);
         }
 
     }
