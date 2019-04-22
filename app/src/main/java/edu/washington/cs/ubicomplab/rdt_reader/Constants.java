@@ -35,6 +35,10 @@ public final class Constants {
     public static Size CAMERA2_PREVIEW_SIZE = new Size(1280, 720);
     public static Size CAMERA2_IMAGE_SIZE = new Size(960, 540);
     public static double VIEWPORT_SCALE = 0.50;
+    public static double MASK_WIDTH_SCALE = 0.52;
+    public static double MASK_HEIGHT_SCALE = 0.32;
+    public static double MAX_CAPTURE_TIME = 30*1000;
+
 
     public static String LANGUAGE = "en";
 

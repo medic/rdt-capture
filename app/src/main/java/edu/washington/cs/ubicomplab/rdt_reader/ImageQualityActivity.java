@@ -402,7 +402,8 @@ public class ImageQualityActivity extends AppCompatActivity implements View.OnCl
                                 }
                             });
 
-                            if (isCorrectPosSize[0] && isCorrectPosSize[1] && isCorrectPosSize[2] && !isBlur && !isOverExposed && !isUnderExposed) {
+                            Log.d(TAG, "CAPTURE TIME: "+(System.currentTimeMillis()-timeTaken));
+                            if (((System.currentTimeMillis()-timeTaken) > Constants.MAX_CAPTURE_TIME) || (isCorrectPosSize[0] && isCorrectPosSize[1] && isCorrectPosSize[2] && !isBlur && !isOverExposed && !isUnderExposed)) {
                                 Mat resultWindowMat = enhanceResultWindow(rgbaMat.clone(), approx);
 
                                 if (resultWindowMat != null) {
@@ -414,6 +415,12 @@ public class ImageQualityActivity extends AppCompatActivity implements View.OnCl
                                         minDistanceUpdated = false;
                                     }
                                     resultWindowMat.release();
+                                }
+
+                                if (((System.currentTimeMillis()-timeTaken) > Constants.MAX_CAPTURE_TIME)) {
+                                    mCaptureProgressBar.incrementProgressBy(1);
+                                    bestCapturedMat = rgbaMat.clone();
+                                    minDistanceUpdated = false;
                                 }
 
                                 //post-processing
@@ -1313,7 +1320,7 @@ public class ImageQualityActivity extends AppCompatActivity implements View.OnCl
         long startTime = System.currentTimeMillis();
 
         Mat mask = new Mat(input.width(), input.height(), CvType.CV_8U, new Scalar(0));
-        Point p1 = new Point(input.size().width*(1-Constants.VIEWPORT_SCALE)/2, input.size().height*(1-Constants.VIEWPORT_SCALE)/2);
+        Point p1 = new Point(input.size().width*(1-Constants.MASK_WIDTH_SCALE)/2, input.size().height*(1-Constants.MASK_HEIGHT_SCALE)/2);
         Point p2 = new Point(input.size().width-p1.x, input.size().height-p1.y);
         Imgproc.rectangle(mask, p1, p2, new Scalar(255), -1);
 
