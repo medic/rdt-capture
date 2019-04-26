@@ -39,6 +39,11 @@ public final class Constants {
     public static double MASK_HEIGHT_SCALE = 0.32;
     public static double MAX_CAPTURE_TIME = 30*1000;
 
+    public static int RESULT_WINDOW_X = 177;
+    public static int RESULT_WINDOW_Y = 55;
+    public static int RESULT_WINDOW_WIDTH = 110;
+    public static int RESULT_WINDOW_HEIGHT = 35;
+
 
     public static String LANGUAGE = "en";
 

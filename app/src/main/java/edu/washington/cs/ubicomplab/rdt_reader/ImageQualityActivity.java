@@ -580,10 +580,10 @@ public class ImageQualityActivity extends AppCompatActivity implements View.OnCl
 //        d = new double[]{59, 183+110};
 
         //TODO: make it as a config
-        a = new double[]{177, 55};
-        b = new double[]{177+110, 55};
-        c = new double[]{177+110, 55+35};
-        d = new double[]{177, 55+35};
+        a = new double[]{Constants.RESULT_WINDOW_X, Constants.RESULT_WINDOW_Y};
+        b = new double[]{Constants.RESULT_WINDOW_X+Constants.RESULT_WINDOW_WIDTH, Constants.RESULT_WINDOW_Y};
+        c = new double[]{Constants.RESULT_WINDOW_X+Constants.RESULT_WINDOW_WIDTH, Constants.RESULT_WINDOW_Y+Constants.RESULT_WINDOW_HEIGHT};
+        d = new double[]{Constants.RESULT_WINDOW_X, Constants.RESULT_WINDOW_Y+Constants.RESULT_WINDOW_HEIGHT};
 //        a = new double[]{185, 63};
 //        b = new double[]{185+90, 63};
 //        c = new double[]{185+90, 63+20};
