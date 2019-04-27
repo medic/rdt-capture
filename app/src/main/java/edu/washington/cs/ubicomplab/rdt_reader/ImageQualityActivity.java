@@ -26,6 +26,7 @@ import android.hardware.camera2.params.MeteringRectangle;
 import android.hardware.camera2.params.StreamConfigurationMap;
 import android.media.Image;
 import android.media.ImageReader;
+import android.net.Uri;
 import android.os.Build;
 import android.os.Handler;
 import android.os.HandlerThread;
@@ -62,17 +63,23 @@ import org.opencv.core.MatOfDouble;
 import org.opencv.core.MatOfFloat;
 import org.opencv.core.MatOfInt;
 import org.opencv.core.MatOfKeyPoint;
+import org.opencv.core.MatOfPoint;
 import org.opencv.core.MatOfPoint2f;
 import org.opencv.core.Point;
 import org.opencv.core.Rect;
 import org.opencv.core.RotatedRect;
+import org.opencv.core.Scalar;
 import org.opencv.features2d.BRISK;
 import org.opencv.features2d.DescriptorMatcher;
+import org.opencv.imgproc.CLAHE;
 import org.opencv.imgproc.Imgproc;
 
 import java.io.File;
+import java.io.FileOutputStream;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
@@ -338,8 +345,8 @@ public class ImageQualityActivity extends AppCompatActivity implements View.OnCl
                     Mat exposureMat = grayMat.submat(cropRect);
 
                     //size and position check
-                    MatOfPoint2f approx = detectRDT(matchingMat);
-                    final boolean[] isCorrectPosSize = checkPositionAndSize(approx, true);
+                    MatOfPoint2f approx = detectRDT(grayMat);
+                    final boolean[] isCorrectPosSize = checkPositionAndSize(approx, false);
 
 
                     //exposure check
@@ -395,10 +402,23 @@ public class ImageQualityActivity extends AppCompatActivity implements View.OnCl
                                 }
                             });
 
-                            if (isCorrectPosSize[0] && isCorrectPosSize[1] && isCorrectPosSize[2] && !isBlur && !isOverExposed && !isUnderExposed) {
-                                mCaptureProgressBar.incrementProgressBy(1);
+                            Log.d(TAG, "CAPTURE TIME: "+(System.currentTimeMillis()-timeTaken));
+                            if (((System.currentTimeMillis()-timeTaken) > Constants.MAX_CAPTURE_TIME) || (isCorrectPosSize[0] && isCorrectPosSize[1] && isCorrectPosSize[2] && !isBlur && !isOverExposed && !isUnderExposed)) {
+                                Mat resultWindowMat = enhanceResultWindow(rgbaMat.clone(), approx);
 
-                                if (minDistanceUpdated) {
+                                if (resultWindowMat != null) {
+                                    mCaptureProgressBar.incrementProgressBy(1);
+                                    //checkWindowPosition(resultWindowMat);
+                                    //if (checkWindowPosition(resultWindowMat) && minDistanceUpdated) {
+                                    if (minDistanceUpdated) {
+                                        bestCapturedMat = resultWindowMat.clone();
+                                        minDistanceUpdated = false;
+                                    }
+                                    resultWindowMat.release();
+                                }
+
+                                if (((System.currentTimeMillis()-timeTaken) > Constants.MAX_CAPTURE_TIME)) {
+                                    mCaptureProgressBar.incrementProgressBy(1);
                                     bestCapturedMat = rgbaMat.clone();
                                     minDistanceUpdated = false;
                                 }
@@ -411,9 +431,16 @@ public class ImageQualityActivity extends AppCompatActivity implements View.OnCl
                                     setNextState(mCurrentState);
                                     setProgressUI(mCurrentState);
 
-                                    Log.d(TAG, "rgbaMat 5 Size: " + bestCapturedMat.size().toString() + ", rect size: " + new Rect((int) (Constants.CAMERA2_IMAGE_SIZE.width / 5), (int) (Constants.CAMERA2_IMAGE_SIZE.height / 5), (int) (Constants.CAMERA2_IMAGE_SIZE.width * 0.6), (int) (Constants.CAMERA2_IMAGE_SIZE.height * 0.6)).size().toString());
-                                    byte[] byteArray = ImageUtil.matToRotatedByteArray(bestCapturedMat.submat(new Rect((int) (Constants.CAMERA2_IMAGE_SIZE.width / 5), (int) (Constants.CAMERA2_IMAGE_SIZE.height / 5), (int) (Constants.CAMERA2_IMAGE_SIZE.width * 0.6), (int) (Constants.CAMERA2_IMAGE_SIZE.height * 0.6))));
-
+                                    //Log.d(TAG, "rgbaMat 5 Size: " + bestCapturedMat.size().toString() + ", rect size: " + new Rect((int) (Constants.CAMERA2_IMAGE_SIZE.width / 5), (int) (Constants.CAMERA2_IMAGE_SIZE.height / 5), (int) (Constants.CAMERA2_IMAGE_SIZE.width * 0.6), (int) (Constants.CAMERA2_IMAGE_SIZE.height * 0.6)).size().toString());
+                                    Mat withTime = bestCapturedMat.submat(new Rect((int) (Constants.CAMERA2_IMAGE_SIZE.width * 0.20), (int) (Constants.CAMERA2_IMAGE_SIZE.height / 5), (int) (Constants.CAMERA2_IMAGE_SIZE.width * 0.6), (int) (Constants.CAMERA2_IMAGE_SIZE.height * 0.6)));
+                                    org.opencv.core.Size textSize = Imgproc.getTextSize(String.format("%.3f", (double)(System.currentTimeMillis() - timeTaken)/1000),
+                                            Core.FONT_HERSHEY_DUPLEX, 1, 3, null);
+                                    Imgproc.rectangle(withTime, new Point(0, 0), new Point(textSize.width+10, textSize.height+10),
+                                            new Scalar(255,255,255,255), Core.FILLED);
+                                    Imgproc.putText(withTime, String.format("%.3f", (double)(System.currentTimeMillis() - timeTaken)/1000), new Point(5, textSize.height+5),
+                                            Core.FONT_HERSHEY_DUPLEX, 1.0, new Scalar(0, 0, 0, 255), 2);
+                                    byte[] byteArray = ImageUtil.matToRotatedByteArray(withTime);
+                                    //byte[] byteArray = ImageUtil.matToRotatedByteArray(bestCapturedMat);
                                     // If this activity was triggered by an external
                                     // intent, then respond with the content of the image.
                                     // Otherwise, handle the result inside this app.
@@ -421,6 +448,7 @@ public class ImageQualityActivity extends AppCompatActivity implements View.OnCl
                                         Intent i = new Intent();
 
                                         i.putExtra("data", byteArray);
+                                        i.putExtra("timeTaken", System.currentTimeMillis() - timeTaken);
 
                                         setResult(Activity.RESULT_OK, i);
                                         mOnImageAvailableThread.interrupt();
@@ -431,6 +459,29 @@ public class ImageQualityActivity extends AppCompatActivity implements View.OnCl
                                         intent.putExtra("RDTCaptureByteArray", byteArray);
                                         intent.putExtra("timeTaken", System.currentTimeMillis() - timeTaken);
 
+//                                        File sdIconStorageDir = new File(Constants.RDT_IMAGE_DIR);
+//
+//                                        //create storage directories, if they don't exist
+//                                        sdIconStorageDir.mkdirs();
+//
+//                                        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH-mm-ss-SSS");
+//
+//                                        try {
+//                                            String filePath = sdIconStorageDir.toString() + String.format("/%s-%08dms.jpg", sdf.format(new Date()), timeTaken);
+//                                            FileOutputStream fileOutputStream = new FileOutputStream(filePath);
+//
+//                                            fileOutputStream.write(byteArray);
+//
+//                                            fileOutputStream.flush();
+//                                            fileOutputStream.close();
+//
+//                                            sendBroadcast(new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE, Uri.parse("file://" + filePath)));
+//
+//                                            //Toast.makeText(this,"Image is successfully saved!", Toast.LENGTH_SHORT).show();
+//                                        } catch (Exception e) {
+//                                            Log.w("TAG", "Error saving image file: " + e.getMessage());
+//                                        }
+
                                         rgbaMat.release();
                                         startActivity(intent);
                                         mOnImageAvailableThread.interrupt();
@@ -439,7 +490,7 @@ public class ImageQualityActivity extends AppCompatActivity implements View.OnCl
                             }
                         }
                     } catch (Exception e) {
-                        Log.d(TAG, e.getMessage());
+                        Log.e(TAG, e.getMessage());
                     }
 
                     rgbaMat.release();
@@ -453,6 +504,168 @@ public class ImageQualityActivity extends AppCompatActivity implements View.OnCl
         }
 
     };
+
+    private boolean checkWindowPosition(Mat resultWindowMat) {
+        Point line = new Point(resultWindowMat.width()*0.35-resultWindowMat.width()*0.15, 0);
+        Rect roi = new Rect((int)(resultWindowMat.width()*0.15), (int)(resultWindowMat.height()*0.2), (int)(resultWindowMat.width()*0.7), (int)(resultWindowMat.height()*0.6));
+        Mat crop = resultWindowMat.submat(roi);
+        Mat cropgray = new Mat();
+        Imgproc.cvtColor(crop, cropgray, Imgproc.COLOR_RGBA2BGR);
+        Imgproc.cvtColor(cropgray, cropgray, Imgproc.COLOR_BGR2HSV);
+
+        ArrayList<Mat> channels = new ArrayList<>();
+        Core.split(cropgray, channels);
+
+        Core.MinMaxLocResult result = Core.minMaxLoc(channels.get(2), null);
+
+        Log.d(TAG, "MIN MAX LOC Rect: "+crop.size().width+", "+ cropgray.size().width);
+        Log.d(TAG, "MIN MAX LOC Rect: "+crop.size().height+", "+ cropgray.size().height);
+        Log.d(TAG, "MIN MAX LOC: "+result.minLoc + ", " + result.minVal + ", " + result.maxLoc + ", " + result.maxVal);
+
+        double minColSum = Double.MAX_VALUE;
+        int minColIndex = -2;
+        for (int i = -2; i < 1; i++) {
+            double colSum = channels.get(2).get((int)result.minLoc.y, (int)result.minLoc.x+i)[0] +
+            channels.get(2).get((int)result.minLoc.y, (int)result.minLoc.x+i+1)[0] +
+            channels.get(2).get((int)result.minLoc.y, (int)result.minLoc.x+i+2)[0];
+
+            Log.d(TAG, String.format("MIN MAX explore: %d: %d, %d, %d", (int)result.minLoc.x+i, (int)channels.get(2).get((int)result.minLoc.y, (int)result.minLoc.x+i)[0],
+                    (int)channels.get(2).get((int)result.minLoc.y, (int)result.minLoc.x+i+1)[0], (int)channels.get(2).get((int)result.minLoc.y, (int)result.minLoc.x+i+2)[0]));
+
+            minColIndex = (colSum < minColSum) ? i : minColIndex;
+            minColSum = (colSum < minColSum) ? colSum : minColSum;
+        }
+
+        Log.d(TAG, "MIN MAX col: " + minColIndex);
+
+        double sum = 0;
+        for (int i = minColIndex; i < minColIndex+3; i++) {
+            for (int j = 0; j < channels.get(2).height(); j++) {
+                Log.d(TAG, "MIN MAX coor: "+(result.minLoc.x+i)+","+j+", " +channels.get(2).get(j, (int)(result.minLoc.x+i))[0]);
+                //if (i >= -1 && i < 2) {
+                sum += channels.get(2).get(j, (int) (result.minLoc.x + i))[0];
+                //}
+            }
+        }
+
+        double avg = sum/(double)(channels.get(0).height()*3);
+
+        Log.d(TAG, "MIN MAX Row Avg: " + avg + " And, MIN VAL: "+result.minVal);
+        Log.d(TAG, "MIN MAX Row Loc: " + line + " And, MIN VAL: "+result.minLoc);
+
+        return (0 < avg && avg < result.minVal+30 && result.minLoc.x - 0.1*channels.get(2).width() < line.x && line.x < result.minLoc.x + 0.1*channels.get(2).width());
+    }
+
+    private Mat enhanceResultWindow(Mat input, MatOfPoint2f boundary) {
+        Mat refPoints = new Mat(4, 1, CvType.CV_32FC2);
+        Mat refResultPoints = new Mat(4, 1, CvType.CV_32FC2);
+        //Mat obj_corners = new Mat(4, 1, CvType.CV_32FC2);
+
+        double[] a = new double[]{0, 0};
+        double[] b = new double[]{mRefImg.cols() - 1, 0};
+        double[] c = new double[]{mRefImg.cols() - 1, mRefImg.rows() - 1};
+        double[] d = new double[]{0, mRefImg.rows() - 1};
+
+        //get corners from object
+        refPoints.put(0, 0, a);
+        refPoints.put(1, 0, b);
+        refPoints.put(2, 0, c);
+        refPoints.put(3, 0, d);
+
+        Log.d(TAG, "perspective ref" + refPoints.dump());
+
+//        a = new double[]{59, 183};
+//        b = new double[]{59+30, 183};
+//        c = new double[]{59+30, 183+110};
+//        d = new double[]{59, 183+110};
+
+        //TODO: make it as a config
+        a = new double[]{Constants.RESULT_WINDOW_X, Constants.RESULT_WINDOW_Y};
+        b = new double[]{Constants.RESULT_WINDOW_X+Constants.RESULT_WINDOW_WIDTH, Constants.RESULT_WINDOW_Y};
+        c = new double[]{Constants.RESULT_WINDOW_X+Constants.RESULT_WINDOW_WIDTH, Constants.RESULT_WINDOW_Y+Constants.RESULT_WINDOW_HEIGHT};
+        d = new double[]{Constants.RESULT_WINDOW_X, Constants.RESULT_WINDOW_Y+Constants.RESULT_WINDOW_HEIGHT};
+//        a = new double[]{185, 63};
+//        b = new double[]{185+90, 63};
+//        c = new double[]{185+90, 63+20};
+//        d = new double[]{185, 63+20};
+
+        refResultPoints.put(0, 0, a);
+        refResultPoints.put(1, 0, b);
+        refResultPoints.put(2, 0, c);
+        refResultPoints.put(3, 0, d);
+
+        Log.d(TAG, "perspective results" + refResultPoints.dump());
+        Log.d(TAG, "perspective bound" + boundary.dump());
+
+        Mat M = Imgproc.getPerspectiveTransform(refPoints, boundary);
+        Log.d(TAG, "perspective transform" + M.dump());
+        Mat imgResultPointsMat = new Mat();
+        Core.perspectiveTransform(refResultPoints, imgResultPointsMat, M);
+        Log.d(TAG, "perspective window" + imgResultPointsMat.dump());
+
+        MatOfPoint imgResultPoints = new MatOfPoint();
+
+        ArrayList<Point> points = new ArrayList<>();
+        points.add(new Point(imgResultPointsMat.get(0, 0)));
+        points.add(new Point(imgResultPointsMat.get(1, 0)));
+        points.add(new Point(imgResultPointsMat.get(2, 0)));
+        points.add(new Point(imgResultPointsMat.get(3, 0)));
+        imgResultPoints.fromList(points);
+
+        Point[] p = imgResultPoints.toArray();
+
+        Rect resultRect = Imgproc.boundingRect(imgResultPoints);
+
+        Mat resultImg = input.submat(resultRect);
+        Mat enhancedImg = enhanceImage(resultImg, new org.opencv.core.Size(2, resultRect.height));
+        enhancedImg = correctGamma(enhancedImg, 1.2);
+        boolean windowPosition = checkWindowPosition(resultImg);
+
+        Log.d(TAG, "MIN MAX position right: " + windowPosition);
+
+        if (windowPosition) {
+            enhancedImg.copyTo(resultImg);
+            return input;
+        } else {
+            return null;
+        }
+    }
+
+    private Mat correctGamma(Mat enhancedImg, double gamma) {
+        Mat lutMat = new Mat(1, 256, CvType.CV_8UC1);
+        for (int i = 0; i < 256; i ++) {
+            double g = Math.pow((double)i/255.0, gamma)*255.0;
+            g = g > 255.0 ? 255.0 : g < 0 ? 0 : g;
+            lutMat.put(0, i, g);
+        }
+        Mat result = new Mat();
+        Core.LUT(enhancedImg, lutMat, result);
+        return result;
+    }
+
+    private Mat enhanceImage(Mat resultImg, org.opencv.core.Size tile) {
+        Mat result = new Mat();
+        Imgproc.cvtColor(resultImg, result, Imgproc.COLOR_RGBA2BGR);
+        Imgproc.cvtColor(result, result, Imgproc.COLOR_BGR2HSV);
+
+        CLAHE clahe = Imgproc.createCLAHE(5, tile);
+
+        ArrayList<Mat> channels = new ArrayList<>();
+        Core.split(result, channels);
+
+        Mat newChannel = new Mat();
+
+        clahe.apply(channels.get(2), newChannel);
+
+        channels.set(2, newChannel);
+
+        Core.merge(channels, result);
+
+        Imgproc.cvtColor(result, result, Imgproc.COLOR_HSV2BGR);
+        Imgproc.cvtColor(result, result, Imgproc.COLOR_BGR2RGBA);
+
+        return result;
+    }
 
     /**
      * {@link CaptureRequest.Builder} for the camera preview
@@ -486,7 +699,7 @@ public class ImageQualityActivity extends AppCompatActivity implements View.OnCl
                     return;
                 }
 
-                if (result.get(CaptureResult.CONTROL_AF_MODE) == CaptureResult.CONTROL_AF_MODE_CONTINUOUS_PICTURE) {
+                if (result.get(CaptureResult.CONTROL_AF_MODE) != null && result.get(CaptureResult.CONTROL_AF_MODE) == CaptureResult.CONTROL_AF_MODE_CONTINUOUS_PICTURE) {
                     if (result.get(CaptureResult.CONTROL_AF_STATE) == CaptureResult.CONTROL_AF_STATE_PASSIVE_FOCUSED) {
                         Log.d(TAG, "FOCUS STATE: focused");
                         mFocusState = FocusState.FOCUSED;
@@ -638,6 +851,9 @@ public class ImageQualityActivity extends AppCompatActivity implements View.OnCl
                 Size closestImageSize = new Size(Integer.MAX_VALUE, (int)(Integer.MAX_VALUE*(3.0/4.0)));
                 for (Size size: Arrays.asList(map.getOutputSizes(ImageFormat.YUV_420_888))) {
                     Log.d(TAG, "Available Sizes: " + size.toString());
+                    if (size.getWidth() < 719)
+                        continue;
+
                     if (size.getWidth()*9 == size.getHeight()*16) { //Preview surface ratio is 16:9
                         double currPreviewDiff = (CAMERA2_PREVIEW_SIZE.height * CAMERA2_PREVIEW_SIZE.width) - closestPreviewSize.getHeight() * closestPreviewSize.getWidth();
                         double newPreviewDiff = (CAMERA2_PREVIEW_SIZE.height * CAMERA2_PREVIEW_SIZE.width) - size.getHeight() * size.getWidth();
@@ -975,7 +1191,10 @@ public class ImageQualityActivity extends AppCompatActivity implements View.OnCl
         mMatcher = DescriptorMatcher.create(DescriptorMatcher.BRUTEFORCE_HAMMING);
         mRefImg = new Mat();
 
-        Bitmap bitmap = BitmapFactory.decodeResource(getApplicationContext().getResources(), R.drawable.sd_bioline_malaria_ag_pf);
+        BitmapFactory.Options bitmapOptions = new BitmapFactory.Options();
+        bitmapOptions.inScaled = false;
+
+        Bitmap bitmap = BitmapFactory.decodeResource(getApplicationContext().getResources(), R.drawable.sd_bioline_malaria_ag_pf, bitmapOptions);
         Utils.bitmapToMat(bitmap, mRefImg);
         Imgproc.cvtColor(mRefImg, mRefImg, Imgproc.COLOR_RGB2GRAY);
         mRefDescriptor = new Mat();
@@ -985,6 +1204,8 @@ public class ImageQualityActivity extends AppCompatActivity implements View.OnCl
         mFeatureDetector.detect(mRefImg, mRefKeypoints);
         mFeatureDetector.compute(mRefImg, mRefKeypoints, mRefDescriptor);
         Log.d(TAG, "REFERENCE LOAD/DETECT/COMPUTE: " + (System.currentTimeMillis() - startTime));
+        Log.d(TAG, "mRef Size: (" + bitmap.getWidth()+", "+bitmap.getHeight()+")");
+        Log.d(TAG, "mRef Size: (" + mRefImg.size().width+", "+mRefImg.size().height+")");
     }
 
     private void unloadReference(){
@@ -1101,7 +1322,13 @@ public class ImageQualityActivity extends AppCompatActivity implements View.OnCl
         MatOfKeyPoint keypoints = new MatOfKeyPoint();
 
         long startTime = System.currentTimeMillis();
-        mFeatureDetector.detect(input, keypoints);
+
+        Mat mask = new Mat(input.width(), input.height(), CvType.CV_8U, new Scalar(0));
+        Point p1 = new Point(input.size().width*(1-Constants.MASK_WIDTH_SCALE)/2, input.size().height*(1-Constants.MASK_HEIGHT_SCALE)/2);
+        Point p2 = new Point(input.size().width-p1.x, input.size().height-p1.y);
+        Imgproc.rectangle(mask, p1, p2, new Scalar(255), -1);
+
+        mFeatureDetector.detect(input, keypoints, mask);
         mFeatureDetector.compute(input, keypoints, descriptors);
         Log.d(TAG, "detect/compute TIME: " + (System.currentTimeMillis()-startTime));
 
@@ -1269,9 +1496,10 @@ public class ImageQualityActivity extends AppCompatActivity implements View.OnCl
             width = rotatedRect.size.height;
         }
 
-        boolean isCentered = center.x < trueCenter.x *(1+ Constants.POSITION_THRESHOLD) && center.x > trueCenter.x*(1- Constants.POSITION_THRESHOLD)
-                && center.y < trueCenter.y *(1+ Constants.POSITION_THRESHOLD) && center.y > trueCenter.y*(1- Constants.POSITION_THRESHOLD);
-        boolean isRightSize = height < Constants.CAMERA2_IMAGE_SIZE.width*Constants.VIEWPORT_SCALE*(1+Constants.SIZE_THRESHOLD) && height > Constants.CAMERA2_IMAGE_SIZE.width*Constants.VIEWPORT_SCALE*(1-Constants.SIZE_THRESHOLD);
+        boolean isCentered = center.x < trueCenter.x + Constants.CAMERA2_IMAGE_SIZE.width*Constants.POSITION_THRESHOLD && center.x > trueCenter.x - Constants.CAMERA2_IMAGE_SIZE.width*Constants.POSITION_THRESHOLD
+                && center.y < trueCenter.y + Constants.CAMERA2_IMAGE_SIZE.height*Constants.POSITION_THRESHOLD && center.y > trueCenter.y - Constants.CAMERA2_IMAGE_SIZE.height*Constants.POSITION_THRESHOLD;
+        boolean isRightSize = height < Constants.CAMERA2_IMAGE_SIZE.width*Constants.VIEWPORT_SCALE*(1+Constants.SIZE_THRESHOLD)
+                && height > Constants.CAMERA2_IMAGE_SIZE.width*Constants.VIEWPORT_SCALE*(1-Constants.SIZE_THRESHOLD);
         boolean isOriented = angle < 90.0*Constants.POSITION_THRESHOLD;
 
         results[0] = isCentered && height > Constants.CAMERA2_IMAGE_SIZE.width*Constants.VIEWPORT_SCALE/5;
