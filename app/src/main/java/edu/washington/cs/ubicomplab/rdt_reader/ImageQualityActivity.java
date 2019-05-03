@@ -81,6 +81,9 @@ import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
+import java.util.Queue;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 
@@ -103,6 +106,7 @@ public class ImageQualityActivity extends AppCompatActivity implements View.OnCl
     private ProgressBar mProgress;
     private ProgressBar mCaptureProgressBar;
     private View mProgressBackgroundView;
+    private TextView mInstructionText;
     private State mCurrentState = State.QUALITY_CHECK;
     private Mat bestCapturedMat;
     private double minDistance = Double.MAX_VALUE;
@@ -126,14 +130,7 @@ public class ImageQualityActivity extends AppCompatActivity implements View.OnCl
         INACTIVE, FOCUSING, FOCUSED, UNFOCUSED
     }
 
-    public enum ExposureResult {
-        UNDER_EXPOSED, NORMAL, OVER_EXPOSED
-    }
-
-    public enum SizeResult{
-        RIGHT_SIZE, LARGE, SMALL, INVALID
-
-    }
+    private Activity thisActivity = this;
 
 
     @Override
@@ -143,8 +140,6 @@ public class ImageQualityActivity extends AppCompatActivity implements View.OnCl
 
 //        loadPref();
 
-        processor = ImageProcessor.getInstance(this);
-
         mTextureView = findViewById(R.id.texture);
 
         mFile = new File(getExternalFilesDir(null), "pic.jpg");
@@ -152,6 +147,8 @@ public class ImageQualityActivity extends AppCompatActivity implements View.OnCl
         timeTaken = System.currentTimeMillis();
 
         initViews();
+
+        //imageProcessor = new ImageProcessor(this);
     }
 
     private boolean isExternalIntent() {
@@ -296,25 +293,59 @@ public class ImageQualityActivity extends AppCompatActivity implements View.OnCl
     final Object lock = new Object();
     final Object focusStateLock = new Object();
 
+    final BlockingQueue<Image> imageQueue = new ArrayBlockingQueue<>(1);
+
     /**
      * This a callback object for the {@link ImageReader}. "onImageAvailable" will be called when a
      * still image is ready to be saved.
      */
-//    private final ImageReader.OnImageAvailableListener mOnImageAvailableListener
-//            = new ImageReader.OnImageAvailableListener() {
-//
-//        @Override
-//        public void onImageAvailable(ImageReader reader) {
-//            if (reader == null) {
-//                return;
-//            }
-//
-//            final Image image = reader.acquireLatestImage();
-//            Log.d(TAG, "OnImageAvailableListener: image acquired! " + System.currentTimeMillis());
-//
-//            if (image == null) {
-//                return;
-//            }
+    private final ImageReader.OnImageAvailableListener mOnImageAvailableListener
+            = new ImageReader.OnImageAvailableListener() {
+
+        @Override
+        public void onImageAvailable(ImageReader reader) {
+            if (reader == null) {
+                return;
+            }
+
+            final Image image = reader.acquireLatestImage();
+            Log.d(TAG, "OnImageAvailableListener: image acquired! " + System.currentTimeMillis());
+
+            if (image == null) {
+                return;
+            }
+
+            if (imageQueue.size() > 0) {
+                return;
+            }
+
+            Log.d(TAG, "LOCAL FOCUS STATE: " + mFocusState + ", " + FocusState.FOCUSED);
+            if (mFocusState != FocusState.FOCUSED) {
+                image.close();
+                return;
+            }
+
+            imageQueue.add(image);
+
+            final Mat rgbaMat = ImageUtil.imageToRGBMat(image);
+            final ImageProcessor.CaptureResult result = processor.captureRDT(rgbaMat);
+            //ImageProcessor.SizeResult sizeResult, boolean isCentered, boolean isRightOrientation, boolean isSharp, ImageProcessor.ExposureResult exposureResult
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    displayQualityResult(result.sizeResult, result.isCentered, result.isRightOrientation, result.isSharp, result.exposureResult);
+                }
+            });
+
+
+            Log.d(TAG, String.format("Captured result: %b", result.allChecksPassed));
+            if (result.allChecksPassed) {
+                Log.d(TAG, String.format("Captured MAT size: %s", result.resultMat.size()));
+            }
+
+            imageQueue.remove();
+            image.close();
+
 //
 //            synchronized (focusStateLock) {
 //                Log.d(TAG, "LOCAL FOCUS STATE: " + mFocusState + ", " + FocusState.FOCUSED);
@@ -484,9 +515,9 @@ public class ImageQualityActivity extends AppCompatActivity implements View.OnCl
 //                    }
 //                }
 //            });
-//        }
-//
-//    };
+        }
+
+    };
 
     /**
      * {@link CaptureRequest.Builder} for the camera preview
@@ -693,8 +724,8 @@ public class ImageQualityActivity extends AppCompatActivity implements View.OnCl
                 mPreviewSize = closestPreviewSize;
                 mImageReader = ImageReader.newInstance(closestImageSize.getWidth(), closestImageSize.getHeight(),
                         ImageFormat.YUV_420_888, /*maxImages*/5);
-//                mImageReader.setOnImageAvailableListener(
-//                        mOnImageAvailableListener, mOnImageAvailableHandler);
+                mImageReader.setOnImageAvailableListener(
+                        mOnImageAvailableListener, mOnImageAvailableHandler);
 
                 Constants.CAMERA2_IMAGE_SIZE.width = closestImageSize.getWidth();
                 Constants.CAMERA2_IMAGE_SIZE.height = closestImageSize.getHeight();
@@ -970,7 +1001,8 @@ public class ImageQualityActivity extends AppCompatActivity implements View.OnCl
             switch (status) {
                 case LoaderCallbackInterface.SUCCESS: {
                     Log.i(TAG, "OpenCV loaded successfully");
-                    loadReference();
+                    processor = ImageProcessor.getInstance(thisActivity);
+                    //loadReference();
                 }
                 break;
                 default: {
@@ -998,7 +1030,7 @@ public class ImageQualityActivity extends AppCompatActivity implements View.OnCl
         mCaptureProgressBar = findViewById(R.id.captureProgressBar);
         mCaptureProgressBar.setMax(CAPTURE_COUNT);
         mCaptureProgressBar.setProgress(0);
-//        mInstructionText = findViewById(R.id.textInstruction);
+        mInstructionText = findViewById(R.id.textInstruction);
 
         setProgressUI(mCurrentState);
     }
@@ -1021,9 +1053,9 @@ public class ImageQualityActivity extends AppCompatActivity implements View.OnCl
     }
 
     private void unloadReference() {
-        mRefImg.release();
-        mRefDescriptor.release();
-        mRefKeypoints.release();
+       //mRefImg.release();
+       //mRefDescriptor.release();
+       // mRefKeypoints.release();
         if (bestCapturedMat != null)
             bestCapturedMat.release();
     }
@@ -1057,6 +1089,41 @@ public class ImageQualityActivity extends AppCompatActivity implements View.OnCl
 
     }
 
+    private void displayQualityResult(ImageProcessor.SizeResult sizeResult, boolean isCentered, boolean isRightOrientation, boolean isSharp, ImageProcessor.ExposureResult exposureResult) {
+        FocusState currFocusState;
+
+        synchronized (focusStateLock) {
+            currFocusState = mFocusState;
+        }
+
+        if (currFocusState == FocusState.FOCUSED) {
+            String[] qChecks = processor.getQualityCheckText(sizeResult, isCentered, isRightOrientation, isSharp, exposureResult);
+            String message = String.format(getResources().getString(R.string.quality_msg_format_text), qChecks[0], qChecks[1], qChecks[2], qChecks[3]);
+
+            mInstructionText.setText(getResources().getText(processor.getInstructionText(sizeResult, isCentered, isRightOrientation)));
+
+            mImageQualityFeedbackView.setText(Html.fromHtml(message));
+            if (sizeResult == ImageProcessor.SizeResult.RIGHT_SIZE && isCentered && isRightOrientation && isSharp && exposureResult == ImageProcessor.ExposureResult.NORMAL) {
+                if (mViewport.getBackgroundColorId() != R.color.green_overlay) {
+                    mViewport.setBackgroundColoId(R.color.green_overlay);
+                }
+            } else {
+                if (mViewport.getBackgroundColorId() != R.color.red_overlay) {
+                    mViewport.setBackgroundColoId(R.color.red_overlay);
+                }
+            }
+        } else if (currFocusState == FocusState.INACTIVE) {
+            mInstructionText.setText(getResources().getString(R.string.instruction_pos));
+            mViewport.setBackgroundColoId(R.color.red_overlay);
+        } else if (currFocusState == FocusState.UNFOCUSED) {
+            mInstructionText.setText(getResources().getString(R.string.instruction_unfocused));
+            mViewport.setBackgroundColoId(R.color.red_overlay);
+        } else if (currFocusState == FocusState.FOCUSING) {
+            mInstructionText.setText(getResources().getString(R.string.instruction_focusing));
+            mViewport.setBackgroundColoId(R.color.red_overlay);
+        }
+    }
+
     private void displayQualityResult(boolean[] isCorrectPosSize, boolean isBlur, boolean isOverExposed, boolean isUnderExposed, boolean isShadow) {
         FocusState currFocusState;
 
@@ -1071,47 +1138,47 @@ public class ImageQualityActivity extends AppCompatActivity implements View.OnCl
                     !isShadow ? Constants.OK : Constants.NOT_OK);
 
 
-            // sets the instructions for the code
-//
-//            if (isCorrectPosSize[1] && isCorrectPosSize[0] & isCorrectPosSize[2]) {
-//                mInstructionText.setText(getResources().getText(R.string.instruction_detected));
-//            } else if (mMoveCloserCount > Constants.MOVE_CLOSER_COUNT)
-//                if (!isCorrectPosSize[5]) {
-//                    if (!isCorrectPosSize[0] || (!isCorrectPosSize[1] && isCorrectPosSize[3])) {
-//                        mInstructionText.setText(getResources().getString(R.string.instruction_pos));
-//                    } else if (!isCorrectPosSize[1] && isCorrectPosSize[4]) {
-//                        mInstructionText.setText(getResources().getString(R.string.instruction_too_small));
-//                        mMoveCloserCount = 0;
-//                    }
-//                } else {
-//                    mInstructionText.setText(getResources().getString(R.string.instruction_pos));
-//                }
-//            else {
-//                mInstructionText.setText(getResources().getString(R.string.instruction_too_small));
-//                mMoveCloserCount++;
-//            }
-//
-//            mImageQualityFeedbackView.setText(Html.fromHtml(message));
-//            if (isCorrectPosSize[0] && isCorrectPosSize[1] && isCorrectPosSize[2] && !isBlur && !isOverExposed && !isUnderExposed && !isShadow) {
-//                if (mViewport.getBackgroundColorId() != R.color.green_overlay) {
-//                    mViewport.setBackgroundColoId(R.color.green_overlay);
-//                }
-//            } else {
-//                if (mViewport.getBackgroundColorId() != R.color.red_overlay) {
-//                    mViewport.setBackgroundColoId(R.color.red_overlay);
-//                }
-//            }
-//        } else if (currFocusState == FocusState.INACTIVE) {
-//            mInstructionText.setText(getResources().getString(R.string.instruction_pos));
-//            mViewport.setBackgroundColoId(R.color.red_overlay);
-//        } else if (currFocusState == FocusState.UNFOCUSED) {
-//            mInstructionText.setText(getResources().getString(R.string.instruction_unfocused));
-//            mViewport.setBackgroundColoId(R.color.red_overlay);
-//        } else if (currFocusState == FocusState.FOCUSING) {
-//            mInstructionText.setText(getResources().getString(R.string.instruction_focusing));
-//            mViewport.setBackgroundColoId(R.color.red_overlay);
-//        }
+            //sets the instructions for the code
+
+            if (isCorrectPosSize[1] && isCorrectPosSize[0] & isCorrectPosSize[2]) {
+                mInstructionText.setText(getResources().getText(R.string.instruction_detected));
+            } else if (mMoveCloserCount > Constants.MOVE_CLOSER_COUNT)
+                if (!isCorrectPosSize[5]) {
+                    if (!isCorrectPosSize[0] || (!isCorrectPosSize[1] && isCorrectPosSize[3])) {
+                        mInstructionText.setText(getResources().getString(R.string.instruction_pos));
+                    } else if (!isCorrectPosSize[1] && isCorrectPosSize[4]) {
+                        mInstructionText.setText(getResources().getString(R.string.instruction_too_small));
+                        mMoveCloserCount = 0;
+                    }
+                } else {
+                    mInstructionText.setText(getResources().getString(R.string.instruction_pos));
+                }
+            else {
+                mInstructionText.setText(getResources().getString(R.string.instruction_too_small));
+                mMoveCloserCount++;
+            }
+
+            mImageQualityFeedbackView.setText(Html.fromHtml(message));
+            if (isCorrectPosSize[0] && isCorrectPosSize[1] && isCorrectPosSize[2] && !isBlur && !isOverExposed && !isUnderExposed && !isShadow) {
+                if (mViewport.getBackgroundColorId() != R.color.green_overlay) {
+                    mViewport.setBackgroundColoId(R.color.green_overlay);
+                }
+            } else {
+                if (mViewport.getBackgroundColorId() != R.color.red_overlay) {
+                    mViewport.setBackgroundColoId(R.color.red_overlay);
+                }
+            }
+        } else if (currFocusState == FocusState.INACTIVE) {
+            mInstructionText.setText(getResources().getString(R.string.instruction_pos));
+            mViewport.setBackgroundColoId(R.color.red_overlay);
+        } else if (currFocusState == FocusState.UNFOCUSED) {
+            mInstructionText.setText(getResources().getString(R.string.instruction_unfocused));
+            mViewport.setBackgroundColoId(R.color.red_overlay);
+        } else if (currFocusState == FocusState.FOCUSING) {
+            mInstructionText.setText(getResources().getString(R.string.instruction_focusing));
+            mViewport.setBackgroundColoId(R.color.red_overlay);
         }
+    }
 
 //
 //    private void setNextState (State currentState) {
@@ -1127,7 +1194,7 @@ public class ImageQualityActivity extends AppCompatActivity implements View.OnCl
 //        }
 //
 //        setProgressUI(mCurrentState);
-//    }
+    //}
 
 
 //    private MatOfPoint2f detectRDT(Mat input, Mat output) {
@@ -1466,5 +1533,5 @@ public class ImageQualityActivity extends AppCompatActivity implements View.OnCl
 //        res.updateConfiguration(conf, dm);
 //        setContentView(R.layout.activity_image_quality);
 //    }
-    }
+//    }
 }

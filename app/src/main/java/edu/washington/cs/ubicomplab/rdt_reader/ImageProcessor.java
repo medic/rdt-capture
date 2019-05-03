@@ -31,19 +31,11 @@ import org.opencv.features2d.BRISK;
 import org.opencv.imgproc.Imgproc;
 import org.opencv.core.Scalar;
 
-import java.nio.channels.CompletionHandler;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 
-import static edu.washington.cs.ubicomplab.rdt_reader.ImageQualityActivity.ExposureResult.NORMAL;
-import static edu.washington.cs.ubicomplab.rdt_reader.ImageQualityActivity.ExposureResult.OVER_EXPOSED;
-import static edu.washington.cs.ubicomplab.rdt_reader.ImageQualityActivity.ExposureResult.UNDER_EXPOSED;
-import static edu.washington.cs.ubicomplab.rdt_reader.ImageQualityActivity.SizeResult.INVALID;
-import static edu.washington.cs.ubicomplab.rdt_reader.ImageQualityActivity.SizeResult.LARGE;
-import static edu.washington.cs.ubicomplab.rdt_reader.ImageQualityActivity.SizeResult.RIGHT_SIZE;
-import static edu.washington.cs.ubicomplab.rdt_reader.ImageQualityActivity.SizeResult.SMALL;
 import static java.lang.Math.pow;
 import static java.lang.StrictMath.abs;
 import static org.opencv.core.Core.NORM_INF;
@@ -93,15 +85,50 @@ public class ImageProcessor {
     String instruction_focusing = "Place RDT at the center.\nFit RDT to the rectangle.\nCamera is focusing. \nStay still.";
     String instruction_unfocused = "Place RDT at the center.\n Fit RDT to the rectangle.\nCamera is not focused. \nMove further away.";
 
+    int mMoveCloserCount = 0;
+
+    public enum ExposureResult {
+        UNDER_EXPOSED, NORMAL, OVER_EXPOSED
+    }
+
+    public enum SizeResult{
+        RIGHT_SIZE, LARGE, SMALL, INVALID
+
+    }
+
+    public class CaptureResult {
+        boolean allChecksPassed;
+        Mat resultMat;
+        double matchDistance;
+        ExposureResult exposureResult;
+        SizeResult sizeResult;
+        boolean isCentered;
+        boolean isRightOrientation;
+        boolean isSharp;
+        boolean isShadow;
+
+        public CaptureResult(boolean allChecksPassed, Mat resultMat, double matchDistance,
+                             ExposureResult exposureResult, SizeResult sizeResult,  boolean isCentered,
+                             boolean isRightOrientation, boolean isSharp, boolean isShadow){
+            this.allChecksPassed = allChecksPassed;
+            this.resultMat = resultMat;
+            this.matchDistance = matchDistance;
+            this.exposureResult = exposureResult;
+            this.sizeResult = sizeResult;
+            this.isCentered = isCentered;
+            this.isRightOrientation = isRightOrientation;
+            this.isSharp = isSharp;
+            this.isShadow = isShadow;
+        }
+    }
 
 
-
-    private ImageProcessor(Activity activity) {
+    public ImageProcessor (Activity activity) {
         mFeatureDetector = BRISK.create(45, 4, 1.0f);
         mMatcher = BFMatcher.create(BFMatcher.BRUTEFORCE_HAMMING, true);
         mRefImg = new Mat();
 
-        Bitmap bitmap = BitmapFactory.decodeResource(activity.getApplicationContext().getResources(), R.drawable.quickvue_ref);
+        Bitmap bitmap = BitmapFactory.decodeResource(activity.getApplicationContext().getResources(), R.drawable.sd_bioline_malaria_ag_pf);
         Utils.bitmapToMat(bitmap, mRefImg);
         Imgproc.cvtColor(mRefImg, mRefImg, Imgproc.COLOR_RGB2GRAY);
         mRefDescriptor = new Mat();
@@ -134,28 +161,27 @@ public class ImageProcessor {
 
     }
 
-    public void captureRDT() {
-        Mat inputMat = new Mat();
+    public CaptureResult captureRDT(Mat inputMat) {
         Mat greyMat = new Mat();
         Imgproc.cvtColor(inputMat, greyMat, Imgproc.COLOR_BGRA2GRAY);
-        MatOfPoint2f matchDistance = new MatOfPoint2f();
+        double matchDistance = -1.0;
         boolean passed = false;
 
         //check brightness (refactored)
-        ImageQualityActivity.ExposureResult exposureResult = (checkBrightness(greyMat));
+        ExposureResult exposureResult = (checkBrightness(greyMat));
 
         //check sharpness (refactored)
         boolean isSharp = checkSharpness(greyMat);
 
         //preform detectRDT only if those two quality checks are passed
-        if (exposureResult == NORMAL && isSharp) {
+        if (exposureResult == ExposureResult.NORMAL && isSharp) {
             //CJ: detectRDT starts
 
             //CJ: detectRDT ends inside of "performBRISKSearchOnMat". Check "performBRISKSearchOnMat" for the end of detectRDT.
             MatOfPoint2f boundary = new MatOfPoint2f();
             matchDistance = detectRDT(greyMat, boundary);
             boolean isCentered = false;
-            ImageQualityActivity.SizeResult sizeResult = INVALID;
+            SizeResult sizeResult = SizeResult.INVALID;
             boolean isRightOrientation = false;
 
             //[self checkPositionAndSize:boundary isCropped:false inside:greyMat.size()];
@@ -167,17 +193,18 @@ public class ImageProcessor {
                 isRightOrientation = checkOrientation(boundary);
             }
 
-            passed = sizeResult == RIGHT_SIZE && isCentered && isRightOrientation;
+            passed = sizeResult == SizeResult.RIGHT_SIZE && isCentered && isRightOrientation;
 
 
+            return new CaptureResult(passed, cropRDT(inputMat), matchDistance, exposureResult, sizeResult, isCentered, isRightOrientation, isSharp, false);
             //MatToUIImage --> Utils.matToBitmap()
             // CompletionHandler seems to not the right method to use in this case
 //            return CompletionHandler((passed, Utils.bitmapToMat(cropRDT(inputMat), matchDistance, exposureResult, sizeResult, isCentered, isRightOrientation, isSharp, false)));
             //completion(passed, MatToUIImage(inputMat), matchDistance, exposureResult, sizeResult, isCentered, isRightOrientation, isSharp, false);
         }
-//        else {
-//            return CompletionHandler(passed, null, matchDistance, exposureResult, INVALID, false, false, isSharp, false);
-//        }
+        else {
+            return new CaptureResult(passed, null, matchDistance, exposureResult, SizeResult.INVALID, false, false, isSharp, false);
+        }
 
     }
 
@@ -185,7 +212,7 @@ public class ImageProcessor {
 
     }
 
-    private MatOfPoint2f detectRDT(Mat input, Mat output) {
+    private double detectRDT(Mat input, MatOfPoint2f boundary) {
         long veryStart = System.currentTimeMillis();
 
         //Imgproc.GaussianBlur(input, input, new org.opencv.core.Size(3,3), 2, 2);
@@ -205,7 +232,7 @@ public class ImageProcessor {
 
         if (size.equals(new org.opencv.core.Size(0,0))) {
             Log.d(TAG, String.format("no features on input"));
-            return null;
+            return -1.0;
         }
 
         // Matching
@@ -216,10 +243,10 @@ public class ImageProcessor {
                 mMatcher.match(mRefDescriptor, descriptors, matches);
                 Log.d(TAG, String.format("matched"));
             } catch (Exception e) {
-                return null;
+                return -1.0;
             }
         } else {
-            return null;
+            return -1.0;
         }
         List<DMatch> matchesList = matches.toList();
         Log.d(TAG, "matching TIME: " + (System.currentTimeMillis()-veryStart));
@@ -238,6 +265,7 @@ public class ImageProcessor {
         Log.d(TAG, "DISTANCE Min dist: " + min_dist + "Max dist: " + max_dist);
 
         double sum = 0;
+        double distance = 0;
         int count = 0;
 
         ArrayList<DMatch> good_matches = new ArrayList<>();
@@ -249,6 +277,8 @@ public class ImageProcessor {
                 Log.d(TAG, String.format("queryIdx: %d, trainIdx: %d, distance: %.2f", matchesList.get(i).queryIdx, matchesList.get(i).trainIdx, matchesList.get(i).distance));
             }
         }
+
+        distance = sum/count;
 
         Log.d(TAG, "good matching TIME: " + (System.currentTimeMillis()-veryStart));
 
@@ -312,7 +342,7 @@ public class ImageProcessor {
                         scene_corners.get(2, 0)[0], scene_corners.get(2, 0)[1],
                         scene_corners.get(3, 0)[0], scene_corners.get(3, 0)[1], scene_corners.width(), scene_corners.height()));
 
-                MatOfPoint2f boundary = new MatOfPoint2f();
+                //MatOfPoint2f boundary = new MatOfPoint2f();
                 MatOfPoint boundaryMat = new MatOfPoint();
                 ArrayList<Point> listOfBoundary = new ArrayList<>();
                 listOfBoundary.add(new Point(scene_corners.get(0, 0)));
@@ -356,7 +386,7 @@ public class ImageProcessor {
 
         Log.d(TAG, "Detect RDT TIME: " + (System.currentTimeMillis()-veryStart));
 
-        return result;
+        return distance;
     }
 
     private boolean checkSharpness(Mat inputMat) {
@@ -383,7 +413,7 @@ public class ImageProcessor {
         return sharpness;
     }
 
-    private ImageQualityActivity.ExposureResult checkBrightness(Mat inputMat) {
+    private ExposureResult checkBrightness(Mat inputMat) {
 
         // Brightness Calculation
         float[] histograms = calculateBrightness(inputMat);
@@ -401,15 +431,15 @@ public class ImageProcessor {
         }
 
         // Check Brightness starts
-        ImageQualityActivity.ExposureResult exposureResult;
+        ExposureResult exposureResult;
         if (maxWhite >= OVER_EXP_THRESHOLD && whiteCount > OVER_EXP_WHITE_COUNT) {
-            exposureResult = OVER_EXPOSED;
+            exposureResult = ExposureResult.OVER_EXPOSED;
             return exposureResult;
         } else if (maxWhite < UNDER_EXP_THRESHOLD) {
-            exposureResult = UNDER_EXPOSED;
+            exposureResult = ExposureResult.UNDER_EXPOSED;
             return exposureResult;
         } else {
-            exposureResult = NORMAL;
+            exposureResult = ExposureResult.NORMAL;
             return exposureResult;
         }
     }
@@ -438,22 +468,22 @@ public class ImageProcessor {
         return mBuff;
     }
 
-    private ImageQualityActivity.SizeResult checkSize(MatOfPoint2f boundary, Size size) {
+    private SizeResult checkSize(MatOfPoint2f boundary, Size size) {
 
         double height = 0;
         boolean isRightSize = height < size.height*VIEWPORT_SCALE*(1+SIZE_THRESHOLD) && height > size.height*VIEWPORT_SCALE*(1-SIZE_THRESHOLD);
 
-        ImageQualityActivity.SizeResult sizeResult = INVALID;
+        SizeResult sizeResult = SizeResult.INVALID;
 
         if (isRightSize) {
-            sizeResult = RIGHT_SIZE;
+            sizeResult = SizeResult.RIGHT_SIZE;
         } else {
             if (height > size.height*VIEWPORT_SCALE*(1+SIZE_THRESHOLD)) {
-                sizeResult = LARGE;
+                sizeResult = SizeResult.LARGE;
             } else if (height < size.height*VIEWPORT_SCALE*(1-SIZE_THRESHOLD)) {
-                sizeResult = SMALL;
+                sizeResult = SizeResult.SMALL;
             } else {
-                sizeResult = INVALID;
+                sizeResult = SizeResult.INVALID;
             }
         }
 
@@ -493,8 +523,8 @@ public class ImageProcessor {
         return angle;
     }
 
-    private boolean checkOrientation(MatOfPoint2f boundry) {
-        double angle = measureOrientation(boundry);
+    private boolean checkOrientation(MatOfPoint2f boundary) {
+        double angle = measureOrientation(boundary);
 
         boolean isOriented = angle < 90.0*POSITION_THRESHOLD;
 
@@ -513,18 +543,18 @@ public class ImageProcessor {
         return cropped;
     }
 
-    private String getInstructionText(ImageQualityActivity.SizeResult sizeResult, boolean isCentered, boolean isRightOrientation) {
-        int mMoveCloserCount = 0;
-        String instructions = instruction_pos;
+    public int getInstructionText(SizeResult sizeResult, boolean isCentered, boolean isRightOrientation) {
+        int instructions = R.string.instruction_pos;
 
-        if (sizeResult == RIGHT_SIZE && isCentered && isRightOrientation){
-            instructions = instruction_detected;
+        if (sizeResult == SizeResult.RIGHT_SIZE && isCentered && isRightOrientation){
+            instructions = R.string.instruction_detected;
         } else if (mMoveCloserCount > MOVE_CLOSER_COUNT) {
-            if (sizeResult != INVALID && sizeResult == SMALL) {
-                 instructions = instruction_too_small;
+            if (sizeResult != SizeResult.INVALID && sizeResult == SizeResult.SMALL) {
+                 instructions = R.string.instruction_too_small;
+                 mMoveCloserCount = 0;
             }
         } else {
-            instructions = instruction_too_small;
+            instructions = R.string.instruction_too_small;
             mMoveCloserCount++;
         }
 
@@ -533,20 +563,20 @@ public class ImageProcessor {
 
     }
 
-    private String[] getQualityCheckText(ImageQualityActivity.SizeResult sizeResult, boolean isCentered, boolean isRightOrientation, boolean isSharp, ImageQualityActivity.ExposureResult exposureResult) {
+    public String[] getQualityCheckText(SizeResult sizeResult, boolean isCentered, boolean isRightOrientation, boolean isSharp, ExposureResult exposureResult) {
 
-        String[] texts = new String[0];
+        String[] texts = new String[4];
 
         texts[0] = isSharp ? "Sharpness: PASSED": "Sharpness: FAILED";
-        if (exposureResult == NORMAL) {
+        if (exposureResult == ExposureResult.NORMAL) {
             texts[1] = "Brightness: PASSED";
-        } else if (exposureResult == OVER_EXPOSED) {
+        } else if (exposureResult == ExposureResult.OVER_EXPOSED) {
             texts[1] = "Brightness: TOO BRIGHT";
-        } else if (exposureResult == UNDER_EXPOSED) {
+        } else if (exposureResult == ExposureResult.UNDER_EXPOSED) {
             texts[1] = "Brightness: TOO DARK";
         }
 
-        texts[2] = sizeResult==RIGHT_SIZE && isCentered && isRightOrientation ? "POSITION/SIZE: PASSED": "POSITION/SIZE: FAILED";
+        texts[2] = sizeResult == SizeResult.RIGHT_SIZE && isCentered && isRightOrientation ? "POSITION/SIZE: PASSED": "POSITION/SIZE: FAILED";
         texts[3] = "Shadow: PASSED";
 
         return texts;
