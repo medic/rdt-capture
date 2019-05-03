@@ -69,7 +69,7 @@ public class ImageProcessor {
     private float OVER_EXP_WHITE_COUNT = 100;
     private double SIZE_THRESHOLD = 0.3;
     private double POSITION_THRESHOLD = 0.2;
-    private double VIEWPORT_SCALE = 0.60;
+    private double VIEWPORT_SCALE = 0.50;
     private int GOOD_MATCH_COUNT = 7;
     private double minSharpness = Double.MIN_VALUE;
     private double maxSharpness = Double.MAX_VALUE; //this value is set to min because blur check is not needed.
@@ -128,7 +128,7 @@ public class ImageProcessor {
         mMatcher = BFMatcher.create(BFMatcher.BRUTEFORCE_HAMMING, true);
         mRefImg = new Mat();
 
-        Bitmap bitmap = BitmapFactory.decodeResource(activity.getApplicationContext().getResources(), R.drawable.sd_bioline_malaria_ag_pf);
+        Bitmap bitmap = BitmapFactory.decodeResource(activity.getApplicationContext().getResources(), R.drawable.quickvue_ref);
         Utils.bitmapToMat(bitmap, mRefImg);
         Imgproc.cvtColor(mRefImg, mRefImg, Imgproc.COLOR_RGB2GRAY);
         mRefDescriptor = new Mat();
@@ -179,17 +179,17 @@ public class ImageProcessor {
 
             //CJ: detectRDT ends inside of "performBRISKSearchOnMat". Check "performBRISKSearchOnMat" for the end of detectRDT.
             MatOfPoint2f boundary = new MatOfPoint2f();
-            matchDistance = detectRDT(greyMat, boundary);
+            boundary = detectRDT(greyMat);
             boolean isCentered = false;
             SizeResult sizeResult = SizeResult.INVALID;
             boolean isRightOrientation = false;
 
             //[self checkPositionAndSize:boundary isCropped:false inside:greyMat.size()];
 
-            Size size = new Size();
+            //Size size = new Size();
             if (boundary.size().width > 0 && boundary.size().height > 0) {
-                isCentered = checkIfCentered(boundary, size);
-                sizeResult = checkSize(boundary, size);
+                isCentered = checkIfCentered(boundary, greyMat.size());
+                sizeResult = checkSize(boundary, greyMat.size());
                 isRightOrientation = checkOrientation(boundary);
             }
 
@@ -212,8 +212,9 @@ public class ImageProcessor {
 
     }
 
-    private double detectRDT(Mat input, MatOfPoint2f boundary) {
+    private MatOfPoint2f detectRDT(Mat input) {
         long veryStart = System.currentTimeMillis();
+        MatOfPoint2f boundary = new MatOfPoint2f();
 
         //Imgproc.GaussianBlur(input, input, new org.opencv.core.Size(3,3), 2, 2);
 
@@ -232,7 +233,7 @@ public class ImageProcessor {
 
         if (size.equals(new org.opencv.core.Size(0,0))) {
             Log.d(TAG, String.format("no features on input"));
-            return -1.0;
+            return boundary;
         }
 
         // Matching
@@ -243,10 +244,10 @@ public class ImageProcessor {
                 mMatcher.match(mRefDescriptor, descriptors, matches);
                 Log.d(TAG, String.format("matched"));
             } catch (Exception e) {
-                return -1.0;
+                return boundary;
             }
         } else {
-            return -1.0;
+            return boundary;
         }
         List<DMatch> matchesList = matches.toList();
         Log.d(TAG, "matching TIME: " + (System.currentTimeMillis()-veryStart));
@@ -342,7 +343,6 @@ public class ImageProcessor {
                         scene_corners.get(2, 0)[0], scene_corners.get(2, 0)[1],
                         scene_corners.get(3, 0)[0], scene_corners.get(3, 0)[1], scene_corners.width(), scene_corners.height()));
 
-                //MatOfPoint2f boundary = new MatOfPoint2f();
                 MatOfPoint boundaryMat = new MatOfPoint();
                 ArrayList<Point> listOfBoundary = new ArrayList<>();
                 listOfBoundary.add(new Point(scene_corners.get(0, 0)));
@@ -357,11 +357,13 @@ public class ImageProcessor {
 
                 Imgproc.polylines(input, list, true, Scalar.all(0),10);
 
-                boundary.release();
+                //boundary.release();
                 obj_corners.release();
                 scene_corners.release();
 
                 Log.d(TAG, String.format("Average DISTANCE: %.2f, good matches: %d", sum/count, count));
+                Log.d(TAG, String.format("Center: %s", measureCentering(boundary).toString()));
+                Log.d(TAG, String.format("Size: %.2f", measureSize(boundary)));
 
 //                if(mCurrentState == State.QUALITY_CHECK && sum/count < minDistance) {
 //                    minDistance = sum/count;
@@ -386,13 +388,14 @@ public class ImageProcessor {
 
         Log.d(TAG, "Detect RDT TIME: " + (System.currentTimeMillis()-veryStart));
 
-        return distance;
+        return boundary;
     }
 
     private boolean checkSharpness(Mat inputMat) {
         double sharpness = calculateSharpness(inputMat);
 
         boolean isSharp = sharpness > (minSharpness * SHARPNESS_THRESHOLD);
+        Log.d(TAG, "Sharpness: "+sharpness);
 
         return isSharp;
 
@@ -408,7 +411,7 @@ public class ImageProcessor {
         meanStdDev(des, median, std);
 
 
-        double sharpness = pow(0,2);
+        double sharpness = pow(std.get(0,0)[0],2);
         des.release();
         return sharpness;
     }
@@ -468,9 +471,26 @@ public class ImageProcessor {
         return mBuff;
     }
 
-    private SizeResult checkSize(MatOfPoint2f boundary, Size size) {
+    private double measureSize(MatOfPoint2f boundary) {
+        RotatedRect rotatedRect = minAreaRect(boundary);
 
+        boolean isUpright = rotatedRect.size.height > rotatedRect.size.width;
+        double angle = 0;
         double height = 0;
+
+        if (isUpright) {
+            angle = 90 - abs(rotatedRect.angle);
+            height = rotatedRect.size.height;
+        } else {
+            angle = abs(rotatedRect.angle);
+            height = rotatedRect.size.width;
+        }
+
+        return height;
+    }
+
+    private SizeResult checkSize(MatOfPoint2f boundary, Size size) {
+        double height = measureSize(boundary);
         boolean isRightSize = height < size.height*VIEWPORT_SCALE*(1+SIZE_THRESHOLD) && height > size.height*VIEWPORT_SCALE*(1-SIZE_THRESHOLD);
 
         SizeResult sizeResult = SizeResult.INVALID;
