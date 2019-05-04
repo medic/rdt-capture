@@ -3,6 +3,7 @@ package edu.washington.cs.ubicomplab.rdt_reader;
 import android.app.Activity;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.hardware.camera2.CaptureRequest;
 import android.util.Log;
 import android.widget.TextView;
 
@@ -28,6 +29,7 @@ import org.opencv.core.RotatedRect;
 import org.opencv.core.Size;
 import org.opencv.features2d.BFMatcher;
 import org.opencv.features2d.BRISK;
+import org.opencv.imgproc.CLAHE;
 import org.opencv.imgproc.Imgproc;
 import org.opencv.core.Scalar;
 
@@ -35,6 +37,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.concurrent.Semaphore;
 
 import static java.lang.Math.pow;
 import static java.lang.StrictMath.abs;
@@ -602,4 +605,186 @@ public class ImageProcessor {
         return texts;
 
     }
+
+    private boolean checkWindowPosition(Mat resultWindowMat) {
+        Point line = new Point(resultWindowMat.width()*0.35-resultWindowMat.width()*0.15, 0);
+        Rect roi = new Rect((int)(resultWindowMat.width()*0.15), (int)(resultWindowMat.height()*0.2), (int)(resultWindowMat.width()*0.7), (int)(resultWindowMat.height()*0.6));
+        Mat crop = resultWindowMat.submat(roi);
+        Mat cropgray = new Mat();
+        Imgproc.cvtColor(crop, cropgray, Imgproc.COLOR_RGBA2BGR);
+        Imgproc.cvtColor(cropgray, cropgray, Imgproc.COLOR_BGR2HSV);
+
+        ArrayList<Mat> channels = new ArrayList<>();
+        Core.split(cropgray, channels);
+
+        Core.MinMaxLocResult result = Core.minMaxLoc(channels.get(2), null);
+
+        Log.d(TAG, "MIN MAX LOC Rect: "+crop.size().width+", "+ cropgray.size().width);
+        Log.d(TAG, "MIN MAX LOC Rect: "+crop.size().height+", "+ cropgray.size().height);
+        Log.d(TAG, "MIN MAX LOC: "+result.minLoc + ", " + result.minVal + ", " + result.maxLoc + ", " + result.maxVal);
+
+        double minColSum = Double.MAX_VALUE;
+        int minColIndex = -2;
+        for (int i = -2; i < 1; i++) {
+            double colSum = channels.get(2).get((int)result.minLoc.y, (int)result.minLoc.x+i)[0] +
+                    channels.get(2).get((int)result.minLoc.y, (int)result.minLoc.x+i+1)[0] +
+                    channels.get(2).get((int)result.minLoc.y, (int)result.minLoc.x+i+2)[0];
+
+            Log.d(TAG, String.format("MIN MAX explore: %d: %d, %d, %d", (int)result.minLoc.x+i, (int)channels.get(2).get((int)result.minLoc.y, (int)result.minLoc.x+i)[0],
+                    (int)channels.get(2).get((int)result.minLoc.y, (int)result.minLoc.x+i+1)[0], (int)channels.get(2).get((int)result.minLoc.y, (int)result.minLoc.x+i+2)[0]));
+
+            minColIndex = (colSum < minColSum) ? i : minColIndex;
+            minColSum = (colSum < minColSum) ? colSum : minColSum;
+        }
+
+        Log.d(TAG, "MIN MAX col: " + minColIndex);
+
+        double sum = 0;
+        for (int i = minColIndex; i < minColIndex+3; i++) {
+            for (int j = 0; j < channels.get(2).height(); j++) {
+                Log.d(TAG, "MIN MAX coor: "+(result.minLoc.x+i)+","+j+", " +channels.get(2).get(j, (int)(result.minLoc.x+i))[0]);
+                //if (i >= -1 && i < 2) {
+                sum += channels.get(2).get(j, (int) (result.minLoc.x + i))[0];
+                //}
+            }
+        }
+
+        double avg = sum/(double)(channels.get(0).height()*3);
+
+        Log.d(TAG, "MIN MAX Row Avg: " + avg + " And, MIN VAL: "+result.minVal);
+        Log.d(TAG, "MIN MAX Row Loc: " + line + " And, MIN VAL: "+result.minLoc);
+
+        return (0 < avg && avg < result.minVal+30 && result.minLoc.x - 0.1*channels.get(2).width() < line.x && line.x < result.minLoc.x + 0.1*channels.get(2).width());
+    }
+
+    private Mat enhanceResultWindow(Mat input, MatOfPoint2f boundary) {
+        Mat refPoints = new Mat(4, 1, CvType.CV_32FC2);
+        Mat refResultPoints = new Mat(4, 1, CvType.CV_32FC2);
+        //Mat obj_corners = new Mat(4, 1, CvType.CV_32FC2);
+
+        double[] a = new double[]{0, 0};
+        double[] b = new double[]{mRefImg.cols() - 1, 0};
+        double[] c = new double[]{mRefImg.cols() - 1, mRefImg.rows() - 1};
+        double[] d = new double[]{0, mRefImg.rows() - 1};
+
+        //get corners from object
+        refPoints.put(0, 0, a);
+        refPoints.put(1, 0, b);
+        refPoints.put(2, 0, c);
+        refPoints.put(3, 0, d);
+
+        Log.d(TAG, "perspective ref" + refPoints.dump());
+
+//        a = new double[]{59, 183};
+//        b = new double[]{59+30, 183};
+//        c = new double[]{59+30, 183+110};
+//        d = new double[]{59, 183+110};
+
+        //TODO: make it as a config
+        a = new double[]{Constants.RESULT_WINDOW_X, Constants.RESULT_WINDOW_Y};
+        b = new double[]{Constants.RESULT_WINDOW_X+Constants.RESULT_WINDOW_WIDTH, Constants.RESULT_WINDOW_Y};
+        c = new double[]{Constants.RESULT_WINDOW_X+Constants.RESULT_WINDOW_WIDTH, Constants.RESULT_WINDOW_Y+Constants.RESULT_WINDOW_HEIGHT};
+        d = new double[]{Constants.RESULT_WINDOW_X, Constants.RESULT_WINDOW_Y+Constants.RESULT_WINDOW_HEIGHT};
+//        a = new double[]{185, 63};
+//        b = new double[]{185+90, 63};
+//        c = new double[]{185+90, 63+20};
+//        d = new double[]{185, 63+20};
+
+        refResultPoints.put(0, 0, a);
+        refResultPoints.put(1, 0, b);
+        refResultPoints.put(2, 0, c);
+        refResultPoints.put(3, 0, d);
+
+        Log.d(TAG, "perspective results" + refResultPoints.dump());
+        Log.d(TAG, "perspective bound" + boundary.dump());
+
+        Mat M = Imgproc.getPerspectiveTransform(refPoints, boundary);
+        Log.d(TAG, "perspective transform" + M.dump());
+        Mat imgResultPointsMat = new Mat();
+        Core.perspectiveTransform(refResultPoints, imgResultPointsMat, M);
+        Log.d(TAG, "perspective window" + imgResultPointsMat.dump());
+
+        MatOfPoint imgResultPoints = new MatOfPoint();
+
+        ArrayList<Point> points = new ArrayList<>();
+        points.add(new Point(imgResultPointsMat.get(0, 0)));
+        points.add(new Point(imgResultPointsMat.get(1, 0)));
+        points.add(new Point(imgResultPointsMat.get(2, 0)));
+        points.add(new Point(imgResultPointsMat.get(3, 0)));
+        imgResultPoints.fromList(points);
+
+        Point[] p = imgResultPoints.toArray();
+
+        Rect resultRect = Imgproc.boundingRect(imgResultPoints);
+
+        Mat resultImg = input.submat(resultRect);
+        Mat enhancedImg = enhanceImage(resultImg, new org.opencv.core.Size(2, resultRect.height));
+        enhancedImg = correctGamma(enhancedImg, 1.2);
+        boolean windowPosition = checkWindowPosition(resultImg);
+
+        Log.d(TAG, "MIN MAX position right: " + windowPosition);
+
+        if (windowPosition) {
+            enhancedImg.copyTo(resultImg);
+            return input;
+        } else {
+            return null;
+        }
+    }
+
+    private Mat correctGamma(Mat enhancedImg, double gamma) {
+        Mat lutMat = new Mat(1, 256, CvType.CV_8UC1);
+        for (int i = 0; i < 256; i ++) {
+            double g = Math.pow((double)i/255.0, gamma)*255.0;
+            g = g > 255.0 ? 255.0 : g < 0 ? 0 : g;
+            lutMat.put(0, i, g);
+        }
+        Mat result = new Mat();
+        Core.LUT(enhancedImg, lutMat, result);
+        return result;
+    }
+
+    private Mat enhanceImage(Mat resultImg, org.opencv.core.Size tile) {
+        Mat result = new Mat();
+        Imgproc.cvtColor(resultImg, result, Imgproc.COLOR_RGBA2BGR);
+        Imgproc.cvtColor(result, result, Imgproc.COLOR_BGR2HSV);
+
+        CLAHE clahe = Imgproc.createCLAHE(5, tile);
+
+        ArrayList<Mat> channels = new ArrayList<>();
+        Core.split(result, channels);
+
+        Mat newChannel = new Mat();
+
+        clahe.apply(channels.get(2), newChannel);
+
+        channels.set(2, newChannel);
+
+        Core.merge(channels, result);
+
+        Imgproc.cvtColor(result, result, Imgproc.COLOR_HSV2BGR);
+        Imgproc.cvtColor(result, result, Imgproc.COLOR_BGR2RGBA);
+
+        return result;
+    }
+
+    /**
+     * {@link CaptureRequest.Builder} for the camera preview
+     */
+    private CaptureRequest.Builder mPreviewRequestBuilder;
+
+    /**
+     * {@link CaptureRequest} generated by {@link #mPreviewRequestBuilder}
+     */
+    private CaptureRequest mPreviewRequest;
+
+
+    /**
+     * A {@link Semaphore} to prevent the app from exiting before closing the camera.
+     */
+    private Semaphore mCameraOpenCloseLock = new Semaphore(1);
+
+    /**
+     * A {@link CameraCaptureSession.CaptureCallback} that handles events related to JPEG capture.
+     */
 }
