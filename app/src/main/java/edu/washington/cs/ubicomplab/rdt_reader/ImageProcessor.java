@@ -1,12 +1,19 @@
 package edu.washington.cs.ubicomplab.rdt_reader;
 
 import android.app.Activity;
+import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.hardware.camera2.CameraAccessException;
+import android.hardware.camera2.CameraCaptureSession;
+import android.hardware.camera2.CameraCharacteristics;
+import android.hardware.camera2.CameraManager;
 import android.hardware.camera2.CaptureRequest;
+import android.hardware.camera2.params.MeteringRectangle;
+import android.os.Handler;
 import android.util.Log;
-import android.widget.TextView;
 
+import org.opencv.android.BaseLoaderCallback;
 import org.opencv.android.LoaderCallbackInterface;
 import org.opencv.android.OpenCVLoader;
 import org.opencv.android.Utils;
@@ -32,6 +39,8 @@ import org.opencv.features2d.BRISK;
 import org.opencv.imgproc.CLAHE;
 import org.opencv.imgproc.Imgproc;
 import org.opencv.core.Scalar;
+import org.opencv.android.OpenCVLoader
+
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -41,13 +50,10 @@ import java.util.concurrent.Semaphore;
 
 import static java.lang.Math.pow;
 import static java.lang.StrictMath.abs;
-import static org.opencv.core.Core.NORM_INF;
 import static org.opencv.core.Core.meanStdDev;
-import static org.opencv.core.Core.normalize;
 import static org.opencv.core.CvType.CV_64F;
 import static org.opencv.imgproc.Imgproc.Laplacian;
 import static org.opencv.imgproc.Imgproc.minAreaRect;
-import org.opencv.imgproc.Imgproc;
 
 
 
@@ -65,7 +71,6 @@ public class ImageProcessor {
     private MatOfKeyPoint mRefKeypoints;
 
 
-    private TextView mInstructionText;
     private double SHARPNESS_THRESHOLD = 0.0;
     private float OVER_EXP_THRESHOLD = 255;
     private float UNDER_EXP_THRESHOLD = 120;
@@ -73,20 +78,11 @@ public class ImageProcessor {
     private double SIZE_THRESHOLD = 0.3;
     private double POSITION_THRESHOLD = 0.2;
     private double VIEWPORT_SCALE = 0.50;
-    private int GOOD_MATCH_COUNT = 7;
     private double minSharpness = Double.MIN_VALUE;
-    private double maxSharpness = Double.MAX_VALUE; //this value is set to min because blur check is not needed.
     private int MOVE_CLOSER_COUNT = 5;
     private double CROP_RATIO = 0.6;
-    private double VIEW_FINDER_SCALE_W = 0.35;
-    private double VIEW_FINDER_SCALE_H = 0.50;
 
-    String instruction_detected = "RDT detected at the center!";
-    String instruction_pos = "Place RDT at the center.\nFit RDT to the rectangle.";
-    String instruction_too_small = "Place RDT at the center.\nFit RDT to the rectangle.\nMove closer.";
-    String instruction_too_large = "Place RDT at the center.\nFit RDT to the rectangle.\nMove further away.";
-    String instruction_focusing = "Place RDT at the center.\nFit RDT to the rectangle.\nCamera is focusing. \nStay still.";
-    String instruction_unfocused = "Place RDT at the center.\n Fit RDT to the rectangle.\nCamera is not focused. \nMove further away.";
+
 
     int mMoveCloserCount = 0;
 
@@ -150,19 +146,70 @@ public class ImageProcessor {
         return instance;
     }
 
+    public void loadOpenCV(BaseLoaderCallback mLoaderCallback) {
+        if (!OpenCVLoader.initDebug()) {
+            Log.d(TAG, "Internal OpenCV library not found. Using OpenCV Manager for initialization");
+            OpenCVLoader.initAsync(OpenCVLoader.OPENCV_VERSION, Context.this, mLoaderCallback);
+        } else {
+            Log.d(TAG, "OpenCV library found inside package. Using it!");
+            mLoaderCallback.onManagerConnected(LoaderCallbackInterface.SUCCESS);
+        }
 
-    public void loadOpenCV() {
+    }
 
+    private int mCounter = Integer.MIN_VALUE;
+
+    public void configureCamera(String mCameraId,
+                                CameraCaptureSession mCaptureSession,
+                                CameraCaptureSession.CaptureCallback mCaptureCallback,
+                                Handler mBackgroundHandler) {
+
+        // When the session is ready, we start displaying the preview.
+        try {
+            CameraManager manager = (CameraManager) getSystemService(Context.CAMERA_SERVICE);
+            CameraCharacteristics characteristics = manager.getCameraCharacteristics(mCameraId);
+
+
+            final android.graphics.Rect sensor = characteristics.get(CameraCharacteristics.SENSOR_INFO_ACTIVE_ARRAY_SIZE);
+            Log.d(TAG, "Sensor size: " + sensor.width() + ", " + sensor.height());
+            MeteringRectangle mr = new MeteringRectangle(sensor.width() / 2 - 50, sensor.height() / 2 - 50, 100 + (mCounter % 2), 100 + (mCounter % 2),
+                    MeteringRectangle.METERING_WEIGHT_MAX - 1);
+
+            Log.d(TAG, String.format("Sensor Size (%d, %d), Metering %s", sensor.width(), sensor.height(), mr.toString()));
+            Log.d(TAG, String.format("Regions AE %s", characteristics.get(CameraCharacteristics.CONTROL_MAX_REGIONS_AE).toString()));
+
+            mPreviewRequestBuilder.set(CaptureRequest.CONTROL_AF_MODE, CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_PICTURE);
+            mPreviewRequestBuilder.set(CaptureRequest.CONTROL_AF_REGIONS,
+                    new MeteringRectangle[]{mr});
+            mPreviewRequestBuilder.set(CaptureRequest.CONTROL_AE_MODE, CaptureRequest.CONTROL_AE_MODE_ON);
+            mPreviewRequestBuilder.set(CaptureRequest.CONTROL_AE_REGIONS,
+                    new MeteringRectangle[]{mr});
+            mPreviewRequestBuilder.set(CaptureRequest.CONTROL_AWB_MODE, CaptureRequest.CONTROL_AWB_MODE_AUTO);
+            mPreviewRequestBuilder.set(CaptureRequest.CONTROL_AWB_REGIONS,
+                    new MeteringRectangle[]{mr});
+
+            mPreviewRequestBuilder.set(CaptureRequest.FLASH_MODE, CaptureRequest.FLASH_MODE_TORCH);
+            mPreviewRequest = mPreviewRequestBuilder.build();
+
+            try {
+                mCameraOpenCloseLock.acquire();
+                if (mCaptureSession != null) {
+                    mCaptureSession.setRepeatingRequest(mPreviewRequest,
+                            mCaptureCallback, mBackgroundHandler);
+                }
+            } catch (InterruptedException e) {
+                throw new RuntimeException("Interrupted while trying to lock camera closing.", e);
+            } finally {
+                mCameraOpenCloseLock.release();
+            }
+
+            mCounter++;
+        } catch (CameraAccessException e) {
+            e.printStackTrace();
+        }
 
     }
 
-    public void configureCamera() {
-
-    }
-
-    public void generateViewFinder() {
-
-    }
 
     public CaptureResult captureRDT(Mat inputMat) {
         Mat greyMat = new Mat();
@@ -178,16 +225,13 @@ public class ImageProcessor {
 
         //preform detectRDT only if those two quality checks are passed
         if (exposureResult == ExposureResult.NORMAL && isSharp) {
-            //CJ: detectRDT starts
 
-            //CJ: detectRDT ends inside of "performBRISKSearchOnMat". Check "performBRISKSearchOnMat" for the end of detectRDT.
             MatOfPoint2f boundary = new MatOfPoint2f();
             boundary = detectRDT(greyMat);
             boolean isCentered = false;
             SizeResult sizeResult = SizeResult.INVALID;
             boolean isRightOrientation = false;
 
-            //[self checkPositionAndSize:boundary isCropped:false inside:greyMat.size()];
 
             //Size size = new Size();
             if (boundary.size().width > 0 && boundary.size().height > 0) {
@@ -200,11 +244,7 @@ public class ImageProcessor {
 
 
             return new CaptureResult(passed, cropRDT(inputMat), matchDistance, exposureResult, sizeResult, isCentered, isRightOrientation, isSharp, false);
-            //MatToUIImage --> Utils.matToBitmap()
-            // CompletionHandler seems to not the right method to use in this case
-//            return CompletionHandler((passed, Utils.bitmapToMat(cropRDT(inputMat), matchDistance, exposureResult, sizeResult, isCentered, isRightOrientation, isSharp, false)));
-            //completion(passed, MatToUIImage(inputMat), matchDistance, exposureResult, sizeResult, isCentered, isRightOrientation, isSharp, false);
-        }
+    }
         else {
             return new CaptureResult(passed, null, matchDistance, exposureResult, SizeResult.INVALID, false, false, isSharp, false);
         }
@@ -368,15 +408,10 @@ public class ImageProcessor {
                 Log.d(TAG, String.format("Center: %s", measureCentering(boundary).toString()));
                 Log.d(TAG, String.format("Size: %.2f", measureSize(boundary)));
 
-//                if(mCurrentState == State.QUALITY_CHECK && sum/count < minDistance) {
-//                    minDistance = sum/count;
-//                    minDistanceUpdated = true;
-//                }
             }
 
             Log.d(TAG, "draw homography TIME: " + (System.currentTimeMillis()-veryStart));
 
-            //Features2d.drawMatches(mRefImg, mRefKeypoints, input, keypoints, goodMatches, output, Scalar.all(-1), new Scalar(255,0,0), new MatOfByte(homographyMask), 2);
             homographyMask.release();
             H.release();
         }
@@ -643,7 +678,6 @@ public class ImageProcessor {
         for (int i = minColIndex; i < minColIndex+3; i++) {
             for (int j = 0; j < channels.get(2).height(); j++) {
                 Log.d(TAG, "MIN MAX coor: "+(result.minLoc.x+i)+","+j+", " +channels.get(2).get(j, (int)(result.minLoc.x+i))[0]);
-                //if (i >= -1 && i < 2) {
                 sum += channels.get(2).get(j, (int) (result.minLoc.x + i))[0];
                 //}
             }
@@ -660,7 +694,6 @@ public class ImageProcessor {
     private Mat enhanceResultWindow(Mat input, MatOfPoint2f boundary) {
         Mat refPoints = new Mat(4, 1, CvType.CV_32FC2);
         Mat refResultPoints = new Mat(4, 1, CvType.CV_32FC2);
-        //Mat obj_corners = new Mat(4, 1, CvType.CV_32FC2);
 
         double[] a = new double[]{0, 0};
         double[] b = new double[]{mRefImg.cols() - 1, 0};
@@ -675,20 +708,13 @@ public class ImageProcessor {
 
         Log.d(TAG, "perspective ref" + refPoints.dump());
 
-//        a = new double[]{59, 183};
-//        b = new double[]{59+30, 183};
-//        c = new double[]{59+30, 183+110};
-//        d = new double[]{59, 183+110};
 
-        //TODO: make it as a config
+
         a = new double[]{Constants.RESULT_WINDOW_X, Constants.RESULT_WINDOW_Y};
         b = new double[]{Constants.RESULT_WINDOW_X+Constants.RESULT_WINDOW_WIDTH, Constants.RESULT_WINDOW_Y};
         c = new double[]{Constants.RESULT_WINDOW_X+Constants.RESULT_WINDOW_WIDTH, Constants.RESULT_WINDOW_Y+Constants.RESULT_WINDOW_HEIGHT};
         d = new double[]{Constants.RESULT_WINDOW_X, Constants.RESULT_WINDOW_Y+Constants.RESULT_WINDOW_HEIGHT};
-//        a = new double[]{185, 63};
-//        b = new double[]{185+90, 63};
-//        c = new double[]{185+90, 63+20};
-//        d = new double[]{185, 63+20};
+
 
         refResultPoints.put(0, 0, a);
         refResultPoints.put(1, 0, b);
