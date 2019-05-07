@@ -20,6 +20,7 @@ import android.hardware.camera2.CameraManager;
 import android.hardware.camera2.CaptureRequest;
 import android.hardware.camera2.CaptureResult;
 import android.hardware.camera2.TotalCaptureResult;
+import android.hardware.camera2.params.MeteringRectangle;
 import android.hardware.camera2.params.StreamConfigurationMap;
 import android.media.Image;
 import android.media.ImageReader;
@@ -387,7 +388,7 @@ public class ImageQualityActivity extends AppCompatActivity implements View.OnCl
 
             if (!Build.MODEL.equals("TECNO-W3")) {
                 if (counter++ % 10 == 0)
-                    ImageProcessor.configureCamera();
+                    updateRepeatingRequest();
             }
         }
 
@@ -437,6 +438,9 @@ public class ImageQualityActivity extends AppCompatActivity implements View.OnCl
             openCamera(mTextureView.getWidth(), mTextureView.getHeight());
         } else {
             mTextureView.setSurfaceTextureListener(mSurfaceTextureListener);
+            if (processor == null)
+                processor = ImageProcessor.getInstance(this);
+            processor.loadOpenCV(getApplicationContext(), mLoaderCallback);
         }
 
     }
@@ -652,7 +656,7 @@ public class ImageQualityActivity extends AppCompatActivity implements View.OnCl
             }
             mCaptureSession = cameraCaptureSession;
 
-            ImageProcessor.configureCamera();
+            updateRepeatingRequest();
         }
 
         @Override
@@ -661,6 +665,54 @@ public class ImageQualityActivity extends AppCompatActivity implements View.OnCl
             showToast("Failed");
         }
     };
+
+    private int mCounter = Integer.MIN_VALUE;
+
+    private void updateRepeatingRequest() {
+        // When the session is ready, we start displaying the preview.
+        try {
+            CameraManager manager = (CameraManager) getSystemService(Context.CAMERA_SERVICE);
+            CameraCharacteristics characteristics = manager.getCameraCharacteristics(mCameraId);
+
+
+            final android.graphics.Rect sensor = characteristics.get(CameraCharacteristics.SENSOR_INFO_ACTIVE_ARRAY_SIZE);
+            Log.d(TAG, "Sensor size: " + sensor.width() + ", " + sensor.height());
+            MeteringRectangle mr = new MeteringRectangle(sensor.width() / 2 - 50, sensor.height() / 2 - 50, 100 + (mCounter % 2), 100 + (mCounter % 2),
+                    MeteringRectangle.METERING_WEIGHT_MAX - 1);
+
+            Log.d(TAG, String.format("Sensor Size (%d, %d), Metering %s", sensor.width(), sensor.height(), mr.toString()));
+            Log.d(TAG, String.format("Regions AE %s", characteristics.get(CameraCharacteristics.CONTROL_MAX_REGIONS_AE).toString()));
+
+            mPreviewRequestBuilder.set(CaptureRequest.CONTROL_AF_MODE, CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_PICTURE);
+            mPreviewRequestBuilder.set(CaptureRequest.CONTROL_AF_REGIONS,
+                    new MeteringRectangle[]{mr});
+            mPreviewRequestBuilder.set(CaptureRequest.CONTROL_AE_MODE, CaptureRequest.CONTROL_AE_MODE_ON);
+            mPreviewRequestBuilder.set(CaptureRequest.CONTROL_AE_REGIONS,
+                    new MeteringRectangle[]{mr});
+            mPreviewRequestBuilder.set(CaptureRequest.CONTROL_AWB_MODE, CaptureRequest.CONTROL_AWB_MODE_AUTO);
+            mPreviewRequestBuilder.set(CaptureRequest.CONTROL_AWB_REGIONS,
+                    new MeteringRectangle[]{mr});
+
+            mPreviewRequestBuilder.set(CaptureRequest.FLASH_MODE, CaptureRequest.FLASH_MODE_TORCH);
+            mPreviewRequest = mPreviewRequestBuilder.build();
+
+            try {
+                mCameraOpenCloseLock.acquire();
+                if (mCaptureSession != null) {
+                    mCaptureSession.setRepeatingRequest(mPreviewRequest,
+                            mCaptureCallback, mBackgroundHandler);
+                }
+            } catch (InterruptedException e) {
+                throw new RuntimeException("Interrupted while trying to lock camera closing.", e);
+            } finally {
+                mCameraOpenCloseLock.release();
+            }
+
+            mCounter++;
+        } catch (CameraAccessException e) {
+            e.printStackTrace();
+        }
+    }
 
 
     /**
@@ -735,7 +787,7 @@ public class ImageQualityActivity extends AppCompatActivity implements View.OnCl
     public void onClick(View view) {
         switch (view.getId()) {
             case R.id.viewport: {
-                ImageProcessor.configureCamera();
+                updateRepeatingRequest();
                 break;
             }
         }
