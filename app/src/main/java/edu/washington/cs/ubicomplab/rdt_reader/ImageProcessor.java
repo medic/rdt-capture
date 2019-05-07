@@ -86,6 +86,7 @@ public class ImageProcessor {
 
     int mMoveCloserCount = 0;
 
+
     public enum ExposureResult {
         UNDER_EXPOSED, NORMAL, OVER_EXPOSED
     }
@@ -709,12 +710,12 @@ public class ImageProcessor {
         Log.d(TAG, "perspective ref" + refPoints.dump());
 
 
-
-        a = new double[]{Constants.RESULT_WINDOW_X, Constants.RESULT_WINDOW_Y};
-        b = new double[]{Constants.RESULT_WINDOW_X+Constants.RESULT_WINDOW_WIDTH, Constants.RESULT_WINDOW_Y};
-        c = new double[]{Constants.RESULT_WINDOW_X+Constants.RESULT_WINDOW_WIDTH, Constants.RESULT_WINDOW_Y+Constants.RESULT_WINDOW_HEIGHT};
-        d = new double[]{Constants.RESULT_WINDOW_X, Constants.RESULT_WINDOW_Y+Constants.RESULT_WINDOW_HEIGHT};
-
+//
+//        a = new double[]{Constants.RESULT_WINDOW_X, Constants.RESULT_WINDOW_Y};
+//        b = new double[]{Constants.RESULT_WINDOW_X+Constants.RESULT_WINDOW_WIDTH, Constants.RESULT_WINDOW_Y};
+//        c = new double[]{Constants.RESULT_WINDOW_X+Constants.RESULT_WINDOW_WIDTH, Constants.RESULT_WINDOW_Y+Constants.RESULT_WINDOW_HEIGHT};
+//        d = new double[]{Constants.RESULT_WINDOW_X, Constants.RESULT_WINDOW_Y+Constants.RESULT_WINDOW_HEIGHT};
+//
 
         refResultPoints.put(0, 0, a);
         refResultPoints.put(1, 0, b);

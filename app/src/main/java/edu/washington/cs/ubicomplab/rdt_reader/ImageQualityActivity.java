@@ -387,7 +387,7 @@ public class ImageQualityActivity extends AppCompatActivity implements View.OnCl
 
             if (!Build.MODEL.equals("TECNO-W3")) {
                 if (counter++ % 10 == 0)
-                    ImageProcessor.cameraConfig();
+                    ImageProcessor.configureCamera();
             }
         }
 
