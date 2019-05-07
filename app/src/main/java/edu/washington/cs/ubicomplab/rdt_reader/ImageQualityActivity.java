@@ -310,6 +310,7 @@ public class ImageQualityActivity extends AppCompatActivity implements View.OnCl
             runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
+                    displayQualityResult(ImageProcessor.SizeResult.INVALID, false, false, false, ImageProcessor.ExposureResult.OVER_EXPOSED);
                     displayQualityResult(result.sizeResult, result.isCentered, result.isRightOrientation, result.isSharp, result.exposureResult);
                 }
             });
@@ -379,7 +380,7 @@ public class ImageQualityActivity extends AppCompatActivity implements View.OnCl
                         runOnUiThread(new Runnable() {
                             @Override
                             public void run() {
-                                displayQualityResult(new boolean[]{false, false, false, false, false, true}, true, true, true, true);
+                                displayQualityResultFocusChanged();
                             }
                         });
                     }
@@ -927,7 +928,7 @@ public class ImageQualityActivity extends AppCompatActivity implements View.OnCl
         }
     }
 
-    private void displayQualityResult(boolean[] isCorrectPosSize, boolean isBlur, boolean isOverExposed, boolean isUnderExposed, boolean isShadow) {
+    private void displayQualityResultFocusChanged() {
         FocusState currFocusState;
 
         synchronized (focusStateLock) {
@@ -935,42 +936,9 @@ public class ImageQualityActivity extends AppCompatActivity implements View.OnCl
         }
 
         if (currFocusState == FocusState.FOCUSED) {
-            String message = String.format(getResources().getString(R.string.quality_msg_format), isCorrectPosSize[0] && isCorrectPosSize[1] && isCorrectPosSize[2] ? Constants.OK : Constants.NOT_OK,
-                    !isBlur ? Constants.OK : Constants.NOT_OK,
-                    !isOverExposed && !isUnderExposed ? Constants.OK : (isOverExposed ? getResources().getString(R.string.over_exposed_msg) + Constants.NOT_OK : getResources().getString(R.string.under_exposed_msg) + Constants.NOT_OK),
-                    !isShadow ? Constants.OK : Constants.NOT_OK);
-
-
-            //sets the instructions for the code
-
-            if (isCorrectPosSize[1] && isCorrectPosSize[0] & isCorrectPosSize[2]) {
-                mInstructionText.setText(getResources().getText(R.string.instruction_detected));
-            } else if (mMoveCloserCount > Constants.MOVE_CLOSER_COUNT)
-                if (!isCorrectPosSize[5]) {
-                    if (!isCorrectPosSize[0] || (!isCorrectPosSize[1] && isCorrectPosSize[3])) {
-                        mInstructionText.setText(getResources().getString(R.string.instruction_pos));
-                    } else if (!isCorrectPosSize[1] && isCorrectPosSize[4]) {
-                        mInstructionText.setText(getResources().getString(R.string.instruction_too_small));
-                        mMoveCloserCount = 0;
-                    }
-                } else {
-                    mInstructionText.setText(getResources().getString(R.string.instruction_pos));
-                }
-            else {
-                mInstructionText.setText(getResources().getString(R.string.instruction_too_small));
-                mMoveCloserCount++;
-            }
-
+            mInstructionText.setText(getResources().getString(R.string.instruction_pos));
+            String message = String.format(getResources().getString(R.string.quality_msg_format), "FAILED", "FAILED", "FAILED", "FAILED");
             mImageQualityFeedbackView.setText(Html.fromHtml(message));
-            if (isCorrectPosSize[0] && isCorrectPosSize[1] && isCorrectPosSize[2] && !isBlur && !isOverExposed && !isUnderExposed && !isShadow) {
-                if (mViewport.getBackgroundColorId() != R.color.green_overlay) {
-                    mViewport.setBackgroundColoId(R.color.green_overlay);
-                }
-            } else {
-                if (mViewport.getBackgroundColorId() != R.color.red_overlay) {
-                    mViewport.setBackgroundColoId(R.color.red_overlay);
-                }
-            }
         } else if (currFocusState == FocusState.INACTIVE) {
             mInstructionText.setText(getResources().getString(R.string.instruction_pos));
             mViewport.setBackgroundColoId(R.color.red_overlay);
