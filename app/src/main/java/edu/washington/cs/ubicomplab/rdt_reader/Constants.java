@@ -36,11 +36,11 @@ public final class Constants {
     public static Size CAMERA2_IMAGE_SIZE = new Size(960, 540);
     public static double VIEWPORT_SCALE = 0.50;
 
-    //Set for malaria RDT
-    public static int RESULT_WINDOW_X = 177;
-    public static int RESULT_WINDOW_Y = 55;
-    public static int RESULT_WINDOW_WIDTH = 110;
-    public static int RESULT_WINDOW_HEIGHT = 35;
+    //Set for QuickVue
+    public static int RESULT_WINDOW_X = 580;
+    public static int RESULT_WINDOW_Y = 0;
+    public static int RESULT_WINDOW_WIDTH = 130;
+    public static int RESULT_WINDOW_HEIGHT = 50;
 
     public static String LANGUAGE = "en";
 

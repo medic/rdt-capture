@@ -119,7 +119,7 @@ public class ImageProcessor {
         mMatcher = BFMatcher.create(BFMatcher.BRUTEFORCE_HAMMING, true);
         mRefImg = new Mat();
 
-        Bitmap bitmap = BitmapFactory.decodeResource(activity.getApplicationContext().getResources(), R.drawable.sd_bioline_malaria_ag_pf);
+        Bitmap bitmap = BitmapFactory.decodeResource(activity.getApplicationContext().getResources(), R.drawable.quickvue_ref_evernote);
         Utils.bitmapToMat(bitmap, mRefImg);
         Imgproc.cvtColor(mRefImg, mRefImg, Imgproc.COLOR_RGB2GRAY);
         mRefDescriptor = new Mat();
