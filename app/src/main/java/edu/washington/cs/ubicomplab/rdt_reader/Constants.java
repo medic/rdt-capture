@@ -36,6 +36,12 @@ public final class Constants {
     public static Size CAMERA2_IMAGE_SIZE = new Size(960, 540);
     public static double VIEWPORT_SCALE = 0.50;
 
+    //Set for malaria RDT
+    public static int RESULT_WINDOW_X = 177;
+    public static int RESULT_WINDOW_Y = 55;
+    public static int RESULT_WINDOW_WIDTH = 110;
+    public static int RESULT_WINDOW_HEIGHT = 35;
+
     public static String LANGUAGE = "en";
 
     public static String RDT_IMAGE_DIR = Environment.getExternalStorageDirectory() + "/Pictures/" +"/RDTImageCaptures/";

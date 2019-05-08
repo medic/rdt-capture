@@ -55,7 +55,7 @@ import static org.opencv.imgproc.Imgproc.minAreaRect;
  */
 
 public class ImageProcessor {
-    private String TAG = "ImageProcessor";
+    private static String TAG = "ImageProcessor";
     private static ImageProcessor instance = null;
     private BRISK mFeatureDetector;
     private BFMatcher mMatcher;
@@ -74,8 +74,6 @@ public class ImageProcessor {
     private double minSharpness = Double.MIN_VALUE;
     private int MOVE_CLOSER_COUNT = 5;
     private double CROP_RATIO = 0.6;
-
-
 
     int mMoveCloserCount = 0;
 
@@ -121,7 +119,7 @@ public class ImageProcessor {
         mMatcher = BFMatcher.create(BFMatcher.BRUTEFORCE_HAMMING, true);
         mRefImg = new Mat();
 
-        Bitmap bitmap = BitmapFactory.decodeResource(activity.getApplicationContext().getResources(), R.drawable.quickvue_ref);
+        Bitmap bitmap = BitmapFactory.decodeResource(activity.getApplicationContext().getResources(), R.drawable.sd_bioline_malaria_ag_pf);
         Utils.bitmapToMat(bitmap, mRefImg);
         Imgproc.cvtColor(mRefImg, mRefImg, Imgproc.COLOR_RGB2GRAY);
         mRefDescriptor = new Mat();
@@ -140,7 +138,7 @@ public class ImageProcessor {
         return instance;
     }
 
-    public void loadOpenCV(Context context, BaseLoaderCallback mLoaderCallback) {
+    public static void loadOpenCV(Context context, BaseLoaderCallback mLoaderCallback) {
         if (!OpenCVLoader.initDebug()) {
             Log.d(TAG, "Internal OpenCV library not found. Using OpenCV Manager for initialization");
             OpenCVLoader.initAsync(OpenCVLoader.OPENCV_VERSION, context, mLoaderCallback);
@@ -654,12 +652,12 @@ public class ImageProcessor {
         Log.d(TAG, "perspective ref" + refPoints.dump());
 
 
-//
-//        a = new double[]{Constants.RESULT_WINDOW_X, Constants.RESULT_WINDOW_Y};
-//        b = new double[]{Constants.RESULT_WINDOW_X+Constants.RESULT_WINDOW_WIDTH, Constants.RESULT_WINDOW_Y};
-//        c = new double[]{Constants.RESULT_WINDOW_X+Constants.RESULT_WINDOW_WIDTH, Constants.RESULT_WINDOW_Y+Constants.RESULT_WINDOW_HEIGHT};
-//        d = new double[]{Constants.RESULT_WINDOW_X, Constants.RESULT_WINDOW_Y+Constants.RESULT_WINDOW_HEIGHT};
-//
+
+        a = new double[]{Constants.RESULT_WINDOW_X, Constants.RESULT_WINDOW_Y};
+        b = new double[]{Constants.RESULT_WINDOW_X+Constants.RESULT_WINDOW_WIDTH, Constants.RESULT_WINDOW_Y};
+        c = new double[]{Constants.RESULT_WINDOW_X+Constants.RESULT_WINDOW_WIDTH, Constants.RESULT_WINDOW_Y+Constants.RESULT_WINDOW_HEIGHT};
+        d = new double[]{Constants.RESULT_WINDOW_X, Constants.RESULT_WINDOW_Y+Constants.RESULT_WINDOW_HEIGHT};
+
 
         refResultPoints.put(0, 0, a);
         refResultPoints.put(1, 0, b);

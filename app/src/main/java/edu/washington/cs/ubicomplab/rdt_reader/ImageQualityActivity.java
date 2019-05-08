@@ -86,9 +86,6 @@ public class ImageQualityActivity extends AppCompatActivity implements View.OnCl
     private View mProgressBackgroundView;
     private TextView mInstructionText;
     private State mCurrentState = State.QUALITY_CHECK;
-    private Mat bestCapturedMat;
-    private double minDistance = Double.MAX_VALUE;
-    private boolean minDistanceUpdated = false;
 
     private long timeTaken = 0;
 
@@ -96,7 +93,6 @@ public class ImageQualityActivity extends AppCompatActivity implements View.OnCl
     private ViewportUsingBitmap mViewport;
 
     private FocusState mFocusState = FocusState.INACTIVE;
-    private int mMoveCloserCount = 0;
 
     private enum State {
         QUALITY_CHECK, FINAL_CHECK
@@ -310,23 +306,44 @@ public class ImageQualityActivity extends AppCompatActivity implements View.OnCl
             runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
-                    displayQualityResult(ImageProcessor.SizeResult.INVALID, false, false, false, ImageProcessor.ExposureResult.OVER_EXPOSED);
                     displayQualityResult(result.sizeResult, result.isCentered, result.isRightOrientation, result.isSharp, result.exposureResult);
                 }
             });
 
-
+            Log.d(TAG, String.format("Capture time: %d", System.currentTimeMillis() - timeTaken));
             Log.d(TAG, String.format("Captured result: %b", result.allChecksPassed));
             if (result.allChecksPassed) {
                 Log.d(TAG, String.format("Captured MAT size: %s", result.resultMat.size()));
+                moveToResultActivity(result.resultMat);
+            } else {
+                imageQueue.remove();
+                image.close();
             }
-
-            imageQueue.remove();
-            image.close();
-
         }
 
     };
+
+    private void moveToResultActivity(Mat result) {
+        byte[] byteArray = ImageUtil.matToRotatedByteArray(result);
+        if (isExternalIntent()) {
+            Intent i = new Intent();
+
+            i.putExtra("data", byteArray);
+            i.putExtra("timeTaken", System.currentTimeMillis() - timeTaken);
+
+            setResult(Activity.RESULT_OK, i);
+            mOnImageAvailableThread.interrupt();
+            finish();
+        } else {
+            Intent intent = new Intent(ImageQualityActivity.this, ImageResultActivity.class);
+            intent.addFlags(Intent.FLAG_ACTIVITY_FORWARD_RESULT);
+            intent.putExtra("RDTCaptureByteArray", byteArray);
+            intent.putExtra("timeTaken", System.currentTimeMillis() - timeTaken);
+            result.release();
+            startActivity(intent);
+            mOnImageAvailableThread.interrupt();
+        }
+    }
 
     /**
      * {@link CaptureRequest.Builder} for the camera preview
@@ -439,9 +456,7 @@ public class ImageQualityActivity extends AppCompatActivity implements View.OnCl
             openCamera(mTextureView.getWidth(), mTextureView.getHeight());
         } else {
             mTextureView.setSurfaceTextureListener(mSurfaceTextureListener);
-            if (processor == null)
-                processor = ImageProcessor.getInstance(this);
-            processor.loadOpenCV(getApplicationContext(), mLoaderCallback);
+            ImageProcessor.loadOpenCV(getApplicationContext(), mLoaderCallback);
         }
 
     }
@@ -453,7 +468,6 @@ public class ImageQualityActivity extends AppCompatActivity implements View.OnCl
 
         closeCamera();
         stopBackgroundThread();
-        unloadReference();
     }
 
     @Override
@@ -839,31 +853,6 @@ public class ImageQualityActivity extends AppCompatActivity implements View.OnCl
         setProgressUI(mCurrentState);
     }
 
-    private void loadReference() {
-        mFeatureDetector = BRISK.create(45, 4, 1.0f);
-        mMatcher = BFMatcher.create(BFMatcher.BRUTEFORCE_HAMMING, true);
-        mRefImg = new Mat();
-
-        Bitmap bitmap = BitmapFactory.decodeResource(getApplicationContext().getResources(), R.drawable.quickvue_ref);
-        Utils.bitmapToMat(bitmap, mRefImg);
-        Imgproc.cvtColor(mRefImg, mRefImg, Imgproc.COLOR_RGB2GRAY);
-        mRefDescriptor = new Mat();
-
-        mRefKeypoints = new MatOfKeyPoint();
-        long startTime = System.currentTimeMillis();
-        mFeatureDetector.detect(mRefImg, mRefKeypoints);
-        mFeatureDetector.compute(mRefImg, mRefKeypoints, mRefDescriptor);
-        Log.d(TAG, "REFERENCE LOAD/DETECT/COMPUTE: " + (System.currentTimeMillis() - startTime));
-    }
-
-    private void unloadReference() {
-       //mRefImg.release();
-       //mRefDescriptor.release();
-       // mRefKeypoints.release();
-        if (bestCapturedMat != null)
-            bestCapturedMat.release();
-    }
-
     private void setProgressUI(State CurrentState) {
         switch (CurrentState) {
             case QUALITY_CHECK:
@@ -873,7 +862,7 @@ public class ImageQualityActivity extends AppCompatActivity implements View.OnCl
                         mProgress.setVisibility(View.GONE);
                         mProgressBackgroundView.setVisibility(View.GONE);
                         mProgressText.setVisibility(View.GONE);
-                        mCaptureProgressBar.setVisibility(View.VISIBLE);
+                        mCaptureProgressBar.setVisibility(View.GONE);
                     }
                 });
                 break;
@@ -885,7 +874,7 @@ public class ImageQualityActivity extends AppCompatActivity implements View.OnCl
                         mProgressBackgroundView.setVisibility(View.VISIBLE);
                         mProgressText.setText(R.string.progress_final);
                         mProgressText.setVisibility(View.VISIBLE);
-                        mCaptureProgressBar.setVisibility(View.VISIBLE);
+                        mCaptureProgressBar.setVisibility(View.GONE);
                     }
                 });
                 break;
