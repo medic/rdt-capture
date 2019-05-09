@@ -42,6 +42,13 @@ public final class Constants {
     public static int RESULT_WINDOW_WIDTH = 130;
     public static int RESULT_WINDOW_HEIGHT = 50;
 
+    //For SD Bioline Malaria
+    //public static int RESULT_WINDOW_X = 177;
+    //public static int RESULT_WINDOW_Y = 55;
+    //public static int RESULT_WINDOW_WIDTH = 110;
+    //public static int RESULT_WINDOW_HEIGHT = 35;
+
+
     public static String LANGUAGE = "en";
 
     public static String RDT_IMAGE_DIR = Environment.getExternalStorageDirectory() + "/Pictures/" +"/RDTImageCaptures/";

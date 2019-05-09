@@ -119,7 +119,10 @@ public class ImageProcessor {
         mMatcher = BFMatcher.create(BFMatcher.BRUTEFORCE_HAMMING, true);
         mRefImg = new Mat();
 
+        //Load reference image for Quickvue flu test strip
         Bitmap bitmap = BitmapFactory.decodeResource(activity.getApplicationContext().getResources(), R.drawable.quickvue_ref_evernote);
+        //Load reference image for SD Bioline Malaria RDT
+        //Bitmap bitmap = BitmapFactory.decodeResource(activity.getApplicationContext().getResources(), R.drawable.sd_bioline_malaria_ag_pf);
         Utils.bitmapToMat(bitmap, mRefImg);
         Imgproc.cvtColor(mRefImg, mRefImg, Imgproc.COLOR_RGB2GRAY);
         mRefDescriptor = new Mat();
