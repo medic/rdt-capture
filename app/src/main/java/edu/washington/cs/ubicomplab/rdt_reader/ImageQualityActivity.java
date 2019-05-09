@@ -506,6 +506,8 @@ public class ImageQualityActivity extends AppCompatActivity implements View.OnCl
     };
 
     private boolean checkWindowPosition(Mat resultWindowMat) {
+        Imgproc.rectangle(resultWindowMat, new Point(resultWindowMat.cols()/3*1.6, 0), new Point(resultWindowMat.cols(), resultWindowMat.rows()), new Scalar(255), -1);
+
         Point line = new Point(resultWindowMat.width()*0.35-resultWindowMat.width()*0.15, 0);
         Rect roi = new Rect((int)(resultWindowMat.width()*0.15), (int)(resultWindowMat.height()*0.2), (int)(resultWindowMat.width()*0.7), (int)(resultWindowMat.height()*0.6));
         Mat crop = resultWindowMat.submat(roi);
