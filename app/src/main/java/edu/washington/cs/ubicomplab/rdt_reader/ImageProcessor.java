@@ -41,11 +41,24 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.Semaphore;
 
+import static edu.washington.cs.ubicomplab.rdt_reader.Constants.GOOD_MATCH_COUNT;
 import static java.lang.Math.pow;
 import static java.lang.StrictMath.abs;
+import static org.opencv.core.Core.LUT;
 import static org.opencv.core.Core.meanStdDev;
+import static org.opencv.core.Core.perspectiveTransform;
+import static org.opencv.core.CvType.CV_32FC2;
 import static org.opencv.core.CvType.CV_64F;
+import static org.opencv.core.CvType.CV_8U;
+import static org.opencv.core.CvType.CV_8UC1;
+import static org.opencv.imgproc.Imgproc.COLOR_BGR2BGRA;
+import static org.opencv.imgproc.Imgproc.COLOR_BGR2HLS;
+import static org.opencv.imgproc.Imgproc.COLOR_BGRA2BGR;
+import static org.opencv.imgproc.Imgproc.COLOR_HLS2BGR;
 import static org.opencv.imgproc.Imgproc.Laplacian;
+import static org.opencv.imgproc.Imgproc.createCLAHE;
+import static org.opencv.imgproc.Imgproc.cvtColor;
+import static org.opencv.imgproc.Imgproc.getPerspectiveTransform;
 import static org.opencv.imgproc.Imgproc.minAreaRect;
 
 
@@ -124,7 +137,7 @@ public class ImageProcessor {
         //Load reference image for SD Bioline Malaria RDT
         //Bitmap bitmap = BitmapFactory.decodeResource(activity.getApplicationContext().getResources(), R.drawable.sd_bioline_malaria_ag_pf);
         Utils.bitmapToMat(bitmap, mRefImg);
-        Imgproc.cvtColor(mRefImg, mRefImg, Imgproc.COLOR_RGB2GRAY);
+        cvtColor(mRefImg, mRefImg, Imgproc.COLOR_RGB2GRAY);
         mRefDescriptor = new Mat();
 
         mRefKeypoints = new MatOfKeyPoint();
@@ -159,7 +172,7 @@ public class ImageProcessor {
 
     public CaptureResult captureRDT(Mat inputMat) {
         Mat greyMat = new Mat();
-        Imgproc.cvtColor(inputMat, greyMat, Imgproc.COLOR_BGRA2GRAY);
+        cvtColor(inputMat, greyMat, Imgproc.COLOR_BGRA2GRAY);
         double matchDistance = -1.0;
         boolean passed = false;
 
@@ -211,7 +224,7 @@ public class ImageProcessor {
         MatOfKeyPoint keypoints = new MatOfKeyPoint();
 
         long startTime = System.currentTimeMillis();
-        Mat mask = new Mat(input.size(), CvType.CV_8U, Scalar.all(0));
+        Mat mask = new Mat(input.size(), CV_8U, Scalar.all(0));
         Imgproc.rectangle(mask, new Point(input.width()/5, input.height()/5), new Point(input.width()-input.width()/5, input.height()-input.height()/5), Scalar.all(255), -1);
 
         mFeatureDetector.detect(input, keypoints);
@@ -299,15 +312,15 @@ public class ImageProcessor {
         result.convertTo(result, CvType.CV_32F);
         Log.d(TAG, "prepare homography TIME: " + (System.currentTimeMillis()-veryStart));
 
-        if (good_matches.size() > Constants.GOOD_MATCH_COUNT) {
+        if (good_matches.size() > GOOD_MATCH_COUNT) {
             //run homography on object and scene points
             Mat homographyMask = new Mat();
             Mat H = Calib3d.findHomography(obj, scene, Calib3d.RANSAC, 100, homographyMask, 1000, 0.995);
             Log.d(TAG, "find homography TIME: " + (System.currentTimeMillis()-veryStart));
 
             if (H.cols() >= 3 && H.rows() >= 3) {
-                Mat obj_corners = new Mat(4, 1, CvType.CV_32FC2);
-                Mat scene_corners = new Mat(4, 1, CvType.CV_32FC2);
+                Mat obj_corners = new Mat(4, 1, CV_32FC2);
+                Mat scene_corners = new Mat(4, 1, CV_32FC2);
                 //Mat obj_corners = new Mat(4, 1, CvType.CV_32FC2);
 
                 double[] a = new double[]{0, 0};
@@ -324,7 +337,7 @@ public class ImageProcessor {
 
                 Log.d(TAG, String.format("H size: %d, %d", H.cols(), H.rows()));
 
-                Core.perspectiveTransform(obj_corners, scene_corners, H);
+                perspectiveTransform(obj_corners, scene_corners, H);
 
                 Log.d(TAG, String.format("transformed: (%.2f, %.2f) (%.2f, %.2f) (%.2f, %.2f) (%.2f, %.2f), width: %d, height: %d",
                         scene_corners.get(0, 0)[0], scene_corners.get(0, 0)[1],
@@ -592,8 +605,8 @@ public class ImageProcessor {
         Rect roi = new Rect((int)(resultWindowMat.width()*0.15), (int)(resultWindowMat.height()*0.2), (int)(resultWindowMat.width()*0.7), (int)(resultWindowMat.height()*0.6));
         Mat crop = resultWindowMat.submat(roi);
         Mat cropgray = new Mat();
-        Imgproc.cvtColor(crop, cropgray, Imgproc.COLOR_RGBA2BGR);
-        Imgproc.cvtColor(cropgray, cropgray, Imgproc.COLOR_BGR2HSV);
+        cvtColor(crop, cropgray, Imgproc.COLOR_RGBA2BGR);
+        cvtColor(cropgray, cropgray, Imgproc.COLOR_BGR2HSV);
 
         ArrayList<Mat> channels = new ArrayList<>();
         Core.split(cropgray, channels);
@@ -638,8 +651,8 @@ public class ImageProcessor {
     }
 
     private Mat enhanceResultWindow(Mat input, MatOfPoint2f boundary) {
-        Mat refPoints = new Mat(4, 1, CvType.CV_32FC2);
-        Mat refResultPoints = new Mat(4, 1, CvType.CV_32FC2);
+        Mat refPoints = new Mat(4, 1, CV_32FC2);
+        Mat refResultPoints = new Mat(4, 1, CV_32FC2);
 
         double[] a = new double[]{0, 0};
         double[] b = new double[]{mRefImg.cols() - 1, 0};
@@ -670,10 +683,10 @@ public class ImageProcessor {
         Log.d(TAG, "perspective results" + refResultPoints.dump());
         Log.d(TAG, "perspective bound" + boundary.dump());
 
-        Mat M = Imgproc.getPerspectiveTransform(refPoints, boundary);
+        Mat M = getPerspectiveTransform(refPoints, boundary);
         Log.d(TAG, "perspective transform" + M.dump());
         Mat imgResultPointsMat = new Mat();
-        Core.perspectiveTransform(refResultPoints, imgResultPointsMat, M);
+        perspectiveTransform(refResultPoints, imgResultPointsMat, M);
         Log.d(TAG, "perspective window" + imgResultPointsMat.dump());
 
         MatOfPoint imgResultPoints = new MatOfPoint();
@@ -705,23 +718,23 @@ public class ImageProcessor {
     }
 
     private Mat correctGamma(Mat enhancedImg, double gamma) {
-        Mat lutMat = new Mat(1, 256, CvType.CV_8UC1);
+        Mat lutMat = new Mat(1, 256, CV_8UC1);
         for (int i = 0; i < 256; i ++) {
             double g = Math.pow((double)i/255.0, gamma)*255.0;
             g = g > 255.0 ? 255.0 : g < 0 ? 0 : g;
             lutMat.put(0, i, g);
         }
         Mat result = new Mat();
-        Core.LUT(enhancedImg, lutMat, result);
+        LUT(enhancedImg, lutMat, result);
         return result;
     }
 
     private Mat enhanceImage(Mat resultImg, org.opencv.core.Size tile) {
         Mat result = new Mat();
-        Imgproc.cvtColor(resultImg, result, Imgproc.COLOR_RGBA2BGR);
-        Imgproc.cvtColor(result, result, Imgproc.COLOR_BGR2HSV);
+        cvtColor(resultImg, result, Imgproc.COLOR_RGBA2BGR);
+        cvtColor(result, result, Imgproc.COLOR_BGR2HSV);
 
-        CLAHE clahe = Imgproc.createCLAHE(5, tile);
+        CLAHE clahe = createCLAHE(5, tile);
 
         ArrayList<Mat> channels = new ArrayList<>();
         Core.split(result, channels);
@@ -734,9 +747,198 @@ public class ImageProcessor {
 
         Core.merge(channels, result);
 
-        Imgproc.cvtColor(result, result, Imgproc.COLOR_HSV2BGR);
-        Imgproc.cvtColor(result, result, Imgproc.COLOR_BGR2RGBA);
+        cvtColor(result, result, Imgproc.COLOR_HSV2BGR);
+        cvtColor(result, result, Imgproc.COLOR_BGR2RGBA);
 
         return result;
     }
+
+    private Bitmap interpretResult(Mat inputMat) {
+        //Mat inputMat = Mat();
+        //UIImageToMat(image, inputMat);
+
+        MatOfPoint2f boundary = detectRDT(inputMat);
+        if (boundary.elemSize() <= 0)
+            return Utils.matToBitmap(inputMat);
+
+        Mat resultMat = cropResultWindow(inputMat, boundary);
+        resultMat = enhanceResultWindow(resultMat, Size(5, resultMat.cols()));
+        //resultMat = [self correctGamma:resultMat withGamma:0.75];
+
+        boolean control = readControlLine(resultMat, Point(CONTROL_LINE_POSITION,0));
+        boolean testA = readTestLine(resultMat, Point(TEST_A_LINE_POSITION,0));
+        boolean testB = readTestLine(resultMat, Point(TEST_B_LINE_POSITION,0));
+
+//        NSLog(@"Control: %d, TestA: %d, TestB: %d", control, testA, testB);
+
+        return  Utils.bitmapToMat(resultMat);
+    }
+
+-(UIImage *) interpretResultWithResultWindow:(Mat) inputMat andControlLine: (bool*) control andTestA: (bool*) testA andTestB: (bool*) testB {
+//        NSLog(@"Result Mat size: (%d, %d) -- interpretation", inputMat.size().width, inputMat.size().height);
+    *control = [self readControlLine:inputMat at:cv::Point(CONTROL_LINE_POSITION,0)];
+    *testA = [self readTestLine:inputMat at:cv::Point(TEST_A_LINE_POSITION,0)];
+    *testB = [self readTestLine:inputMat at:cv::Point(TEST_B_LINE_POSITION,0)];
+
+//        NSLog(@"Control: %d, TestA: %d, TestB: %d", *control, *testA, *testB);
+
+        cvtColor(inputMat, inputMat, CV_BGR2RGBA);
+
+        return MatToUIImage(inputMat);
+    }
+
+    private  Mat checkControlLine(Mat inputMat, boolean result)  {
+            MatOfPoint2f boundary = detectRDT(inputMat);
+            if (boundary.elemSize() <= 0)
+                return inputMat;
+            //return inputMat;
+
+            Mat resultMat = cropResultWindow(inputMat, boundary);
+            resultMat = enhanceResultWindow(resultMat, Size(5, resultMat.cols()));
+//            NSLog(@"Result Mat size -- check control line: (%d, %d)", resultMat.size().width, resultMat.size().height);
+            boolean control = readControlLine(resultMat, Point(CONTROL_LINE_POSITION,0));
+
+//            Log(@"Control: %d", control);
+
+            result = control;
+
+            return resultMat;
+            //return control;// ? resultMat : inputMat;
+        }
+
+    private  boolean readLine(Mat inputMat, Point position, boolean isControlLine) {
+        Mat hls = new Mat();
+        cvtColor(inputMat, hls, COLOR_BGRA2BGR);
+        cvtColor(hls, hls, COLOR_BGR2HLS);
+
+        Mat channels = new Mat();
+        split(hls, channels);
+
+        int lower_bound = (position.x-LINE_SEARCH_WIDTH < 0 ? 0 : position.x-LINE_SEARCH_WIDTH);
+        int upper_bound = position.x+LINE_SEARCH_WIDTH;
+
+        float avgIntensities = (float ) malloc((upper_bound-lower_bound)sizeof(float));
+        float avgHues = (float ) malloc((upper_bound-lower_bound)sizeof(float));
+        float avgSats = (float ) malloc((upper_bound-lower_bound)sizeof(float));
+
+        for (int i = lower_bound; i < upper_bound; i++) {
+            float sumIntensity=0;
+            float sumHue=0;
+            float sumSat=0;
+            for (int j = 0; j < channels[1].rows; j++) {
+                sumIntensity+=channels[1].at<uchar>(j, i);
+                sumHue+=channels[0].at<uchar>(j, i);
+                sumSat+=channels[2].at<uchar>(j, i);
+            }
+            avgIntensities[i-lower_bound] = sumIntensity/channels[1].rows;
+            avgHues[i-lower_bound] = sumHue/channels[0].rows;
+            avgSats[i-lower_bound] = sumSat/channels[2].rows;
+            //NSLog(@"Avg HLS: %.2f, %.2f, %.2f", avgHues[i-lower_bound]*2, avgIntensities[i-lower_bound]/255*100, avgSats[i-lower_bound]/255*100);
+        }
+
+        float min, max;
+        vDSP_Length min_index, max_index;
+        vDSP_minvi(avgIntensities, 1, &min, &min_index, upper_bound-lower_bound);
+        vDSP_maxvi(avgIntensities, 1, &max, &max_index, upper_bound-lower_bound);
+
+//        NSLog(@"Intensity Minimum HLS (%.2f, %.2f, %.2f) at %lu/%d", avgHues[min_index]*2, min/255*100, avgSats[min_index]/255*100, min_index, upper_bound-lower_bound);
+//        NSLog(@"Intensity Maximum HLS (%.2f, %.2f, %.2f) at %lu/%d", avgHues[max_index]*2, max/255*100, avgSats[max_index]/255*100, max_index, upper_bound-lower_bound);
+//        NSLog(@"Intensity diff %.3f",abs(min-max));
+
+        //cv::line(inputMat, cv::Point(lower_bound+(int)min_index,0), cv::Point(lower_bound+(int)min_index, inputMat.rows), cv::Scalar(0), 1);
+        //cv::line(inputMat, cv::Point(lower_bound+(int)max_index,0), cv::Point(lower_bound+(int)max_index, inputMat.rows), cv::Scalar(255), 1);
+        //cv::rectangle(inputMat, cv::Point(lower_bound, 0), cv::Point(upper_bound, inputMat.rows), cv::Scalar(0), 0.1);
+        if (isControlLine) {
+            return min < INTENSITY_THRESHOLD && abs(min-max) > CONTROL_INTENSITY_PEAK_THRESHOLD;
+        } else {
+            return min < INTENSITY_THRESHOLD && abs(min-max) > TEST_INTENSITY_PEAK_THRESHOLD;
+        }
+    }
+
+    private boolean readControlLine(Mat inputMat, Point position) {
+            return readLine(inputMat, position, false);
+    }
+
+    private boolean readTestLine(Mat inputMat, Point position) {
+            return readLine(inputMat, position, false);
+    }
+
+
+    private Mat enhanceResultWindow(Mat inputMat, Size tile) {
+            Mat result =  new Mat();
+//            NSLog(@"Enhance Result Mat Type: %d", inputMat.type());
+            cvtColor(inputMat, result, COLOR_BGRA2BGR);
+            cvtColor(result, result, COLOR_BGR2HLS);
+
+            CLAHE clahe = createCLAHE(5, tile);
+
+            Mat channels = new Mat();
+            cv::split(result, channels);
+
+            Mat newChannel = new Mat();
+
+            cv::normalize(channels[1], channels[1], 0, 255, cv::NORM_MINMAX);
+
+            clahe->apply(channels[1], newChannel);
+
+            channels[1] = newChannel;
+
+            merge(channels, result);
+
+            cvtColor(result, result, COLOR_HLS2BGR);
+            cvtColor(result, result, COLOR_BGR2BGRA);
+
+            return result;
+        }
+
+    private Mat correctGamma(Mat enhancedImg, float gamma) {
+            Mat lutMat = Mat(1, 256, CV_8UC1);
+            for (int i = 0; i < 256; i ++) {
+                float g = pow((float)i/255.0, gamma)*255.0;
+                g = g > 255.0 ? 255.0 : g < 0 ? 0 : g;
+                lutMat.at<uchar>(0, i) = g;
+            }
+            Mat result = new Mat();
+            LUT(enhancedImg, lutMat, result);
+            return result;
+        }
+
+    private Mat cropResultWindow(Mat inputMat, MatOfPoint2f boundary) {
+            Mat ref_boundary = new Mat(4, 1, CV_32FC2);
+
+            ref_boundary.at<Vec2f>(0, 0)[0] = 0;
+            ref_boundary.at<Vec2f>(0, 0)[1] = 0;
+
+            ref_boundary.at<Vec2f>(1, 0)[0] = refImg.cols - 1;
+            ref_boundary.at<Vec2f>(1, 0)[1] = 0;
+
+            ref_boundary.at<Vec2f>(2, 0)[0] = refImg.cols - 1;
+            ref_boundary.at<Vec2f>(2, 0)[1] = refImg.rows - 1;
+
+            ref_boundary.at<Vec2f>(3, 0)[0] = 0;
+            ref_boundary.at<Vec2f>(3, 0)[1] = refImg.rows - 1;
+
+//            NSLog(@"ref_boundary:  (%.2f, %.2f) (%.2f, %.2f) (%.2f, %.2f) (%.2f, %.2f)",
+                    ref_boundary.at<Vec2f>(0, 0)[0], ref_boundary.at<Vec2f>(0, 0)[1],
+            ref_boundary.at<Vec2f>(1, 0)[0], ref_boundary.at<Vec2f>(1, 0)[1],
+            ref_boundary.at<Vec2f>(2, 0)[0], ref_boundary.at<Vec2f>(2, 0)[1],
+            ref_boundary.at<Vec2f>(3, 0)[0], ref_boundary.at<Vec2f>(3, 0)[1]);
+
+            Mat boundaryMat = new Mat(boundary);
+
+//            NSLog(@"boundaryMat:  (%.2f, %.2f) (%.2f, %.2f) (%.2f, %.2f) (%.2f, %.2f)",
+                    boundaryMat.at<Vec2f>(0, 0)[0], boundaryMat.at<Vec2f>(0, 0)[1],
+            boundaryMat.at<Vec2f>(1, 0)[0], boundaryMat.at<Vec2f>(1, 0)[1],
+            boundaryMat.at<Vec2f>(2, 0)[0], boundaryMat.at<Vec2f>(2, 0)[1],
+            boundaryMat.at<Vec2f>(3, 0)[0], boundaryMat.at<Vec2f>(3, 0)[1]);
+
+            Mat M = getPerspectiveTransform(boundaryMat, ref_boundary);
+            Mat correctedMat = new Mat(refImg.rows, refImg.cols, refImg.type());
+            cv::warpPerspective(inputMat, correctedMat, M, cv::Size(refImg.cols, refImg.rows));
+
+            correctedMat = Mat(correctedMat, RESULT_WINDOW_RECT);
+
+            return correctedMat;
+        }}
+
 }
