@@ -6,8 +6,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.res.Configuration;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.graphics.ImageFormat;
 import android.graphics.Matrix;
 import android.graphics.RectF;
@@ -33,7 +31,6 @@ import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.text.Html;
-import android.util.DisplayMetrics;
 import android.util.Log;
 import android.util.Size;
 import android.util.SparseIntArray;
@@ -47,15 +44,12 @@ import android.widget.Toast;
 
 import org.opencv.android.BaseLoaderCallback;
 import org.opencv.android.LoaderCallbackInterface;
-import org.opencv.android.Utils;
 
 import org.opencv.core.Mat;;
 import org.opencv.core.MatOfKeyPoint;
 
 import org.opencv.features2d.BFMatcher;
 import org.opencv.features2d.BRISK;
-
-import org.opencv.imgproc.Imgproc;
 
 import java.io.File;
 import java.util.Arrays;
@@ -314,7 +308,7 @@ public class ImageQualityActivity extends AppCompatActivity implements View.OnCl
             Log.d(TAG, String.format("Captured result: %b", result.allChecksPassed));
             if (result.allChecksPassed) {
                 Log.d(TAG, String.format("Captured MAT size: %s", result.resultMat.size()));
-                moveToResultActivity(result.resultMat);
+                useCapturedImage(result.resultMat);
             } else {
                 imageQueue.remove();
                 image.close();
@@ -322,6 +316,10 @@ public class ImageQualityActivity extends AppCompatActivity implements View.OnCl
         }
 
     };
+
+    protected void useCapturedImage(Mat result) {
+        moveToResultActivity(result);
+    }
 
     private void moveToResultActivity(Mat result) {
         byte[] byteArray = ImageUtil.matToRotatedByteArray(result);
