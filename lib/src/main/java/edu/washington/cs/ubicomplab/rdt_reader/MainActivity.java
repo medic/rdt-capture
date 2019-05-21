@@ -85,13 +85,13 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         // Handle item selection
-        switch (item.getItemId()) {
-            case R.id.action_settings:
-                SettingDialogFragment dialog = new SettingDialogFragment();
-                dialog.show(getFragmentManager(), "Setting Dialog");
-                return true;
-            default:
-                return false;
+        int i = item.getItemId();
+        if (i == R.id.action_settings) {
+            SettingDialogFragment dialog = new SettingDialogFragment();
+            dialog.show(getFragmentManager(), "Setting Dialog");
+            return true;
+        } else {
+            return false;
         }
     }
 

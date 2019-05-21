@@ -798,11 +798,9 @@ public class ImageQualityActivity extends AppCompatActivity implements View.OnCl
 
     @Override
     public void onClick(View view) {
-        switch (view.getId()) {
-            case R.id.viewport: {
-                updateRepeatingRequest();
-                break;
-            }
+        int i = view.getId();
+        if (i == R.id.viewport) {
+            updateRepeatingRequest();
         }
     }
 
@@ -815,16 +813,12 @@ public class ImageQualityActivity extends AppCompatActivity implements View.OnCl
     private BaseLoaderCallback mLoaderCallback = new BaseLoaderCallback(this) {
         @Override
         public void onManagerConnected(int status) {
-            switch (status) {
-                case LoaderCallbackInterface.SUCCESS: {
-                    Log.i(TAG, "OpenCV loaded successfully");
-                    processor = ImageProcessor.getInstance(thisActivity);
-                }
-                break;
-                default: {
-                    super.onManagerConnected(status);
-                }
-                break;
+            if (status == LoaderCallbackInterface.SUCCESS) {
+                Log.i(TAG, "OpenCV loaded successfully");
+                processor = ImageProcessor.getInstance(thisActivity);
+            } else {
+                super.onManagerConnected(status);
+
             }
         }
     };
@@ -852,30 +846,29 @@ public class ImageQualityActivity extends AppCompatActivity implements View.OnCl
     }
 
     private void setProgressUI(State CurrentState) {
-        switch (CurrentState) {
-            case QUALITY_CHECK:
-                runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        mProgress.setVisibility(View.GONE);
-                        mProgressBackgroundView.setVisibility(View.GONE);
-                        mProgressText.setVisibility(View.GONE);
-                        mCaptureProgressBar.setVisibility(View.GONE);
-                    }
-                });
-                break;
-            case FINAL_CHECK:
-                runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        mProgress.setVisibility(View.VISIBLE);
-                        mProgressBackgroundView.setVisibility(View.VISIBLE);
-                        mProgressText.setText(R.string.progress_final);
-                        mProgressText.setVisibility(View.VISIBLE);
-                        mCaptureProgressBar.setVisibility(View.GONE);
-                    }
-                });
-                break;
+        if (CurrentState == State.QUALITY_CHECK) {
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    mProgress.setVisibility(View.GONE);
+                    mProgressBackgroundView.setVisibility(View.GONE);
+                    mProgressText.setVisibility(View.GONE);
+                    mCaptureProgressBar.setVisibility(View.GONE);
+                }
+            });
+
+        } else if (CurrentState == State.FINAL_CHECK) {
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    mProgress.setVisibility(View.VISIBLE);
+                    mProgressBackgroundView.setVisibility(View.VISIBLE);
+                    mProgressText.setText(R.string.progress_final);
+                    mProgressText.setVisibility(View.VISIBLE);
+                    mCaptureProgressBar.setVisibility(View.GONE);
+                }
+            });
+
         }
 
     }

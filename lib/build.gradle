@@ -1,4 +1,8 @@
 apply plugin: 'com.android.library'
+apply plugin: 'maven'
+
+group = "io.ona.rdt-capture"
+version = '0.1'
 
 android {
     compileSdkVersion 26
@@ -43,4 +47,12 @@ dependencies {
     //compile 'org.nd4j:nd4j-native:0.9.1:android-x86'
     implementation project(':openCVLibrary341')
     implementation 'com.android.support:cardview-v7:26.1.0'
+}
+
+uploadArchives {
+    repositories {
+        mavenDeployer {
+            repository(url: mavenLocal().getUrl())
+        }
+    }
 }

@@ -81,19 +81,14 @@ public class ImageQualityOpencvActivity extends AppCompatActivity implements CvC
     private BaseLoaderCallback mLoaderCallback = new BaseLoaderCallback(this) {
         @Override
         public void onManagerConnected(int status) {
-            switch (status) {
-                case LoaderCallbackInterface.SUCCESS:
-                {
-                    Log.i(TAG, "OpenCV loaded successfully");
-                    mOpenCvCameraView.enableView();
-                    mDetector = new ColorBlobDetector();
-                    mDetector.setHsvColor(Constants.RDT_COLOR_HSV);
-                    loadReference();
-                } break;
-                default:
-                {
-                    super.onManagerConnected(status);
-                } break;
+            if (status == LoaderCallbackInterface.SUCCESS) {
+                Log.i(TAG, "OpenCV loaded successfully");
+                mOpenCvCameraView.enableView();
+                mDetector = new ColorBlobDetector();
+                mDetector.setHsvColor(Constants.RDT_COLOR_HSV);
+                loadReference();
+            } else {
+                super.onManagerConnected(status);
             }
         }
     };
@@ -220,13 +215,13 @@ public class ImageQualityOpencvActivity extends AppCompatActivity implements CvC
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         // Handle item selection
-        switch (item.getItemId()) {
-            case R.id.action_settings:
-                SettingDialogFragment dialog = new SettingDialogFragment();
-                dialog.show(getFragmentManager(), "Setting Dialog");
-                return true;
-            default:
-                return false;
+        int i = item.getItemId();
+        if (i == R.id.action_settings) {
+            SettingDialogFragment dialog = new SettingDialogFragment();
+            dialog.show(getFragmentManager(), "Setting Dialog");
+            return true;
+        } else {
+            return false;
         }
     }
 
@@ -280,47 +275,39 @@ public class ImageQualityOpencvActivity extends AppCompatActivity implements CvC
             //mResetCameraNeeded = false;
         }
 
-        switch (mCurrentState) {
-            case INITIALIZATION:
-                if (initTask == null || initTask.getStatus() == AsyncTask.Status.FINISHED ) {
-                    initTask = new FeatureMathchingTask();
-                    initTask.execute(grayMat);
-                }
-                break;
-            case ENV_FOCUS_INFINITY:
-            case ENV_FOCUS_MACRO:
-            case ENV_FOCUS_AUTO_CENTER:
-                final double currVal = calculateBlurriness(rgbaMat);
-                grayMat.release();
+        if (mCurrentState == State.INITIALIZATION) {
+            if (initTask == null || initTask.getStatus() == AsyncTask.Status.FINISHED) {
+                initTask = new FeatureMathchingTask();
+                initTask.execute(grayMat);
+            }
 
-                if (currVal < minBlur)
-                    minBlur = currVal;
+        } else if (mCurrentState == State.ENV_FOCUS_INFINITY || mCurrentState == State.ENV_FOCUS_MACRO || mCurrentState == State.ENV_FOCUS_AUTO_CENTER) {
+            final double currVal = calculateBlurriness(rgbaMat);
+            grayMat.release();
 
-                if (currVal > maxBlur)
-                    maxBlur = currVal;
+            if (currVal < minBlur)
+                minBlur = currVal;
 
-                if (frameCounter > CALIBRATION_FRAME_COUNTER) {
-                    setNextState(mCurrentState);
-                    frameCounter = 0;
-                } else {
-                    frameCounter++;
-                }
+            if (currVal > maxBlur)
+                maxBlur = currVal;
 
-                break;
-            case QUALITY_CHECK:
-                if (isCaptured)
-                    return null;
-                if (qualityCheckTask == null || qualityCheckTask.getStatus() == AsyncTask.Status.FINISHED) {
-                    qualityCheckTask = new ImageQualityCheckTask();
-                    Log.d(TAG, "rgbaMat 0 Size: "+rgbaMat.size().toString() + ", grayMat 1 Size: "+grayMat.size().toString());
-                    qualityCheckTask.execute(rgbaMat.clone(), grayMat);
-                }
-
-                break;
-            case FINAL_CHECK:
-                if (isCaptured)
-                    return null;
-                break;
+            if (frameCounter > CALIBRATION_FRAME_COUNTER) {
+                setNextState(mCurrentState);
+                frameCounter = 0;
+            } else {
+                frameCounter++;
+            }
+        } else if (mCurrentState == State.QUALITY_CHECK) {
+            if (isCaptured)
+                return null;
+            if (qualityCheckTask == null || qualityCheckTask.getStatus() == AsyncTask.Status.FINISHED) {
+                qualityCheckTask = new ImageQualityCheckTask();
+                Log.d(TAG, "rgbaMat 0 Size: " + rgbaMat.size().toString() + ", grayMat 1 Size: " + grayMat.size().toString());
+                qualityCheckTask.execute(rgbaMat.clone(), grayMat);
+            }
+        } else if (mCurrentState == State.FINAL_CHECK) {
+            if (isCaptured)
+                return null;
         }
 
         System.gc();
@@ -443,87 +430,76 @@ public class ImageQualityOpencvActivity extends AppCompatActivity implements CvC
     }
 
     private void setNextState (State currentState) {
-        switch (currentState) {
-            case INITIALIZATION:
-                mCurrentState = State.ENV_FOCUS_INFINITY;
-                mResetCameraNeeded = true;
-                break;
-            case ENV_FOCUS_INFINITY:
-                mCurrentState = State.ENV_FOCUS_AUTO_CENTER;
-                mResetCameraNeeded = true;
-
-                break;
-            case ENV_FOCUS_MACRO:
-                mCurrentState = State.ENV_FOCUS_AUTO_CENTER;
-                mResetCameraNeeded = true;
-                break;
-            case ENV_FOCUS_AUTO_CENTER:
-                mCurrentState = State.QUALITY_CHECK;
-                mResetCameraNeeded = true;
-                break;
-            case QUALITY_CHECK:
-                mCurrentState = State.FINAL_CHECK;
-                mResetCameraNeeded = false;
-                break;
-            case FINAL_CHECK:
-                mCurrentState = State.FINAL_CHECK;
-                mResetCameraNeeded = false;
-                break;
+        if (currentState == State.INITIALIZATION) {
+            mCurrentState = State.ENV_FOCUS_INFINITY;
+            mResetCameraNeeded = true;
+        } else if (currentState == State.ENV_FOCUS_INFINITY) {
+            mCurrentState = State.ENV_FOCUS_AUTO_CENTER;
+            mResetCameraNeeded = true;
+        } else if (currentState == State.ENV_FOCUS_MACRO) {
+            mCurrentState = State.ENV_FOCUS_AUTO_CENTER;
+            mResetCameraNeeded = true;
+        } else if (currentState == State.ENV_FOCUS_AUTO_CENTER) {
+            mCurrentState = State.QUALITY_CHECK;
+            mResetCameraNeeded = true;
+        } else if (currentState == State.QUALITY_CHECK) {
+            mCurrentState = State.FINAL_CHECK;
+            mResetCameraNeeded = false;
+        } else if (currentState == State.FINAL_CHECK) {
+            mCurrentState = State.FINAL_CHECK;
+            mResetCameraNeeded = false;
         }
 
         setProgressUI(mCurrentState);
     }
 
     private void setProgressUI (State CurrentState) {
-        switch  (CurrentState) {
-            case INITIALIZATION:
-                runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        mProgress.setVisibility(View.GONE);
-                        mProgressBackgroundView.setVisibility(View.GONE);
-                        mProgressText.setVisibility(View.GONE);
-                        mCaptureProgressBar.setVisibility(View.GONE);
-                    }
-                });
-                break;
-                case QUALITY_CHECK:
-                runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        mProgress.setVisibility(View.GONE);
-                        mProgressBackgroundView.setVisibility(View.GONE);
-                        mProgressText.setVisibility(View.GONE);
-                        mCaptureProgressBar.setVisibility(View.VISIBLE);
-                    }
-                });
-                break;
-            case ENV_FOCUS_INFINITY:
-            case ENV_FOCUS_MACRO:
-            case ENV_FOCUS_AUTO_CENTER:
-                runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        mProgress.setVisibility(View.VISIBLE);
-                        mProgressBackgroundView.setVisibility(View.VISIBLE);
-                        mProgressText.setText(R.string.progress_initialization);
-                        mProgressText.setVisibility(View.VISIBLE);
-                        mCaptureProgressBar.setVisibility(View.GONE);
-                    }
-                });
-                break;
-            case FINAL_CHECK:
-                runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        mProgress.setVisibility(View.VISIBLE);
-                        mProgressBackgroundView.setVisibility(View.VISIBLE);
-                        mProgressText.setText(R.string.progress_final);
-                        mProgressText.setVisibility(View.VISIBLE);
-                        mCaptureProgressBar.setVisibility(View.VISIBLE);
-                    }
-                });
-                break;
+        if (CurrentState == State.INITIALIZATION) {
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    mProgress.setVisibility(View.GONE);
+                    mProgressBackgroundView.setVisibility(View.GONE);
+                    mProgressText.setVisibility(View.GONE);
+                    mCaptureProgressBar.setVisibility(View.GONE);
+                }
+            });
+
+        } else if (CurrentState == State.QUALITY_CHECK) {
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    mProgress.setVisibility(View.GONE);
+                    mProgressBackgroundView.setVisibility(View.GONE);
+                    mProgressText.setVisibility(View.GONE);
+                    mCaptureProgressBar.setVisibility(View.VISIBLE);
+                }
+            });
+
+        } else if (CurrentState == State.ENV_FOCUS_INFINITY || CurrentState == State.ENV_FOCUS_MACRO || CurrentState == State.ENV_FOCUS_AUTO_CENTER) {
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    mProgress.setVisibility(View.VISIBLE);
+                    mProgressBackgroundView.setVisibility(View.VISIBLE);
+                    mProgressText.setText(R.string.progress_initialization);
+                    mProgressText.setVisibility(View.VISIBLE);
+                    mCaptureProgressBar.setVisibility(View.GONE);
+                }
+            });
+
+        } else if (CurrentState == State.FINAL_CHECK) {
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    mProgress.setVisibility(View.VISIBLE);
+                    mProgressBackgroundView.setVisibility(View.VISIBLE);
+                    mProgressText.setText(R.string.progress_final);
+                    mProgressText.setVisibility(View.VISIBLE);
+                    mCaptureProgressBar.setVisibility(View.VISIBLE);
+                }
+            });
+
         }
 
     }
@@ -532,46 +508,42 @@ public class ImageQualityOpencvActivity extends AppCompatActivity implements CvC
         try {
             CameraCharacteristics characteristics = mOpenCvCameraView.mCameraManager.getCameraCharacteristics(mOpenCvCameraView.mCameraID);
 
-            switch (currentState) {
-                case INITIALIZATION:
-                case ENV_FOCUS_AUTO_CENTER:
-                case QUALITY_CHECK:
-                    //resetCaptureRequest();
-                    final android.graphics.Rect sensor = characteristics.get(CameraCharacteristics.SENSOR_INFO_ACTIVE_ARRAY_SIZE);
-                    MeteringRectangle mr = new MeteringRectangle(sensor.width() / 2 - 50, sensor.height() / 2 - 50, 100, 100,
-                            MeteringRectangle.METERING_WEIGHT_MAX - 1);
+            if (currentState == State.INITIALIZATION || currentState == State.ENV_FOCUS_AUTO_CENTER || currentState == State.QUALITY_CHECK) {//resetCaptureRequest();
+                final android.graphics.Rect sensor = characteristics.get(CameraCharacteristics.SENSOR_INFO_ACTIVE_ARRAY_SIZE);
+                MeteringRectangle mr = new MeteringRectangle(sensor.width() / 2 - 50, sensor.height() / 2 - 50, 100, 100,
+                        MeteringRectangle.METERING_WEIGHT_MAX - 1);
 
-                    Log.d(TAG, String.format("Sensor Size (%d, %d), Metering %s", sensor.width(), sensor.height(), mr.toString()));
-                    Log.d(TAG, String.format("Regions AE %s", characteristics.get(CameraCharacteristics.CONTROL_MAX_REGIONS_AE).toString()));
+                Log.d(TAG, String.format("Sensor Size (%d, %d), Metering %s", sensor.width(), sensor.height(), mr.toString()));
+                Log.d(TAG, String.format("Regions AE %s", characteristics.get(CameraCharacteristics.CONTROL_MAX_REGIONS_AE).toString()));
 
-                    mOpenCvCameraView.mPreviewRequestBuilder.set(CaptureRequest.CONTROL_AF_MODE, CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_PICTURE);
-                    mOpenCvCameraView.mPreviewRequestBuilder.set(CaptureRequest.CONTROL_AF_REGIONS,
-                            new MeteringRectangle[]{new MeteringRectangle(sensor.width() / 2 - 500+(counter%2), sensor.height() / 2 - 50+(counter%2), 1000+(counter%2), 100+(counter%2),
-                                    MeteringRectangle.METERING_WEIGHT_MAX - 1)});
-                    mOpenCvCameraView.mPreviewRequestBuilder.set(CaptureRequest.CONTROL_AE_REGIONS,
-                            new MeteringRectangle[]{new MeteringRectangle(sensor.width() / 2 - 500+(counter%2), sensor.height() / 2 - 50+(counter%2), 1000+(counter%2), 100+(counter%2),
-                                    MeteringRectangle.METERING_WEIGHT_MAX - 1)});
-                    mOpenCvCameraView.mPreviewRequestBuilder.set(CaptureRequest.CONTROL_AE_MODE, CaptureRequest.CONTROL_AE_MODE_ON);
-                    mOpenCvCameraView.mPreviewRequestBuilder.set(CaptureRequest.CONTROL_AWB_REGIONS,
-                            new MeteringRectangle[]{new MeteringRectangle(sensor.width() / 2 - 500+(counter%2), sensor.height() / 2 - 50+(counter%2), 1000+(counter%2), 100+(counter%2),
-                                    MeteringRectangle.METERING_WEIGHT_MAX - 1)});
-                    mOpenCvCameraView.mPreviewRequestBuilder.set(CaptureRequest.CONTROL_AWB_MODE, CaptureRequest.CONTROL_AWB_MODE_AUTO);
-                    mOpenCvCameraView.mPreviewRequestBuilder.set(CaptureRequest.FLASH_MODE, CaptureRequest.FLASH_MODE_TORCH);
-                    counter++;
-                    break;
-                case ENV_FOCUS_INFINITY:
-                    mOpenCvCameraView.mPreviewRequestBuilder.set(CaptureRequest.CONTROL_AF_MODE, CaptureRequest.CONTROL_AF_MODE_OFF);
-                    mOpenCvCameraView.mPreviewRequestBuilder.set(CaptureRequest.LENS_FOCUS_DISTANCE, 0.0f);
-                    mOpenCvCameraView.mPreviewRequestBuilder.set(CaptureRequest.CONTROL_AE_MODE, CaptureRequest.CONTROL_AE_MODE_ON);
-                    mOpenCvCameraView.mPreviewRequestBuilder.set(CaptureRequest.CONTROL_AWB_MODE, CaptureRequest.CONTROL_AWB_MODE_AUTO);
-                    mOpenCvCameraView.mPreviewRequestBuilder.set(CaptureRequest.FLASH_MODE, CaptureRequest.FLASH_MODE_TORCH);
-                    break;
-                case ENV_FOCUS_MACRO:
-                    mOpenCvCameraView.mPreviewRequestBuilder.set(CaptureRequest.CONTROL_AF_MODE, CaptureRequest.CONTROL_AF_MODE_MACRO);
-                    mOpenCvCameraView.mPreviewRequestBuilder.set(CaptureRequest.CONTROL_AE_MODE, CaptureRequest.CONTROL_AE_MODE_ON);
-                    mOpenCvCameraView.mPreviewRequestBuilder.set(CaptureRequest.CONTROL_AWB_MODE, CaptureRequest.CONTROL_AWB_MODE_AUTO);
-                    mOpenCvCameraView.mPreviewRequestBuilder.set(CaptureRequest.FLASH_MODE, CaptureRequest.FLASH_MODE_TORCH);
-                    break;
+                mOpenCvCameraView.mPreviewRequestBuilder.set(CaptureRequest.CONTROL_AF_MODE, CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_PICTURE);
+                mOpenCvCameraView.mPreviewRequestBuilder.set(CaptureRequest.CONTROL_AF_REGIONS,
+                        new MeteringRectangle[]{new MeteringRectangle(sensor.width() / 2 - 500 + (counter % 2), sensor.height() / 2 - 50 + (counter % 2), 1000 + (counter % 2), 100 + (counter % 2),
+                                MeteringRectangle.METERING_WEIGHT_MAX - 1)});
+                mOpenCvCameraView.mPreviewRequestBuilder.set(CaptureRequest.CONTROL_AE_REGIONS,
+                        new MeteringRectangle[]{new MeteringRectangle(sensor.width() / 2 - 500 + (counter % 2), sensor.height() / 2 - 50 + (counter % 2), 1000 + (counter % 2), 100 + (counter % 2),
+                                MeteringRectangle.METERING_WEIGHT_MAX - 1)});
+                mOpenCvCameraView.mPreviewRequestBuilder.set(CaptureRequest.CONTROL_AE_MODE, CaptureRequest.CONTROL_AE_MODE_ON);
+                mOpenCvCameraView.mPreviewRequestBuilder.set(CaptureRequest.CONTROL_AWB_REGIONS,
+                        new MeteringRectangle[]{new MeteringRectangle(sensor.width() / 2 - 500 + (counter % 2), sensor.height() / 2 - 50 + (counter % 2), 1000 + (counter % 2), 100 + (counter % 2),
+                                MeteringRectangle.METERING_WEIGHT_MAX - 1)});
+                mOpenCvCameraView.mPreviewRequestBuilder.set(CaptureRequest.CONTROL_AWB_MODE, CaptureRequest.CONTROL_AWB_MODE_AUTO);
+                mOpenCvCameraView.mPreviewRequestBuilder.set(CaptureRequest.FLASH_MODE, CaptureRequest.FLASH_MODE_TORCH);
+                counter++;
+
+            } else if (currentState == State.ENV_FOCUS_INFINITY) {
+                mOpenCvCameraView.mPreviewRequestBuilder.set(CaptureRequest.CONTROL_AF_MODE, CaptureRequest.CONTROL_AF_MODE_OFF);
+                mOpenCvCameraView.mPreviewRequestBuilder.set(CaptureRequest.LENS_FOCUS_DISTANCE, 0.0f);
+                mOpenCvCameraView.mPreviewRequestBuilder.set(CaptureRequest.CONTROL_AE_MODE, CaptureRequest.CONTROL_AE_MODE_ON);
+                mOpenCvCameraView.mPreviewRequestBuilder.set(CaptureRequest.CONTROL_AWB_MODE, CaptureRequest.CONTROL_AWB_MODE_AUTO);
+                mOpenCvCameraView.mPreviewRequestBuilder.set(CaptureRequest.FLASH_MODE, CaptureRequest.FLASH_MODE_TORCH);
+
+            } else if (currentState == State.ENV_FOCUS_MACRO) {
+                mOpenCvCameraView.mPreviewRequestBuilder.set(CaptureRequest.CONTROL_AF_MODE, CaptureRequest.CONTROL_AF_MODE_MACRO);
+                mOpenCvCameraView.mPreviewRequestBuilder.set(CaptureRequest.CONTROL_AE_MODE, CaptureRequest.CONTROL_AE_MODE_ON);
+                mOpenCvCameraView.mPreviewRequestBuilder.set(CaptureRequest.CONTROL_AWB_MODE, CaptureRequest.CONTROL_AWB_MODE_AUTO);
+                mOpenCvCameraView.mPreviewRequestBuilder.set(CaptureRequest.FLASH_MODE, CaptureRequest.FLASH_MODE_TORCH);
+
             }
             mOpenCvCameraView.mCaptureSession.setRepeatingRequest(mOpenCvCameraView.mPreviewRequestBuilder.build(), null, null);
         } catch (Exception e) {
