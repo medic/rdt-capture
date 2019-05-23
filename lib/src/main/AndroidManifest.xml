@@ -34,11 +34,6 @@
             android:configChanges="keyboardHidden|orientation"
             android:noHistory="true"
             android:screenOrientation="portrait">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-
-                <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
         </activity>
         <activity
             android:name=".ExpirationDateActivity"
@@ -48,7 +43,6 @@
             android:theme="@style/Theme.AppCompat.NoActionBar"
             android:configChanges="keyboardHidden|orientation"
             android:exported="true"
-            android:noHistory="true"
             android:screenOrientation="portrait">
             <intent-filter>
                 <category android:name="android.intent.category.DEFAULT"/>

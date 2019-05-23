@@ -81,6 +81,11 @@ public class ImageQualityActivity extends AppCompatActivity implements View.OnCl
     private TextView mInstructionText;
     private State mCurrentState = State.QUALITY_CHECK;
 
+    private Integer cameraHeight = null;
+    private Integer cameraWidth = null;
+
+    private boolean isRequestingPermissions = false;
+
     private long timeTaken = 0;
 
 
@@ -97,6 +102,8 @@ public class ImageQualityActivity extends AppCompatActivity implements View.OnCl
     }
 
     private Activity thisActivity = this;
+
+    private static final String TAG = ImageQualityActivity.class.getName();
 
 
     @Override
@@ -132,11 +139,6 @@ public class ImageQualityActivity extends AppCompatActivity implements View.OnCl
         ORIENTATIONS.append(Surface.ROTATION_180, 270);
         ORIENTATIONS.append(Surface.ROTATION_270, 180);
     }
-
-    /**
-     * Tag for the {@link Log}.
-     */
-    private static final String TAG = "Camera2BasicFragment";
 
     /**
      * Camera state: Showing camera preview.
@@ -462,28 +464,21 @@ public class ImageQualityActivity extends AppCompatActivity implements View.OnCl
     @Override
     public void onPause() {
         super.onPause();
-
-
-        closeCamera();
-        stopBackgroundThread();
-    }
-
-    @Override
-    public void onBackPressed() {
-        if (isExternalIntent()) {
-            super.onBackPressed();
-        } else {
-            Intent intent = new Intent(this, MainActivity.class);
-            startActivity(intent);
+        if (!isRequestingPermissions) {
+            closeCamera();
+            stopBackgroundThread();
         }
     }
 
     @Override
-    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions,
-                                           @NonNull int[] grantResults) {
-        if (requestCode == REQUEST_CAMERA_PERMISSION) {
-            if (grantResults.length != 1 || grantResults[0] != PackageManager.PERMISSION_GRANTED) {
-                showToast("This sample needs camera permission.");
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults){
+        isRequestingPermissions = false;
+        if (requestCode == REQUEST_CAMERA_PERMISSION && grantResults.length > 0) {
+            if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                openCamera(cameraWidth, cameraHeight);
+            } else if (grantResults[0] == PackageManager.PERMISSION_DENIED) {
+                showToast("RDT image capture requires camera permission");
+                finish();
             }
         }
     }
@@ -573,32 +568,33 @@ public class ImageQualityActivity extends AppCompatActivity implements View.OnCl
     }
 
     private void requestCameraPermission() {
-        ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.CAMERA}, MY_PERMISSION_REQUEST_CODE);
+        ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.CAMERA}, REQUEST_CAMERA_PERMISSION);
     }
 
     /**
      * Opens the camera specified by {@link #mCameraId}.
      */
     private void openCamera(int width, int height) throws SecurityException {
-        if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA)
-                != PackageManager.PERMISSION_GRANTED) {
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
+            cameraHeight = height;
+            cameraWidth = width;
+            isRequestingPermissions = true;
             requestCameraPermission();
-            return;
-        }
-
-        setUpCameraOutputs(width, height);
-        configureTransform(width, height);
-        Activity activity = mActivity;
-        CameraManager manager = (CameraManager) activity.getSystemService(Context.CAMERA_SERVICE);
-        try {
-            if (!mCameraOpenCloseLock.tryAcquire(2500, TimeUnit.MILLISECONDS)) {
-                throw new RuntimeException("Time out waiting to lock camera opening.");
+        } else if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED) {
+            setUpCameraOutputs(width, height);
+            configureTransform(width, height);
+            Activity activity = mActivity;
+            CameraManager manager = (CameraManager) activity.getSystemService(Context.CAMERA_SERVICE);
+            try {
+                if (!mCameraOpenCloseLock.tryAcquire(2500, TimeUnit.MILLISECONDS)) {
+                    throw new RuntimeException("Time out waiting to lock camera opening.");
+                }
+                manager.openCamera(mCameraId, mStateCallback, mBackgroundHandler);
+            } catch (CameraAccessException e) {
+                e.printStackTrace();
+            } catch (InterruptedException e) {
+                throw new RuntimeException("Interrupted while trying to lock camera opening.", e);
             }
-            manager.openCamera(mCameraId, mStateCallback, mBackgroundHandler);
-        } catch (CameraAccessException e) {
-            e.printStackTrace();
-        } catch (InterruptedException e) {
-            throw new RuntimeException("Interrupted while trying to lock camera opening.", e);
         }
     }
 
@@ -670,12 +666,12 @@ public class ImageQualityActivity extends AppCompatActivity implements View.OnCl
             mCaptureSession = cameraCaptureSession;
 
             updateRepeatingRequest();
+            Log.e(TAG, "Successfully configured camera!");
         }
 
         @Override
-        public void onConfigureFailed(
-                @NonNull CameraCaptureSession cameraCaptureSession) {
-            showToast("Failed");
+        public void onConfigureFailed(@NonNull CameraCaptureSession cameraCaptureSession) {
+            Log.e(TAG, "Camera configuration failed!");
         }
     };
 
@@ -755,8 +751,7 @@ public class ImageQualityActivity extends AppCompatActivity implements View.OnCl
 
             // Here, we create a CameraCaptureSession for camera preview.
             mCameraDevice.createCaptureSession(Arrays.asList(surface, mImageReader.getSurface()),
-                    mCameraCaptureSessionStateCallback, null
-            );
+                    mCameraCaptureSessionStateCallback, null);
         } catch (CameraAccessException e) {
             e.printStackTrace();
         }
