@@ -4,23 +4,17 @@ import android.content.Intent;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.net.Uri;
-import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.support.v7.app.AppCompatActivity;
 import android.util.DisplayMetrics;
-import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.Toast;
 
-import java.io.File;
-import java.io.FileOutputStream;
-import java.text.SimpleDateFormat;
-import java.util.Date;
 import java.util.Locale;
 
-import static java.text.DateFormat.getDateTimeInstance;
+import static edu.washington.cs.ubicomplab.rdt_reader.ImageUtil.saveImage;
 
 public class ImageResultActivity extends AppCompatActivity implements View.OnClickListener, SettingDialogFragment.SettingDialogListener{
 
@@ -67,35 +61,8 @@ public class ImageResultActivity extends AppCompatActivity implements View.OnCli
     @Override
     public void onClick(View view) {
         if (view.getId() == R.id.saveButton) {
-            if (isImageSaved) {
-                Toast.makeText(this,"Image is already saved.", Toast.LENGTH_LONG).show();
-                return;
-            }
-
-            File sdIconStorageDir = new File(Constants.RDT_IMAGE_DIR);
-
-            //create storage directories, if they don't exist
-            sdIconStorageDir.mkdirs();
-
-            SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH-mm-ss-SSS");
-
-            try {
-                String filePath = sdIconStorageDir.toString() + String.format("/%s-%08dms.jpg", sdf.format(new Date()), timeTaken);
-                FileOutputStream fileOutputStream = new FileOutputStream(filePath);
-
-                fileOutputStream.write(mByteArray);
-
-                fileOutputStream.flush();
-                fileOutputStream.close();
-
-                sendBroadcast(new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE, Uri.parse("file://" + filePath)));
-
-                isImageSaved = true;
-
-                Toast.makeText(this,"Image is successfully saved!", Toast.LENGTH_SHORT).show();
-            } catch (Exception e) {
-                Log.w("TAG", "Error saving image file: " + e.getMessage());
-            }
+           saveImage(getApplicationContext(), mByteArray, timeTaken);
+           isImageSaved = true;
         } else if (view.getId() == R.id.sendButton) {
             Intent data = new Intent();
             data.putExtra("RDTCaptureByteArray", mByteArray);

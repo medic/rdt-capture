@@ -4,12 +4,16 @@ package edu.washington.cs.ubicomplab.rdt_reader;
  * Created by cjpark on 6/30/18.
  */
 
+import android.content.Context;
+import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.ImageFormat;
 import android.graphics.Matrix;
 import android.graphics.Rect;
 import android.graphics.YuvImage;
 import android.media.Image;
+import android.net.Uri;
+import android.util.Log;
 
 import org.opencv.android.Utils;
 import org.opencv.core.CvType;
@@ -17,9 +21,15 @@ import org.opencv.core.Mat;
 import org.opencv.imgproc.Imgproc;
 
 import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileOutputStream;
 import java.nio.ByteBuffer;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 
 public final class ImageUtil {
+
+    private static final  String TAG = ImageUtil.class.getName();
 
     public static byte[] imageToByteArray(Image image) {
         byte[] data = null;
@@ -141,5 +151,31 @@ public final class ImageUtil {
         resultBitmap.compress(Bitmap.CompressFormat.JPEG, 100, bs);
 
         return bs.toByteArray();
+    }
+
+    public static String saveImage(Context context, byte[] byteArray, long timeTaken) {
+        File sdIconStorageDir = new File(Constants.RDT_IMAGE_DIR);
+
+        //create storage directories, if they don't exist
+        sdIconStorageDir.mkdirs();
+
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH-mm-ss-SSS");
+        String filePath = null;
+        try {
+            filePath = sdIconStorageDir.toString() + String.format("/%s-%08dms.jpg", sdf.format(new Date()), timeTaken);
+            FileOutputStream fileOutputStream = new FileOutputStream(filePath);
+
+            fileOutputStream.write(byteArray);
+
+            fileOutputStream.flush();
+            fileOutputStream.close();
+
+            context.sendBroadcast(new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE, Uri.parse("file://" + filePath)));
+
+            Log.i(TAG, "Image successfully saved!");
+        } catch (Exception e) {
+            Log.e(TAG, "Error saving image file: " + e.getMessage());
+        }
+        return filePath;
     }
 }
