@@ -27,6 +27,8 @@ import java.nio.ByteBuffer;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
+import edu.washington.cs.ubicomplab.rdt_reader.callback.OnImageSavedCallBack;
+
 public final class ImageUtil {
 
     private static final  String TAG = ImageUtil.class.getName();
@@ -153,16 +155,15 @@ public final class ImageUtil {
         return bs.toByteArray();
     }
 
-    public static String saveImage(Context context, byte[] byteArray, long timeTaken) {
+    public static void saveImage(Context context, byte[] byteArray, long timeTaken, OnImageSavedCallBack onImageSavedCallBack) {
         File sdIconStorageDir = new File(Constants.RDT_IMAGE_DIR);
 
         //create storage directories, if they don't exist
         sdIconStorageDir.mkdirs();
 
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH-mm-ss-SSS");
-        String filePath = null;
         try {
-            filePath = sdIconStorageDir.toString() + String.format("/%s-%08dms.jpg", sdf.format(new Date()), timeTaken);
+            String filePath = sdIconStorageDir.toString() + String.format("/%s-%08dms.jpg", sdf.format(new Date()), timeTaken);
             FileOutputStream fileOutputStream = new FileOutputStream(filePath);
 
             fileOutputStream.write(byteArray);
@@ -173,9 +174,9 @@ public final class ImageUtil {
             context.sendBroadcast(new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE, Uri.parse("file://" + filePath)));
 
             Log.i(TAG, "Image successfully saved!");
+            onImageSavedCallBack.onImageSaved(filePath);
         } catch (Exception e) {
             Log.e(TAG, "Error saving image file: " + e.getMessage());
         }
-        return filePath;
     }
 }

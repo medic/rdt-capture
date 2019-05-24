@@ -61,7 +61,7 @@ public class ImageResultActivity extends AppCompatActivity implements View.OnCli
     @Override
     public void onClick(View view) {
         if (view.getId() == R.id.saveButton) {
-           saveImage(getApplicationContext(), mByteArray, timeTaken);
+           saveImage(getApplicationContext(), mByteArray, timeTaken, null);
            isImageSaved = true;
         } else if (view.getId() == R.id.sendButton) {
             Intent data = new Intent();
