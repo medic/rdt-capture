@@ -54,6 +54,8 @@
             android:configChanges="keyboardHidden|orientation"
             android:noHistory="true"
             android:screenOrientation="portrait" />
+
+        <activity android:name=".activity.RDTCaptureActivity" />
     </application>
 
 </manifest>

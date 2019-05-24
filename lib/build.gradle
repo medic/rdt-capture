@@ -2,12 +2,12 @@ apply plugin: 'com.android.library'
 apply plugin: 'maven-publish'
 
 group = "io.ona.rdt-capture"
-version = '0.1'
+version = '0.8'
 
 android {
     compileSdkVersion 26
     defaultConfig {
-        minSdkVersion 21
+        minSdkVersion 17
         targetSdkVersion 26
         versionCode 1
         versionName "1.0"
