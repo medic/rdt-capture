@@ -13,6 +13,7 @@ import android.graphics.Rect;
 import android.graphics.YuvImage;
 import android.media.Image;
 import android.net.Uri;
+import android.os.AsyncTask;
 import android.util.Log;
 
 import org.opencv.android.Utils;
@@ -155,28 +156,72 @@ public final class ImageUtil {
         return bs.toByteArray();
     }
 
-    public static void saveImage(Context context, byte[] byteArray, long timeTaken, OnImageSavedCallBack onImageSavedCallBack) {
-        File sdIconStorageDir = new File(Constants.RDT_IMAGE_DIR);
+    private static class SaveImageParams {
+        private Context context;
+        private byte[] byteArray;
+        private long timeTaken;
+        private OnImageSavedCallBack onImageSavedCallBack;
 
-        //create storage directories, if they don't exist
-        sdIconStorageDir.mkdirs();
-
-        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH-mm-ss-SSS");
-        try {
-            String filePath = sdIconStorageDir.toString() + String.format("/%s-%08dms.jpg", sdf.format(new Date()), timeTaken);
-            FileOutputStream fileOutputStream = new FileOutputStream(filePath);
-
-            fileOutputStream.write(byteArray);
-
-            fileOutputStream.flush();
-            fileOutputStream.close();
-
-            context.sendBroadcast(new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE, Uri.parse("file://" + filePath)));
-
-            Log.i(TAG, "Image successfully saved!");
-            onImageSavedCallBack.onImageSaved(filePath);
-        } catch (Exception e) {
-            Log.e(TAG, "Error saving image file: " + e.getMessage());
+        public SaveImageParams(Context context, byte[] byteArray, long timeTaken, OnImageSavedCallBack onImageSavedCallBack) {
+            this.context = context;
+            this.byteArray = byteArray;
+            this.timeTaken = timeTaken;
+            this.onImageSavedCallBack = onImageSavedCallBack;
         }
+
+        public Context getContext() {
+            return context;
+        }
+
+        public byte[] getByteArray() {
+            return byteArray;
+        }
+
+        public long getTimeTaken() {
+            return timeTaken;
+        }
+
+        public OnImageSavedCallBack getOnImageSavedCallBack() {
+            return onImageSavedCallBack;
+        }
+    }
+
+    public static void saveImage(final Context context, final byte[] byteArray, final long timeTaken, final OnImageSavedCallBack onImageSavedCallBack) {
+
+        class SaveImageTask extends AsyncTask<SaveImageParams, Void, String> {
+            private OnImageSavedCallBack imageSavedCallBack;
+            @Override
+            protected String doInBackground(SaveImageParams... params) {
+                String filePath = null;
+                SaveImageParams imageParams = params[0];
+                File sdIconStorageDir = new File(Constants.RDT_IMAGE_DIR);
+                sdIconStorageDir.mkdirs();
+                SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH-mm-ss-SSS");
+                imageSavedCallBack = imageParams.getOnImageSavedCallBack();
+                try {
+                    filePath = sdIconStorageDir.toString() + String.format("/%s-%08dms.jpg", sdf.format(new Date()), imageParams.getTimeTaken());
+                    FileOutputStream fileOutputStream = new FileOutputStream(filePath);
+
+                    fileOutputStream.write(imageParams.getByteArray());
+
+                    fileOutputStream.flush();
+                    fileOutputStream.close();
+
+                    imageParams.getContext().sendBroadcast(new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE, Uri.parse("file://" + filePath)));
+
+                    Log.i(TAG, "Image successfully saved!");
+                    imageSavedCallBack.onImageSaved(filePath);
+                } catch (Exception e) {
+                    Log.e(TAG, "Error saving image file: " + e.getMessage());
+                }
+                return filePath;
+            }
+
+            protected void onPostExecute(String imageFilePath) {
+                imageSavedCallBack.onImageSaved(imageFilePath);
+            }
+        }
+
+        new SaveImageTask().execute(new SaveImageParams(context, byteArray, timeTaken, onImageSavedCallBack));
     }
 }
