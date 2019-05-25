@@ -12,6 +12,7 @@ import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ImageView;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import java.io.File;
@@ -28,6 +29,7 @@ public class ImageResultActivity extends AppCompatActivity implements View.OnCli
     byte[] mByteArray;
     boolean isImageSaved = false;
     long timeTaken = 0;
+    boolean control, testA, testB;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -39,16 +41,44 @@ public class ImageResultActivity extends AppCompatActivity implements View.OnCli
     }
 
     private void initViews() {
-        if (getIntent().hasExtra("RDTCaptureByteArray")) {
-            mByteArray = getIntent().getExtras().getByteArray("RDTCaptureByteArray");
+        if (getIntent().hasExtra("captured")) {
+            mByteArray = getIntent().getExtras().getByteArray("captured");
             mBitmapToSave = BitmapFactory.decodeByteArray(mByteArray, 0, mByteArray.length);
 
             ImageView resultImageView = findViewById(R.id.RDTImageView);
             resultImageView.setImageBitmap(BitmapFactory.decodeByteArray(mByteArray, 0, mByteArray.length));
         }
 
+        if (getIntent().hasExtra("window")) {
+            mByteArray = getIntent().getExtras().getByteArray("window");
+            mBitmapToSave = BitmapFactory.decodeByteArray(mByteArray, 0, mByteArray.length);
+
+            ImageView windowImageView = findViewById(R.id.WindowImageView);
+            windowImageView.setImageBitmap(BitmapFactory.decodeByteArray(mByteArray, 0, mByteArray.length));
+        }
+
         if (getIntent().hasExtra("timeTaken")) {
             timeTaken = getIntent().getLongExtra("timeTaken", 0);
+            TextView timeTextView = findViewById(R.id.TimeTextView);
+            timeTextView.setText(String.format("%.2f seconds", timeTaken));
+        }
+
+        if (getIntent().hasExtra("control")) {
+            control = getIntent().getBooleanExtra("control", false);
+            TextView controlTextView = findViewById(R.id.ControlTextView);
+            controlTextView.setText(String.format("%s seconds", control?"True":"False"));
+        }
+
+        if (getIntent().hasExtra("testA")) {
+            testA = getIntent().getBooleanExtra("testA", false);
+            TextView testATextView = findViewById(R.id.TestATextView);
+            testATextView.setText(String.format("%s seconds", testA?"True":"False"));
+        }
+
+        if (getIntent().hasExtra("testB")) {
+            testB = getIntent().getBooleanExtra("testB", false);
+            TextView testBTextView = findViewById(R.id.TestBTextView);
+            testBTextView.setText(String.format("%s seconds", testB?"True":"False"));
         }
 
         Button saveImageButton = findViewById(R.id.saveButton);

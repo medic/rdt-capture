@@ -65,20 +65,12 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 
-import static edu.washington.cs.ubicomplab.rdt_reader.Constants.CAMERA2_PREVIEW_SIZE;
-import static edu.washington.cs.ubicomplab.rdt_reader.Constants.CAPTURE_COUNT;
-import static edu.washington.cs.ubicomplab.rdt_reader.Constants.CAMERA2_IMAGE_SIZE;
-import static edu.washington.cs.ubicomplab.rdt_reader.Constants.MY_PERMISSION_REQUEST_CODE;
+import static edu.washington.cs.ubicomplab.rdt_reader.Constants.*;
+
 
 public class ImageQualityActivity extends AppCompatActivity implements View.OnClickListener, ActivityCompat.OnRequestPermissionsResultCallback {
     private ImageProcessor processor;
     private Activity mActivity = this;
-    private File mFile;
-    private BRISK mFeatureDetector;
-    private BFMatcher mMatcher;
-    private Mat mRefImg;
-    private Mat mRefDescriptor;
-    private MatOfKeyPoint mRefKeypoints;
     private TextView mImageQualityFeedbackView;
     private TextView mProgressText;
     private ProgressBar mProgress;
@@ -88,7 +80,6 @@ public class ImageQualityActivity extends AppCompatActivity implements View.OnCl
     private State mCurrentState = State.QUALITY_CHECK;
 
     private long timeTaken = 0;
-
 
     private ViewportUsingBitmap mViewport;
 
@@ -112,8 +103,6 @@ public class ImageQualityActivity extends AppCompatActivity implements View.OnCl
 
 
         mTextureView = findViewById(R.id.texture);
-
-        mFile = new File(getExternalFilesDir(null), "pic.jpg");
 
         timeTaken = System.currentTimeMillis();
 
@@ -301,20 +290,30 @@ public class ImageQualityActivity extends AppCompatActivity implements View.OnCl
             imageQueue.add(image);
 
             final Mat rgbaMat = ImageUtil.imageToRGBMat(image);
-            final ImageProcessor.CaptureResult result = processor.captureRDT(rgbaMat);
+            final ImageProcessor.CaptureResult captureResult = processor.captureRDT(rgbaMat);
             //ImageProcessor.SizeResult sizeResult, boolean isCentered, boolean isRightOrientation, boolean isSharp, ImageProcessor.ExposureResult exposureResult
             runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
-                    displayQualityResult(result.sizeResult, result.isCentered, result.isRightOrientation, result.isSharp, result.exposureResult);
+                    displayQualityResult(captureResult.sizeResult, captureResult.isCentered, captureResult.isRightOrientation, captureResult.isSharp, captureResult.exposureResult);
                 }
             });
 
             Log.d(TAG, String.format("Capture time: %d", System.currentTimeMillis() - timeTaken));
-            Log.d(TAG, String.format("Captured result: %b", result.allChecksPassed));
-            if (result.allChecksPassed) {
-                Log.d(TAG, String.format("Captured MAT size: %s", result.resultMat.size()));
-                moveToResultActivity(result.resultMat);
+            Log.d(TAG, String.format("Captured result: %b", captureResult.allChecksPassed));
+            if (captureResult.allChecksPassed) {
+                Log.d(TAG, String.format("Captured MAT size: %s", captureResult.resultMat.size()));
+
+                //interpretation
+                ImageProcessor.InterpretationResult interpretationResult = processor.interpretResult(captureResult.resultMat);
+
+                if (interpretationResult.control) {
+                    moveToResultActivity(captureResult.resultMat, interpretationResult.resultMat,
+                            interpretationResult.control, interpretationResult.testA, interpretationResult.testB);
+                } else {
+                    imageQueue.remove();
+                    image.close();
+                }
             } else {
                 imageQueue.remove();
                 image.close();
@@ -323,12 +322,17 @@ public class ImageQualityActivity extends AppCompatActivity implements View.OnCl
 
     };
 
-    private void moveToResultActivity(Mat result) {
-        byte[] byteArray = ImageUtil.matToRotatedByteArray(result);
+    private void moveToResultActivity(Mat captureMat, Mat windowMat, boolean control, boolean testA, boolean testB) {
+        byte[] captureByteArray = ImageUtil.matToRotatedByteArray(captureMat);
+        byte[] windowByteArray = ImageUtil.matToRotatedByteArray(windowMat);
         if (isExternalIntent()) {
             Intent i = new Intent();
 
-            i.putExtra("data", byteArray);
+            i.putExtra("captured", captureByteArray);
+            i.putExtra("resultwindow", windowByteArray);
+            i.putExtra("control", control);
+            i.putExtra("testA", testA);
+            i.putExtra("testB", testB);
             i.putExtra("timeTaken", System.currentTimeMillis() - timeTaken);
 
             setResult(Activity.RESULT_OK, i);
@@ -337,9 +341,9 @@ public class ImageQualityActivity extends AppCompatActivity implements View.OnCl
         } else {
             Intent intent = new Intent(ImageQualityActivity.this, ImageResultActivity.class);
             intent.addFlags(Intent.FLAG_ACTIVITY_FORWARD_RESULT);
-            intent.putExtra("RDTCaptureByteArray", byteArray);
+            intent.putExtra("RDTCaptureByteArray", captureByteArray);
             intent.putExtra("timeTaken", System.currentTimeMillis() - timeTaken);
-            result.release();
+            captureMat.release();
             startActivity(intent);
             mOnImageAvailableThread.interrupt();
         }
@@ -546,11 +550,11 @@ public class ImageQualityActivity extends AppCompatActivity implements View.OnCl
                 mImageReader.setOnImageAvailableListener(
                         mOnImageAvailableListener, mOnImageAvailableHandler);
 
-                Constants.CAMERA2_IMAGE_SIZE.width = closestImageSize.getWidth();
-                Constants.CAMERA2_IMAGE_SIZE.height = closestImageSize.getHeight();
+                CAMERA2_IMAGE_SIZE.width = closestImageSize.getWidth();
+                CAMERA2_IMAGE_SIZE.height = closestImageSize.getHeight();
 
-                Constants.CAMERA2_PREVIEW_SIZE.width = closestPreviewSize.getWidth();
-                Constants.CAMERA2_PREVIEW_SIZE.height = closestPreviewSize.getHeight();
+                CAMERA2_PREVIEW_SIZE.width = closestPreviewSize.getWidth();
+                CAMERA2_PREVIEW_SIZE.height = closestPreviewSize.getHeight();
 
                 // We fit the aspect ratio of TextureView to the size of preview we picked.
                 int orientation = getResources().getConfiguration().orientation;
