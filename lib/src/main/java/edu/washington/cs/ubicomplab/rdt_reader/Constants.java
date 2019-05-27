@@ -56,4 +56,6 @@ public final class Constants {
     public static int GOOD_MATCH_COUNT = 7;
 
     public static int MOVE_CLOSER_COUNT = 5;
+
+    public static String SAVED_IMAGE_FILE_PATH = "saved_image_file_path";
 }
