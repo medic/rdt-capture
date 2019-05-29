@@ -4,6 +4,8 @@ package edu.washington.cs.ubicomplab.rdt_reader;
  * Created by cjpark on 6/30/18.
  */
 
+import android.Manifest;
+import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
@@ -14,6 +16,7 @@ import android.graphics.YuvImage;
 import android.media.Image;
 import android.net.Uri;
 import android.os.AsyncTask;
+import android.support.v4.app.ActivityCompat;
 import android.util.Log;
 
 import org.opencv.android.Utils;
@@ -29,6 +32,8 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 
 import edu.washington.cs.ubicomplab.rdt_reader.callback.OnImageSavedCallBack;
+
+import static edu.washington.cs.ubicomplab.rdt_reader.Constants.REQUEST_CAMERA_PERMISSION;
 
 public final class ImageUtil {
 
@@ -224,4 +229,9 @@ public final class ImageUtil {
 
         new SaveImageTask().execute(new SaveImageParams(context, byteArray, timeTaken, onImageSavedCallBack));
     }
+
+    public void requestCameraPermission(Activity activity) {
+        ActivityCompat.requestPermissions(activity, new String[]{Manifest.permission.CAMERA}, REQUEST_CAMERA_PERMISSION);
+    }
+
 }
