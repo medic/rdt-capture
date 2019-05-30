@@ -506,6 +506,8 @@ public class ImageQualityActivity extends AppCompatActivity implements View.OnCl
     };
 
     private boolean checkWindowPosition(Mat resultWindowMat) {
+        Imgproc.rectangle(resultWindowMat, new Point(resultWindowMat.cols()/3*1.6, 0), new Point(resultWindowMat.cols(), resultWindowMat.rows()), new Scalar(255), -1);
+
         Point line = new Point(resultWindowMat.width()*0.35-resultWindowMat.width()*0.15, 0);
         Rect roi = new Rect((int)(resultWindowMat.width()*0.15), (int)(resultWindowMat.height()*0.2), (int)(resultWindowMat.width()*0.7), (int)(resultWindowMat.height()*0.6));
         Mat crop = resultWindowMat.submat(roi);
@@ -1324,7 +1326,7 @@ public class ImageQualityActivity extends AppCompatActivity implements View.OnCl
         long startTime = System.currentTimeMillis();
 
         Mat mask = new Mat(input.width(), input.height(), CvType.CV_8U, new Scalar(0));
-        Point p1 = new Point(input.size().width*(1-Constants.MASK_WIDTH_SCALE)/2, input.size().height*(1-Constants.MASK_HEIGHT_SCALE)/2);
+        Point p1 = new Point(0, input.size().height*(1-Constants.MASK_HEIGHT_SCALE)/2);
         Point p2 = new Point(input.size().width-p1.x, input.size().height-p1.y);
         Imgproc.rectangle(mask, p1, p2, new Scalar(255), -1);
 
@@ -1368,11 +1370,11 @@ public class ImageQualityActivity extends AppCompatActivity implements View.OnCl
 
         LinkedList<DMatch> good_matches = new LinkedList<DMatch>();
         for (int i = 0; i < matchesList.size(); i++) {
-            if (matchesList.get(i).distance <= (1.5 * min_dist)) {
+            //if (matchesList.get(i).distance <= (1.5 * min_dist)) {
                 good_matches.addLast(matchesList.get(i));
                 sum += matchesList.get(i).distance;
                 count++;
-            }
+            //}
         }
 
         MatOfDMatch goodMatches = new MatOfDMatch();
