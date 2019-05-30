@@ -824,7 +824,7 @@ public class ImageQualityActivity extends AppCompatActivity implements View.OnCl
     @Override
     public void onClick(View view) {
         switch (view.getId()) {
-            case R.id.viewport: {
+            case R.id.img_quality_check_viewport: {
                 updateRepeatingRequest();
                 break;
             }
