@@ -1,3 +1,11 @@
+/*
+ * Copyright (C) 2019 University of Washington Ubicomp Lab
+ * All rights reserved.
+ *
+ * This software may be modified and distributed under the terms
+ * of a BSD-style license that can be found in the LICENSE file.
+ */
+
 package edu.washington.cs.ubicomplab.rdt_reader;
 
 import android.content.Context;
@@ -12,10 +20,6 @@ import org.opencv.android.JavaCameraView;
 
 import java.util.ArrayList;
 import java.util.List;
-
-/**
- * Created by cjpark on 3/5/18.
- */
 
 public class RDTCameraView extends JavaCameraView implements Camera.AutoFocusCallback {
     public RDTCameraView(Context context, int cameraId) {

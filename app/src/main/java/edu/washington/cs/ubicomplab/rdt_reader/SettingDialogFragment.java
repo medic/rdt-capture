@@ -1,3 +1,11 @@
+/*
+ * Copyright (C) 2019 University of Washington Ubicomp Lab
+ * All rights reserved.
+ *
+ * This software may be modified and distributed under the terms
+ * of a BSD-style license that can be found in the LICENSE file.
+ */
+
 package edu.washington.cs.ubicomplab.rdt_reader;
 
 import android.app.Dialog;
@@ -17,10 +25,6 @@ import android.widget.RadioGroup;
 import android.widget.SeekBar;
 
 import java.util.Locale;
-
-/**
- * Created by cjparkuw on 3/14/2018.
- */
 
 public class SettingDialogFragment extends DialogFragment implements RadioGroup.OnCheckedChangeListener {
 

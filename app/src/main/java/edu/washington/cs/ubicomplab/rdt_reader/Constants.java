@@ -1,13 +1,17 @@
+/*
+ * Copyright (C) 2019 University of Washington Ubicomp Lab
+ * All rights reserved.
+ *
+ * This software may be modified and distributed under the terms
+ * of a BSD-style license that can be found in the LICENSE file.
+ */
+
 package edu.washington.cs.ubicomplab.rdt_reader;
 
 import android.os.Environment;
 
 import org.opencv.core.Scalar;
 import org.opencv.core.Size;
-
-/**
- * Created by cjparkuw on 3/9/2018.
- */
 
 public final class Constants {
     public static final String TAG = "RDT-reader";

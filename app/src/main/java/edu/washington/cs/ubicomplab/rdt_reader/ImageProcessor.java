@@ -1,3 +1,11 @@
+/*
+ * Copyright (C) 2019 University of Washington Ubicomp Lab
+ * All rights reserved.
+ *
+ * This software may be modified and distributed under the terms
+ * of a BSD-style license that can be found in the LICENSE file.
+ */
+
 package edu.washington.cs.ubicomplab.rdt_reader;
 
 import android.app.Activity;
@@ -67,10 +75,6 @@ import static org.opencv.imgproc.Imgproc.minAreaRect;
 import static org.opencv.imgproc.Imgproc.resize;
 import static org.opencv.imgproc.Imgproc.warpPerspective;
 
-
-/**
- * Created by cjparkuw on 2/27/2019.
- */
 
 public class ImageProcessor {
     private static String TAG = "ImageProcessor";
