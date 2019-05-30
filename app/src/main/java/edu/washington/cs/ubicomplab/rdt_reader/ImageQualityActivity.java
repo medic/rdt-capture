@@ -1326,7 +1326,7 @@ public class ImageQualityActivity extends AppCompatActivity implements View.OnCl
         long startTime = System.currentTimeMillis();
 
         Mat mask = new Mat(input.width(), input.height(), CvType.CV_8U, new Scalar(0));
-        Point p1 = new Point(input.size().width*(1-Constants.MASK_WIDTH_SCALE)/2, input.size().height*(1-Constants.MASK_HEIGHT_SCALE)/2);
+        Point p1 = new Point(0, input.size().height*(1-Constants.MASK_HEIGHT_SCALE)/2);
         Point p2 = new Point(input.size().width-p1.x, input.size().height-p1.y);
         Imgproc.rectangle(mask, p1, p2, new Scalar(255), -1);
 
