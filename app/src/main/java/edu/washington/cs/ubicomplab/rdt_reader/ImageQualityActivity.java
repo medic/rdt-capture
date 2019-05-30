@@ -24,6 +24,7 @@ import android.hardware.camera2.params.MeteringRectangle;
 import android.hardware.camera2.params.StreamConfigurationMap;
 import android.media.Image;
 import android.media.ImageReader;
+import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Handler;
 import android.os.HandlerThread;
@@ -251,8 +252,6 @@ public class ImageQualityActivity extends AppCompatActivity implements View.OnCl
      */
     private ImageReader mImageReader;
 
-    private boolean inProcess = false;
-    final Object lock = new Object();
     final Object focusStateLock = new Object();
 
     final BlockingQueue<Image> imageQueue = new ArrayBlockingQueue<>(1);
@@ -278,17 +277,28 @@ public class ImageQualityActivity extends AppCompatActivity implements View.OnCl
             }
 
             if (imageQueue.size() > 0) {
+                Log.d(TAG, "OnImageAvailableListener: image closed! " + System.currentTimeMillis());
+                image.close();
                 return;
             }
 
-            Log.d(TAG, "LOCAL FOCUS STATE: " + mFocusState + ", " + FocusState.FOCUSED);
+            //Log.d(TAG, "LOCAL FOCUS STATE: " + mFocusState + ", " + FocusState.FOCUSED);
             if (mFocusState != FocusState.FOCUSED) {
                 image.close();
                 return;
             }
 
             imageQueue.add(image);
+            new ImageProcessAsyncTask().execute(image);
+        }
 
+    };
+
+    private class ImageProcessAsyncTask extends AsyncTask<Image, Void, Void> {
+
+        @Override
+        protected Void doInBackground(Image... images) {
+            Image image = images[0];
             final Mat rgbaMat = ImageUtil.imageToRGBMat(image);
             final ImageProcessor.CaptureResult captureResult = processor.captureRDT(rgbaMat);
             //ImageProcessor.SizeResult sizeResult, boolean isCentered, boolean isRightOrientation, boolean isSharp, ImageProcessor.ExposureResult exposureResult
@@ -318,9 +328,9 @@ public class ImageQualityActivity extends AppCompatActivity implements View.OnCl
                 imageQueue.remove();
                 image.close();
             }
+            return null;
         }
-
-    };
+    }
 
     private void moveToResultActivity(Mat captureMat, Mat windowMat, boolean control, boolean testA, boolean testB) {
         byte[] captureByteArray = ImageUtil.matToRotatedByteArray(captureMat);
@@ -328,23 +338,23 @@ public class ImageQualityActivity extends AppCompatActivity implements View.OnCl
         if (isExternalIntent()) {
             Intent i = new Intent();
 
-            i.putExtra("captured", captureByteArray);
-            i.putExtra("resultwindow", windowByteArray);
-            i.putExtra("control", control);
-            i.putExtra("testA", testA);
-            i.putExtra("testB", testB);
+            i.putExtra("data", captureByteArray);
             i.putExtra("timeTaken", System.currentTimeMillis() - timeTaken);
 
             setResult(Activity.RESULT_OK, i);
             mOnImageAvailableThread.interrupt();
             finish();
         } else {
-            Intent intent = new Intent(ImageQualityActivity.this, ImageResultActivity.class);
-            intent.addFlags(Intent.FLAG_ACTIVITY_FORWARD_RESULT);
-            intent.putExtra("RDTCaptureByteArray", captureByteArray);
-            intent.putExtra("timeTaken", System.currentTimeMillis() - timeTaken);
+            Intent i = new Intent(ImageQualityActivity.this, ImageResultActivity.class);
+            i.addFlags(Intent.FLAG_ACTIVITY_FORWARD_RESULT);
+            i.putExtra("captured", captureByteArray);
+            i.putExtra("window", windowByteArray);
+            i.putExtra("control", control);
+            i.putExtra("testA", testA);
+            i.putExtra("testB", testB);
+            i.putExtra("timeTaken", System.currentTimeMillis() - timeTaken);
             captureMat.release();
-            startActivity(intent);
+            startActivity(i);
             mOnImageAvailableThread.interrupt();
         }
     }
@@ -377,24 +387,24 @@ public class ImageQualityActivity extends AppCompatActivity implements View.OnCl
             synchronized (focusStateLock) {
                 FocusState previousFocusState = mFocusState;
                 if (result.get(CaptureResult.CONTROL_AF_MODE) == null) {
-                    Log.d(TAG, "FOCUS STATE: is null");
+                    //Log.d(TAG, "FOCUS STATE: is null");
                     return;
                 }
                 if (result.get(CaptureResult.CONTROL_AF_MODE) == CaptureResult.CONTROL_AF_MODE_CONTINUOUS_PICTURE) {
                     if (result.get(CaptureResult.CONTROL_AF_STATE) == CaptureResult.CONTROL_AF_STATE_PASSIVE_FOCUSED) {
-                        Log.d(TAG, "FOCUS STATE: focused");
+                        //Log.d(TAG, "FOCUS STATE: focused");
                         mFocusState = FocusState.FOCUSED;
                     } else if (result.get(CaptureResult.CONTROL_AF_STATE) == CaptureResult.CONTROL_AF_STATE_PASSIVE_UNFOCUSED) {
-                        Log.d(TAG, "FOCUS STATE: unfocused");
+                        //Log.d(TAG, "FOCUS STATE: unfocused");
                         mFocusState = FocusState.UNFOCUSED;
                     } else if (result.get(CaptureResult.CONTROL_AF_STATE) == CaptureResult.CONTROL_AF_STATE_INACTIVE) {
-                        Log.d(TAG, "FOCUS STATE: inactive");
+                        //Log.d(TAG, "FOCUS STATE: inactive");
                         mFocusState = FocusState.INACTIVE;
                     } else if (result.get(CaptureResult.CONTROL_AF_STATE) == CaptureResult.CONTROL_AF_STATE_PASSIVE_SCAN) {
-                        Log.d(TAG, "FOCUS STATE: focusing");
+                        //Log.d(TAG, "FOCUS STATE: focusing");
                         mFocusState = FocusState.FOCUSING;
                     } else {
-                        Log.d(TAG, "FOCUS STATE: unknown state " + result.get(CaptureResult.CONTROL_AF_STATE).toString());
+                        //Log.d(TAG, "FOCUS STATE: unknown state " + result.get(CaptureResult.CONTROL_AF_STATE).toString());
                     }
 
                     if (previousFocusState != mFocusState) {
@@ -522,7 +532,7 @@ public class ImageQualityActivity extends AppCompatActivity implements View.OnCl
 
                 // choose optimal size
                 Size closestPreviewSize = new Size(Integer.MAX_VALUE, (int) (Integer.MAX_VALUE * (9.0 / 16.0)));
-                Size closestImageSize = new Size(Integer.MAX_VALUE, (int) (Integer.MAX_VALUE * (3.0 / 4.0)));
+                Size closestImageSize = new Size(Integer.MAX_VALUE, (int) (Integer.MAX_VALUE * (9.0 / 16.0)));
                 for (Size size : Arrays.asList(map.getOutputSizes(ImageFormat.YUV_420_888))) {
                     Log.d(TAG, "Available Sizes: " + size.toString());
                     if (size.getWidth() * 9 == size.getHeight() * 16) { //Preview surface ratio is 16:9
@@ -658,6 +668,7 @@ public class ImageQualityActivity extends AppCompatActivity implements View.OnCl
             mBackgroundThread = null;
             mBackgroundHandler = null;
 
+            mOnImageAvailableThread.join();
             mOnImageAvailableThread = null;
             mOnImageAvailableHandler = null;
         } catch (InterruptedException e) {

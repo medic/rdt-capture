@@ -105,8 +105,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             Intent intent = new Intent(this, ImageQualityActivity.class);
             startActivity(intent);
         } else if (view.getId() == R.id.camera2TestButton) {
-            Intent intent = new Intent(this, ImageQualityOpencvActivity.class);
-            startActivity(intent);
+//            Intent intent = new Intent(this, ImageQualityOpencvActivity.class);
+//            startActivity(intent);
         } else if (view.getId() == R.id.settingsButton) {
             SettingDialogFragment dialog = new SettingDialogFragment();
             dialog.show(getFragmentManager(), "Setting Dialog");
@@ -159,9 +159,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         }
 
         if (sharedPref.contains(getString(R.string.preference_sharpness))) {
-            Constants.BLUR_THRESHOLD = sharedPref.getFloat(getString(R.string.preference_sharpness),(float)Constants.BLUR_THRESHOLD);
+            Constants.SHARPNESS_THRESHOLD = sharedPref.getFloat(getString(R.string.preference_sharpness),(float)Constants.SHARPNESS_THRESHOLD);
         } else {
-            editor.putFloat(getString(R.string.preference_sharpness), (float)Constants.BLUR_THRESHOLD);
+            editor.putFloat(getString(R.string.preference_sharpness), (float)Constants.SHARPNESS_THRESHOLD);
         }
 
         if (sharedPref.contains(getString(R.string.preference_position))) {

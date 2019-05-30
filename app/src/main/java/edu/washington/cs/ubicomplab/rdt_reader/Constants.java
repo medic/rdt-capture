@@ -14,7 +14,7 @@ public final class Constants {
     public static final int MY_PERMISSION_REQUEST_CODE = 100;
     public static final String[] DATE_FORMATS = {"yyyy/MM/dd","yyyy.MM.dd","yyyy-MM-dd", "yyyyMMdd"};
 
-    public static double BLUR_THRESHOLD = 0.0;
+    public static double SHARPNESS_THRESHOLD = 0.0;
     public static double OVER_EXP_THRESHOLD = 255;
     public static double UNDER_EXP_THRESHOLD = 120;
     public static double OVER_EXP_WHITE_COUNT = 100;
@@ -27,13 +27,10 @@ public final class Constants {
     public static double SIZE_THRESHOLD = 0.3;
     public static double POSITION_THRESHOLD = 0.2;
 
-    public static int CALIBRATION_FRAME_COUNTER = 1;
-    public static int FEATURE_MATCHING_FRAME_COUNTER = 0;
     public static int CAPTURE_COUNT = 3;
 
-    public static Size PREVIEW_SIZE = new Size(960, 720);
-    public static Size CAMERA2_PREVIEW_SIZE = new Size(1280, 720);
-    public static Size CAMERA2_IMAGE_SIZE = new Size(960, 540);
+    public static Size CAMERA2_PREVIEW_SIZE = new Size(1920, 1080);
+    public static Size CAMERA2_IMAGE_SIZE = new Size(1920, 1080);
     //public static double VIEWPORT_SCALE = 0.50;
     public static double VIEW_FINDER_SCALE_H = 0.52;
     public static double VIEW_FINDER_SCALE_W = 0.15;
@@ -69,10 +66,13 @@ public final class Constants {
     public static int TEST_A_LINE_POSITION = 15;
     public static int TEST_B_LINE_POSITION = 75;
     public static Scalar CONTROL_LINE_COLOR_LOWER = new Scalar(160/2.0, 45/100.0*255.0, 5/100.0*255.0);
-    public static Scalar CONTROL_LINE_COLOR_UPPER = new Scalar(260/2.0, 90/100.0*255.0, 15/100.0*255.0);
+    public static Scalar CONTROL_LINE_COLOR_UPPER = new Scalar(260/2.0, 90/100.0*255.0, 100/100.0*255.0);
     public static int CONTROL_LINE_POSITION_MIN = 575;
     public static int CONTROL_LINE_POSITION_MAX = 700;
     public static int CONTROL_LINE_MIN_HEIGHT = 25;
     public static int CONTROL_LINE_MIN_WIDTH = 20;
     public static int CONTROL_LINE_MAX_WIDTH = 55;
+    public static int RESULT_WINDOW_RECT_HEIGHT = 90;
+    public static int RESULT_WINDOW_RECT_WIDTH_PADDING = 10;
+    public static int ANGLE_THRESHOLD = 10;
 }
