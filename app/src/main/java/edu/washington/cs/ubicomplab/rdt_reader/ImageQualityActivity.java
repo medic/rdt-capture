@@ -1370,11 +1370,11 @@ public class ImageQualityActivity extends AppCompatActivity implements View.OnCl
 
         LinkedList<DMatch> good_matches = new LinkedList<DMatch>();
         for (int i = 0; i < matchesList.size(); i++) {
-            if (matchesList.get(i).distance <= (1.5 * min_dist)) {
+            //if (matchesList.get(i).distance <= (1.5 * min_dist)) {
                 good_matches.addLast(matchesList.get(i));
                 sum += matchesList.get(i).distance;
                 count++;
-            }
+            //}
         }
 
         MatOfDMatch goodMatches = new MatOfDMatch();
