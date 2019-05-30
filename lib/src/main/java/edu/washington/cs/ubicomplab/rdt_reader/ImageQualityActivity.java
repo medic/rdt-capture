@@ -63,6 +63,7 @@ import static edu.washington.cs.ubicomplab.rdt_reader.Constants.CAMERA2_PREVIEW_
 import static edu.washington.cs.ubicomplab.rdt_reader.Constants.CAPTURE_COUNT;
 import static edu.washington.cs.ubicomplab.rdt_reader.Constants.CAMERA2_IMAGE_SIZE;
 import static edu.washington.cs.ubicomplab.rdt_reader.Constants.MY_PERMISSION_REQUEST_CODE;
+import static edu.washington.cs.ubicomplab.rdt_reader.Constants.REQUEST_CAMERA_PERMISSION;
 
 public class ImageQualityActivity extends AppCompatActivity implements View.OnClickListener, ActivityCompat.OnRequestPermissionsResultCallback {
     private ImageProcessor processor;
@@ -103,6 +104,8 @@ public class ImageQualityActivity extends AppCompatActivity implements View.OnCl
 
     private Activity thisActivity = this;
 
+    ImageUtil imageUtil;
+
     private static final String TAG = ImageQualityActivity.class.getName();
 
 
@@ -118,6 +121,8 @@ public class ImageQualityActivity extends AppCompatActivity implements View.OnCl
 
         timeTaken = System.currentTimeMillis();
 
+        imageUtil = new ImageUtil();
+
         initViews();
 
     }
@@ -131,7 +136,6 @@ public class ImageQualityActivity extends AppCompatActivity implements View.OnCl
      * Conversion from screen rotation to JPEG orientation.
      */
     private static final SparseIntArray ORIENTATIONS = new SparseIntArray();
-    private static final int REQUEST_CAMERA_PERMISSION = 1;
 
     static {
         ORIENTATIONS.append(Surface.ROTATION_0, 90);
@@ -273,6 +277,7 @@ public class ImageQualityActivity extends AppCompatActivity implements View.OnCl
 
         @Override
         public void onImageAvailable(ImageReader reader) {
+
             if (reader == null) {
                 return;
             }
@@ -287,6 +292,8 @@ public class ImageQualityActivity extends AppCompatActivity implements View.OnCl
             if (imageQueue.size() > 0) {
                 return;
             }
+
+
 
             Log.d(TAG, "LOCAL FOCUS STATE: " + mFocusState + ", " + FocusState.FOCUSED);
             if (mFocusState != FocusState.FOCUSED) {
@@ -308,7 +315,7 @@ public class ImageQualityActivity extends AppCompatActivity implements View.OnCl
 
             Log.d(TAG, String.format("Capture time: %d", System.currentTimeMillis() - timeTaken));
             Log.d(TAG, String.format("Captured result: %b", result.allChecksPassed));
-            if (result.allChecksPassed) {
+            if (result.allChecksPassed && result.resultMat != null) {
                 Log.d(TAG, String.format("Captured MAT size: %s", result.resultMat.size()));
                 useCapturedImage(result.resultMat);
             } else {
@@ -316,7 +323,6 @@ public class ImageQualityActivity extends AppCompatActivity implements View.OnCl
                 image.close();
             }
         }
-
     };
 
     protected void useCapturedImage(Mat result) {
@@ -478,6 +484,8 @@ public class ImageQualityActivity extends AppCompatActivity implements View.OnCl
                 openCamera(cameraWidth, cameraHeight);
             } else if (grantResults[0] == PackageManager.PERMISSION_DENIED) {
                 showToast("RDT image capture requires camera permission");
+                Intent resultIntent = new Intent();
+                setResult(RESULT_CANCELED, resultIntent);
                 finish();
             }
         }
@@ -567,10 +575,6 @@ public class ImageQualityActivity extends AppCompatActivity implements View.OnCl
         }
     }
 
-    private void requestCameraPermission() {
-        ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.CAMERA}, REQUEST_CAMERA_PERMISSION);
-    }
-
     /**
      * Opens the camera specified by {@link #mCameraId}.
      */
@@ -579,7 +583,6 @@ public class ImageQualityActivity extends AppCompatActivity implements View.OnCl
             cameraHeight = height;
             cameraWidth = width;
             isRequestingPermissions = true;
-            requestCameraPermission();
         } else if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED) {
             setUpCameraOutputs(width, height);
             configureTransform(width, height);
