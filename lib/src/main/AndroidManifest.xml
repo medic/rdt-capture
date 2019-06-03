@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="edu.washington.cs.ubicomplab.rdt_reader">
+
+    <uses-permission android:name="android.permission.CAMERA" />
+    <uses-permission android:name="android.permission.FLASHLIGHT" />
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+
+    <uses-feature
+        android:name="android.hardware.camera"
+        android:required="false" />
+    <uses-feature
+        android:name="android.hardware.camera.autofocus"
+        android:required="false" />
+    <uses-feature
+        android:name="android.hardware.camera.flash"
+        android:required="false" />
+    <uses-feature
+        android:name="android.hardware.camera.front"
+        android:required="false" />
+    <uses-feature
+        android:name="android.hardware.camera.front.autofocus"
+        android:required="false" />
+
+    <application
+        android:allowBackup="true"
+        android:icon="@mipmap/ic_launcher"
+        android:label="@string/app_name"
+        android:roundIcon="@mipmap/ic_launcher_round"
+        android:supportsRtl="true"
+        android:theme="@style/AppTheme">
+        <activity
+            android:name=".MainActivity"
+            android:configChanges="keyboardHidden|orientation"
+            android:noHistory="true"
+            android:screenOrientation="portrait">
+        </activity>
+        <activity
+            android:name=".ExpirationDateActivity"
+            android:noHistory="true" />
+        <activity
+            android:name=".ImageQualityActivity"
+            android:theme="@style/Theme.AppCompat.NoActionBar"
+            android:configChanges="keyboardHidden|orientation"
+            android:exported="true"
+            android:screenOrientation="portrait">
+            <intent-filter>
+                <category android:name="android.intent.category.DEFAULT"/>
+                <action android:name="medic.mrdt.verify"/>
+            </intent-filter>
+        </activity>
+        <activity
+            android:name=".ImageResultActivity"
+            android:configChanges="keyboardHidden|orientation"
+            android:noHistory="true"
+            android:screenOrientation="portrait" />
+
+        <activity android:name=".activity.RDTCaptureActivity" />
+    </application>
+
+</manifest>
