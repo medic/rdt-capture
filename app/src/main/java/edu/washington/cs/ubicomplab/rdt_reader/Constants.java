@@ -69,7 +69,7 @@ public final class Constants {
     public static int CONTROL_LINE_POSITION = 45;
     public static int TEST_A_LINE_POSITION = 15;
     public static int TEST_B_LINE_POSITION = 75;
-    public static Scalar CONTROL_LINE_COLOR_LOWER = new Scalar(160/2.0, 45/100.0*255.0, 5/100.0*255.0);
+    public static Scalar CONTROL_LINE_COLOR_LOWER = new Scalar(160/2.0, 20/100.0*255.0, 5/100.0*255.0);
     public static Scalar CONTROL_LINE_COLOR_UPPER = new Scalar(260/2.0, 90/100.0*255.0, 100/100.0*255.0);
     public static int CONTROL_LINE_POSITION_MIN = 575;
     public static int CONTROL_LINE_POSITION_MAX = 700;
