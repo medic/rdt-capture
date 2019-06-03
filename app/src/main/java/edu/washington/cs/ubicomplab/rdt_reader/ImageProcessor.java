@@ -10,12 +10,9 @@ package edu.washington.cs.ubicomplab.rdt_reader;
 
 import android.app.Activity;
 import android.content.Context;
-import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.net.Uri;
 import android.util.Log;
-import android.widget.Toast;
 
 import org.opencv.android.BaseLoaderCallback;
 import org.opencv.android.LoaderCallbackInterface;
@@ -44,7 +41,6 @@ import org.opencv.features2d.Features2d;
 import org.opencv.imgproc.CLAHE;
 import org.opencv.imgproc.Imgproc;
 import org.opencv.core.Scalar;
-import org.opencv.android.OpenCVLoader;
 import org.opencv.xfeatures2d.SIFT;
 
 
@@ -56,9 +52,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
-import java.util.LinkedList;
 import java.util.List;
-import java.util.concurrent.Semaphore;
 
 import static edu.washington.cs.ubicomplab.rdt_reader.Constants.*;
 import static java.lang.Math.pow;
@@ -90,7 +84,7 @@ public class ImageProcessor {
     private MatOfKeyPoint siftRefKeypoints;
     private Mat siftRefDescriptor;
 
-    private double minSharpness = Double.MIN_VALUE;
+    private double refImgSharpness = Double.MIN_VALUE;
 
     private int mMoveCloserCount = 0;
 
@@ -180,6 +174,10 @@ public class ImageProcessor {
         long startTime = System.currentTimeMillis();
         mFeatureDetector.detectAndCompute(mRefImg, new Mat(), mRefKeypoints, mRefDescriptor);
 
+        Imgproc.GaussianBlur(mRefImg, mRefImg, new Size(5, 5), 0, 0);
+        refImgSharpness = calculateSharpness(mRefImg);
+        Log.d(TAG, String.format("mRefImg sharpness: %.2f", refImgSharpness));
+
         siftDetector = SIFT.create();
         siftMatcher = BFMatcher.create(BFMatcher.BRUTEFORCE, false);
         siftDetector.detectAndCompute(mRefImg, new Mat(), siftRefKeypoints, siftRefDescriptor);
@@ -223,7 +221,7 @@ public class ImageProcessor {
         ExposureResult exposureResult = (checkBrightness(greyMat));
 
         //check sharpness (refactored)
-        boolean isSharp = checkSharpness(greyMat);
+        boolean isSharp = checkSharpness(greyMat.submat(getViewfinderRect(greyMat)));
 
         //preform detectRDT only if those two quality checks are passed
         if (exposureResult == ExposureResult.NORMAL && isSharp) {
@@ -404,13 +402,19 @@ public class ImageProcessor {
     }
 
     private boolean checkSharpness(Mat inputMat) {
-        double sharpness = calculateSharpness(inputMat);
+        Mat resized = new Mat();
+        resize(inputMat, resized, new Size(inputMat.size().width*mRefImg.size().width/inputMat.size().width, inputMat.size().height*mRefImg.size().width/inputMat.size().width));
 
-        boolean isSharp = sharpness > (minSharpness * SHARPNESS_THRESHOLD);
+        double sharpness = calculateSharpness(resized);
+        //Log.d(TAG, String.format("inputMat sharpness: %.2f, %.2f",calculateSharpness(resized), calculateSharpness(inputMat)));
+        Log.d(TAG, String.format("inputMat sharpness: %.2f",calculateSharpness(resized)));
+
+        boolean isSharp = sharpness > (refImgSharpness * (1-SHARPNESS_THRESHOLD));
         Log.d(TAG, "Sharpness: "+sharpness);
 
-        return isSharp;
+        resized.release();
 
+        return isSharp;
     }
 
     private double calculateSharpness(Mat input) {
@@ -955,6 +959,12 @@ public class ImageProcessor {
             }
         }
         return boundary;
+    }
+
+    private Rect getViewfinderRect(Mat inputMat) {
+        Point p1 = new Point(inputMat.size().width*(1-VIEW_FINDER_SCALE_H)/2, inputMat.size().height*(1-VIEW_FINDER_SCALE_W)/2);
+        Point p2 = new Point(inputMat.size().width-p1.x, inputMat.size().height-p1.y);
+        return new Rect(p1, p2);
     }
 
     //methods for debugging
