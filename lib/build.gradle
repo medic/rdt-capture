@@ -105,7 +105,7 @@ bintray {
         desc = 'RDT Capture Library'
         websiteUrl = "https://ona.io"
         publish = true
-        vcsUrl = "https://github.com/onaio/rdt-standard/"
+        vcsUrl = "https://github.com/onaio/rdt-capture"
         version {
             name = this.version
             desc = "RDT Capture Library ${this.version}"
