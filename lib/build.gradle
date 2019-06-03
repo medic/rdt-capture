@@ -1,8 +1,9 @@
 apply plugin: 'com.android.library'
 apply plugin: 'maven-publish'
+apply plugin: 'com.jfrog.bintray'
 
 group = "io.ona.rdt-capture"
-version = '0.78298'
+version = '0.1'
 def home = System.properties['user.home']
 
 android {
@@ -86,9 +87,32 @@ publishing {
             name = 'local'
             url = "file://${home}/.m2/repository/"
         }
-        maven {
-            name = 'remote'
-            url = "https://oss.sonatype.org/content/repositories/snapshots/"
-        }
     }
 }
+
+
+
+bintray {
+    // Get Bintray credentials from environment variables
+    user = System.getenv('BINTRAY_USER') // Get bintray User
+    key = System.getenv('BINTRAY_KEY') // Get bintray Secret Key
+    configurations = ['archives']
+    pkg {
+        repo = 'rdt-capture'
+        name = project.name
+        userOrg = 'ona'
+        licenses = ['Apache-2.0']
+        desc = 'RDT Capture Library'
+        websiteUrl = "https://ona.io"
+        publish = true
+        vcsUrl = "https://github.com/onaio/rdt-standard/"
+        version {
+            name = this.version
+            desc = "RDT Capture Library ${this.version}"
+            released = new Date()
+            vcsTag = this.version
+        }
+    }
+    publications = ['RDTCaptureLib']
+}
+
