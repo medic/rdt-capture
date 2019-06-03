@@ -2,7 +2,8 @@ apply plugin: 'com.android.library'
 apply plugin: 'maven-publish'
 
 group = "io.ona.rdt-capture"
-version = '0.8'
+version = '0.78298'
+def home = System.properties['user.home']
 
 android {
     compileSdkVersion 26
@@ -59,7 +60,7 @@ artifacts {
 
 publishing {
     publications {
-        Production(MavenPublication) {
+        RDTCaptureLib(MavenPublication) {
             artifact("$buildDir/outputs/aar/lib-release.aar")
             artifact(sourceJar)
             groupId this.group
@@ -77,6 +78,17 @@ publishing {
                     dependencyNode.appendNode('version', it.version)
                 }
             }
+        }
+    }
+
+    repositories {
+        maven {
+            name = 'local'
+            url = "file://${home}/.m2/repository/"
+        }
+        maven {
+            name = 'remote'
+            url = "https://oss.sonatype.org/content/repositories/snapshots/"
         }
     }
 }
