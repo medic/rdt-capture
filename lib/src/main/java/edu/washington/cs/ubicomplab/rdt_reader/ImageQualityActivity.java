@@ -1,3 +1,11 @@
+/*
+ * Copyright (C) 2019 University of Washington Ubicomp Lab
+ * All rights reserved.
+ *
+ * This software may be modified and distributed under the terms
+ * of a BSD-style license that can be found in the LICENSE file.
+ */
+
 package edu.washington.cs.ubicomplab.rdt_reader;
 
 import android.Manifest;
@@ -22,14 +30,15 @@ import android.hardware.camera2.params.MeteringRectangle;
 import android.hardware.camera2.params.StreamConfigurationMap;
 import android.media.Image;
 import android.media.ImageReader;
+import android.os.AsyncTask;
 import android.os.Build;
+import android.os.Bundle;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
-import android.os.Bundle;
 import android.text.Html;
 import android.util.Log;
 import android.util.Size;
@@ -44,36 +53,25 @@ import android.widget.Toast;
 
 import org.opencv.android.BaseLoaderCallback;
 import org.opencv.android.LoaderCallbackInterface;
+import org.opencv.core.Mat;
 
-import org.opencv.core.Mat;;
-import org.opencv.core.MatOfKeyPoint;
-
-import org.opencv.features2d.BFMatcher;
-import org.opencv.features2d.BRISK;
-
-import java.io.File;
 import java.util.Arrays;
-
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 
+import static edu.washington.cs.ubicomplab.rdt_reader.Constants.CAMERA2_IMAGE_SIZE;
 import static edu.washington.cs.ubicomplab.rdt_reader.Constants.CAMERA2_PREVIEW_SIZE;
 import static edu.washington.cs.ubicomplab.rdt_reader.Constants.CAPTURE_COUNT;
-import static edu.washington.cs.ubicomplab.rdt_reader.Constants.CAMERA2_IMAGE_SIZE;
-import static edu.washington.cs.ubicomplab.rdt_reader.Constants.MY_PERMISSION_REQUEST_CODE;
 import static edu.washington.cs.ubicomplab.rdt_reader.Constants.REQUEST_CAMERA_PERMISSION;
+
+;
+
 
 public class ImageQualityActivity extends AppCompatActivity implements View.OnClickListener, ActivityCompat.OnRequestPermissionsResultCallback {
     private ImageProcessor processor;
     private Activity mActivity = this;
-    private File mFile;
-    private BRISK mFeatureDetector;
-    private BFMatcher mMatcher;
-    private Mat mRefImg;
-    private Mat mRefDescriptor;
-    private MatOfKeyPoint mRefKeypoints;
     private TextView mImageQualityFeedbackView;
     private TextView mProgressText;
     private ProgressBar mProgress;
@@ -88,7 +86,6 @@ public class ImageQualityActivity extends AppCompatActivity implements View.OnCl
     private boolean isRequestingPermissions = false;
 
     private long timeTaken = 0;
-
 
     private ViewportUsingBitmap mViewport;
 
@@ -116,8 +113,6 @@ public class ImageQualityActivity extends AppCompatActivity implements View.OnCl
 
 
         mTextureView = findViewById(R.id.texture);
-
-        mFile = new File(getExternalFilesDir(null), "pic.jpg");
 
         timeTaken = System.currentTimeMillis();
 
@@ -262,8 +257,6 @@ public class ImageQualityActivity extends AppCompatActivity implements View.OnCl
      */
     private ImageReader mImageReader;
 
-    private boolean inProcess = false;
-    final Object lock = new Object();
     final Object focusStateLock = new Object();
 
     final BlockingQueue<Image> imageQueue = new ArrayBlockingQueue<>(1);
@@ -290,63 +283,87 @@ public class ImageQualityActivity extends AppCompatActivity implements View.OnCl
             }
 
             if (imageQueue.size() > 0) {
+                Log.d(TAG, "OnImageAvailableListener: image closed! " + System.currentTimeMillis());
+                image.close();
                 return;
             }
 
-
-
-            Log.d(TAG, "LOCAL FOCUS STATE: " + mFocusState + ", " + FocusState.FOCUSED);
+            //Log.d(TAG, "LOCAL FOCUS STATE: " + mFocusState + ", " + FocusState.FOCUSED);
             if (mFocusState != FocusState.FOCUSED) {
                 image.close();
                 return;
             }
 
             imageQueue.add(image);
+            new ImageProcessAsyncTask().execute(image);
+        }
 
+    };
+
+    private class ImageProcessAsyncTask extends AsyncTask<Image, Void, Void> {
+
+        @Override
+        protected Void doInBackground(Image... images) {
+            Image image = images[0];
             final Mat rgbaMat = ImageUtil.imageToRGBMat(image);
-            final ImageProcessor.CaptureResult result = processor.captureRDT(rgbaMat);
+            final ImageProcessor.CaptureResult captureResult = processor.captureRDT(rgbaMat);
             //ImageProcessor.SizeResult sizeResult, boolean isCentered, boolean isRightOrientation, boolean isSharp, ImageProcessor.ExposureResult exposureResult
             runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
-                    displayQualityResult(result.sizeResult, result.isCentered, result.isRightOrientation, result.isSharp, result.exposureResult);
+                    displayQualityResult(captureResult.sizeResult, captureResult.isCentered, captureResult.isRightOrientation, captureResult.isSharp, captureResult.exposureResult);
                 }
             });
 
             Log.d(TAG, String.format("Capture time: %d", System.currentTimeMillis() - timeTaken));
-            Log.d(TAG, String.format("Captured result: %b", result.allChecksPassed));
-            if (result.allChecksPassed && result.resultMat != null) {
-                Log.d(TAG, String.format("Captured MAT size: %s", result.resultMat.size()));
-                useCapturedImage(result.resultMat);
+            Log.d(TAG, String.format("Captured result: %b", captureResult.allChecksPassed));
+            if (captureResult.allChecksPassed) {
+                Log.d(TAG, String.format("Captured MAT size: %s", captureResult.resultMat.size()));
+
+                //interpretation
+                ImageProcessor.InterpretationResult interpretationResult = processor.interpretResult(captureResult.resultMat);
+
+                if (interpretationResult.control) {
+                    useCapturedImage(captureResult.resultMat, interpretationResult);
+                } else {
+                    imageQueue.remove();
+                    image.close();
+                }
             } else {
                 imageQueue.remove();
                 image.close();
             }
+            return null;
         }
-    };
-
-    protected void useCapturedImage(Mat result) {
-        moveToResultActivity(result);
     }
 
-    private void moveToResultActivity(Mat result) {
-        byte[] byteArray = ImageUtil.matToRotatedByteArray(result);
+    protected void useCapturedImage(Mat resultMat, ImageProcessor.InterpretationResult interpretationResult) {
+        moveToResultActivity(resultMat, interpretationResult.resultMat, interpretationResult.control, interpretationResult.testA, interpretationResult.testB);
+    }
+
+    private void moveToResultActivity(Mat captureMat, Mat windowMat, boolean control, boolean testA, boolean testB) {
+        byte[] captureByteArray = ImageUtil.matToRotatedByteArray(captureMat);
+        byte[] windowByteArray = ImageUtil.matToRotatedByteArray(windowMat);
         if (isExternalIntent()) {
             Intent i = new Intent();
 
-            i.putExtra("data", byteArray);
+            i.putExtra("data", captureByteArray);
             i.putExtra("timeTaken", System.currentTimeMillis() - timeTaken);
 
             setResult(Activity.RESULT_OK, i);
             mOnImageAvailableThread.interrupt();
             finish();
         } else {
-            Intent intent = new Intent(ImageQualityActivity.this, ImageResultActivity.class);
-            intent.addFlags(Intent.FLAG_ACTIVITY_FORWARD_RESULT);
-            intent.putExtra("RDTCaptureByteArray", byteArray);
-            intent.putExtra("timeTaken", System.currentTimeMillis() - timeTaken);
-            result.release();
-            startActivity(intent);
+            Intent i = new Intent(ImageQualityActivity.this, ImageResultActivity.class);
+            i.addFlags(Intent.FLAG_ACTIVITY_FORWARD_RESULT);
+            i.putExtra("captured", captureByteArray);
+            i.putExtra("window", windowByteArray);
+            i.putExtra("control", control);
+            i.putExtra("testA", testA);
+            i.putExtra("testB", testB);
+            i.putExtra("timeTaken", System.currentTimeMillis() - timeTaken);
+            captureMat.release();
+            startActivity(i);
             mOnImageAvailableThread.interrupt();
         }
     }
@@ -379,24 +396,24 @@ public class ImageQualityActivity extends AppCompatActivity implements View.OnCl
             synchronized (focusStateLock) {
                 FocusState previousFocusState = mFocusState;
                 if (result.get(CaptureResult.CONTROL_AF_MODE) == null) {
-                    Log.d(TAG, "FOCUS STATE: is null");
+                    //Log.d(TAG, "FOCUS STATE: is null");
                     return;
                 }
                 if (result.get(CaptureResult.CONTROL_AF_MODE) == CaptureResult.CONTROL_AF_MODE_CONTINUOUS_PICTURE) {
                     if (result.get(CaptureResult.CONTROL_AF_STATE) == CaptureResult.CONTROL_AF_STATE_PASSIVE_FOCUSED) {
-                        Log.d(TAG, "FOCUS STATE: focused");
+                        //Log.d(TAG, "FOCUS STATE: focused");
                         mFocusState = FocusState.FOCUSED;
                     } else if (result.get(CaptureResult.CONTROL_AF_STATE) == CaptureResult.CONTROL_AF_STATE_PASSIVE_UNFOCUSED) {
-                        Log.d(TAG, "FOCUS STATE: unfocused");
+                        //Log.d(TAG, "FOCUS STATE: unfocused");
                         mFocusState = FocusState.UNFOCUSED;
                     } else if (result.get(CaptureResult.CONTROL_AF_STATE) == CaptureResult.CONTROL_AF_STATE_INACTIVE) {
-                        Log.d(TAG, "FOCUS STATE: inactive");
+                        //Log.d(TAG, "FOCUS STATE: inactive");
                         mFocusState = FocusState.INACTIVE;
                     } else if (result.get(CaptureResult.CONTROL_AF_STATE) == CaptureResult.CONTROL_AF_STATE_PASSIVE_SCAN) {
-                        Log.d(TAG, "FOCUS STATE: focusing");
+                        //Log.d(TAG, "FOCUS STATE: focusing");
                         mFocusState = FocusState.FOCUSING;
                     } else {
-                        Log.d(TAG, "FOCUS STATE: unknown state " + result.get(CaptureResult.CONTROL_AF_STATE).toString());
+                        //Log.d(TAG, "FOCUS STATE: unknown state " + result.get(CaptureResult.CONTROL_AF_STATE).toString());
                     }
 
                     if (previousFocusState != mFocusState) {
@@ -519,7 +536,7 @@ public class ImageQualityActivity extends AppCompatActivity implements View.OnCl
 
                 // choose optimal size
                 Size closestPreviewSize = new Size(Integer.MAX_VALUE, (int) (Integer.MAX_VALUE * (9.0 / 16.0)));
-                Size closestImageSize = new Size(Integer.MAX_VALUE, (int) (Integer.MAX_VALUE * (3.0 / 4.0)));
+                Size closestImageSize = new Size(Integer.MAX_VALUE, (int) (Integer.MAX_VALUE * (9.0 / 16.0)));
                 for (Size size : Arrays.asList(map.getOutputSizes(ImageFormat.YUV_420_888))) {
                     Log.d(TAG, "Available Sizes: " + size.toString());
                     if (size.getWidth() * 9 == size.getHeight() * 16) { //Preview surface ratio is 16:9
@@ -547,11 +564,11 @@ public class ImageQualityActivity extends AppCompatActivity implements View.OnCl
                 mImageReader.setOnImageAvailableListener(
                         mOnImageAvailableListener, mOnImageAvailableHandler);
 
-                Constants.CAMERA2_IMAGE_SIZE.width = closestImageSize.getWidth();
-                Constants.CAMERA2_IMAGE_SIZE.height = closestImageSize.getHeight();
+                CAMERA2_IMAGE_SIZE.width = closestImageSize.getWidth();
+                CAMERA2_IMAGE_SIZE.height = closestImageSize.getHeight();
 
-                Constants.CAMERA2_PREVIEW_SIZE.width = closestPreviewSize.getWidth();
-                Constants.CAMERA2_PREVIEW_SIZE.height = closestPreviewSize.getHeight();
+                CAMERA2_PREVIEW_SIZE.width = closestPreviewSize.getWidth();
+                CAMERA2_PREVIEW_SIZE.height = closestPreviewSize.getHeight();
 
                 // We fit the aspect ratio of TextureView to the size of preview we picked.
                 int orientation = getResources().getConfiguration().orientation;
@@ -651,6 +668,7 @@ public class ImageQualityActivity extends AppCompatActivity implements View.OnCl
             mBackgroundThread = null;
             mBackgroundHandler = null;
 
+            mOnImageAvailableThread.join();
             mOnImageAvailableThread = null;
             mOnImageAvailableHandler = null;
         } catch (InterruptedException e) {
@@ -797,15 +815,10 @@ public class ImageQualityActivity extends AppCompatActivity implements View.OnCl
     @Override
     public void onClick(View view) {
         int i = view.getId();
-        if (i == R.id.viewport) {
+        if (i == R.id.img_quality_check_viewport) {
             updateRepeatingRequest();
         }
     }
-
-
-    /**
-     * Imported from ImageQualityOpencvActivity
-     **/
 
 
     private BaseLoaderCallback mLoaderCallback = new BaseLoaderCallback(this) {

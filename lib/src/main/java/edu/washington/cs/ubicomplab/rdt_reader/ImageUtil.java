@@ -1,13 +1,19 @@
-package edu.washington.cs.ubicomplab.rdt_reader;
 
-/**
- * Created by cjpark on 6/30/18.
+/*
+ * Copyright (C) 2019 University of Washington Ubicomp Lab
+ * All rights reserved.
+ *
+ * This software may be modified and distributed under the terms
+ * of a BSD-style license that can be found in the LICENSE file.
  */
+
+package edu.washington.cs.ubicomplab.rdt_reader;
 
 import android.Manifest;
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
+
 import android.graphics.Bitmap;
 import android.graphics.ImageFormat;
 import android.graphics.Matrix;

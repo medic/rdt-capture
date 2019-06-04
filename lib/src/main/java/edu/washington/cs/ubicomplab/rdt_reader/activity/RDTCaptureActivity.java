@@ -7,6 +7,7 @@ import android.util.Log;
 
 import org.opencv.core.Mat;
 
+import edu.washington.cs.ubicomplab.rdt_reader.ImageProcessor;
 import edu.washington.cs.ubicomplab.rdt_reader.ImageQualityActivity;
 import edu.washington.cs.ubicomplab.rdt_reader.ImageUtil;
 import edu.washington.cs.ubicomplab.rdt_reader.callback.OnImageSavedCallBack;
@@ -26,7 +27,7 @@ public class RDTCaptureActivity extends ImageQualityActivity implements Activity
     }
 
     @Override
-    protected void useCapturedImage(Mat result) {
+    protected void useCapturedImage(Mat result, ImageProcessor.InterpretationResult interpretationResult) {
         Log.i(TAG, "Processing captured image");
         byte[] byteArray = ImageUtil.matToRotatedByteArray(result);
         presenter.saveImage(getApplicationContext(), byteArray, System.currentTimeMillis(), this);

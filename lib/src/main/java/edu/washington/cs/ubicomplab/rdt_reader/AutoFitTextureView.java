@@ -1,3 +1,11 @@
+/*
+ * Copyright (C) 2019 University of Washington Ubicomp Lab
+ * All rights reserved.
+ *
+ * This software may be modified and distributed under the terms
+ * of a BSD-style license that can be found in the LICENSE file.
+ */
+
 package edu.washington.cs.ubicomplab.rdt_reader;
 
 import android.content.Context;
@@ -8,10 +16,6 @@ import android.graphics.PorterDuffXfermode;
 import android.graphics.RectF;
 import android.util.AttributeSet;
 import android.view.TextureView;
-
-/**
- * Created by cjpark on 6/30/18.
- */
 
 public class AutoFitTextureView extends TextureView {
 

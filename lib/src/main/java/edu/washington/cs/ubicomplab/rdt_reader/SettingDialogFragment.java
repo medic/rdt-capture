@@ -1,3 +1,11 @@
+/*
+ * Copyright (C) 2019 University of Washington Ubicomp Lab
+ * All rights reserved.
+ *
+ * This software may be modified and distributed under the terms
+ * of a BSD-style license that can be found in the LICENSE file.
+ */
+
 package edu.washington.cs.ubicomplab.rdt_reader;
 
 import android.app.Dialog;
@@ -17,10 +25,6 @@ import android.widget.RadioGroup;
 import android.widget.SeekBar;
 
 import java.util.Locale;
-
-/**
- * Created by cjparkuw on 3/14/2018.
- */
 
 public class SettingDialogFragment extends DialogFragment implements RadioGroup.OnCheckedChangeListener {
 
@@ -71,7 +75,7 @@ public class SettingDialogFragment extends DialogFragment implements RadioGroup.
         mLangGroup = dialogView.findViewById(R.id.langGroup);
 
         mSharpnessBar.setMax(100);
-        mSharpnessBar.setProgress((int)(Constants.BLUR_THRESHOLD*100));
+        mSharpnessBar.setProgress((int)(Constants.SHARPNESS_THRESHOLD*100));
 
         mOverExpBar.setMax(300);
         mOverExpBar.setProgress(mOverExpBar.getMax() - (int)(Constants.OVER_EXP_WHITE_COUNT));
@@ -116,7 +120,7 @@ public class SettingDialogFragment extends DialogFragment implements RadioGroup.
     }
 
     private void UpdateConstants() {
-        Constants.BLUR_THRESHOLD = (double)mSharpnessBar.getProgress()/100.0;
+        Constants.SHARPNESS_THRESHOLD = (double)mSharpnessBar.getProgress()/100.0;
         Constants.OVER_EXP_WHITE_COUNT =  mOverExpBar.getMax() - mOverExpBar.getProgress();
         Constants.UNDER_EXP_THRESHOLD = mUnderExpBar.getProgress();
         //Constants.SHADOW mShadowBar.getProgress();
@@ -131,11 +135,11 @@ public class SettingDialogFragment extends DialogFragment implements RadioGroup.
         editor.putString(getString(R.string.preference_language), Constants.LANGUAGE);
         editor.putFloat(getString(R.string.preference_over_exposure), (float)Constants.OVER_EXP_WHITE_COUNT);
         editor.putFloat(getString(R.string.preference_under_exposure), (float)Constants.UNDER_EXP_THRESHOLD);
-        editor.putFloat(getString(R.string.preference_sharpness), (float)Constants.BLUR_THRESHOLD);
+        editor.putFloat(getString(R.string.preference_sharpness), (float)Constants.SHARPNESS_THRESHOLD);
         editor.putFloat(getString(R.string.preference_position), (float)Constants.POSITION_THRESHOLD);
         editor.putFloat(getString(R.string.preference_size), (float)Constants.SIZE_THRESHOLD);
         editor.apply();
 
-        Log.d(Constants.TAG, String.format("UODATED SETTINGS: BLUR: %.2f, SIZE: %.2f",  Constants.BLUR_THRESHOLD, Constants.SIZE_THRESHOLD));
+        Log.d(Constants.TAG, String.format("UODATED SETTINGS: BLUR: %.2f, SIZE: %.2f",  Constants.SHARPNESS_THRESHOLD, Constants.SIZE_THRESHOLD));
     }
 }
