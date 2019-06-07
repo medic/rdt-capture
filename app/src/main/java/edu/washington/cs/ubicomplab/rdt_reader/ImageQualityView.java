@@ -77,7 +77,7 @@ import java.util.concurrent.TimeUnit;
 import static edu.washington.cs.ubicomplab.rdt_reader.Constants.*;
 
 
-public class ImageQualityActivity extends AppCompatActivity implements View.OnClickListener, ActivityCompat.OnRequestPermissionsResultCallback {
+public class ImageQualityView extends AppCompatActivity implements View.OnClickListener, ActivityCompat.OnRequestPermissionsResultCallback {
     private ImageProcessor processor;
     private Activity mActivity = this;
     private TextView mImageQualityFeedbackView;
@@ -108,7 +108,7 @@ public class ImageQualityActivity extends AppCompatActivity implements View.OnCl
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_image_quality);
+        setContentView(R.layout.image_quality_view);
 
 
         mTextureView = findViewById(R.id.texture);
@@ -353,7 +353,7 @@ public class ImageQualityActivity extends AppCompatActivity implements View.OnCl
             mOnImageAvailableThread.interrupt();
             finish();
         } else {
-            Intent i = new Intent(ImageQualityActivity.this, ImageResultActivity.class);
+            Intent i = new Intent(ImageQualityView.this, ImageResultActivity.class);
             i.addFlags(Intent.FLAG_ACTIVITY_FORWARD_RESULT);
             i.putExtra("captured", captureByteArray);
             i.putExtra("window", windowByteArray);
