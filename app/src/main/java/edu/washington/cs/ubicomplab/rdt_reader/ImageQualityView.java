@@ -79,7 +79,7 @@ import java.util.concurrent.TimeUnit;
 import static edu.washington.cs.ubicomplab.rdt_reader.Constants.*;
 
 
-public class ImageQualityView extends LinearLayout implements ActivityCompat.OnRequestPermissionsResultCallback {
+public class ImageQualityView extends LinearLayout implements View.OnClickListener, ActivityCompat.OnRequestPermissionsResultCallback {
     private ImageProcessor processor;
     private Activity mActivity;
     private TextView mImageQualityFeedbackView;
@@ -121,7 +121,7 @@ public class ImageQualityView extends LinearLayout implements ActivityCompat.OnR
 
     }
 
-    private boolean isExternalIntent() {
+    public boolean isExternalIntent() {
         Intent i = mActivity.getIntent();
         return i != null && "medic.mrdt.verify".equals(i.getAction());
     }
@@ -472,9 +472,7 @@ public class ImageQualityView extends LinearLayout implements ActivityCompat.OnR
         }
     }
 
-    @Override
     public void onResume() {
-        super.onResume();
         startBackgroundThread();
 
         // When the screen is turned off and turned back on, the SurfaceTexture is already
@@ -485,28 +483,14 @@ public class ImageQualityView extends LinearLayout implements ActivityCompat.OnR
             openCamera(mTextureView.getWidth(), mTextureView.getHeight());
         } else {
             mTextureView.setSurfaceTextureListener(mSurfaceTextureListener);
-            ImageProcessor.loadOpenCV(getApplicationContext(), mLoaderCallback);
+            ImageProcessor.loadOpenCV(mActivity.getApplicationContext(), mLoaderCallback);
         }
 
     }
 
-    @Override
     public void onPause() {
-        super.onPause();
-
-
         closeCamera();
         stopBackgroundThread();
-    }
-
-    @Override
-    public void onBackPressed() {
-        if (isExternalIntent()) {
-            super.onBackPressed();
-        } else {
-            Intent intent = new Intent(this, MainActivity.class);
-            startActivity(intent);
-        }
     }
 
     @Override
@@ -828,7 +812,6 @@ public class ImageQualityView extends LinearLayout implements ActivityCompat.OnR
     }
 
 
-    @Override
     public void onClick(View view) {
         switch (view.getId()) {
             case R.id.img_quality_check_viewport: {
@@ -844,7 +827,7 @@ public class ImageQualityView extends LinearLayout implements ActivityCompat.OnR
      **/
 
 
-    private BaseLoaderCallback mLoaderCallback = new BaseLoaderCallback(this) {
+    private BaseLoaderCallback mLoaderCallback = new BaseLoaderCallback(mActivity) {
         @Override
         public void onManagerConnected(int status) {
             switch (status) {
