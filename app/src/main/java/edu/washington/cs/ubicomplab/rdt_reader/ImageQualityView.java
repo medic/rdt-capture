@@ -401,7 +401,7 @@ public class ImageQualityView extends LinearLayout implements View.OnClickListen
         private void process(CaptureResult result) {
             synchronized (focusStateLock) {
                 FocusState previousFocusState = mFocusState;
-                if (result.get(CaptureResult.CONTROL_AF_MODE) == null) {
+                if (result.get(CaptureResult.CONTROL_AF_MODE) == null || result.get(CaptureResult.CONTROL_AF_STATE) == null) {
                     //Log.d(TAG, "FOCUS STATE: is null");
                     return;
                 }
