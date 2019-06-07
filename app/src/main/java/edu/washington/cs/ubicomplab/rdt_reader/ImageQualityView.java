@@ -96,12 +96,23 @@ public class ImageQualityView extends LinearLayout implements View.OnClickListen
 
     private FocusState mFocusState = FocusState.INACTIVE;
 
+    private ImageQualityViewListener mImageQualityViewListener;
+
     private enum State {
         QUALITY_CHECK, FINAL_CHECK
     }
 
     private enum FocusState {
         INACTIVE, FOCUSING, FOCUSED, UNFOCUSED
+    }
+
+    public interface ImageQualityViewListener {
+        void onRDTCameraReady();
+        void onRDTDetected(
+                String base64Img,
+                ImageProcessor.CaptureResult captureResult,
+                ImageProcessor.InterpretationResult interpretationResult
+        );
     }
 
     public ImageQualityView(Context context, AttributeSet attrs) {
@@ -124,6 +135,10 @@ public class ImageQualityView extends LinearLayout implements View.OnClickListen
     public boolean isExternalIntent() {
         Intent i = mActivity.getIntent();
         return i != null && "medic.mrdt.verify".equals(i.getAction());
+    }
+
+    public void setImageQualityViewListener(ImageQualityViewListener listener) {
+        mImageQualityViewListener = listener;
     }
 
     /**
@@ -339,7 +354,21 @@ public class ImageQualityView extends LinearLayout implements View.OnClickListen
                     imageQueue.remove();
                     image.close();
                 }
+                if (mImageQualityViewListener != null) {
+                    mImageQualityViewListener.onRDTDetected(
+                            ImageUtil.matToBase64(captureResult.resultMat),
+                            captureResult,
+                            interpretationResult
+                    );
+                }
             } else {
+                if (mImageQualityViewListener != null) {
+                    mImageQualityViewListener.onRDTDetected(
+                            ImageUtil.matToBase64(captureResult.resultMat),
+                            captureResult,
+                            null
+                    );
+                }
                 imageQueue.remove();
                 image.close();
             }
