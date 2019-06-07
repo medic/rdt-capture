@@ -42,6 +42,7 @@ import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.text.Html;
+import android.util.AttributeSet;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.util.Size;
@@ -50,6 +51,7 @@ import android.view.Surface;
 import android.view.TextureView;
 import android.view.View;
 import android.view.WindowManager;
+import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -77,9 +79,9 @@ import java.util.concurrent.TimeUnit;
 import static edu.washington.cs.ubicomplab.rdt_reader.Constants.*;
 
 
-public class ImageQualityView extends AppCompatActivity implements View.OnClickListener, ActivityCompat.OnRequestPermissionsResultCallback {
+public class ImageQualityView extends LinearLayout implements ActivityCompat.OnRequestPermissionsResultCallback {
     private ImageProcessor processor;
-    private Activity mActivity = this;
+    private Activity mActivity;
     private TextView mImageQualityFeedbackView;
     private TextView mProgressText;
     private ProgressBar mProgress;
@@ -102,14 +104,14 @@ public class ImageQualityView extends AppCompatActivity implements View.OnClickL
         INACTIVE, FOCUSING, FOCUSED, UNFOCUSED
     }
 
-    private Activity thisActivity = this;
-
-
-    @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        setContentView(R.layout.image_quality_view);
-
+    public ImageQualityView(Context context, AttributeSet attrs) {
+        super(context, attrs);
+        if (context instanceof Activity) {
+            mActivity = (Activity) context;
+        } else {
+            throw new Error("ImageQualityView must be created in an activity");
+        }
+        inflate(context, R.layout.image_quality_view, this);
 
         mTextureView = findViewById(R.id.texture);
 
@@ -120,7 +122,7 @@ public class ImageQualityView extends AppCompatActivity implements View.OnClickL
     }
 
     private boolean isExternalIntent() {
-        Intent i = getIntent();
+        Intent i = mActivity.getIntent();
         return i != null && "medic.mrdt.verify".equals(i.getAction());
     }
 
@@ -310,7 +312,7 @@ public class ImageQualityView extends AppCompatActivity implements View.OnClickL
             final Mat rgbaMat = ImageUtil.imageToRGBMat(image);
             final ImageProcessor.CaptureResult captureResult = processor.captureRDT(rgbaMat);
             //ImageProcessor.SizeResult sizeResult, boolean isCentered, boolean isRightOrientation, boolean isSharp, ImageProcessor.ExposureResult exposureResult
-            runOnUiThread(new Runnable() {
+            mActivity.runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
                     displayQualityResult(captureResult.sizeResult, captureResult.isCentered, captureResult.isRightOrientation, captureResult.isSharp, captureResult.exposureResult);
@@ -323,11 +325,16 @@ public class ImageQualityView extends AppCompatActivity implements View.OnClickL
                 Log.d(TAG, String.format("Captured MAT size: %s", captureResult.resultMat.size()));
 
                 //interpretation
-                ImageProcessor.InterpretationResult interpretationResult = processor.interpretResult(captureResult.resultMat);
+                final ImageProcessor.InterpretationResult interpretationResult = processor.interpretResult(captureResult.resultMat);
 
                 if (interpretationResult.control) {
-                    moveToResultActivity(captureResult.resultMat, interpretationResult.resultMat,
-                            interpretationResult.control, interpretationResult.testA, interpretationResult.testB);
+                    mActivity.runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            moveToResultActivity(captureResult.resultMat, interpretationResult.resultMat,
+                                    interpretationResult.control, interpretationResult.testA, interpretationResult.testB);
+                        }
+                    });
                 } else {
                     imageQueue.remove();
                     image.close();
@@ -349,11 +356,11 @@ public class ImageQualityView extends AppCompatActivity implements View.OnClickL
             i.putExtra("data", captureByteArray);
             i.putExtra("timeTaken", System.currentTimeMillis() - timeTaken);
 
-            setResult(Activity.RESULT_OK, i);
+            mActivity.setResult(Activity.RESULT_OK, i);
             mOnImageAvailableThread.interrupt();
-            finish();
+            mActivity.finish();
         } else {
-            Intent i = new Intent(ImageQualityView.this, ImageResultActivity.class);
+            Intent i = new Intent(mActivity, ImageResultActivity.class);
             i.addFlags(Intent.FLAG_ACTIVITY_FORWARD_RESULT);
             i.putExtra("captured", captureByteArray);
             i.putExtra("window", windowByteArray);
@@ -362,7 +369,7 @@ public class ImageQualityView extends AppCompatActivity implements View.OnClickL
             i.putExtra("testB", testB);
             i.putExtra("timeTaken", System.currentTimeMillis() - timeTaken);
             captureMat.release();
-            startActivity(i);
+            mActivity.startActivity(i);
             mOnImageAvailableThread.interrupt();
         }
     }
@@ -416,7 +423,7 @@ public class ImageQualityView extends AppCompatActivity implements View.OnClickL
                     }
 
                     if (previousFocusState != mFocusState) {
-                        runOnUiThread(new Runnable() {
+                        mActivity.runOnUiThread(new Runnable() {
                             @Override
                             public void run() {
                                 displayQualityResultFocusChanged();
@@ -597,14 +604,14 @@ public class ImageQualityView extends AppCompatActivity implements View.OnClickL
     }
 
     private void requestCameraPermission() {
-        ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.CAMERA}, MY_PERMISSION_REQUEST_CODE);
+        ActivityCompat.requestPermissions(mActivity, new String[]{Manifest.permission.CAMERA}, MY_PERMISSION_REQUEST_CODE);
     }
 
     /**
      * Opens the camera specified by {@link #mCameraId}.
      */
     private void openCamera(int width, int height) throws SecurityException {
-        if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA)
+        if (ContextCompat.checkSelfPermission(mActivity, Manifest.permission.CAMERA)
                 != PackageManager.PERMISSION_GRANTED) {
             requestCameraPermission();
             return;
@@ -709,7 +716,7 @@ public class ImageQualityView extends AppCompatActivity implements View.OnClickL
     private void updateRepeatingRequest() {
         // When the session is ready, we start displaying the preview.
         try {
-            CameraManager manager = (CameraManager) getSystemService(Context.CAMERA_SERVICE);
+            CameraManager manager = (CameraManager) mActivity.getSystemService(Context.CAMERA_SERVICE);
             CameraCharacteristics characteristics = manager.getCameraCharacteristics(mCameraId);
 
 
@@ -843,7 +850,7 @@ public class ImageQualityView extends AppCompatActivity implements View.OnClickL
             switch (status) {
                 case LoaderCallbackInterface.SUCCESS: {
                     Log.i(TAG, "OpenCV loaded successfully");
-                    processor = ImageProcessor.getInstance(thisActivity);
+                    processor = ImageProcessor.getInstance(mActivity);
                 }
                 break;
                 default: {
@@ -855,10 +862,10 @@ public class ImageQualityView extends AppCompatActivity implements View.OnClickL
     };
 
     private void initViews() {
-        setTitle("Image Quality Checker");
+        mActivity.setTitle("Image Quality Checker");
 
-        getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
-        getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN);
+        mActivity.getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+        mActivity.getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN);
 
         // Instructions are set here
 
@@ -879,7 +886,7 @@ public class ImageQualityView extends AppCompatActivity implements View.OnClickL
     private void setProgressUI(State CurrentState) {
         switch (CurrentState) {
             case QUALITY_CHECK:
-                runOnUiThread(new Runnable() {
+                mActivity.runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
                         mProgress.setVisibility(View.GONE);
@@ -890,7 +897,7 @@ public class ImageQualityView extends AppCompatActivity implements View.OnClickL
                 });
                 break;
             case FINAL_CHECK:
-                runOnUiThread(new Runnable() {
+                mActivity.runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
                         mProgress.setVisibility(View.VISIBLE);
