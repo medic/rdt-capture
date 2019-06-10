@@ -60,7 +60,7 @@ import org.opencv.android.BaseLoaderCallback;
 import org.opencv.android.LoaderCallbackInterface;
 import org.opencv.android.Utils;
 
-import org.opencv.core.Mat;;
+import org.opencv.core.Mat;
 import org.opencv.core.MatOfKeyPoint;
 
 import org.opencv.features2d.BFMatcher;
@@ -142,7 +142,7 @@ public class ImageQualityView extends LinearLayout implements View.OnClickListen
     /**
      * Tag for the {@link Log}.
      */
-    private static final String TAG = "Camera2BasicFragment";
+    private static final String TAG = "ImageQualityView";
 
     /**
      * Camera state: Showing camera preview.
