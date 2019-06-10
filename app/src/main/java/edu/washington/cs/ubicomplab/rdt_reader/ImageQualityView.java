@@ -417,7 +417,7 @@ public class ImageQualityView extends LinearLayout implements View.OnClickListen
                         //Log.d(TAG, "FOCUS STATE: unknown state " + result.get(CaptureResult.CONTROL_AF_STATE).toString());
                     }
 
-                    if (previousFocusState != mFocusState) {
+                    if (showFeedback && previousFocusState != mFocusState) {
                         mActivity.runOnUiThread(new Runnable() {
                             @Override
                             public void run() {
@@ -875,6 +875,10 @@ public class ImageQualityView extends LinearLayout implements View.OnClickListen
     }
 
     private void setProgressUI(State CurrentState) {
+        if (!showFeedback) {
+            return;
+        }
+
         switch (CurrentState) {
             case QUALITY_CHECK:
                 mActivity.runOnUiThread(new Runnable() {
@@ -904,6 +908,10 @@ public class ImageQualityView extends LinearLayout implements View.OnClickListen
     }
 
     private void displayQualityResult(ImageProcessor.SizeResult sizeResult, boolean isCentered, boolean isRightOrientation, boolean isSharp, ImageProcessor.ExposureResult exposureResult) {
+        if (!showFeedback) {
+            return;
+        }
+
         FocusState currFocusState;
 
         synchronized (focusStateLock) {
@@ -939,6 +947,10 @@ public class ImageQualityView extends LinearLayout implements View.OnClickListen
     }
 
     private void displayQualityResultFocusChanged() {
+        if (!showFeedback) {
+            return;
+        }
+
         FocusState currFocusState;
 
         synchronized (focusStateLock) {
