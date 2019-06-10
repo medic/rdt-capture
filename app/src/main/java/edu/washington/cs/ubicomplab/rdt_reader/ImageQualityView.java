@@ -77,6 +77,8 @@ public class ImageQualityView extends LinearLayout implements View.OnClickListen
     private View mProgressBackgroundView;
     private TextView mInstructionText;
     private State mCurrentState = State.QUALITY_CHECK;
+    private boolean showViewport;
+    private boolean showFeedback;
 
     private long timeTaken = 0;
 
@@ -103,14 +105,14 @@ public class ImageQualityView extends LinearLayout implements View.OnClickListen
 
         TypedArray styleAttrs = context.getTheme().obtainStyledAttributes(
                 attrs, R.styleable.ImageQualityView, 0, 0);
-        boolean showViewport = styleAttrs.getBoolean(R.styleable.ImageQualityView_showViewport, true);
-        boolean showFeedback = styleAttrs.getBoolean(R.styleable.ImageQualityView_showFeedback, true);
+        showViewport = styleAttrs.getBoolean(R.styleable.ImageQualityView_showViewport, true);
+        showFeedback = styleAttrs.getBoolean(R.styleable.ImageQualityView_showFeedback, true);
 
         mTextureView = findViewById(R.id.texture);
 
         timeTaken = System.currentTimeMillis();
 
-        initViews(showViewport, showFeedback);
+        initViews();
 
     }
 
@@ -837,7 +839,7 @@ public class ImageQualityView extends LinearLayout implements View.OnClickListen
         }
     };
 
-    private void initViews(boolean showViewport, boolean showFeedback) {
+    private void initViews() {
         mActivity.setTitle("Image Quality Checker");
 
         mActivity.getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
@@ -860,7 +862,9 @@ public class ImageQualityView extends LinearLayout implements View.OnClickListen
         mCaptureProgressBar.setProgress(0);
         mInstructionText = findViewById(R.id.textInstruction);
 
-        if (!showFeedback) {
+        if (showFeedback) {
+            setProgressUI(mCurrentState);
+        } else {
             mImageQualityFeedbackView.setVisibility(GONE);
             mProgressBackgroundView.setVisibility(GONE);
             mProgress.setVisibility(GONE);
@@ -868,8 +872,6 @@ public class ImageQualityView extends LinearLayout implements View.OnClickListen
             mInstructionText.setVisibility(GONE);
             mCaptureProgressBar.setVisibility(GONE);
         }
-
-        setProgressUI(mCurrentState);
     }
 
     private void setProgressUI(State CurrentState) {
