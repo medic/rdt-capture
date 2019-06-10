@@ -810,7 +810,7 @@ public class ImageQualityView extends LinearLayout implements View.OnClickListen
         mTextureView.setTransform(matrix);
     }
 
-
+    @Override
     public void onClick(View view) {
         switch (view.getId()) {
             case R.id.img_quality_check_viewport: {
