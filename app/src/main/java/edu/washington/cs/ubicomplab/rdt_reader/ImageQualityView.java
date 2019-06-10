@@ -461,12 +461,11 @@ public class ImageQualityView extends LinearLayout implements View.OnClickListen
      * @param text The message to show
      */
     private void showToast(final String text) {
-        final Activity activity = mActivity;
-        if (activity != null) {
-            activity.runOnUiThread(new Runnable() {
+        if (mActivity != null) {
+            mActivity.runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
-                    Toast.makeText(activity, text, Toast.LENGTH_SHORT).show();
+                    Toast.makeText(mActivity, text, Toast.LENGTH_SHORT).show();
                 }
             });
         }
