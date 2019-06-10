@@ -497,7 +497,7 @@ public class ImageQualityView extends LinearLayout implements View.OnClickListen
                                            @NonNull int[] grantResults) {
         if (requestCode == REQUEST_CAMERA_PERMISSION) {
             if (grantResults.length != 1 || grantResults[0] != PackageManager.PERMISSION_GRANTED) {
-                showToast("This sample needs camera permission.");
+                showToast("This App requires permission to use your camera.");
             }
         }
     }
@@ -582,7 +582,7 @@ public class ImageQualityView extends LinearLayout implements View.OnClickListen
         } catch (NullPointerException e) {
             // Currently an NPE is thrown when the Camera2API is used but not supported on the
             // device this code runs.
-            showToast("This device doesn\\'t support Camera2 API.");
+            showToast("Unable to open the camera.");
         }
     }
 
@@ -690,7 +690,7 @@ public class ImageQualityView extends LinearLayout implements View.OnClickListen
         @Override
         public void onConfigureFailed(
                 @NonNull CameraCaptureSession cameraCaptureSession) {
-            showToast("Failed");
+            showToast("Unable to open the camera.");
         }
     };
 
