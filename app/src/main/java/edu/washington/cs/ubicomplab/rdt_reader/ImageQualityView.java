@@ -433,10 +433,10 @@ public class ImageQualityView extends LinearLayout implements View.OnClickListen
                 }
             }
 
-            if (!Build.MODEL.equals("TECNO-W3")) {
-                if (counter++ % 10 == 0)
-                    updateRepeatingRequest();
-            }
+            //if (!Build.MODEL.equals("TECNO-W3")) {
+            //    if (counter++ % 10 == 0)
+            //        updateRepeatingRequest();
+            //}
         }
 
         @Override
