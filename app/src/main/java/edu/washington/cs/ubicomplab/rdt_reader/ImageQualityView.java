@@ -360,8 +360,11 @@ public class ImageQualityView extends LinearLayout implements View.OnClickListen
                                 finalInterpretationResult,
                                 System.currentTimeMillis() - timeTaken
                         );
-                        captureResult.resultMat.release();
-                        if (finalInterpretationResult != null) {
+                        if (captureResult.resultMat != null) {
+                            captureResult.resultMat.release();
+                        }
+                        if (finalInterpretationResult != null &&
+                                finalInterpretationResult.resultMat != null) {
                             finalInterpretationResult.resultMat.release();
                         }
                         if (result == RDTDectedResult.STOP) {
