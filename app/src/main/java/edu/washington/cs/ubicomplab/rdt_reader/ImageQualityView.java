@@ -685,6 +685,9 @@ public class ImageQualityView extends LinearLayout implements View.OnClickListen
                 return;
             }
             mCaptureSession = cameraCaptureSession;
+            if (mImageQualityViewListener != null) {
+                mImageQualityViewListener.onRDTCameraReady();
+            }
 
             updateRepeatingRequest();
         }
