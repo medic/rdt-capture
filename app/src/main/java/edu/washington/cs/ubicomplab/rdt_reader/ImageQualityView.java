@@ -354,22 +354,23 @@ public class ImageQualityView extends LinearLayout implements View.OnClickListen
             mActivity.runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
+                    RDTDectedResult result = RDTDectedResult.CONTINUE;
                     if (mImageQualityViewListener != null) {
-                        RDTDectedResult result = mImageQualityViewListener.onRDTDetected(
+                        result = mImageQualityViewListener.onRDTDetected(
                                 captureResult,
                                 finalInterpretationResult,
                                 System.currentTimeMillis() - timeTaken
                         );
-                        if (captureResult.resultMat != null) {
-                            captureResult.resultMat.release();
-                        }
-                        if (finalInterpretationResult != null &&
-                                finalInterpretationResult.resultMat != null) {
-                            finalInterpretationResult.resultMat.release();
-                        }
-                        if (result == RDTDectedResult.STOP) {
-                            mOnImageAvailableThread.interrupt();
-                        }
+                    }
+                    if (captureResult.resultMat != null) {
+                        captureResult.resultMat.release();
+                    }
+                    if (finalInterpretationResult != null &&
+                            finalInterpretationResult.resultMat != null) {
+                        finalInterpretationResult.resultMat.release();
+                    }
+                    if (result == RDTDectedResult.STOP) {
+                        mOnImageAvailableThread.interrupt();
                     }
                 }
             });
