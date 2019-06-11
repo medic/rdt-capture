@@ -540,9 +540,7 @@ public class ImageQualityActivity extends AppCompatActivity implements View.OnCl
 
         ArrayList<Mat> channels = new ArrayList<>();
         Core.split(cropgray, channels);
-
-        saveImage(crop);
-
+        
         Core.MinMaxLocResult result = Core.minMaxLoc(channels.get(1), null);
 
         Log.d(TAG, "MIN MAX LOC Rect: "+crop.size().width+", "+ cropgray.size().width);
