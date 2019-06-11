@@ -696,8 +696,8 @@ public class ImageQualityActivity extends AppCompatActivity implements View.OnCl
         private void process(CaptureResult result) {
             synchronized (focusStateLock) {
                 FocusState previousFocusState = mFocusState;
-                if (result.get(CaptureResult.CONTROL_AF_MODE) == null) {
-                    Log.d(TAG, "FOCUS STATE: is null");
+                if (result.get(CaptureResult.CONTROL_AF_MODE) == null || result.get(CaptureResult.CONTROL_AF_STATE) == null) {
+                    Log.d(TAG, "FOCUS STATE or AF STATE is null");
                     return;
                 }
 
@@ -727,11 +727,6 @@ public class ImageQualityActivity extends AppCompatActivity implements View.OnCl
                         });
                     }
                 }
-            }
-
-            if (!Build.MODEL.equals("TECNO-W3")) {
-                if (counter++%10 == 0)
-                    updateRepeatingRequest();
             }
         }
 
