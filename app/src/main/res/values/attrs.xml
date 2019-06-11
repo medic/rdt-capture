@@ -12,4 +12,8 @@
         <attr name="heightScale" format="float" />
         <attr name="widthScale" format="float" />
     </declare-styleable>
+    <declare-styleable name="ImageQualityView">
+        <attr name="showViewport" format="boolean" />
+        <attr name="showFeedback" format="boolean"/>
+    </declare-styleable>
 </resources>
