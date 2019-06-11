@@ -541,6 +541,8 @@ public class ImageQualityActivity extends AppCompatActivity implements View.OnCl
         ArrayList<Mat> channels = new ArrayList<>();
         Core.split(cropgray, channels);
 
+        saveImage(crop);
+
         Core.MinMaxLocResult result = Core.minMaxLoc(channels.get(1), null);
 
         Log.d(TAG, "MIN MAX LOC Rect: "+crop.size().width+", "+ cropgray.size().width);
@@ -583,7 +585,7 @@ public class ImageQualityActivity extends AppCompatActivity implements View.OnCl
         Log.d(TAG, "MIN MAX Row Avg: " + avg + " And, MIN VAL: "+avgMin);
         Log.d(TAG, "MIN MAX Row Loc: " + line + " And, MIN VAL: "+result.minLoc);
 
-        return (0 < avg && avg < avgMin+30 && result.minLoc.x - 0.1*channels.get(2).width() < line.x && line.x < result.minLoc.x + 0.1*channels.get(2).width());
+        return (0 < avg && avg < avgMin+30 && result.minLoc.x - 0.2*channels.get(2).width() < line.x && line.x < result.minLoc.x + 0.2*channels.get(2).width());
     }
 
     private Mat enhanceResultWindow(Mat input, MatOfPoint2f boundary) {
