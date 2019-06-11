@@ -348,32 +348,27 @@ public class ImageQualityView extends LinearLayout implements View.OnClickListen
                 interpretationResult = processor.interpretResult(captureResult.resultMat);
 
             }
-            final ImageProcessor.InterpretationResult finalInterpretationResult = interpretationResult;
             imageQueue.remove();
             image.close();
-            mActivity.runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    RDTDectedResult result = RDTDectedResult.CONTINUE;
-                    if (mImageQualityViewListener != null) {
-                        result = mImageQualityViewListener.onRDTDetected(
-                                captureResult,
-                                finalInterpretationResult,
-                                System.currentTimeMillis() - timeTaken
-                        );
-                    }
-                    if (captureResult.resultMat != null) {
-                        captureResult.resultMat.release();
-                    }
-                    if (finalInterpretationResult != null &&
-                            finalInterpretationResult.resultMat != null) {
-                        finalInterpretationResult.resultMat.release();
-                    }
-                    if (result == RDTDectedResult.STOP) {
-                        mOnImageAvailableThread.interrupt();
-                    }
-                }
-            });
+
+            RDTDectedResult result = RDTDectedResult.CONTINUE;
+            if (mImageQualityViewListener != null) {
+                result = mImageQualityViewListener.onRDTDetected(
+                        captureResult,
+                        interpretationResult,
+                        System.currentTimeMillis() - timeTaken
+                );
+            }
+            if (captureResult.resultMat != null) {
+                captureResult.resultMat.release();
+            }
+            if (interpretationResult != null &&
+                    interpretationResult.resultMat != null) {
+                interpretationResult.resultMat.release();
+            }
+            if (result == RDTDectedResult.STOP) {
+                mOnImageAvailableThread.interrupt();
+            }
 
             return null;
         }

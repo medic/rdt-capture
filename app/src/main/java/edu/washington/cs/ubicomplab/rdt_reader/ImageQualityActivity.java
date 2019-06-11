@@ -57,27 +57,32 @@ public class ImageQualityActivity extends Activity implements ImageQualityView.I
         Log.i("ImageQualityActivity", "Detected and Passed!");
         final ImageQualityActivity self = this;
 
-        byte[] captureByteArray = ImageUtil.matToRotatedByteArray(captureResult.resultMat);
-        byte[] windowByteArray = ImageUtil.matToRotatedByteArray(interpretationResult.resultMat);
-        if (mImageQualityView.isExternalIntent()) {
-            Intent i = new Intent();
+        final byte[] captureByteArray = ImageUtil.matToRotatedByteArray(captureResult.resultMat);
+        final byte[] windowByteArray = ImageUtil.matToRotatedByteArray(interpretationResult.resultMat);
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                if (mImageQualityView.isExternalIntent()) {
+                    Intent i = new Intent();
 
-            i.putExtra("data", captureByteArray);
-            i.putExtra("timeTaken", timeTaken);
+                    i.putExtra("data", captureByteArray);
+                    i.putExtra("timeTaken", timeTaken);
 
-            setResult(Activity.RESULT_OK, i);
-            finish();
-        } else {
-            Intent i = new Intent(self, ImageResultActivity.class);
-            i.addFlags(Intent.FLAG_ACTIVITY_FORWARD_RESULT);
-            i.putExtra("captured", captureByteArray);
-            i.putExtra("window", windowByteArray);
-            i.putExtra("control", interpretationResult.control);
-            i.putExtra("testA", interpretationResult.testA);
-            i.putExtra("testB", interpretationResult.testB);
-            i.putExtra("timeTaken", timeTaken);
-            startActivity(i);
-        }
+                    setResult(Activity.RESULT_OK, i);
+                    finish();
+                } else {
+                    Intent i = new Intent(self, ImageResultActivity.class);
+                    i.addFlags(Intent.FLAG_ACTIVITY_FORWARD_RESULT);
+                    i.putExtra("captured", captureByteArray);
+                    i.putExtra("window", windowByteArray);
+                    i.putExtra("control", interpretationResult.control);
+                    i.putExtra("testA", interpretationResult.testA);
+                    i.putExtra("testB", interpretationResult.testB);
+                    i.putExtra("timeTaken", timeTaken);
+                    startActivity(i);
+                }
+            }
+        });
         return ImageQualityView.RDTDectedResult.STOP;
     }
 }
