@@ -14,8 +14,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.res.Configuration;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
+import android.content.res.TypedArray;
 import android.graphics.ImageFormat;
 import android.graphics.Matrix;
 import android.graphics.RectF;
@@ -39,11 +38,8 @@ import android.os.HandlerThread;
 import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
-import android.support.v7.app.AppCompatActivity;
-import android.os.Bundle;
 import android.text.Html;
 import android.util.AttributeSet;
-import android.util.DisplayMetrics;
 import android.util.Log;
 import android.util.Size;
 import android.util.SparseIntArray;
@@ -58,17 +54,10 @@ import android.widget.Toast;
 
 import org.opencv.android.BaseLoaderCallback;
 import org.opencv.android.LoaderCallbackInterface;
-import org.opencv.android.Utils;
 
 import org.opencv.core.Mat;
-import org.opencv.core.MatOfKeyPoint;
 
-import org.opencv.features2d.BFMatcher;
-import org.opencv.features2d.BRISK;
 
-import org.opencv.imgproc.Imgproc;
-
-import java.io.File;
 import java.util.Arrays;
 
 import java.util.concurrent.ArrayBlockingQueue;
@@ -89,6 +78,8 @@ public class ImageQualityView extends LinearLayout implements View.OnClickListen
     private View mProgressBackgroundView;
     private TextView mInstructionText;
     private State mCurrentState = State.QUALITY_CHECK;
+    private boolean showViewport;
+    private boolean showFeedback;
 
     private long timeTaken = 0;
 
@@ -112,6 +103,11 @@ public class ImageQualityView extends LinearLayout implements View.OnClickListen
             throw new Error("ImageQualityView must be created in an activity");
         }
         inflate(context, R.layout.image_quality_view, this);
+
+        TypedArray styleAttrs = context.getTheme().obtainStyledAttributes(
+                attrs, R.styleable.ImageQualityView, 0, 0);
+        showViewport = styleAttrs.getBoolean(R.styleable.ImageQualityView_showViewport, true);
+        showFeedback = styleAttrs.getBoolean(R.styleable.ImageQualityView_showFeedback, true);
 
         mTextureView = findViewById(R.id.texture);
 
@@ -422,7 +418,7 @@ public class ImageQualityView extends LinearLayout implements View.OnClickListen
                         //Log.d(TAG, "FOCUS STATE: unknown state " + result.get(CaptureResult.CONTROL_AF_STATE).toString());
                     }
 
-                    if (previousFocusState != mFocusState) {
+                    if (showFeedback && previousFocusState != mFocusState) {
                         mActivity.runOnUiThread(new Runnable() {
                             @Override
                             public void run() {
@@ -849,7 +845,11 @@ public class ImageQualityView extends LinearLayout implements View.OnClickListen
         // Instructions are set here
 
         mViewport = findViewById(R.id.img_quality_check_viewport);
-        mViewport.setOnClickListener(this);
+        if (showViewport) {
+            mViewport.setOnClickListener(this);
+        } else {
+            mViewport.setVisibility(GONE);
+        }
         mImageQualityFeedbackView = findViewById(R.id.img_quality_feedback_view);
         mProgress = findViewById(R.id.progressCircularBar);
         mProgressBackgroundView = findViewById(R.id.progressBackground);
@@ -859,10 +859,23 @@ public class ImageQualityView extends LinearLayout implements View.OnClickListen
         mCaptureProgressBar.setProgress(0);
         mInstructionText = findViewById(R.id.textInstruction);
 
-        setProgressUI(mCurrentState);
+        if (showFeedback) {
+            setProgressUI(mCurrentState);
+        } else {
+            mImageQualityFeedbackView.setVisibility(GONE);
+            mProgressBackgroundView.setVisibility(GONE);
+            mProgress.setVisibility(GONE);
+            mProgressText.setVisibility(GONE);
+            mInstructionText.setVisibility(GONE);
+            mCaptureProgressBar.setVisibility(GONE);
+        }
     }
 
     private void setProgressUI(State CurrentState) {
+        if (!showFeedback) {
+            return;
+        }
+
         switch (CurrentState) {
             case QUALITY_CHECK:
                 mActivity.runOnUiThread(new Runnable() {
@@ -892,6 +905,10 @@ public class ImageQualityView extends LinearLayout implements View.OnClickListen
     }
 
     private void displayQualityResult(ImageProcessor.SizeResult sizeResult, boolean isCentered, boolean isRightOrientation, boolean isSharp, ImageProcessor.ExposureResult exposureResult) {
+        if (!showFeedback) {
+            return;
+        }
+
         FocusState currFocusState;
 
         synchronized (focusStateLock) {
@@ -927,6 +944,10 @@ public class ImageQualityView extends LinearLayout implements View.OnClickListen
     }
 
     private void displayQualityResultFocusChanged() {
+        if (!showFeedback) {
+            return;
+        }
+
         FocusState currFocusState;
 
         synchronized (focusStateLock) {
