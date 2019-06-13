@@ -87,12 +87,26 @@ public class ImageQualityView extends LinearLayout implements View.OnClickListen
 
     private FocusState mFocusState = FocusState.INACTIVE;
 
+    private ImageQualityViewListener mImageQualityViewListener;
+
     private enum State {
         QUALITY_CHECK, FINAL_CHECK
     }
 
     private enum FocusState {
         INACTIVE, FOCUSING, FOCUSED, UNFOCUSED
+    }
+
+    public enum RDTDectedResult {
+        STOP, CONTINUE
+    }
+    public interface ImageQualityViewListener {
+        void onRDTCameraReady();
+        RDTDectedResult onRDTDetected(
+                ImageProcessor.CaptureResult captureResult,
+                ImageProcessor.InterpretationResult interpretationResult,
+                long timeTaken
+        );
     }
 
     public ImageQualityView(Context context, AttributeSet attrs) {
@@ -120,6 +134,10 @@ public class ImageQualityView extends LinearLayout implements View.OnClickListen
     public boolean isExternalIntent() {
         Intent i = mActivity.getIntent();
         return i != null && "medic.mrdt.verify".equals(i.getAction());
+    }
+
+    public void setImageQualityViewListener(ImageQualityViewListener listener) {
+        mImageQualityViewListener = listener;
     }
 
     /**
@@ -317,56 +335,38 @@ public class ImageQualityView extends LinearLayout implements View.OnClickListen
 
             Log.d(TAG, String.format("Capture time: %d", System.currentTimeMillis() - timeTaken));
             Log.d(TAG, String.format("Captured result: %b", captureResult.allChecksPassed));
+
+            ImageProcessor.InterpretationResult interpretationResult = null;
             if (captureResult.allChecksPassed) {
                 Log.d(TAG, String.format("Captured MAT size: %s", captureResult.resultMat.size()));
 
                 //interpretation
-                final ImageProcessor.InterpretationResult interpretationResult = processor.interpretResult(captureResult.resultMat);
+                interpretationResult = processor.interpretResult(captureResult.resultMat);
 
-                if (interpretationResult.control) {
-                    mActivity.runOnUiThread(new Runnable() {
-                        @Override
-                        public void run() {
-                            moveToResultActivity(captureResult.resultMat, interpretationResult.resultMat,
-                                    interpretationResult.control, interpretationResult.testA, interpretationResult.testB);
-                        }
-                    });
-                } else {
-                    imageQueue.remove();
-                    image.close();
-                }
-            } else {
-                imageQueue.remove();
-                image.close();
             }
+            imageQueue.remove();
+            image.close();
+
+            RDTDectedResult result = RDTDectedResult.CONTINUE;
+            if (mImageQualityViewListener != null) {
+                result = mImageQualityViewListener.onRDTDetected(
+                        captureResult,
+                        interpretationResult,
+                        System.currentTimeMillis() - timeTaken
+                );
+            }
+            if (captureResult.resultMat != null) {
+                captureResult.resultMat.release();
+            }
+            if (interpretationResult != null &&
+                    interpretationResult.resultMat != null) {
+                interpretationResult.resultMat.release();
+            }
+            if (result == RDTDectedResult.STOP) {
+                mOnImageAvailableThread.interrupt();
+            }
+
             return null;
-        }
-    }
-
-    private void moveToResultActivity(Mat captureMat, Mat windowMat, boolean control, boolean testA, boolean testB) {
-        byte[] captureByteArray = ImageUtil.matToRotatedByteArray(captureMat);
-        byte[] windowByteArray = ImageUtil.matToRotatedByteArray(windowMat);
-        if (isExternalIntent()) {
-            Intent i = new Intent();
-
-            i.putExtra("data", captureByteArray);
-            i.putExtra("timeTaken", System.currentTimeMillis() - timeTaken);
-
-            mActivity.setResult(Activity.RESULT_OK, i);
-            mOnImageAvailableThread.interrupt();
-            mActivity.finish();
-        } else {
-            Intent i = new Intent(mActivity, ImageResultActivity.class);
-            i.addFlags(Intent.FLAG_ACTIVITY_FORWARD_RESULT);
-            i.putExtra("captured", captureByteArray);
-            i.putExtra("window", windowByteArray);
-            i.putExtra("control", control);
-            i.putExtra("testA", testA);
-            i.putExtra("testB", testB);
-            i.putExtra("timeTaken", System.currentTimeMillis() - timeTaken);
-            captureMat.release();
-            mActivity.startActivity(i);
-            mOnImageAvailableThread.interrupt();
         }
     }
 
@@ -677,6 +677,9 @@ public class ImageQualityView extends LinearLayout implements View.OnClickListen
                 return;
             }
             mCaptureSession = cameraCaptureSession;
+            if (mImageQualityViewListener != null) {
+                mImageQualityViewListener.onRDTCameraReady();
+            }
 
             updateRepeatingRequest();
         }

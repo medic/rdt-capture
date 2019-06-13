@@ -14,6 +14,7 @@ import android.graphics.Matrix;
 import android.graphics.Rect;
 import android.graphics.YuvImage;
 import android.media.Image;
+import android.util.Base64;
 
 import org.opencv.android.Utils;
 import org.opencv.core.CvType;
@@ -132,6 +133,17 @@ public final class ImageUtil {
         return mat;
     }
 
+    public static String matToBase64(Mat mat) {
+        if (mat == null) {
+            return "";
+        }
+        Bitmap bitmap = Bitmap.createBitmap(mat.cols(), mat.rows(), Bitmap.Config.ARGB_8888);
+        Utils.matToBitmap(mat, bitmap);
+        ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+        bitmap.compress(Bitmap.CompressFormat.PNG, 100, byteArrayOutputStream);
+        byte[] byteArray = byteArrayOutputStream .toByteArray();
+        return Base64.encodeToString(byteArray, Base64.DEFAULT);
+    }
 
     public static byte[] matToRotatedByteArray(Mat captureMat) {
         Bitmap resultBitmap = Bitmap.createBitmap(captureMat.cols(), captureMat.rows(), Bitmap.Config.ARGB_8888);
