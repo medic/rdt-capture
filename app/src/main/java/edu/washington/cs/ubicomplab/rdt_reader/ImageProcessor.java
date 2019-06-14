@@ -610,17 +610,17 @@ public class ImageProcessor {
 
         String[] texts = new String[4];
 
-        texts[0] = isSharp ? "Sharpness: PASSED": "Sharpness: FAILED";
+        texts[0] = isSharp ? "&#x2713; Sharpness: passed": "Sharpness: failed";
         if (exposureResult == ExposureResult.NORMAL) {
-            texts[1] = "Brightness: PASSED";
+            texts[1] = "&#x2713; Brightness: passed";
         } else if (exposureResult == ExposureResult.OVER_EXPOSED) {
-            texts[1] = "Brightness: TOO BRIGHT";
+            texts[1] = "Brightness: too bright";
         } else if (exposureResult == ExposureResult.UNDER_EXPOSED) {
-            texts[1] = "Brightness: TOO DARK";
+            texts[1] = "Brightness: too dark";
         }
 
-        texts[2] = sizeResult == SizeResult.RIGHT_SIZE && isCentered && isRightOrientation ? "POSITION/SIZE: PASSED": "POSITION/SIZE: FAILED";
-        texts[3] = "Shadow: PASSED";
+        texts[2] = sizeResult == SizeResult.RIGHT_SIZE && isCentered && isRightOrientation ? "&#x2713; Position/Size: passed": "Position/Size: failed";
+        texts[3] = "&#x2713; Shadow: passed";
 
         return texts;
 

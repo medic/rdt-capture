@@ -925,25 +925,14 @@ public class ImageQualityView extends LinearLayout implements View.OnClickListen
             mInstructionText.setText(getResources().getText(processor.getInstructionText(sizeResult, isCentered, isRightOrientation)));
 
             mImageQualityFeedbackView.setText(Html.fromHtml(message));
-            if (sizeResult == ImageProcessor.SizeResult.RIGHT_SIZE && isCentered && isRightOrientation && isSharp && exposureResult == ImageProcessor.ExposureResult.NORMAL) {
-                if (mViewport.getBackgroundColorId() != R.color.green_overlay) {
-                    mViewport.setBackgroundColoId(R.color.green_overlay);
-                }
-            } else {
-                if (mViewport.getBackgroundColorId() != R.color.red_overlay) {
-                    mViewport.setBackgroundColoId(R.color.red_overlay);
-                }
-            }
         } else if (currFocusState == FocusState.INACTIVE) {
             mInstructionText.setText(getResources().getString(R.string.instruction_pos));
-            mViewport.setBackgroundColoId(R.color.red_overlay);
         } else if (currFocusState == FocusState.UNFOCUSED) {
             mInstructionText.setText(getResources().getString(R.string.instruction_unfocused));
-            mViewport.setBackgroundColoId(R.color.red_overlay);
         } else if (currFocusState == FocusState.FOCUSING) {
             mInstructionText.setText(getResources().getString(R.string.instruction_focusing));
-            mViewport.setBackgroundColoId(R.color.red_overlay);
         }
+        mViewport.setBackgroundColoId(R.color.black_overlay);
     }
 
     private void displayQualityResultFocusChanged() {
@@ -959,17 +948,14 @@ public class ImageQualityView extends LinearLayout implements View.OnClickListen
 
         if (currFocusState == FocusState.FOCUSED) {
             mInstructionText.setText(getResources().getString(R.string.instruction_pos));
-            String message = String.format(getResources().getString(R.string.quality_msg_format), "FAILED", "FAILED", "FAILED", "FAILED");
+            String message = String.format(getResources().getString(R.string.quality_msg_format), "failed", "failed", "failed", "failed");
             mImageQualityFeedbackView.setText(Html.fromHtml(message));
         } else if (currFocusState == FocusState.INACTIVE) {
             mInstructionText.setText(getResources().getString(R.string.instruction_pos));
-            mViewport.setBackgroundColoId(R.color.red_overlay);
         } else if (currFocusState == FocusState.UNFOCUSED) {
             mInstructionText.setText(getResources().getString(R.string.instruction_unfocused));
-            mViewport.setBackgroundColoId(R.color.red_overlay);
         } else if (currFocusState == FocusState.FOCUSING) {
             mInstructionText.setText(getResources().getString(R.string.instruction_focusing));
-            mViewport.setBackgroundColoId(R.color.red_overlay);
         }
     }
 
