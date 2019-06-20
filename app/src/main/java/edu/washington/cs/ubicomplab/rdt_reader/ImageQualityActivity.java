@@ -505,20 +505,43 @@ public class ImageQualityActivity extends AppCompatActivity implements View.OnCl
 
     };
 
+    //methods for debugging
+    private void saveImage (Mat inputMat) {
+        File sdIconStorageDir = new File(Constants.RDT_IMAGE_DIR);
+
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH-mm-ss-SSS");
+
+        try {
+            String filePath = sdIconStorageDir.toString() + String.format("/%s-%08dms.jpg", sdf.format(new Date()), 0);
+            FileOutputStream fileOutputStream = new FileOutputStream(filePath);
+
+            fileOutputStream.write(ImageUtil.matToRotatedByteArray(inputMat));
+
+            fileOutputStream.flush();
+            fileOutputStream.close();
+
+            //sendBroadcast(new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE, Uri.parse("file://" + filePath)));
+
+            //Toast.makeText(this,"Image is successfully saved!", Toast.LENGTH_SHORT).show();
+        } catch (Exception e) {
+            Log.w("TAG", "Error saving image file: " + e.getMessage());
+        }
+    }
+
     private boolean checkWindowPosition(Mat resultWindowMat) {
-        Imgproc.rectangle(resultWindowMat, new Point(resultWindowMat.cols()/3*1.6, 0), new Point(resultWindowMat.cols(), resultWindowMat.rows()), new Scalar(255), -1);
+        Imgproc.rectangle(resultWindowMat, new Point(resultWindowMat.cols()/3*1.5, 0), new Point(resultWindowMat.cols(), resultWindowMat.rows()), new Scalar(255), -1);
 
         Point line = new Point(resultWindowMat.width()*0.35-resultWindowMat.width()*0.15, 0);
-        Rect roi = new Rect((int)(resultWindowMat.width()*0.15), (int)(resultWindowMat.height()*0.2), (int)(resultWindowMat.width()*0.7), (int)(resultWindowMat.height()*0.6));
+        Rect roi = new Rect((int)(resultWindowMat.width()*0.15), (int)(resultWindowMat.height()*0.2), (int)(resultWindowMat.width()*0.7)/2, (int)(resultWindowMat.height()*0.6));
         Mat crop = resultWindowMat.submat(roi);
         Mat cropgray = new Mat();
         Imgproc.cvtColor(crop, cropgray, Imgproc.COLOR_RGBA2BGR);
-        Imgproc.cvtColor(cropgray, cropgray, Imgproc.COLOR_BGR2HSV);
+        Imgproc.cvtColor(cropgray, cropgray, Imgproc.COLOR_BGR2HLS);
 
         ArrayList<Mat> channels = new ArrayList<>();
         Core.split(cropgray, channels);
-
-        Core.MinMaxLocResult result = Core.minMaxLoc(channels.get(2), null);
+        
+        Core.MinMaxLocResult result = Core.minMaxLoc(channels.get(1), null);
 
         Log.d(TAG, "MIN MAX LOC Rect: "+crop.size().width+", "+ cropgray.size().width);
         Log.d(TAG, "MIN MAX LOC Rect: "+crop.size().height+", "+ cropgray.size().height);
@@ -527,12 +550,12 @@ public class ImageQualityActivity extends AppCompatActivity implements View.OnCl
         double minColSum = Double.MAX_VALUE;
         int minColIndex = -2;
         for (int i = -2; i < 1; i++) {
-            double colSum = channels.get(2).get((int)result.minLoc.y, (int)result.minLoc.x+i)[0] +
-            channels.get(2).get((int)result.minLoc.y, (int)result.minLoc.x+i+1)[0] +
-            channels.get(2).get((int)result.minLoc.y, (int)result.minLoc.x+i+2)[0];
+            double colSum = channels.get(1).get((int)result.minLoc.y, (int)result.minLoc.x+i)[0] +
+            channels.get(1).get((int)result.minLoc.y, (int)result.minLoc.x+i+1)[0] +
+            channels.get(1).get((int)result.minLoc.y, (int)result.minLoc.x+i+2)[0];
 
-            Log.d(TAG, String.format("MIN MAX explore: %d: %d, %d, %d", (int)result.minLoc.x+i, (int)channels.get(2).get((int)result.minLoc.y, (int)result.minLoc.x+i)[0],
-                    (int)channels.get(2).get((int)result.minLoc.y, (int)result.minLoc.x+i+1)[0], (int)channels.get(2).get((int)result.minLoc.y, (int)result.minLoc.x+i+2)[0]));
+            Log.d(TAG, String.format("MIN MAX explore: %d: %d, %d, %d", (int)result.minLoc.x+i, (int)channels.get(1).get((int)result.minLoc.y, (int)result.minLoc.x+i)[0],
+                    (int)channels.get(1).get((int)result.minLoc.y, (int)result.minLoc.x+i+1)[0], (int)channels.get(1).get((int)result.minLoc.y, (int)result.minLoc.x+i+2)[0]));
 
             minColIndex = (colSum < minColSum) ? i : minColIndex;
             minColSum = (colSum < minColSum) ? colSum : minColSum;
@@ -541,21 +564,26 @@ public class ImageQualityActivity extends AppCompatActivity implements View.OnCl
         Log.d(TAG, "MIN MAX col: " + minColIndex);
 
         double sum = 0;
+        double sumMin = 0;
         for (int i = minColIndex; i < minColIndex+3; i++) {
-            for (int j = 0; j < channels.get(2).height(); j++) {
-                Log.d(TAG, "MIN MAX coor: "+(result.minLoc.x+i)+","+j+", " +channels.get(2).get(j, (int)(result.minLoc.x+i))[0]);
+            for (int j = 0; j < channels.get(1).height(); j++) {
+                Log.d(TAG, "MIN MAX coor: "+(result.minLoc.x+i)+","+j+", " +channels.get(1).get(j, (int)(result.minLoc.x+i))[0]);
                 //if (i >= -1 && i < 2) {
-                sum += channels.get(2).get(j, (int) (result.minLoc.x + i))[0];
+                sum += channels.get(1).get(j, (int) (result.minLoc.x + i))[0];
                 //}
+                if (i == minColIndex) {
+                    sumMin += channels.get(1).get(j, (int) (result.minLoc.x + i))[0];
+                }
             }
         }
 
+        double avgMin = sumMin/(double)(channels.get(0).height());
         double avg = sum/(double)(channels.get(0).height()*3);
 
-        Log.d(TAG, "MIN MAX Row Avg: " + avg + " And, MIN VAL: "+result.minVal);
+        Log.d(TAG, "MIN MAX Row Avg: " + avg + " And, MIN VAL: "+avgMin);
         Log.d(TAG, "MIN MAX Row Loc: " + line + " And, MIN VAL: "+result.minLoc);
 
-        return (0 < avg && avg < result.minVal+30 && result.minLoc.x - 0.1*channels.get(2).width() < line.x && line.x < result.minLoc.x + 0.1*channels.get(2).width());
+        return (0 < avg && avg < avgMin+30 && result.minLoc.x - 0.2*channels.get(2).width() < line.x && line.x < result.minLoc.x + 0.2*channels.get(2).width());
     }
 
     private Mat enhanceResultWindow(Mat input, MatOfPoint2f boundary) {
@@ -696,8 +724,8 @@ public class ImageQualityActivity extends AppCompatActivity implements View.OnCl
         private void process(CaptureResult result) {
             synchronized (focusStateLock) {
                 FocusState previousFocusState = mFocusState;
-                if (result.get(CaptureResult.CONTROL_AF_MODE) == null) {
-                    Log.d(TAG, "FOCUS STATE: is null");
+                if (result.get(CaptureResult.CONTROL_AF_MODE) == null || result.get(CaptureResult.CONTROL_AF_STATE) == null) {
+                    Log.d(TAG, "FOCUS STATE or AF STATE is null");
                     return;
                 }
 
@@ -727,11 +755,6 @@ public class ImageQualityActivity extends AppCompatActivity implements View.OnCl
                         });
                     }
                 }
-            }
-
-            if (!Build.MODEL.equals("TECNO-W3")) {
-                if (counter++%10 == 0)
-                    updateRepeatingRequest();
             }
         }
 
