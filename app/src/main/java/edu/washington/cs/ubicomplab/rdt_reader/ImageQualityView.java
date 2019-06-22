@@ -57,13 +57,14 @@ import org.opencv.android.LoaderCallbackInterface;
 
 import org.opencv.core.Mat;
 
-
 import java.util.Arrays;
 
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
+
+import host.exp.exponent.R;
 
 import static edu.washington.cs.ubicomplab.rdt_reader.Constants.*;
 
@@ -80,6 +81,7 @@ public class ImageQualityView extends LinearLayout implements View.OnClickListen
     private State mCurrentState = State.QUALITY_CHECK;
     private boolean showViewport;
     private boolean showFeedback;
+    private boolean flashEnabled = true;
 
     private long timeTaken = 0;
 
@@ -138,6 +140,16 @@ public class ImageQualityView extends LinearLayout implements View.OnClickListen
 
     public void setImageQualityViewListener(ImageQualityViewListener listener) {
         mImageQualityViewListener = listener;
+    }
+
+    public void setFlashEnabled(boolean flashEnabled) {
+        if (this.flashEnabled == flashEnabled) {
+            return;
+        }
+        this.flashEnabled = flashEnabled;
+        if (mCameraId != null) {
+            this.updateRepeatingRequest();
+        }
     }
 
     /**
@@ -718,7 +730,7 @@ public class ImageQualityView extends LinearLayout implements View.OnClickListen
             mPreviewRequestBuilder.set(CaptureRequest.CONTROL_AWB_REGIONS,
                     new MeteringRectangle[]{mr});
 
-            mPreviewRequestBuilder.set(CaptureRequest.FLASH_MODE, CaptureRequest.FLASH_MODE_TORCH);
+            mPreviewRequestBuilder.set(CaptureRequest.FLASH_MODE, flashEnabled ? CaptureRequest.FLASH_MODE_TORCH : CaptureRequest.FLASH_MODE_OFF);
             mPreviewRequest = mPreviewRequestBuilder.build();
 
             try {
@@ -872,6 +884,11 @@ public class ImageQualityView extends LinearLayout implements View.OnClickListen
             mInstructionText.setVisibility(GONE);
             mCaptureProgressBar.setVisibility(GONE);
         }
+    }
+
+    public void setShowViewfinder(boolean showViewport) {
+        this.showViewport = showViewport;
+        mViewport.setVisibility(showViewport ? VISIBLE : GONE);
     }
 
     private void setProgressUI(State CurrentState) {
