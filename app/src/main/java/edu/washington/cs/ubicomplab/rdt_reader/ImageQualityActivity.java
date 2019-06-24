@@ -51,7 +51,7 @@ public class ImageQualityActivity extends Activity implements ImageQualityView.I
             final ImageProcessor.InterpretationResult interpretationResult,
             final long timeTaken) {
         Log.i("ImageQualityActivity", "Detected!");
-        if (!captureResult.allChecksPassed || interpretationResult == null || !interpretationResult.control) {
+        if (!captureResult.allChecksPassed || interpretationResult == null) {
             return ImageQualityView.RDTDectedResult.CONTINUE;
         }
         Log.i("ImageQualityActivity", "Detected and Passed!");

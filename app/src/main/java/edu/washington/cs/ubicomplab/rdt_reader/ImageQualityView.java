@@ -64,8 +64,6 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 
-import host.exp.exponent.R;
-
 import static edu.washington.cs.ubicomplab.rdt_reader.Constants.*;
 
 
@@ -354,10 +352,12 @@ public class ImageQualityView extends LinearLayout implements View.OnClickListen
 
                 //interpretation
                 interpretationResult = processor.interpretResult(captureResult.resultMat);
-
+                image.close();
+            } else {
+                imageQueue.remove();
+                image.close();
             }
-            imageQueue.remove();
-            image.close();
+            rgbaMat.release();
 
             RDTDectedResult result = RDTDectedResult.CONTINUE;
             if (mImageQualityViewListener != null) {
