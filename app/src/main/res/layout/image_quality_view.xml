@@ -37,7 +37,8 @@
         android:paddingVertical="5dp"
         android:textAlignment="center"
         android:textColor="@android:color/white"
-        android:textSize="20sp" />
+        android:textSize="25sp"
+        app:layout_constraintStart_toStartOf="parent" />
 
     <edu.washington.cs.ubicomplab.rdt_reader.ViewportUsingBitmap
         android:id="@+id/img_quality_check_viewport"
@@ -53,7 +54,8 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:background="@color/black_overlay"
-        android:visibility="visible" />
+        android:visibility="visible"
+        app:layout_constraintTop_toTopOf="parent" />
 
     <ProgressBar
         android:id="@+id/progressCircularBar"
@@ -93,13 +95,13 @@
         android:id="@+id/textInstruction"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginEnd="8dp"
         android:layout_marginStart="8dp"
         android:layout_marginTop="8dp"
+        android:layout_marginEnd="8dp"
         android:text="@string/instruction"
         android:textAlignment="center"
         android:textColor="@color/colorWhite"
-        android:textSize="25sp"
+        android:textSize="20sp"
         android:textStyle="bold"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
