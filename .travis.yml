@@ -1,0 +1,53 @@
+language: android
+dist: trusty
+jdk: oraclejdk8
+android:
+  components:
+  - tools
+  - platform-tools
+  - build-tools-28.0.2
+  - android-28
+  - extra-android-m2repository
+  - extra-google-m2repository
+env:
+- GRADLE_OPTS="-XX:MaxPermSize=2048M"
+before_install:
+- openssl aes-256-cbc -K $encrypted_d751a50dc857_key -iv $encrypted_d751a50dc857_iv -in secrets.tar.gz.enc -out secrets.tar.gz -d
+- tar -xf ./secrets.tar.gz
+- gem update --system
+- gem install fastlane --no-document --quiet
+install:
+- echo y | sdkmanager "ndk-bundle"
+- echo y | sdkmanager "cmake;3.6.4111459"
+- echo y | sdkmanager --channel=3 --channel=1 "cmake;3.10.2.4988404"
+before_script:
+- export ANDROID_NDK_HOME=$ANDROID_HOME/ndk-bundle
+stages:
+- name: test
+- name: deploy
+  if: tag IS present
+jobs:
+  include:
+  - stage: test
+    script: ./gradlew --daemon --parallel test
+  - stage: deploy
+    script: fastlane deploy
+before_cache:
+- rm -f  $HOME/.gradle/caches/modules-2/modules-2.lock
+- rm -fr $HOME/.gradle/caches/*/plugin-resolution/
+cache:
+  directories:
+  - "$HOME/.gradle/caches/"
+  - "$HOME/.gradle/wrapper/"
+  - "$HOME/.android/build-cache"
+deploy:
+  provider: releases
+  skip_cleanup: true
+  overwrite: true
+  api_key:
+    secure: oaUQr+Kn8Eikrlc5Hwo5NVn/4W+xc6VdcYdBHpOEC6Oi+oO5Yp/hNZMUxg7DKBJs9moRRGfqdFhFIj5XO6hCYgJgPOA6ZC51nOQzkNoYgWwPAKf6PvCu8JQ25XTMVc9nCyHTz7LcP3cxYKSaOZt0IAYCKeBjogPJQ4dtNSvFmy0WAx4OYBHj+P0djWWHi2XlBLRsaRn430b+XyHooeOiSbOtgOT5Vk3vcruCaojL0uat3f+384yyD140qKspJ568OqF/wCzuAK8N3ex3MFXU6Giv9JdUA+ZDLhFN2lHMK7cqUaCqsAxF2gYyUNSXoG+RptBDtqn5JsqmsoMgtJW6ygcIHoC4Q6IIEtz/jUiueOnLuu2MB4e6+ft3MZfjaztnSrMjRXdU5ewv9avv70Ibh8mhDNxOBRqgbtDTR5tdNTwiyaBIY0D9nbzrNw1HU5Ti74KvAvOLA/k6kuO5/9t9V2j8HbUOfh08EttqUB4brDBVnpwZwxhDkrMfSkJJHd7Z7mBo2nsDMBG1xGQ12ZD0YCOj/QV/nm4+KeUeWEIwqj76E8y8/z+n49JcjhejK486oLI1/bOKufX9MQeAXNqBKKLIZDwzDRbBhVq9tulbw4IsA374PspQE1e0zxzOFNnahTFbrOTaLiMSqiEjjLLHx/piLKd5QyV0dWDP97iGhVA=
+  file_glob: true
+  file: ./app/build/outputs/apk/**/*.apk
+  on:
+    repo: medic/rdt-capture
+    branch: master

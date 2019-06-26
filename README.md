@@ -7,6 +7,11 @@ The current version is <a href="https://play.google.com/store/apps/details?id=ed
 
 **Please note that the app has not yet been clinically validated.** 
 
+## Publishing
+Create a git tag starting with v, e.g. v1.2.3 and push the tag to GitHub.
+
+Creating this tag will trigger a Travis CI to build, sign, and version a new release. The release-ready APKs are available for side-loading from GitHub Releases and are uploaded to the Google Play Console in the "alpha" channel. To release to the public, click "Release to Production" or "Release to Beta" via the Google Play Console.
+
 ## License 
 The software is provided under [BSD-3-Clause](LICENSE). Contributions to this project are accepted under the same license.
 
