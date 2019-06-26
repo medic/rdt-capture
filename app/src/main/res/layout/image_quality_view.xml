@@ -37,7 +37,7 @@
         android:paddingVertical="5dp"
         android:textAlignment="center"
         android:textColor="@android:color/white"
-        android:textSize="25sp"
+        android:textSize="20sp"
         app:layout_constraintStart_toStartOf="parent" />
 
     <edu.washington.cs.ubicomplab.rdt_reader.ViewportUsingBitmap
@@ -95,9 +95,9 @@
         android:id="@+id/textInstruction"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:layout_marginEnd="8dp"
         android:layout_marginStart="8dp"
         android:layout_marginTop="8dp"
-        android:layout_marginEnd="8dp"
         android:text="@string/instruction"
         android:textAlignment="center"
         android:textColor="@color/colorWhite"
