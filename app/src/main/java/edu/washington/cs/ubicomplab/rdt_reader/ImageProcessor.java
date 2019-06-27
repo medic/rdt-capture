@@ -813,6 +813,7 @@ public class ImageProcessor {
 
         int lower_bound = (int)(position.x-LINE_SEARCH_WIDTH < 0 ? 0 : position.x-LINE_SEARCH_WIDTH);
         int upper_bound = (int)(position.x+LINE_SEARCH_WIDTH);
+        upper_bound = upper_bound > channels.get(1).cols() ? channels.get(1).cols() : upper_bound;
 
         float[] avgIntensities = new float[upper_bound-lower_bound];
         float[] avgHues = new float[upper_bound-lower_bound];
