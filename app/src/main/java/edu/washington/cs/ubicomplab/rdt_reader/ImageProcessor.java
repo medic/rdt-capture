@@ -100,17 +100,17 @@ public class ImageProcessor {
     }
 
     public class CaptureResult {
-        boolean allChecksPassed;
-        Mat resultMat;
-        MatOfPoint2f boundary;
-        ExposureResult exposureResult;
-        SizeResult sizeResult;
-        boolean isCentered;
-        boolean isRightOrientation;
-        boolean isSharp;
-        boolean isShadow;
-        boolean fiducial;
-        double angle;
+        public boolean allChecksPassed;
+        public Mat resultMat;
+        public MatOfPoint2f boundary;
+        public ExposureResult exposureResult;
+        public SizeResult sizeResult;
+        public boolean isCentered;
+        public boolean isRightOrientation;
+        public boolean isSharp;
+        public boolean isShadow;
+        public boolean fiducial;
+        public double angle;
 
         public CaptureResult(boolean allChecksPassed, Mat resultMat, boolean fiducial,
                              ExposureResult exposureResult, SizeResult sizeResult,  boolean isCentered,
@@ -129,12 +129,12 @@ public class ImageProcessor {
         }
     }
 
-    public class InterpretationResult {
-        boolean control;
-        boolean testA;
-        boolean testB;
-        Mat resultMat;
-        Bitmap resultBitmap;
+    public static class InterpretationResult {
+        public boolean control;
+        public boolean testA;
+        public boolean testB;
+        public Mat resultMat;
+        public Bitmap resultBitmap;
 
         public InterpretationResult() {
             control = false;
