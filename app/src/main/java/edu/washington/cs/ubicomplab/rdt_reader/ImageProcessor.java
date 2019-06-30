@@ -171,7 +171,7 @@ public class ImageProcessor {
         mRefImg = new Mat();
 
         //Load reference image for Quickvue flu test strip
-        Bitmap bitmap = BitmapFactory.decodeResource(activity.getApplicationContext().getResources(), R.drawable.quickvue_ref_v5);
+        Bitmap bitmap = BitmapFactory.decodeResource(activity.getApplicationContext().getResources(), R.drawable.experimental_rdt_v0);
         //Load reference image for SD Bioline Malaria RDT
         //Bitmap bitmap = BitmapFactory.decodeResource(activity.getApplicationContext().getResources(), R.drawable.sd_bioline_malaria_ag_pf);
 
@@ -268,6 +268,7 @@ public class ImageProcessor {
             }
 
             greyMat.release();
+            saveImage(inputMat);
             return new CaptureResult(passed, cropRDT(inputMat), fiducial, exposureResult, sizeResult, isCentered, isRightOrientation, angle, isSharp, false, boundary);
         }
         else {
