@@ -47,7 +47,7 @@
         android:layout_weight=".5"
         android:background="@color/transparent_overlay"
         custom:heightScale="0.80"
-        custom:widthScale="0.15" />
+        custom:widthScale="0.40" />
 
     <View
         android:id="@+id/progressBackground"
