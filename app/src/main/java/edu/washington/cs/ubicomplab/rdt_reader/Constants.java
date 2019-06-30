@@ -73,17 +73,17 @@ public final class Constants {
                                                         new Scalar(300/2.0, 20/100.0*255.0, 20/100.0*255.0)};
     public static Scalar[] CONTROL_LINE_COLOR_UPPER = {new Scalar(60/2.0, 85/100.0*255.0, 100/100.0*255.0),
                                                         new Scalar(360/2.0, 85/100.0*255.0, 100/100.0*255.0)};
-    public static int FIDUCIAL_POSITION_MIN = 160;
-    public static int FIDUCIAL_POSITION_MAX = 935;
-    public static int FIDUCIAL_MIN_HEIGHT = 45;
-    public static int FIDUCIAL_MIN_WIDTH = 20;
-    public static int FIDUCIAL_MAX_WIDTH = 150;
-    public static int FIDUCIAL_TO_CONTROL_LINE_OFFSET = 50;
-    public static int RESULT_WINDOW_RECT_HEIGHT = 90;
-    public static int RESULT_WINDOW_RECT_WIDTH_PADDING = 10;
+    public static int FIDUCIAL_POSITION_MIN = 0;
+    public static int FIDUCIAL_POSITION_MAX = 0;
+    public static int FIDUCIAL_MIN_HEIGHT = 0;
+    public static int FIDUCIAL_MIN_WIDTH = 0;
+    public static int FIDUCIAL_MAX_WIDTH = 0;
+    public static int FIDUCIAL_TO_CONTROL_LINE_OFFSET = 300;
+    public static int RESULT_WINDOW_RECT_HEIGHT = 100;
+    public static int RESULT_WINDOW_RECT_WIDTH_PADDING = 90;
     public static int ANGLE_THRESHOLD = 10;
-    public static int FIDUCIAL_DISTANCE = 610;
-    public static int FIDUCIAL_COUNT = 2;
+    public static int FIDUCIAL_DISTANCE = 120;
+    public static int FIDUCIAL_COUNT = 0;
 
     public static double ENHANCING_THRESHOLD = 4.50;
 }
