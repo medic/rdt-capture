@@ -259,7 +259,6 @@ public class ImageProcessor {
             }
 
             greyMat.release();
-            saveImage(inputMat);
             return new CaptureResult(passed, cropRDT(inputMat), fiducial, exposureResult, sizeResult, isCentered, isRightOrientation, angle, isSharp, false, boundary);
         }
         else {
