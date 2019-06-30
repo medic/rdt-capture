@@ -351,7 +351,7 @@ public class ImageQualityView extends LinearLayout implements View.OnClickListen
                 Log.d(TAG, String.format("Captured MAT size: %s", captureResult.resultMat.size()));
 
                 //interpretation
-                interpretationResult = processor.interpretResult(captureResult.resultMat);
+                interpretationResult = processor.interpretResult(captureResult.resultMat, captureResult.boundary);
                 image.close();
             } else {
                 imageQueue.remove();
