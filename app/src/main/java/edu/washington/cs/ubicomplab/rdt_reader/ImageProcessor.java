@@ -733,74 +733,81 @@ public class ImageProcessor {
     }
 
     private Rect checkFiducialAndReturnResultWindowRect(Mat inputMat)  {
-        Mat hls = new Mat();
-        //inputMat = enhanceImage(inputMat, new Size(5,5));
-        cvtColor(inputMat, hls, Imgproc.COLOR_RGBA2RGB);
-        cvtColor(hls, hls, Imgproc.COLOR_RGB2HLS);
+        if (FIDUCIAL_COUNT == 0) {
+            Point tl = new Point(FIDUCIAL_TO_CONTROL_LINE_OFFSET - RESULT_WINDOW_RECT_HEIGHT / 2.0, RESULT_WINDOW_RECT_WIDTH_PADDING);
+            Point br = new Point(FIDUCIAL_TO_CONTROL_LINE_OFFSET + RESULT_WINDOW_RECT_HEIGHT / 2.0, inputMat.size().height - RESULT_WINDOW_RECT_WIDTH_PADDING);
 
+            Rect fiducialRect = new Rect(tl, br);
 
-        Mat[] thresholds = {new Mat(inputMat.rows(), inputMat.cols(), CV_8U, new Scalar(0)), new Mat(inputMat.rows(), inputMat.cols(), CV_8U, new Scalar(0))};
+            return fiducialRect;
+        } else {
+            Mat hls = new Mat();
+            //inputMat = enhanceImage(inputMat, new Size(5,5));
+            cvtColor(inputMat, hls, Imgproc.COLOR_RGBA2RGB);
+            cvtColor(hls, hls, Imgproc.COLOR_RGB2HLS);
 
-        Mat threshold = new Mat(inputMat.rows(), inputMat.cols(), CV_8U, new Scalar(0));
+            Mat[] thresholds = {new Mat(inputMat.rows(), inputMat.cols(), CV_8U, new Scalar(0)), new Mat(inputMat.rows(), inputMat.cols(), CV_8U, new Scalar(0))};
 
-        for (int i = 0; i < CONTROL_LINE_COLOR_LOWER.length; i++) {
-            Core.inRange(hls, CONTROL_LINE_COLOR_LOWER[i], CONTROL_LINE_COLOR_UPPER[i], thresholds[i]);
-            Core.add(threshold, thresholds[i], threshold);
-        }
+            Mat threshold = new Mat(inputMat.rows(), inputMat.cols(), CV_8U, new Scalar(0));
 
-        Mat element_erode = Imgproc.getStructuringElement(Imgproc.MORPH_ELLIPSE, new Size(5, 5));
-        Mat element_dilate = Imgproc.getStructuringElement(Imgproc.MORPH_ELLIPSE, new Size(20, 20));
-        Imgproc.erode(threshold, threshold, element_erode);
-        Imgproc.dilate(threshold, threshold, element_dilate);
-        Imgproc.GaussianBlur(threshold, threshold, new Size(5, 5), 2, 2);
-
-        List<MatOfPoint> contours = new ArrayList<>();
-        Mat hierarchy = new Mat();
-
-        Imgproc.findContours(threshold, contours, hierarchy, Imgproc.RETR_EXTERNAL, Imgproc.CHAIN_APPROX_SIMPLE, new Point(0, 0));
-
-        List<Rect> fiducialRects = new ArrayList<>();
-        Rect fiducialRect = new Rect(0,0,0,0);
-
-        for (int i = 0; i < contours.size(); i++)
-        {
-            Rect rect = Imgproc.boundingRect(contours.get(i));
-            double rectCenter = rect.x + rect.width/2.0;
-            if (FIDUCIAL_POSITION_MIN < rectCenter && rectCenter < FIDUCIAL_POSITION_MAX && FIDUCIAL_MIN_HEIGHT < rect.height && FIDUCIAL_MIN_WIDTH < rect.width && rect.width < FIDUCIAL_MAX_WIDTH) {
-                fiducialRects.add(rect);
-                Log.d(TAG, String.format("Control line rect size: %s %s %s", rect.tl(), rect.br(), rect.size()));
-            }
-        }
-
-        if (fiducialRects.size() == FIDUCIAL_COUNT) { //should
-            double center0 = fiducialRects.get(0).x + fiducialRects.get(0).width/2.0;
-            double center1 = fiducialRects.get(0).x + fiducialRects.get(0).width/2.0;
-
-            if (fiducialRects.size() > 1) {
-                center1 = fiducialRects.get(1).x + fiducialRects.get(1).width/2.0;
+            for (int i = 0; i < CONTROL_LINE_COLOR_LOWER.length; i++) {
+                Core.inRange(hls, CONTROL_LINE_COLOR_LOWER[i], CONTROL_LINE_COLOR_UPPER[i], thresholds[i]);
+                Core.add(threshold, thresholds[i], threshold);
             }
 
-            int midpoint = (int)((center0+center1)/2);
-            double diff = abs(center0-center1);
+            Mat element_erode = Imgproc.getStructuringElement(Imgproc.MORPH_ELLIPSE, new Size(5, 5));
+            Mat element_dilate = Imgproc.getStructuringElement(Imgproc.MORPH_ELLIPSE, new Size(20, 20));
+            Imgproc.erode(threshold, threshold, element_erode);
+            Imgproc.dilate(threshold, threshold, element_dilate);
+            Imgproc.GaussianBlur(threshold, threshold, new Size(5, 5), 2, 2);
 
-            double scale = FIDUCIAL_DISTANCE == 0? 1 : diff/FIDUCIAL_DISTANCE;
-            double offset = scale*FIDUCIAL_TO_CONTROL_LINE_OFFSET;
+            List<MatOfPoint> contours = new ArrayList<>();
+            Mat hierarchy = new Mat();
 
-            Point tl = new Point(midpoint+offset-RESULT_WINDOW_RECT_HEIGHT*scale/2.0, RESULT_WINDOW_RECT_WIDTH_PADDING);
-            Point br = new Point(midpoint+offset+RESULT_WINDOW_RECT_HEIGHT*scale/2.0, inputMat.size().height-RESULT_WINDOW_RECT_WIDTH_PADDING);
+            Imgproc.findContours(threshold, contours, hierarchy, Imgproc.RETR_EXTERNAL, Imgproc.CHAIN_APPROX_SIMPLE, new Point(0, 0));
 
-            fiducialRect = new Rect(tl, br);
+            List<Rect> fiducialRects = new ArrayList<>();
+            Rect fiducialRect = new Rect(0, 0, 0, 0);
+
+            for (int i = 0; i < contours.size(); i++) {
+                Rect rect = Imgproc.boundingRect(contours.get(i));
+                double rectCenter = rect.x + rect.width / 2.0;
+                if (FIDUCIAL_POSITION_MIN < rectCenter && rectCenter < FIDUCIAL_POSITION_MAX && FIDUCIAL_MIN_HEIGHT < rect.height && FIDUCIAL_MIN_WIDTH < rect.width && rect.width < FIDUCIAL_MAX_WIDTH) {
+                    fiducialRects.add(rect);
+                    Log.d(TAG, String.format("Control line rect size: %s %s %s", rect.tl(), rect.br(), rect.size()));
+                }
+            }
+
+            if (fiducialRects.size() == FIDUCIAL_COUNT) { //should
+                double center0 = fiducialRects.get(0).x + fiducialRects.get(0).width / 2.0;
+                double center1 = fiducialRects.get(0).x + fiducialRects.get(0).width / 2.0;
+
+                if (fiducialRects.size() > 1) {
+                    center1 = fiducialRects.get(1).x + fiducialRects.get(1).width / 2.0;
+                }
+
+                int midpoint = (int) ((center0 + center1) / 2);
+                double diff = abs(center0 - center1);
+
+                double scale = FIDUCIAL_DISTANCE == 0 ? 1 : diff / FIDUCIAL_DISTANCE;
+                double offset = scale * FIDUCIAL_TO_CONTROL_LINE_OFFSET;
+
+                Point tl = new Point(midpoint + offset - RESULT_WINDOW_RECT_HEIGHT * scale / 2.0, RESULT_WINDOW_RECT_WIDTH_PADDING);
+                Point br = new Point(midpoint + offset + RESULT_WINDOW_RECT_HEIGHT * scale / 2.0, inputMat.size().height - RESULT_WINDOW_RECT_WIDTH_PADDING);
+
+                fiducialRect = new Rect(tl, br);
+            }
+
+            for (int i = 0; i < CONTROL_LINE_COLOR_LOWER.length; i++) {
+                thresholds[i].release();
+            }
+            threshold.release();
+            hls.release();
+            element_erode.release();
+            element_dilate.release();
+
+            return fiducialRect;
         }
-
-        for(int i = 0; i < CONTROL_LINE_COLOR_LOWER.length; i++) {
-            thresholds[i].release();
-        }
-        threshold.release();
-        hls.release();
-        element_erode.release();
-        element_dilate.release();
-
-        return fiducialRect;
     }
 
     private boolean readLine(Mat inputMat, Point position, boolean isControlLine) {
