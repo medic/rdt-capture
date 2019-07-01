@@ -43,4 +43,9 @@ public class RDTCaptureActivity extends ImageQualityActivity implements Activity
         }
         finish();
     }
+
+    @Override
+    public void onBackPressed() {
+       finish();
+    }
 }
