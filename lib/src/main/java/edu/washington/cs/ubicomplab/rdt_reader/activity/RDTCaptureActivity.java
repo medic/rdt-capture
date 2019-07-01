@@ -27,10 +27,9 @@ public class RDTCaptureActivity extends ImageQualityActivity implements Activity
     }
 
     @Override
-    protected void useCapturedImage(Mat result, ImageProcessor.InterpretationResult interpretationResult) {
+    protected void useCapturedImage(byte[] captureByteArray, byte[] windowByteArray, ImageProcessor.InterpretationResult interpretationResult, long timeTaken) {
         Log.i(TAG, "Processing captured image");
-        byte[] byteArray = ImageUtil.matToRotatedByteArray(result);
-        presenter.saveImage(getApplicationContext(), byteArray, System.currentTimeMillis(), this);
+        presenter.saveImage(getApplicationContext(), captureByteArray, System.currentTimeMillis(), this);
     }
 
     @Override

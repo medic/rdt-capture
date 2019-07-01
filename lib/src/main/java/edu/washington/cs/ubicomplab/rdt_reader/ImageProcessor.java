@@ -60,6 +60,7 @@ import static java.lang.StrictMath.abs;
 import static org.opencv.core.Core.LUT;
 import static org.opencv.core.Core.meanStdDev;
 import static org.opencv.core.Core.perspectiveTransform;
+import static org.opencv.core.CvType.CV_8U;
 import static org.opencv.imgproc.Imgproc.Laplacian;
 import static org.opencv.imgproc.Imgproc.contourArea;
 import static org.opencv.imgproc.Imgproc.createCLAHE;
@@ -99,23 +100,24 @@ public class ImageProcessor {
     }
 
     public class CaptureResult {
-        boolean allChecksPassed;
-        Mat resultMat;
-        double matchDistance;
-        ExposureResult exposureResult;
-        SizeResult sizeResult;
-        boolean isCentered;
-        boolean isRightOrientation;
-        boolean isSharp;
-        boolean isShadow;
-        double angle;
+        public boolean allChecksPassed;
+        public Mat resultMat;
+        public MatOfPoint2f boundary;
+        public ExposureResult exposureResult;
+        public SizeResult sizeResult;
+        public boolean isCentered;
+        public boolean isRightOrientation;
+        public boolean isSharp;
+        public boolean isShadow;
+        public boolean fiducial;
+        public double angle;
 
-        public CaptureResult(boolean allChecksPassed, Mat resultMat, double matchDistance,
+        public CaptureResult(boolean allChecksPassed, Mat resultMat, boolean fiducial,
                              ExposureResult exposureResult, SizeResult sizeResult,  boolean isCentered,
-                             boolean isRightOrientation, double angle, boolean isSharp, boolean isShadow){
+                             boolean isRightOrientation, double angle, boolean isSharp, boolean isShadow, MatOfPoint2f boundary){
             this.allChecksPassed = allChecksPassed;
             this.resultMat = resultMat;
-            this.matchDistance = matchDistance;
+            this.fiducial = fiducial;
             this.exposureResult = exposureResult;
             this.sizeResult = sizeResult;
             this.isCentered = isCentered;
@@ -123,15 +125,16 @@ public class ImageProcessor {
             this.isSharp = isSharp;
             this.isShadow = isShadow;
             this.angle = angle;
+            this.boundary = boundary;
         }
     }
 
-    public class InterpretationResult {
-        boolean control;
-        boolean testA;
-        boolean testB;
-        Mat resultMat;
-        Bitmap resultBitmap;
+    public static class InterpretationResult {
+        public boolean control;
+        public boolean testA;
+        public boolean testB;
+        public Mat resultMat;
+        public Bitmap resultBitmap;
 
         public InterpretationResult() {
             control = false;
@@ -160,7 +163,7 @@ public class ImageProcessor {
         mRefImg = new Mat();
 
         //Load reference image for Quickvue flu test strip
-        Bitmap bitmap = BitmapFactory.decodeResource(activity.getApplicationContext().getResources(), R.drawable.quickvue_ref_v1);
+        Bitmap bitmap = BitmapFactory.decodeResource(activity.getApplicationContext().getResources(), R.drawable.experimental_rdt_v0);
         //Load reference image for SD Bioline Malaria RDT
         //Bitmap bitmap = BitmapFactory.decodeResource(activity.getApplicationContext().getResources(), R.drawable.sd_bioline_malaria_ag_pf);
 
@@ -227,7 +230,7 @@ public class ImageProcessor {
         if (exposureResult == ExposureResult.NORMAL && isSharp) {
 
             MatOfPoint2f boundary = new MatOfPoint2f();
-            boundary = detectRDT(greyMat);
+            boundary = detectRDTWithSIFT(greyMat, 5);
             boolean isCentered = false;
             SizeResult sizeResult = SizeResult.INVALID;
             boolean isRightOrientation = false;
@@ -244,11 +247,23 @@ public class ImageProcessor {
 
             passed = sizeResult == SizeResult.RIGHT_SIZE && isCentered && isRightOrientation;
 
+            boolean fiducial = false;
+            if (passed) {
+                Mat resultMat = cropResultWindow(inputMat, boundary);
+                if (resultMat.width() > 0 && resultMat.height() > 0) {
+                    fiducial = true;
+                }
+                resultMat.release();
+                passed = passed & fiducial;
+                Log.d(TAG, String.format("fiducial: %b", fiducial));
+            }
 
-            return new CaptureResult(passed, cropRDT(inputMat), matchDistance, exposureResult, sizeResult, isCentered, isRightOrientation, angle, isSharp, false);
-    }
+            greyMat.release();
+            return new CaptureResult(passed, cropRDT(inputMat), fiducial, exposureResult, sizeResult, isCentered, isRightOrientation, angle, isSharp, false, boundary);
+        }
         else {
-            return new CaptureResult(passed, null, matchDistance, exposureResult, SizeResult.INVALID, false, false, 0.0, isSharp, false);
+            greyMat.release();
+            return new CaptureResult(passed, null, false, exposureResult, SizeResult.INVALID, false, false, 0.0, isSharp, false, new MatOfPoint2f());
         }
 
     }
@@ -261,7 +276,7 @@ public class ImageProcessor {
         MatOfKeyPoint keypoints = new MatOfKeyPoint();
 
         long startTime = System.currentTimeMillis();
-        Mat mask = new Mat(inputMat.size(), CvType.CV_8U, Scalar.all(0));
+        Mat mask = new Mat(inputMat.size(), CV_8U, Scalar.all(0));
         Point p1 = new Point(0, inputMat.size().height*(1-VIEW_FINDER_SCALE_W/CROP_RATIO)/2);
         Point p2 = new Point(inputMat.size().width-p1.x, inputMat.size().height-p1.y);
         Imgproc.rectangle(mask, p1, p2, Scalar.all(255), -1);
@@ -412,6 +427,7 @@ public class ImageProcessor {
         boolean isSharp = sharpness > (refImgSharpness * (1-SHARPNESS_THRESHOLD));
         Log.d(TAG, "Sharpness: "+sharpness);
 
+        inputMat.release();
         resized.release();
 
         return isSharp;
@@ -610,17 +626,17 @@ public class ImageProcessor {
 
         String[] texts = new String[4];
 
-        texts[0] = isSharp ? "Sharpness: PASSED": "Sharpness: FAILED";
+        texts[0] = isSharp ? "&#x2713; Sharpness: passed": "Sharpness: failed";
         if (exposureResult == ExposureResult.NORMAL) {
-            texts[1] = "Brightness: PASSED";
+            texts[1] = "&#x2713; Brightness: passed";
         } else if (exposureResult == ExposureResult.OVER_EXPOSED) {
-            texts[1] = "Brightness: TOO BRIGHT";
+            texts[1] = "Brightness: too bright";
         } else if (exposureResult == ExposureResult.UNDER_EXPOSED) {
-            texts[1] = "Brightness: TOO DARK";
+            texts[1] = "Brightness: too dark";
         }
 
-        texts[2] = sizeResult == SizeResult.RIGHT_SIZE && isCentered && isRightOrientation ? "POSITION/SIZE: PASSED": "POSITION/SIZE: FAILED";
-        texts[3] = "Shadow: PASSED";
+        texts[2] = sizeResult == SizeResult.RIGHT_SIZE && isCentered && isRightOrientation ? "&#x2713; Position/Size: passed": "Position/Size: failed";
+        texts[3] = "&#x2713; Shadow: passed";
 
         return texts;
 
@@ -670,6 +686,26 @@ public class ImageProcessor {
         return interpretResult(resultMat);
     }
 
+    public InterpretationResult interpretResult(Mat inputMat, MatOfPoint2f boundary) {
+        Mat resultMat = cropResultWindow(inputMat, boundary);
+        boolean control, testA, testB;
+
+        if (resultMat.width() == 0 && resultMat.height() == 0) {
+            return new InterpretationResult(resultMat, false, false, false);
+        }
+
+        resultMat = enhanceResultWindow(resultMat, new Size(5, resultMat.cols()));
+        //resultMat = correctGamma(resultMat, 0.75);
+
+        control = readControlLine(resultMat, new Point(CONTROL_LINE_POSITION, 0));
+        testA = readTestLine(resultMat, new Point(TEST_A_LINE_POSITION, 0));
+        testB = readTestLine(resultMat, new Point(TEST_B_LINE_POSITION, 0));
+
+        Log.d(TAG, String.format("Interpretation results: %s %s %s", control, testA, testB));
+
+        return new InterpretationResult(resultMat, control, testA, testB);
+    }
+
     public InterpretationResult interpretResult(Mat inputMat) {
         MatOfPoint2f boundary = new MatOfPoint2f();
         Mat grayMat = new Mat();
@@ -693,57 +729,85 @@ public class ImageProcessor {
         if (boundary.size().width <= 0 && boundary.size().height <= 0)
             return new InterpretationResult();
 
-        Mat resultMat = cropResultWindow(inputMat, boundary);
-        boolean control, testA, testB;
-
-        if (resultMat.width() == 0 && resultMat.height() == 0) {
-            return new InterpretationResult(resultMat, false, false, false);
-        }
-
-        resultMat = enhanceResultWindow(resultMat, new Size(5, resultMat.cols()));
-        //resultMat = correctGamma(resultMat, 0.75);
-
-        control = readControlLine(resultMat, new Point(CONTROL_LINE_POSITION, 0));
-        testA = readTestLine(resultMat, new Point(TEST_A_LINE_POSITION, 0));
-        testB = readTestLine(resultMat, new Point(TEST_B_LINE_POSITION, 0));
-
-        Log.d(TAG, String.format("Interpretation results: %s %s %s", control, testA, testB));
-
-        return new InterpretationResult(resultMat, control, testA, testB);
+        return interpretResult(inputMat, boundary);
     }
 
-    private Rect checkControlLine(Mat inputMat)  {
-        Mat hls = new Mat();
-        //inputMat = enhanceImage(inputMat, new Size(5,5));
-        cvtColor(inputMat, hls, Imgproc.COLOR_RGBA2RGB);
-        cvtColor(hls, hls, Imgproc.COLOR_RGB2HLS);
+    private Rect checkFiducialAndReturnResultWindowRect(Mat inputMat)  {
+        if (FIDUCIAL_COUNT == 0) {
+            Point tl = new Point(FIDUCIAL_TO_CONTROL_LINE_OFFSET - RESULT_WINDOW_RECT_HEIGHT / 2.0, RESULT_WINDOW_RECT_WIDTH_PADDING);
+            Point br = new Point(FIDUCIAL_TO_CONTROL_LINE_OFFSET + RESULT_WINDOW_RECT_HEIGHT / 2.0, inputMat.size().height - RESULT_WINDOW_RECT_WIDTH_PADDING);
 
-        Mat threshold = new Mat();
-        Core.inRange(hls, CONTROL_LINE_COLOR_LOWER, CONTROL_LINE_COLOR_UPPER, threshold);
-        Mat element_erode = Imgproc.getStructuringElement(Imgproc.MORPH_ELLIPSE, new Size(5, 5));
-        Mat element_dilate = Imgproc.getStructuringElement(Imgproc.MORPH_ELLIPSE, new Size(20, 20));
-        Imgproc.erode(threshold, threshold, element_erode);
-        Imgproc.dilate(threshold, threshold, element_dilate);
-        Imgproc.GaussianBlur(threshold, threshold, new Size(5, 5), 2, 2);
+            Rect fiducialRect = new Rect(tl, br);
 
-        List<MatOfPoint> contours = new ArrayList<>();
-        Mat hierarchy = new Mat();
+            return fiducialRect;
+        } else {
+            Mat hls = new Mat();
+            //inputMat = enhanceImage(inputMat, new Size(5,5));
+            cvtColor(inputMat, hls, Imgproc.COLOR_RGBA2RGB);
+            cvtColor(hls, hls, Imgproc.COLOR_RGB2HLS);
 
-        Imgproc.findContours(threshold, contours, hierarchy, Imgproc.RETR_EXTERNAL, Imgproc.CHAIN_APPROX_SIMPLE, new Point(0, 0));
-        Rect controlLineRect = new Rect(0,0,0,0);
+            Mat[] thresholds = {new Mat(inputMat.rows(), inputMat.cols(), CV_8U, new Scalar(0)), new Mat(inputMat.rows(), inputMat.cols(), CV_8U, new Scalar(0))};
 
-        Log.d(TAG, String.format("Control line rect size: %d", contours.size()));
+            Mat threshold = new Mat(inputMat.rows(), inputMat.cols(), CV_8U, new Scalar(0));
 
-        for (int i = 0; i < contours.size(); i++)
-        {
-            Rect rect = Imgproc.boundingRect(contours.get(i));
-            if (CONTROL_LINE_POSITION_MIN < rect.x && rect.x < CONTROL_LINE_POSITION_MAX && CONTROL_LINE_MIN_HEIGHT < rect.height && CONTROL_LINE_MIN_WIDTH < rect.width && rect.width < CONTROL_LINE_MAX_WIDTH) {
-                controlLineRect = rect;
-                Log.d(TAG, String.format("Control line rect size: %s %s %s", rect.tl(), rect.br(), rect.size()));
+            for (int i = 0; i < CONTROL_LINE_COLOR_LOWER.length; i++) {
+                Core.inRange(hls, CONTROL_LINE_COLOR_LOWER[i], CONTROL_LINE_COLOR_UPPER[i], thresholds[i]);
+                Core.add(threshold, thresholds[i], threshold);
             }
-        }
 
-        return controlLineRect;
+            Mat element_erode = Imgproc.getStructuringElement(Imgproc.MORPH_ELLIPSE, new Size(5, 5));
+            Mat element_dilate = Imgproc.getStructuringElement(Imgproc.MORPH_ELLIPSE, new Size(20, 20));
+            Imgproc.erode(threshold, threshold, element_erode);
+            Imgproc.dilate(threshold, threshold, element_dilate);
+            Imgproc.GaussianBlur(threshold, threshold, new Size(5, 5), 2, 2);
+
+            List<MatOfPoint> contours = new ArrayList<>();
+            Mat hierarchy = new Mat();
+
+            Imgproc.findContours(threshold, contours, hierarchy, Imgproc.RETR_EXTERNAL, Imgproc.CHAIN_APPROX_SIMPLE, new Point(0, 0));
+
+            List<Rect> fiducialRects = new ArrayList<>();
+            Rect fiducialRect = new Rect(0, 0, 0, 0);
+
+            for (int i = 0; i < contours.size(); i++) {
+                Rect rect = Imgproc.boundingRect(contours.get(i));
+                double rectCenter = rect.x + rect.width / 2.0;
+                if (FIDUCIAL_POSITION_MIN < rectCenter && rectCenter < FIDUCIAL_POSITION_MAX && FIDUCIAL_MIN_HEIGHT < rect.height && FIDUCIAL_MIN_WIDTH < rect.width && rect.width < FIDUCIAL_MAX_WIDTH) {
+                    fiducialRects.add(rect);
+                    Log.d(TAG, String.format("Control line rect size: %s %s %s", rect.tl(), rect.br(), rect.size()));
+                }
+            }
+
+            if (fiducialRects.size() == FIDUCIAL_COUNT) { //should
+                double center0 = fiducialRects.get(0).x + fiducialRects.get(0).width / 2.0;
+                double center1 = fiducialRects.get(0).x + fiducialRects.get(0).width / 2.0;
+
+                if (fiducialRects.size() > 1) {
+                    center1 = fiducialRects.get(1).x + fiducialRects.get(1).width / 2.0;
+                }
+
+                int midpoint = (int) ((center0 + center1) / 2);
+                double diff = abs(center0 - center1);
+
+                double scale = FIDUCIAL_DISTANCE == 0 ? 1 : diff / FIDUCIAL_DISTANCE;
+                double offset = scale * FIDUCIAL_TO_CONTROL_LINE_OFFSET;
+
+                Point tl = new Point(midpoint + offset - RESULT_WINDOW_RECT_HEIGHT * scale / 2.0, RESULT_WINDOW_RECT_WIDTH_PADDING);
+                Point br = new Point(midpoint + offset + RESULT_WINDOW_RECT_HEIGHT * scale / 2.0, inputMat.size().height - RESULT_WINDOW_RECT_WIDTH_PADDING);
+
+                fiducialRect = new Rect(tl, br);
+            }
+
+            for (int i = 0; i < CONTROL_LINE_COLOR_LOWER.length; i++) {
+                thresholds[i].release();
+            }
+            threshold.release();
+            hls.release();
+            element_erode.release();
+            element_dilate.release();
+
+            return fiducialRect;
+        }
     }
 
     private boolean readLine(Mat inputMat, Point position, boolean isControlLine) {
@@ -756,6 +820,7 @@ public class ImageProcessor {
 
         int lower_bound = (int)(position.x-LINE_SEARCH_WIDTH < 0 ? 0 : position.x-LINE_SEARCH_WIDTH);
         int upper_bound = (int)(position.x+LINE_SEARCH_WIDTH);
+        upper_bound = upper_bound > channels.get(1).cols() ? channels.get(1).cols() : upper_bound;
 
         float[] avgIntensities = new float[upper_bound-lower_bound];
         float[] avgHues = new float[upper_bound-lower_bound];
@@ -827,16 +892,9 @@ public class ImageProcessor {
         Mat correctedMat = new Mat(mRefImg.rows(), mRefImg.cols(), mRefImg.type());
         warpPerspective(inputMat, correctedMat, M, new Size(mRefImg.cols(), mRefImg.rows()));
 
-        Rect controlLineRect = checkControlLine(correctedMat);
+        Rect resultWindowRect = checkFiducialAndReturnResultWindowRect(correctedMat);
 
-        if (controlLineRect.width == 0 && controlLineRect.height == 0) {
-            return new Mat();
-        }
-
-        Point tl = new Point((controlLineRect.tl().x+controlLineRect.br().x)/2.0-RESULT_WINDOW_RECT_HEIGHT/2.0, RESULT_WINDOW_RECT_WIDTH_PADDING);
-        Point br = new Point((controlLineRect.tl().x+controlLineRect.br().x)/2.0+RESULT_WINDOW_RECT_HEIGHT/2.0, correctedMat.size().height-RESULT_WINDOW_RECT_WIDTH_PADDING);
-
-        correctedMat = new Mat(correctedMat, new Rect(tl, br));
+        correctedMat = new Mat(correctedMat, resultWindowRect);
 
         return correctedMat;
     }
@@ -847,7 +905,7 @@ public class ImageProcessor {
         MatOfKeyPoint inKeypoints = new MatOfKeyPoint();
         MatOfPoint2f boundary = new MatOfPoint2f();
 
-        Mat mask = new Mat(inputMat.cols(), inputMat.rows(), CvType.CV_8U, new Scalar(0));
+        Mat mask = new Mat(inputMat.cols(), inputMat.rows(), CV_8U, new Scalar(0));
 
         Point p1 = new Point(0, inputMat.size().height*(1-VIEW_FINDER_SCALE_W/CROP_RATIO)/2);
         Point p2 = new Point(inputMat.size().width-p1.x, inputMat.size().height-p1.y);
@@ -957,7 +1015,14 @@ public class ImageProcessor {
 
                 boundary.fromArray(bound);
             }
+            H.release();
         }
+        goodMatchesMat.release();
+        objMat.release();
+        sceneMat.release();
+        mask.release();
+        inDescriptor.release();
+        inKeypoints.release();
         return boundary;
     }
 
