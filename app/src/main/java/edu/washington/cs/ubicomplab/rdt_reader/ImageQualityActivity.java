@@ -1302,25 +1302,14 @@ public class ImageQualityActivity extends AppCompatActivity implements View.OnCl
             }
 
             mImageQualityFeedbackView.setText(Html.fromHtml(message));
-            if (isCorrectPosSize[0] && isCorrectPosSize[1] && isCorrectPosSize[2] && !isBlur && !isOverExposed && !isUnderExposed && !isShadow) {
-                if (mViewport.getBackgroundColorId() != R.color.green_overlay) {
-                    mViewport.setBackgroundColoId(R.color.green_overlay);
-                }
-            } else {
-                if (mViewport.getBackgroundColorId() != R.color.red_overlay) {
-                    mViewport.setBackgroundColoId(R.color.red_overlay);
-                }
-            }
         } else if (currFocusState == FocusState.INACTIVE) {
             mInstructionText.setText(getResources().getString(R.string.instruction_pos));
-            mViewport.setBackgroundColoId(R.color.red_overlay);
         } else if (currFocusState == FocusState.UNFOCUSED) {
             mInstructionText.setText(getResources().getString(R.string.instruction_unfocused));
-            mViewport.setBackgroundColoId(R.color.red_overlay);
         } else if (currFocusState == FocusState.FOCUSING) {
             mInstructionText.setText(getResources().getString(R.string.instruction_focusing));
-            mViewport.setBackgroundColoId(R.color.red_overlay);
         }
+        mViewport.setBackgroundColoId(R.color.black_overlay);
     }
 
 

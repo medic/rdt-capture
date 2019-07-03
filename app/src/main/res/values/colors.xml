@@ -9,7 +9,7 @@
     <color name="transparent_overlay">#00000000</color>
     <color name="gray_overlay">#33000000</color>
     <color name="red_overlay">#66FF0000</color>
-    <color name="green_overlay">#6600FF00</color>
+    <color name="green_overlay">#662ead2e</color>
 
     <color name="control_background">#cc4285f4</color>
 </resources>
