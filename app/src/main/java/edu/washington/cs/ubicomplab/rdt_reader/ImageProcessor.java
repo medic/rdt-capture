@@ -880,30 +880,35 @@ public class ImageProcessor {
     }
 
     private Mat cropResultWindow(Mat inputMat, MatOfPoint2f boundary) {
-        Mat refBoundary = new Mat(4, 1, CvType.CV_32FC2);
+//        Mat refBoundary = new Mat(4, 1, CvType.CV_32FC2);
+//
+//        double[] a = new double[]{0, 0};
+//        double[] b = new double[]{mRefImg.cols() - 1, 0};
+//        double[] c = new double[]{mRefImg.cols() - 1, mRefImg.rows() - 1};
+//        double[] d = new double[]{0, mRefImg.rows() - 1};
+//
+//
+//        //get corners from object
+//        refBoundary.put(0, 0, a);
+//        refBoundary.put(1, 0, b);
+//        refBoundary.put(2, 0, c);
+//        refBoundary.put(3, 0, d);
+//
+//        Mat M = getPerspectiveTransform(boundary, refBoundary);
+//        Mat correctedMat = new Mat(mRefImg.rows(), mRefImg.cols(), mRefImg.type());
+//        warpPerspective(inputMat, correctedMat, M, new Size(mRefImg.cols(), mRefImg.rows()));
+//
+//        //Rect resultWindowRect = checkFiducialAndReturnResultWindowRect(correctedMat);
+//        Rect resultWindowRect = returnResultWindowRect(correctedMat);
+//
+//        correctedMat = new Mat(correctedMat, resultWindowRect);
+//
+//        return correctedMat;
 
-        double[] a = new double[]{0, 0};
-        double[] b = new double[]{mRefImg.cols() - 1, 0};
-        double[] c = new double[]{mRefImg.cols() - 1, mRefImg.rows() - 1};
-        double[] d = new double[]{0, mRefImg.rows() - 1};
-
-
-        //get corners from object
-        refBoundary.put(0, 0, a);
-        refBoundary.put(1, 0, b);
-        refBoundary.put(2, 0, c);
-        refBoundary.put(3, 0, d);
-
-        Mat M = getPerspectiveTransform(boundary, refBoundary);
-        Mat correctedMat = new Mat(mRefImg.rows(), mRefImg.cols(), mRefImg.type());
-        warpPerspective(inputMat, correctedMat, M, new Size(mRefImg.cols(), mRefImg.rows()));
-
-        //Rect resultWindowRect = checkFiducialAndReturnResultWindowRect(correctedMat);
-        Rect resultWindowRect = returnResultWindowRect(correctedMat);
-
-        correctedMat = new Mat(correctedMat, resultWindowRect);
-
-        return correctedMat;
+        Point p1 = new Point(inputMat.size().width/2, inputMat.size().height*(1-VIEW_FINDER_SCALE_W/CROP_RATIO)/2);
+        Point p2 = new Point(inputMat.size().width - inputMat.size().width*(1-VIEW_FINDER_SCALE_H/CROP_RATIO), inputMat.size().height-p1.y);
+        Rect rect = new Rect(p1, p2);
+        return new Mat(inputMat, rect);
     }
 
     private MatOfPoint2f detectRDTWithSIFT(Mat inputMat, int ransac){

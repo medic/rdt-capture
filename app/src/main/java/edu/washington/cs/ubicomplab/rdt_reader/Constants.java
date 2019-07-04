@@ -29,7 +29,7 @@ public final class Constants {
     public static Scalar RDT_COLOR_HSV = new Scalar(30, 21, 204, 0.0);
 
     public static double SIZE_THRESHOLD = 0.15;
-    public static double POSITION_THRESHOLD = 0.2;
+    public static double POSITION_THRESHOLD = 0.05;
 
     public static int CAPTURE_COUNT = 3;
 
