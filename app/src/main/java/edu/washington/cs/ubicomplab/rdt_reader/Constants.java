@@ -40,7 +40,7 @@ public final class Constants {
     public static double VIEW_FINDER_SCALE_W = 0.15;
 
     //Set for QuickVue
-    public static int RESULT_WINDOW_X = 525;
+    public static int RESULT_WINDOW_X = 550;
     public static int RESULT_WINDOW_Y = 10;
     public static int RESULT_WINDOW_WIDTH = 200;
     public static int RESULT_WINDOW_HEIGHT = 30;

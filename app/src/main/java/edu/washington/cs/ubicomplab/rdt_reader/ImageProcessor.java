@@ -164,7 +164,7 @@ public class ImageProcessor {
         mRefImg = new Mat();
 
         //Load reference image for Quickvue flu test strip
-        Bitmap bitmap = BitmapFactory.decodeResource(activity.getApplicationContext().getResources(), R.drawable.quickvue_ref_v3);
+        Bitmap bitmap = BitmapFactory.decodeResource(activity.getApplicationContext().getResources(), R.drawable.quickvue_ref_v4);
         //Load reference image for SD Bioline Malaria RDT
         //Bitmap bitmap = BitmapFactory.decodeResource(activity.getApplicationContext().getResources(), R.drawable.sd_bioline_malaria_ag_pf);
 
