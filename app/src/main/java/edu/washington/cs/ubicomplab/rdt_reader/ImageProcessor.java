@@ -12,6 +12,7 @@ import android.app.Activity;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.support.constraint.solver.widgets.Rectangle;
 import android.util.Log;
 
 import org.opencv.android.BaseLoaderCallback;
@@ -694,7 +695,8 @@ public class ImageProcessor {
             return new InterpretationResult(resultMat, false, false, false);
         }
 
-        resultMat = enhanceResultWindow(resultMat, new Size(5, resultMat.cols()));
+        //resultMat = enhanceResultWindow(resultMat, new Size(5, resultMat.cols()));
+        resultMat = enhanceResultWindow(resultMat, new Size(10, 10));
         //resultMat = correctGamma(resultMat, 0.75);
 
         control = readControlLine(resultMat, new Point(CONTROL_LINE_POSITION, 0));
@@ -730,6 +732,10 @@ public class ImageProcessor {
             return new InterpretationResult();
 
         return interpretResult(inputMat, boundary);
+    }
+
+    private Rect returnResultWindowRect(Mat inputMat) {
+        return new Rect(RESULT_WINDOW_X, RESULT_WINDOW_Y, RESULT_WINDOW_WIDTH, RESULT_WINDOW_HEIGHT);
     }
 
     private Rect checkFiducialAndReturnResultWindowRect(Mat inputMat)  {
@@ -892,7 +898,8 @@ public class ImageProcessor {
         Mat correctedMat = new Mat(mRefImg.rows(), mRefImg.cols(), mRefImg.type());
         warpPerspective(inputMat, correctedMat, M, new Size(mRefImg.cols(), mRefImg.rows()));
 
-        Rect resultWindowRect = checkFiducialAndReturnResultWindowRect(correctedMat);
+        //Rect resultWindowRect = checkFiducialAndReturnResultWindowRect(correctedMat);
+        Rect resultWindowRect = returnResultWindowRect(correctedMat);
 
         correctedMat = new Mat(correctedMat, resultWindowRect);
 
