@@ -1030,6 +1030,7 @@ public class ImageProcessor {
         mask.release();
         inDescriptor.release();
         inKeypoints.release();
+        Log.d(TAG, "Detect RDT TIME: " + (System.currentTimeMillis()-currentTime));
         return boundary;
     }
 
