@@ -1005,6 +1005,7 @@ public class ImageProcessor {
         //Rect resultWindowRect = returnResultWindowRect(correctedMat);
 
         correctedMat = new Mat(correctedMat, resultWindowRect);
+        resize(correctedMat, correctedMat, new Size(RESULT_WINDOW_RECT_HEIGHT, mRefImg.rows()-2*RESULT_WINDOW_RECT_WIDTH_PADDING));
 
         return correctedMat;
     }
