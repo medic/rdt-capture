@@ -238,8 +238,8 @@ public class ImageProcessor {
         if (exposureResult == ExposureResult.NORMAL && isSharp) {
 
             MatOfPoint2f boundary = new MatOfPoint2f();
-            boundary = detectRDTWithSIFT(greyMat, 5);
-            //boundary = detectRDT(greyMat);
+            //boundary = detectRDTWithSIFT(greyMat, 5);
+            boundary = detectRDT(greyMat);
             boolean isCentered = false;
             SizeResult sizeResult = SizeResult.INVALID;
             boolean isRightOrientation = false;
