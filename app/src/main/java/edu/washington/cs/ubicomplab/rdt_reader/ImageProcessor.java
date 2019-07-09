@@ -703,8 +703,8 @@ public class ImageProcessor {
             return new InterpretationResult(resultMat, false, false, false);
         }
 
-        //resultMat = enhanceResultWindow(resultMat, new Size(5, resultMat.cols()));
-        resultMat = enhanceResultWindow(resultMat, new Size(10, 10));
+        resultMat = enhanceResultWindow(resultMat, new Size(5, resultMat.cols()));
+        //resultMat = enhanceResultWindow(resultMat, new Size(10, 10));
         //resultMat = correctGamma(resultMat, 0.75);
 
         control = readControlLine(resultMat, new Point(CONTROL_LINE_POSITION, 0));
