@@ -36,7 +36,7 @@ public final class Constants {
     public static Size CAMERA2_PREVIEW_SIZE = new Size(1280, 720);
     public static Size CAMERA2_IMAGE_SIZE = new Size(1280, 720);
     //public static double VIEWPORT_SCALE = 0.50;
-    public static double VIEW_FINDER_SCALE_H = 0.80;
+    public static double VIEW_FINDER_SCALE_H = 0.60;
     public static double VIEW_FINDER_SCALE_W = 0.15;
 
     //Set for QuickVue
