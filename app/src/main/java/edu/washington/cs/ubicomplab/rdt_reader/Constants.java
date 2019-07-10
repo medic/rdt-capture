@@ -18,7 +18,7 @@ public final class Constants {
     public static final int MY_PERMISSION_REQUEST_CODE = 100;
     public static final String[] DATE_FORMATS = {"yyyy/MM/dd","yyyy.MM.dd","yyyy-MM-dd", "yyyyMMdd"};
 
-    public static double SHARPNESS_THRESHOLD = 0.7;
+    public static double SHARPNESS_THRESHOLD = 0.8;
     public static double OVER_EXP_THRESHOLD = 255;
     public static double UNDER_EXP_THRESHOLD = 120;
     public static double OVER_EXP_WHITE_COUNT = 100;
