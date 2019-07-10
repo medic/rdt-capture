@@ -304,14 +304,12 @@ public class ImageQualityView extends LinearLayout implements View.OnClickListen
             }
 
             final Image image = reader.acquireLatestImage();
-            Log.d(TAG, "OnImageAvailableListener: image acquired! " + System.currentTimeMillis());
 
             if (image == null) {
                 return;
             }
 
             if (imageQueue.size() > 0) {
-                Log.d(TAG, "OnImageAvailableListener: image closed! " + System.currentTimeMillis());
                 image.close();
                 return;
             }
