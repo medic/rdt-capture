@@ -238,8 +238,8 @@ public class ImageProcessor {
         if (exposureResult == ExposureResult.NORMAL && isSharp) {
 
             MatOfPoint2f boundary = new MatOfPoint2f();
-            //boundary = detectRDTWithSIFT(greyMat, 5);
-            boundary = detectRDT(greyMat);
+            boundary = detectRDTWithSIFT(greyMat, 5);
+            //boundary = detectRDT(greyMat);
             boolean isCentered = false;
             SizeResult sizeResult = SizeResult.INVALID;
             boolean isRightOrientation = false;
@@ -1013,18 +1013,21 @@ public class ImageProcessor {
     }
 
     private MatOfPoint2f detectRDTWithSIFT(Mat inputMat, int ransac){
+        double scale = 0.5;
+        Mat scaledMat = new Mat();
+        Imgproc.resize(inputMat, scaledMat, new Size(), scale, scale, Imgproc.INTER_LINEAR);
         double currentTime = System.currentTimeMillis();
         Mat inDescriptor = new Mat();
         MatOfKeyPoint inKeypoints = new MatOfKeyPoint();
         MatOfPoint2f boundary = new MatOfPoint2f();
 
-        Mat mask = new Mat(inputMat.cols(), inputMat.rows(), CV_8U, new Scalar(0));
+        Mat mask = new Mat(scaledMat.cols(), scaledMat.rows(), CV_8U, new Scalar(0));
 
-        Point p1 = new Point(0, inputMat.size().height*(1-VIEW_FINDER_SCALE_W/CROP_RATIO)/2);
-        Point p2 = new Point(inputMat.size().width-p1.x, inputMat.size().height-p1.y);
+        Point p1 = new Point(0, scaledMat.size().height*(1-VIEW_FINDER_SCALE_W/CROP_RATIO)/2);
+        Point p2 = new Point(scaledMat.size().width-p1.x, scaledMat.size().height-p1.y);
         Imgproc.rectangle(mask, p1, p2, new Scalar(255), -1);
 
-        siftDetector.detectAndCompute(inputMat, mask, inKeypoints, inDescriptor);
+        siftDetector.detectAndCompute(scaledMat, mask, inKeypoints, inDescriptor);
 
         if (inDescriptor.size().equals(new Size(0,0))) { // No features found!
             return boundary;
@@ -1121,15 +1124,16 @@ public class ImageProcessor {
 
                 for (int i = 0; i < 4; i++) {
                     if(rotatedRect.angle < -45)
-                        bound[(i+2)%4] = v[i];
+                        bound[(i+2)%4] = new Point(v[i].x/scale, v[i].y/scale);
                     else
-                        bound[(i+3)%4] = v[i];
+                        bound[(i+3)%4] = new Point(v[i].x/scale, v[i].y/scale);
                 }
 
                 boundary.fromArray(bound);
             }
             H.release();
         }
+        scaledMat.release();
         goodMatchesMat.release();
         objMat.release();
         sceneMat.release();
