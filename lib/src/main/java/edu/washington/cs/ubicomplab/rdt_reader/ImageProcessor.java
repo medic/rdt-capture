@@ -934,12 +934,15 @@ public class ImageProcessor {
 
         ArrayList<DMatch> goodMatches = new ArrayList<>();
         for (int i = 0; i < matches.size(); i++) {
-            DMatch m = matches.get(i).toArray()[0];
-            DMatch n = matches.get(i).toArray()[1];
-            if (m.distance <= 0.80 * n.distance) {
-                goodMatches.add(m);
-                sum += m.distance;
-                count++;
+            DMatch[] dMatches = matches.get(i).toArray();
+            if (dMatches.length > 1) {
+                DMatch m = dMatches[0];
+                DMatch n = dMatches[1];
+                if (m.distance <= 0.80 * n.distance) {
+                    goodMatches.add(m);
+                    sum += m.distance;
+                    count++;
+                }
             }
         }
 

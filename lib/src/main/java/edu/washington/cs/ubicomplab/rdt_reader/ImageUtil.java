@@ -241,7 +241,9 @@ public final class ImageUtil {
             }
 
             protected void onPostExecute(String imageFilePath) {
-                imageSavedCallBack.onImageSaved(imageFilePath);
+                if (imageSavedCallBack != null) {
+                    imageSavedCallBack.onImageSaved(imageFilePath);
+                }
             }
         }
 
