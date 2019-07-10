@@ -120,10 +120,18 @@ public class ImageResultActivity extends AppCompatActivity implements View.OnCli
             SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH-mm-ss-SSS");
 
             try {
-                String filePath = sdIconStorageDir.toString() + String.format("/%s-%08dms.jpg", sdf.format(new Date()), timeTaken);
+                String filePath = sdIconStorageDir.toString() + String.format("/%s-%08dms_full.jpg", sdf.format(new Date()), timeTaken);
                 FileOutputStream fileOutputStream = new FileOutputStream(filePath);
 
                 fileOutputStream.write(capturedByteArray);
+
+                fileOutputStream.flush();
+                fileOutputStream.close();
+
+                filePath = sdIconStorageDir.toString() + String.format("/%s-%08dms_cropped.jpg", sdf.format(new Date()), timeTaken);
+                fileOutputStream = new FileOutputStream(filePath);
+
+                fileOutputStream.write(windowByteArray);
 
                 fileOutputStream.flush();
                 fileOutputStream.close();
