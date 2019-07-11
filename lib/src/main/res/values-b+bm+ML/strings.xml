@@ -1,0 +1,49 @@
+<!--
+  ~ Copyright (C) 2019 University of Washington Ubicomp Lab
+  ~ All rights reserved.
+  ~
+  ~ This software may be modified and distributed under the terms
+  ~ of a BSD-style license that can be found in the LICENSE file.
+  -->
+
+<resources>
+    <string name="app_name">rdt-reader</string>
+    <string name="title_activity_result">ResultActivity</string>
+    <string name="title_activity_camera2_test">Camera2TestActivity</string>
+    <string name="progress_initialization">A to a cogola...</string>
+    <string name="progress_final">Cassɛti ja tara, a sɛgɛsɛgɛli bɛ sennan...</string>
+    <string name="instruction">Cassɛti ja do tɛrɛ kɔnɔ.</string>
+    <string name="instruction_detected"><![CDATA[Cassɛti ja bilala camacɛla kaɲɛ!]]></string>
+    <string name="instruction_pos"><![CDATA[Cassɛti ja bila camacɛla.\nCassɛti ja do tɛrɛ kɔnɔ.]]></string>
+    <string name="instruction_too_small"><![CDATA[Cassɛti ja bila camacɛla.\nCassɛti ja do tɛrɛ kɔnɔ.\nA ma gɛrɛ.]]></string>
+    <string name="instruction_too_large"><![CDATA[Cassɛti ja bila camacɛla.\nCassɛti ja do tɛrɛ kɔnɔ.\nA ma bɔ.]]></string>
+    <string name="instruction_focusing"><![CDATA[Cassɛti ja bila camacɛla.\nCassɛti ja do tɛrɛ kɔnɔ.\nA gilanli bɛ sennan.\nA to a cogola.]]></string>
+    <string name="instruction_unfocused"><![CDATA[Cassɛti ja bila camacɛla.\nCassɛti ja do tɛrɛ kɔnɔ.\nCamera ma gilan kaɲɛ.\nA ma bɔ.]]></string>
+    <string name="over_exposed_msg">A ɲɛ jɛlen kojugu </string>
+    <string name="under_exposed_msg">A ɲɛ dibilen kojugu </string>
+    <string name="quality_msg_format"> <![CDATA[Ta cogoya/A jaɲan: %s <br> Ka ɲɛ sanuya: %s <br> A ɲɛ jɛ: %s <br> Dibi tala: %s]]></string>
+    <string name="exp_date_undetected"><![CDATA[Ciɲɛ don mase kaa ta.\n ]]></string>
+    <string name="exp_date_expired"><![CDATA[TDR ciɲɛna !\n I kana ni TDR labaara tuguni ! ]]></string>
+    <string name="exp_date_valid"><![CDATA[TDR bese ka labaara sisan.]]></string>
+    <string name="settings_strict">A suguya kaɲi</string>
+    <string name="settings_loose">A suguya maɲi</string>
+    <string name="exp_date_check">Ciɲɛ don (Datitɛmɛli)</string>
+    <string name="image_quality">Ja cogoya</string>
+    <string name="settings">Paramɛtiri</string>
+    <string name="save_image">Ja mara</string>
+    <string name="done">Done</string>
+    <string name="settings_sharpness">Ka ɲɛ sanuya</string>
+    <string name="settings_over_exposure">Yelen ka bo</string>
+    <string name="settings_under_exposure">Yelen ka dɔgɔn</string>
+    <string name="settings_shadow">Ja dibiyali</string>
+    <string name="settings_size">A jaɲan</string>
+    <string name="settings_position">Ta cogoya</string>
+    <string name="settings_language">Language</string>
+    <string name="settings_english">English</string>
+    <string name="settings_french">Français</string>
+    <string name="settings_bambara">Bamanankan</string>
+    <string name="results_image_saved">Ja mara la kaɲɛ.</string>
+    <string name="results_image_already_saved">Ja mara la kaban.</string>
+    <string name="results_image_sent">Image is successfully sent!</string>
+    <string name="cancel">Cancel</string>
+</resources>

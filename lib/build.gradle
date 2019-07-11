@@ -1,0 +1,117 @@
+apply plugin: 'com.android.library'
+apply plugin: 'maven-publish'
+apply plugin: 'com.jfrog.bintray'
+
+group = "io.ona.rdt-capture"
+version = '0.1.5'
+def home = System.properties['user.home']
+
+android {
+    compileSdkVersion 26
+    defaultConfig {
+        minSdkVersion 17
+        targetSdkVersion 26
+        versionCode 1
+        versionName "1.0"
+        testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
+        externalNativeBuild {
+            cmake {
+                cppFlags ""
+            }
+        }
+    }
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+        }
+    }
+    externalNativeBuild {
+        cmake {
+            path "CMakeLists.txt"
+        }
+    }
+}
+
+dependencies {
+    implementation 'com.android.support:support-v4:26.1.0'
+    testImplementation 'junit:junit:4.12'
+    implementation 'com.android.support:appcompat-v7:26.1.0'
+    implementation 'com.android.support.constraint:constraint-layout:1.0.2'
+    androidTestImplementation 'com.android.support.test:runner:1.0.1'
+    androidTestImplementation 'com.android.support.test.espresso:espresso-core:3.0.1'
+    implementation 'com.android.support:design:26.1.0'
+    implementation 'com.github.PhilJay:MPAndroidChart:v3.0.3'
+    implementation 'com.google.android.gms:play-services-vision:11+'
+    implementation 'com.shuhart.stepview:stepview:1.2.0'
+    //compile 'org.nd4j:nd4j-native:0.9.1'
+    //compile 'org.nd4j:nd4j-native:0.9.1:android-x86'
+    implementation 'com.android.support:cardview-v7:26.1.0'
+    implementation project(':openCVLibrary341-contrib')
+}
+
+task sourceJar(type: Jar) {
+    from android.sourceSets.main.java.srcDirs
+    classifier "sources"
+}
+
+artifacts {
+    archives sourceJar
+}
+
+publishing {
+    publications {
+        RDTCaptureLib(MavenPublication) {
+            artifact("$buildDir/outputs/aar/lib-release.aar")
+            artifact(sourceJar)
+            groupId this.group
+            artifactId 'lib'
+            version this.version
+
+            //The publication doesn't know about our dependencies, so we have to manually add them to the pom
+            pom.withXml {
+                def dependenciesNode = asNode().appendNode('dependencies')
+                //Iterate over the compile dependencies (we don't want the test ones), adding a <dependency> node for each
+                configurations.implementation.allDependencies.each {
+                    def dependencyNode = dependenciesNode.appendNode('dependency')
+                    dependencyNode.appendNode('groupId', it.group)
+                    dependencyNode.appendNode('artifactId', it.name)
+                    dependencyNode.appendNode('version', it.version)
+                }
+            }
+        }
+    }
+
+    repositories {
+        maven {
+            name = 'local'
+            url = "file://${home}/.m2/repository/"
+        }
+    }
+}
+
+
+
+bintray {
+    // Get Bintray credentials from environment variables
+    user = System.getenv('BINTRAY_USER') // Get bintray User
+    key = System.getenv('BINTRAY_KEY') // Get bintray Secret Key
+    configurations = ['archives']
+    pkg {
+        repo = 'rdt-capture'
+        name = project.name
+        userOrg = 'ona'
+        licenses = ['Apache-2.0']
+        desc = 'RDT Capture Library'
+        websiteUrl = "https://ona.io"
+        publish = true
+        vcsUrl = "https://github.com/onaio/rdt-capture"
+        version {
+            name = this.version
+            desc = "RDT Capture Library ${this.version}"
+            released = new Date()
+            vcsTag = this.version
+        }
+    }
+    publications = ['RDTCaptureLib']
+}
