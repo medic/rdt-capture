@@ -173,36 +173,30 @@ public class ExpirationDateActivity extends AppCompatActivity implements CvCamer
         SparseArray<TextBlock> items = mTextRecognizer.detect(frame);
 
         Date expDate = new Date(0);
-
-        ArrayList<SimpleDateFormat> dfs = new ArrayList<>();
-
-        for (String format : DATE_FORMATS) {
-            dfs.add(new SimpleDateFormat(format));
-        }
+        SimpleDateFormat df = new SimpleDateFormat("MMMyyyy");
+        String startWord = "exp";
 
         for (int i = 0; i < items.size(); ++i) {
             TextBlock item = items.valueAt(i);
             for (Text currText : item.getComponents()) {
-                Log.d(TAG, "DETECTED LINE: " + currText.getValue());
                 String str = currText.getValue();
+                Log.d(TAG, "DETECTED LINE: " + str);
 
                 str = str.toLowerCase();
                 str = str.replaceAll(" ", "");
-                str = str.replace('o', '0');
-                str = str.replace('t', '1');
-                str = str.replace(',', '.');
+                str = str.replace(",", ".");
                 str = str.replaceAll("\\.","");
+                Log.d(TAG, "CLEANED LINE: " + str);
 
-                Log.d(TAG, "DETECTED TEXT: " + str);
-
-                for (SimpleDateFormat df : dfs) {
-                    if (str.length() > 7) {
-                        try {
-                            expDate = df.parse(str).after(expDate) ? df.parse(str) : expDate;
-                        } catch (ParseException pe) {
-                            Log.d(TAG, pe.getMessage());
-                        }
+                if (str.startsWith(startWord)) {
+                    int indexOfStartWord = str.indexOf(startWord);
+                    str = str.substring(indexOfStartWord+startWord.length());
+                    try {
+                        expDate = df.parse(str).after(expDate) ? df.parse(str) : expDate;
+                    } catch (ParseException pe) {
+                        Log.d(TAG, pe.getMessage());
                     }
+                    Log.d(TAG, "PARSED DATE: " + expDate.toString());
                 }
             }
         }
