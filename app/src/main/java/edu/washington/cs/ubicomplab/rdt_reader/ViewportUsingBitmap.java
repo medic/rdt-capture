@@ -23,8 +23,8 @@ import android.util.AttributeSet;
 import android.view.ViewGroup;
 
 public class ViewportUsingBitmap extends ViewGroup {
-    private float hScale;
-    private float wScale;
+    float hScale;
+    float wScale;
 
     private Canvas temp;
     private Paint paint;

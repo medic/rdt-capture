@@ -80,6 +80,7 @@ public class ImageQualityView extends LinearLayout implements View.OnClickListen
     private boolean showViewport;
     private boolean showFeedback;
     private boolean flashEnabled = true;
+    private String rdtName;
 
     private long timeTaken = 0;
 
@@ -88,6 +89,10 @@ public class ImageQualityView extends LinearLayout implements View.OnClickListen
     private FocusState mFocusState = FocusState.INACTIVE;
 
     private ImageQualityViewListener mImageQualityViewListener;
+
+    public void setRDTName(String rdtName) {
+        this.rdtName = rdtName;
+    }
 
     private enum State {
         QUALITY_CHECK, FINAL_CHECK
@@ -838,7 +843,10 @@ public class ImageQualityView extends LinearLayout implements View.OnClickListen
             switch (status) {
                 case LoaderCallbackInterface.SUCCESS: {
                     Log.i(TAG, "OpenCV loaded successfully");
-                    processor = ImageProcessor.getInstance(mActivity);
+                    processor = ImageProcessor.getInstance(mActivity, rdtName);
+                    ViewportUsingBitmap viewport = findViewById(R.id.img_quality_check_viewport);
+                    viewport.hScale = (float)processor.mRDT.viewFinderScaleH;
+                    viewport.wScale = (float)processor.mRDT.viewFinderScaleW;
                 }
                 break;
                 default: {

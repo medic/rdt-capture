@@ -7,15 +7,25 @@ import android.util.Log;
 
 import org.opencv.core.Mat;
 
+import static edu.washington.cs.ubicomplab.rdt_reader.Constants.DEFAULT_RDT_NAME;
+
 public class ImageQualityActivity extends Activity implements ImageQualityView.ImageQualityViewListener {
     ImageQualityView mImageQualityView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        Bundle b = getIntent().getExtras();
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_image_quality);
         mImageQualityView = findViewById(R.id.imageQualityView);
         mImageQualityView.setImageQualityViewListener(this);
+
+        if (b != null && b.containsKey("rdt_name")) {
+            String rdtName = b.getString("rdt_name");
+            mImageQualityView.setRDTName(rdtName);
+        } else {
+            mImageQualityView.setRDTName(DEFAULT_RDT_NAME);
+        }
     }
 
 
