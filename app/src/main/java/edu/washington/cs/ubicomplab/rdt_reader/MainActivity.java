@@ -111,6 +111,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             startActivity(intent);
         } else if (view.getId() == R.id.imagequalButton) {
             Intent intent = new Intent(this, ImageQualityActivity.class);
+            intent.putExtra("rdt_name", "experimental");
             startActivity(intent);
         } else if (view.getId() == R.id.camera2TestButton) {
 //            Intent intent = new Intent(this, ImageQualityOpencvActivity.class);
