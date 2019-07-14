@@ -532,19 +532,16 @@ public class ImageProcessor {
 
     private SizeResult checkSize(MatOfPoint2f boundary, Size size) {
         double height = measureSize(boundary);
-        //boolean isRightSize = height < size.height*VIEW_FINDER_SCALE_H*(1+SIZE_THRESHOLD) && height > size.height*VIEW_FINDER_SCALE_H*(1-SIZE_THRESHOLD);
-        boolean isRightSize = height < size.width*VIEW_FINDER_SCALE_H+100 && height > size.width*VIEW_FINDER_SCALE_H-100;
+        boolean isRightSize = height < size.width*VIEW_FINDER_SCALE_H+size.width*SIZE_THRESHOLD && height > size.width*VIEW_FINDER_SCALE_H-size.width*SIZE_THRESHOLD;
 
         SizeResult sizeResult = SizeResult.INVALID;
 
         if (isRightSize) {
             sizeResult = SizeResult.RIGHT_SIZE;
         } else {
-            //if (height > size.height*VIEW_FINDER_SCALE_H*(1+SIZE_THRESHOLD)) {
-            if (height > size.height*VIEW_FINDER_SCALE_H+100) {
+            if (height > size.width*VIEW_FINDER_SCALE_H+size.width*SIZE_THRESHOLD) {
                 sizeResult = SizeResult.LARGE;
-            //} else if (height < size.height*VIEW_FINDER_SCALE_H*(1-SIZE_THRESHOLD)) {
-            } else if (height < size.height*VIEW_FINDER_SCALE_H-100) {
+            } else if (height < size.width*VIEW_FINDER_SCALE_H-size.width*SIZE_THRESHOLD) {
                 sizeResult = SizeResult.SMALL;
             } else {
                 sizeResult = SizeResult.INVALID;
