@@ -45,4 +45,6 @@ public final class Constants {
     public static final int REQUEST_CAMERA_PERMISSION = 1;
 
     public static double CROP_RATIO = 1.0;
+
+    public static final String ONA_RDT = "experimental";
 }

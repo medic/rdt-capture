@@ -16,6 +16,7 @@ import org.opencv.xfeatures2d.SIFT;
 import java.io.IOException;
 import java.io.InputStream;
 
+import static edu.washington.cs.ubicomplab.rdt_reader.Constants.ONA_RDT;
 import static org.opencv.imgproc.Imgproc.cvtColor;
 
 /**
@@ -66,6 +67,10 @@ public class RDT {
 
             //load config
             JSONObject obj = new JSONObject(new String(buffer, "UTF-8")).getJSONObject(rdtName);
+            if (obj == null) {
+                // default to ona rdt
+                obj = new JSONObject(new String(buffer, "UTF-8")).getJSONObject(ONA_RDT);
+            }
 
             refImageID = context.getResources().getIdentifier(obj.getString("REF_IMG"), "drawable", context.getPackageName());
             viewFinderScaleH = obj.getDouble("VIEW_FINDER_SCALE_H");
