@@ -107,6 +107,7 @@ public class ImageQualityView extends LinearLayout implements View.OnClickListen
                 ImageProcessor.InterpretationResult interpretationResult,
                 long timeTaken
         );
+        void onRDTInterpreting(long timeTaken);
     }
 
     public ImageQualityView(Context context, AttributeSet attrs) {
@@ -347,6 +348,21 @@ public class ImageQualityView extends LinearLayout implements View.OnClickListen
             ImageProcessor.InterpretationResult interpretationResult = null;
             if (captureResult.allChecksPassed) {
                 Log.d(TAG, String.format("Captured MAT size: %s", captureResult.resultMat.size()));
+                if (mImageQualityViewListener != null) {
+                    mImageQualityViewListener.onRDTInterpreting(System.currentTimeMillis() - timeTaken);
+                }
+                try {
+                    mCameraOpenCloseLock.acquire();
+                    if (null != mCaptureSession) {
+                        mCaptureSession.stopRepeating();
+                    }
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                } catch (CameraAccessException e) {
+                    e.printStackTrace();
+                } finally {
+                    mCameraOpenCloseLock.release();
+                }
 
                 //interpretation
                 interpretationResult = processor.interpretResult(captureResult.resultMat, captureResult.boundary);
