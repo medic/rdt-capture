@@ -700,7 +700,21 @@ public class ImageProcessor {
             return new InterpretationResult(resultMat, false, false, false);
         }
 
-        resultMat = enhanceResultWindow(resultMat, new Size(5, resultMat.cols()));
+        Mat grayMat = new Mat();
+        cvtColor(resultMat, grayMat, COLOR_RGB2GRAY);
+        MatOfDouble mu = new MatOfDouble();
+        MatOfDouble sigma = new MatOfDouble();
+        Core.meanStdDev(grayMat, mu, sigma);
+        Core.MinMaxLocResult minMaxLocResult = Core.minMaxLoc(grayMat);
+
+        Log.d(TAG, String.format("stdev %.2f, minval %.2f at %s, maxval %.2f at %s",
+                sigma.get(0,0)[0],
+                minMaxLocResult.minVal, minMaxLocResult.minLoc,
+                minMaxLocResult.maxVal, minMaxLocResult.maxLoc));
+
+        if (sigma.get(0,0)[0] > ENHANCING_THRESHOLD)
+            resultMat = enhanceResultWindow(resultMat, new Size(5, resultMat.cols()));
+
         //resultMat = enhanceResultWindow(resultMat, new Size(10, 10));
         //resultMat = correctGamma(resultMat, 0.75);
 
