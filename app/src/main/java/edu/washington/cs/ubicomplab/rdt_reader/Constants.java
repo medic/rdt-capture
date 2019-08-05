@@ -84,4 +84,6 @@ public final class Constants {
     public static int ANGLE_THRESHOLD = 10;
     public static int FIDUCIAL_DISTANCE = 610;
     public static int FIDUCIAL_COUNT = 2;
+
+    public static double ENHANCING_THRESHOLD = 4.50;
 }
