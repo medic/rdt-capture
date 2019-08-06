@@ -37,60 +37,79 @@ public class ImageResultActivity extends AppCompatActivity implements View.OnCli
     byte[] capturedByteArray, windowByteArray;
     boolean isImageSaved = false;
     long timeTaken = 0;
-    boolean control, testA, testB;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_image_result);
-
-
         initViews();
     }
 
     private void initViews() {
-        Intent i = getIntent();
+        Intent intent = getIntent();
 
-        if (getIntent().hasExtra("captured")) {
-            capturedByteArray = getIntent().getExtras().getByteArray("captured");
+        // Captured image
+        if (intent.hasExtra("captured")) {
+            capturedByteArray = intent.getExtras().getByteArray("captured");
             mBitmapToSave = BitmapFactory.decodeByteArray(capturedByteArray, 0, capturedByteArray.length);
 
             ImageView resultImageView = findViewById(R.id.RDTImageView);
             resultImageView.setImageBitmap(BitmapFactory.decodeByteArray(capturedByteArray, 0, capturedByteArray.length));
         }
 
-        if (getIntent().hasExtra("window")) {
-            windowByteArray = getIntent().getExtras().getByteArray("window");
+        // Enhanced image
+        if (intent.hasExtra("window")) {
+            windowByteArray = intent.getExtras().getByteArray("window");
             mBitmapToSave = BitmapFactory.decodeByteArray(windowByteArray, 0, windowByteArray.length);
 
             ImageView windowImageView = findViewById(R.id.WindowImageView);
             windowImageView.setImageBitmap(BitmapFactory.decodeByteArray(windowByteArray, 0, windowByteArray.length));
         }
 
-        if (getIntent().hasExtra("timeTaken")) {
-            timeTaken = getIntent().getLongExtra("timeTaken", 0);
+        // Capture time
+        if (intent.hasExtra("timeTaken")) {
+            timeTaken = intent.getLongExtra("timeTaken", 0);
             TextView timeTextView = findViewById(R.id.TimeTextView);
             timeTextView.setText(String.format("%.2f seconds", timeTaken/1000.0));
         }
 
-        if (getIntent().hasExtra("control")) {
-            control = getIntent().getBooleanExtra("control", false);
-            TextView controlTextView = findViewById(R.id.ControlTextView);
-            controlTextView.setText(String.format("%s", control?"True":"False"));
+        // Top line
+        if (intent.hasExtra("topLine")) {
+            boolean topLine = intent.getBooleanExtra("topLine", false);
+            TextView topLineTextView = findViewById(R.id.topLineTextView);
+            topLineTextView.setText(String.format("%s", topLine ?"True":"False"));
+        }
+        if (intent.hasExtra("topLineName")) {
+            String topLineName = intent.getStringExtra("topLineName");
+            TextView topLineNameTextView = findViewById(R.id.topLineNameTextView);
+            topLineNameTextView.setText(topLineName);
         }
 
-        if (getIntent().hasExtra("testA")) {
-            testA = getIntent().getBooleanExtra("testA", false);
-            TextView testATextView = findViewById(R.id.TestATextView);
-            testATextView.setText(String.format("%s", testA?"True":"False"));
+        // Middle line
+        if (intent.hasExtra("middleLine")) {
+            boolean middleLine = intent.getBooleanExtra("middleLine", false);
+            TextView middleLineTextView = findViewById(R.id.middleLineTextView);
+            middleLineTextView.setText(String.format("%s", middleLine ?"True":"False"));
+        }
+        if (intent.hasExtra("middleLineName")) {
+            String middleLineName = intent.getStringExtra("middleLineName");
+            TextView middleLineNameTextView = findViewById(R.id.middleLineNameTextView);
+            middleLineNameTextView.setText(middleLineName);
         }
 
-        if (getIntent().hasExtra("testB")) {
-            testB = getIntent().getBooleanExtra("testB", false);
-            TextView testBTextView = findViewById(R.id.TestBTextView);
-            testBTextView.setText(String.format("%s", testB?"True":"False"));
+        // Bottom line
+        if (intent.hasExtra("bottomLine")) {
+            boolean bottomLine = intent.getBooleanExtra("bottomLine", false);
+            TextView bottomLineTextView = findViewById(R.id.bottomLineTextView);
+            bottomLineTextView.setText(String.format("%s", bottomLine ?"True":"False"));
+        }
+        if (intent.hasExtra("bottomLineName")) {
+            String bottomLineName = intent.getStringExtra("bottomLineName");
+            TextView bottomLineNameTextView = findViewById(R.id.bottomLineNameTextView);
+            bottomLineNameTextView.setText(bottomLineName);
         }
 
+        // Buttons
         Button saveImageButton = findViewById(R.id.saveButton);
         saveImageButton.setOnClickListener(this);
         Button sendImageButton = findViewById(R.id.sendButton);
@@ -120,26 +139,22 @@ public class ImageResultActivity extends AppCompatActivity implements View.OnCli
             SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH-mm-ss-SSS");
 
             try {
+                // Save the full image
                 String filePath = sdIconStorageDir.toString() + String.format("/%s-%08dms_full.jpg", sdf.format(new Date()), timeTaken);
                 FileOutputStream fileOutputStream = new FileOutputStream(filePath);
-
                 fileOutputStream.write(capturedByteArray);
-
                 fileOutputStream.flush();
                 fileOutputStream.close();
 
+                // Save the enhanced image
                 filePath = sdIconStorageDir.toString() + String.format("/%s-%08dms_cropped.jpg", sdf.format(new Date()), timeTaken);
                 fileOutputStream = new FileOutputStream(filePath);
-
                 fileOutputStream.write(windowByteArray);
-
                 fileOutputStream.flush();
                 fileOutputStream.close();
 
                 sendBroadcast(new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE, Uri.parse("file://" + filePath)));
-
                 isImageSaved = true;
-
                 Toast.makeText(this,"Image is successfully saved!", Toast.LENGTH_SHORT).show();
             } catch (Exception e) {
                 Log.w("TAG", "Error saving image file: " + e.getMessage());

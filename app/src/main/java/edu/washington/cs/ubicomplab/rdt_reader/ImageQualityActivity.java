@@ -5,8 +5,6 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
 
-import org.opencv.core.Mat;
-
 import static edu.washington.cs.ubicomplab.rdt_reader.Constants.DEFAULT_RDT_NAME;
 
 public class ImageQualityActivity extends Activity implements ImageQualityView.ImageQualityViewListener {
@@ -85,9 +83,12 @@ public class ImageQualityActivity extends Activity implements ImageQualityView.I
                     i.addFlags(Intent.FLAG_ACTIVITY_FORWARD_RESULT);
                     i.putExtra("captured", captureByteArray);
                     i.putExtra("window", windowByteArray);
-                    i.putExtra("control", interpretationResult.control);
-                    i.putExtra("testA", interpretationResult.testA);
-                    i.putExtra("testB", interpretationResult.testB);
+                    i.putExtra("topLine", interpretationResult.topLine);
+                    i.putExtra("middleLine", interpretationResult.middleLine);
+                    i.putExtra("bottomLine", interpretationResult.bottomLine);
+                    i.putExtra("topLineName", interpretationResult.topLineName);
+                    i.putExtra("middleLineName", interpretationResult.middleLineName);
+                    i.putExtra("bottomLineName", interpretationResult.bottomLineName);
                     i.putExtra("timeTaken", timeTaken);
                     startActivity(i);
                 }

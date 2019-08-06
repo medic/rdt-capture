@@ -11,7 +11,6 @@ package edu.washington.cs.ubicomplab.rdt_reader;
 import android.app.Activity;
 import android.content.Context;
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.util.Log;
 
 import org.opencv.android.BaseLoaderCallback;
@@ -36,13 +35,10 @@ import org.opencv.core.Rect;
 import org.opencv.core.RotatedRect;
 import org.opencv.core.Size;
 import org.opencv.core.TermCriteria;
-import org.opencv.features2d.BFMatcher;
-import org.opencv.features2d.BRISK;
 import org.opencv.features2d.Features2d;
 import org.opencv.imgproc.CLAHE;
 import org.opencv.imgproc.Imgproc;
 import org.opencv.core.Scalar;
-import org.opencv.xfeatures2d.SIFT;
 
 
 import java.io.File;
@@ -50,8 +46,6 @@ import java.io.FileOutputStream;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
-import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
 
@@ -82,7 +76,7 @@ import static org.opencv.imgproc.Imgproc.warpPerspective;
 public class ImageProcessor {
     private static String TAG = "ImageProcessor";
     private static ImageProcessor instance = null;
-    RDT mRDT;
+    static RDT mRDT;
 
     private int mMoveCloserCount = 0;
 
@@ -127,25 +121,34 @@ public class ImageProcessor {
     }
 
     public static class InterpretationResult {
-        public boolean control;
-        public boolean testA;
-        public boolean testB;
+        public boolean topLine;
+        public boolean middleLine;
+        public boolean bottomLine;
+        public String topLineName;
+        public String middleLineName;
+        public String bottomLineName;
         public Mat resultMat;
         public Bitmap resultBitmap;
 
         public InterpretationResult() {
-            control = false;
-            testA = false;
-            testB = false;
+            topLine = false;
+            middleLine = false;
+            bottomLine = false;
+            topLineName = "Top Line";
+            middleLineName = "Middle Line";
+            bottomLineName = "Bottom Line";
             resultMat = new Mat();
             resultBitmap = null;
         }
 
-        public InterpretationResult(Mat resultMat, boolean control, boolean testA, boolean testB) {
+        public InterpretationResult(Mat resultMat, boolean topLine, boolean middleLine, boolean bottomLine) {
             this.resultMat = resultMat;
-            this.control = control;
-            this.testA = testA;
-            this.testB = testB;
+            this.topLine = topLine;
+            this.middleLine = middleLine;
+            this.bottomLine = bottomLine;
+            this.topLineName = mRDT.topLineName;
+            this.middleLineName = mRDT.middleLineName;
+            this.bottomLineName = mRDT.bottomLineName;
             if (resultMat.cols() > 0 && resultMat.rows() > 0) {
                 this.resultBitmap = Bitmap.createBitmap(resultMat.cols(), resultMat.rows(), Bitmap.Config.ARGB_8888);
                 Utils.matToBitmap(resultMat, resultBitmap);
@@ -545,7 +548,7 @@ public class ImageProcessor {
 
     public InterpretationResult interpretResult(Mat inputMat, MatOfPoint2f boundary) {
         Mat resultMat = cropResultWindow(inputMat, boundary);
-        boolean control, testA, testB;
+        boolean topLine, middleLine, bottomLine;
 
         if (resultMat.width() == 0 && resultMat.height() == 0) {
             return new InterpretationResult(resultMat, false, false, false);
@@ -569,13 +572,13 @@ public class ImageProcessor {
         //resultMat = enhanceResultWindow(resultMat, new Size(10, 10));
         //resultMat = correctGamma(resultMat, 0.75);
 
-        control = readControlLine(resultMat, new Point(mRDT.controlLinePosition, 0));
-        testA = readTestLine(resultMat, new Point(mRDT.testALinePosition, 0));
-        testB = readTestLine(resultMat, new Point(mRDT.testBLinePosition, 0));
+        topLine = readControlLine(resultMat, new Point(mRDT.topLinePosition, 0));
+        middleLine = readTestLine(resultMat, new Point(mRDT.middleLinePosition, 0));
+        bottomLine = readTestLine(resultMat, new Point(mRDT.bottomLinePosition, 0));
 
-        Log.d(TAG, String.format("Interpretation results: %s %s %s", control, testA, testB));
+        Log.d(TAG, String.format("Interpretation results: %s %s %s", topLine, middleLine, bottomLine));
 
-        return new InterpretationResult(resultMat, control, testA, testB);
+        return new InterpretationResult(resultMat, topLine, middleLine, bottomLine);
     }
 
     public InterpretationResult interpretResult(Mat inputMat) {
