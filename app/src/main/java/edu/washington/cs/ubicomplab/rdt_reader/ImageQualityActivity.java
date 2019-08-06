@@ -72,10 +72,8 @@ public class ImageQualityActivity extends Activity implements ImageQualityView.I
             public void run() {
                 if (mImageQualityView.isExternalIntent()) {
                     Intent i = new Intent();
-
                     i.putExtra("data", captureByteArray);
                     i.putExtra("timeTaken", timeTaken);
-
                     setResult(Activity.RESULT_OK, i);
                     finish();
                 } else {
