@@ -235,7 +235,12 @@ public class ImageProcessor {
             }
 
             greyMat.release();
-            return new CaptureResult(passed, cropRDT(inputMat), fiducial, exposureResult, sizeResult, isCentered, isRightOrientation, angle, isSharp, false, boundary);
+
+            // Apply crops if necessary
+            Mat croppedMat = cropRDTMat(inputMat);
+            MatOfPoint2f croppedBoundary = cropRDTBoundary(inputMat, boundary);
+
+            return new CaptureResult(passed, croppedMat, fiducial, exposureResult, sizeResult, isCentered, isRightOrientation, angle, isSharp, false, croppedBoundary);
         }
         else {
             greyMat.release();
@@ -415,16 +420,43 @@ public class ImageProcessor {
         return isOriented;
     }
 
-    private Mat cropRDT(Mat inputMat) {
+    /**
+     * Crops the input image
+     * @param inputMat the input image
+     * @return the adjusted image
+     */
+    private Mat cropRDTMat(Mat inputMat) {
+        // Compute the crop ROI
         int width = (int)(inputMat.cols() * CROP_RATIO);
         int height = (int)(inputMat.rows() * CROP_RATIO);
         int x = (int)(inputMat.cols() * (1.0-CROP_RATIO)/2);
         int y = (int)(inputMat.rows() * (1.0-CROP_RATIO)/2);
-
         Rect roi = new Rect(x, y, width, height);
-        Mat cropped = new Mat(inputMat, roi);
 
-        return cropped;
+        // Crop the image
+        return new Mat(inputMat, roi);
+    }
+
+    /**
+     * Adjusts the bounding box coordinates according to how the input matrix should be cropped
+     * @param inputMat the input image
+     * @param boundary the bounding box
+     * @return the adjusted bounding box
+     */
+    private MatOfPoint2f cropRDTBoundary(Mat inputMat, MatOfPoint2f boundary) {
+        // Compute the offset
+        int x = (int)(inputMat.cols() * (1.0-CROP_RATIO)/2);
+        int y = (int)(inputMat.rows() * (1.0-CROP_RATIO)/2);
+
+        // Apply the offset
+        Point[] boundaryPts = boundary.toArray();
+        for (Point p: boundaryPts) {
+            p.x -= x;
+            p.y -= y;
+        }
+
+        // Return the new boundary
+        return new MatOfPoint2f(boundaryPts);
     }
 
     public int getInstructionText(SizeResult sizeResult, boolean isCentered, boolean isRightOrientation) {

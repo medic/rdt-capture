@@ -41,7 +41,7 @@ public final class Constants {
 
     public static int MOVE_CLOSER_COUNT = 5;
 
-    public static double CROP_RATIO = 1.0;
+    public static double CROP_RATIO = 0.75;
 
     public static double ENHANCING_THRESHOLD = 4.50;
 }
