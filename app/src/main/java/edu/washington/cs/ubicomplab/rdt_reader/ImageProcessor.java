@@ -95,7 +95,6 @@ public class ImageProcessor {
     private int mMoveCloserCount = 0;
     private boolean DEBUG_FLAG = false;
 
-
     public enum ExposureResult {
         UNDER_EXPOSED, NORMAL, OVER_EXPOSED
     }
@@ -214,6 +213,11 @@ public class ImageProcessor {
 
     }
 
+    /**
+     * Attempts to identify the presence of the RDT within the image
+     * @param inputMat: the input image
+     * @return a CaptureResult object with details for feedback
+     */
     public CaptureResult captureRDT(Mat inputMat) {
         // Convert the input to grayscale
         Mat greyMat = new Mat();
@@ -227,9 +231,9 @@ public class ImageProcessor {
 
         // Attempt to detect the RDT using homography
         MatOfPoint2f boundary = detectRDTWithSIFT(greyMat, 5);
-        //boundary = detectRDT(greyMat);
+//        MatOfPoint2f boundary = detectRDT(greyMat);
 
-        // Check the detected RDT's size and position
+        // Check the detected RDT's size, position, and orientation
         boolean isCentered = false;
         SizeResult sizeResult = SizeResult.INVALID;
         boolean isRightOrientation = false;
@@ -241,27 +245,30 @@ public class ImageProcessor {
             angle = measureOrientation(boundary);
         }
 
+        // Determine intermediate result before checking fiducials
         boolean passed = exposureResult == ExposureResult.NORMAL &&
                 isSharp &&
                 sizeResult == SizeResult.RIGHT_SIZE &&
                 isCentered &&
                 isRightOrientation;
 
-        //check fiducial
+        // Check for fiducials for QuickVue strip
         boolean fiducial = false;
         if (passed) {
             Mat resultMat = cropResultWindow(inputMat, boundary);
-            if (resultMat.width() > 0 && resultMat.height() > 0) {
-                fiducial = true;
-            }
+            fiducial = resultMat.width() > 0 && resultMat.height() > 0;
             resultMat.release();
-            passed = passed & fiducial;
+            passed = fiducial;
             if (DEBUG_FLAG)
                 Log.d(TAG, String.format("fiducial: %b", fiducial));
         }
 
+        // Release resources
         greyMat.release();
-        return new CaptureResult(passed, cropRDT(inputMat), fiducial, exposureResult, sizeResult, isCentered, isRightOrientation, angle, isSharp, false, boundary);
+
+        // Return a CaptureResult object
+        return new CaptureResult(passed, cropRDT(inputMat), fiducial, exposureResult, sizeResult,
+                isCentered, isRightOrientation, angle, isSharp, false, boundary);
     }
 
     /**
@@ -379,88 +386,83 @@ public class ImageProcessor {
         return mBuff;
     }
 
-    private double measureSize(MatOfPoint2f boundary) {
+    /**
+     * Measures the height of the bounding box regardless of its orientation
+     * @param boundary: the MatOfPoint2f bounding box around the identified RDT
+     * @return the height of the bounding box
+     */
+    private double measureHeight(MatOfPoint2f boundary) {
         RotatedRect rotatedRect = minAreaRect(boundary);
-
         boolean isUpright = rotatedRect.size.height > rotatedRect.size.width;
-        double angle = 0;
-        double height = 0;
-
-        if (isUpright) {
-            angle = 90 - abs(rotatedRect.angle);
-            height = rotatedRect.size.height;
-        } else {
-            angle = abs(rotatedRect.angle);
-            height = rotatedRect.size.width;
-        }
-
-        return height;
+        return isUpright ? rotatedRect.size.height : rotatedRect.size.width;
     }
 
+    /**
+     * Determines if the detected RDT bounding box has a reasonable size
+     * @param boundary: the MatOfPoint2f bounding box around the identified RDT
+     * @param size: the bounding box's ideal size
+     * @return sizeResult: a SizeResult enum value that can be {RIGHT_SIZE, LARGE, SMALL}
+     */
     private SizeResult checkSize(MatOfPoint2f boundary, Size size) {
-        double height = measureSize(boundary);
-        boolean isRightSize = height < size.width*VIEW_FINDER_SCALE_H+size.width*SIZE_THRESHOLD && height > size.width*VIEW_FINDER_SCALE_H-size.width*SIZE_THRESHOLD;
-
-        SizeResult sizeResult = SizeResult.INVALID;
-
-        if (isRightSize) {
-            sizeResult = SizeResult.RIGHT_SIZE;
-        } else {
-            if (height > size.width*VIEW_FINDER_SCALE_H+size.width*SIZE_THRESHOLD) {
-                sizeResult = SizeResult.LARGE;
-            } else if (height < size.width*VIEW_FINDER_SCALE_H-size.width*SIZE_THRESHOLD) {
-                sizeResult = SizeResult.SMALL;
-            } else {
-                sizeResult = SizeResult.INVALID;
-            }
-        }
-
+        double height = measureHeight(boundary);
+        SizeResult sizeResult = SizeResult.RIGHT_SIZE;
+        if (height > size.width*(VIEW_FINDER_SCALE_H+SIZE_THRESHOLD))
+            sizeResult = SizeResult.LARGE;
+        else if (height < size.width*(VIEW_FINDER_SCALE_H-SIZE_THRESHOLD))
+            sizeResult = SizeResult.SMALL;
         return sizeResult;
-
     }
 
+    /**
+     * Determines if the detected RDT is sufficiently centered
+     * @param boundary: the MatOfPoint2f bounding box around the identified RDT
+     * @param size: the bounding box's ideal size
+     * @return a boolean that describes whether the bounding box is sufficiently centered
+     */
     private boolean checkIfCentered(MatOfPoint2f boundary, Size size) {
-
+        // Compute the center of the bounding box
         Point center = measureCentering(boundary);
-        Point trueCenter = new Point(size.width/2, size.height/2);
-        boolean isCentered = center.x < trueCenter.x + (size.width*POSITION_THRESHOLD) && center.x > trueCenter.x-(size.width*POSITION_THRESHOLD)
-                && center.y < trueCenter.y+(size.height*POSITION_THRESHOLD) && center.y > trueCenter.y-(size.height*POSITION_THRESHOLD);
 
-        return isCentered;
+        // Compare the centering relative to the viewfinder's center
+        Point trueCenter = new Point(size.width/2, size.height/2);
+        boolean isXCentered = center.x > trueCenter.x-(size.width*POSITION_THRESHOLD) &&
+                center.x < trueCenter.x+(size.width*POSITION_THRESHOLD);
+        boolean isYCentered = center.y > trueCenter.y-(size.height*POSITION_THRESHOLD) &&
+                center.y < trueCenter.y+(size.height*POSITION_THRESHOLD);
+        return isXCentered && isYCentered;
 
     }
 
+    /**
+     * Computes the center of a bounding box
+     * @param boundary: a MatOfPoint2f bounding box
+     * @return the (x, y) coordinate of the center
+     */
     private Point measureCentering(MatOfPoint2f boundary) {
         RotatedRect rotatedRect = minAreaRect(boundary);
         return rotatedRect.center;
     }
 
+    /**
+     * Computes the orientation of a bounding box
+     * @param boundary: a MatOfPoint2f bounding box
+     * @return the angle between -90 and 90 degrees
+     */
     private double measureOrientation(MatOfPoint2f boundary) {
+        // Compute min enclosing rectangle and check if it is upright
         RotatedRect rotatedRect = minAreaRect(boundary);
-
         boolean isUpright = rotatedRect.size.height > rotatedRect.size.width;
-        double angle = 0;
-        double height = 0;
 
-        if (isUpright) {
-            if (rotatedRect.angle < 0) {
-                angle = 90 + rotatedRect.angle;
-            } else {
-                angle = rotatedRect.angle - 90;
-            }
-        } else {
-            angle = rotatedRect.angle;
-        }
-
+        // Compute the angle of the rotated rectangle
+        double angle = rotatedRect.angle;
+        if (isUpright)
+            angle = (rotatedRect.angle < 0) ? rotatedRect.angle + 90: rotatedRect.angle - 90;
         return angle;
     }
 
     private boolean checkOrientation(MatOfPoint2f boundary) {
         double angle = measureOrientation(boundary);
-
-        boolean isOriented = abs(angle) < ANGLE_THRESHOLD;
-
-        return isOriented;
+        return abs(angle) < ANGLE_THRESHOLD;
     }
 
     private Mat cropRDT(Mat inputMat) {
@@ -481,7 +483,7 @@ public class ImageProcessor {
         if (sizeResult == SizeResult.RIGHT_SIZE && isCentered && isRightOrientation){
             instructions = R.string.instruction_detected;
         } else if (mMoveCloserCount > MOVE_CLOSER_COUNT) {
-            if (sizeResult != SizeResult.INVALID && sizeResult == SizeResult.SMALL) {
+            if (sizeResult == SizeResult.SMALL) {
                 instructions = R.string.instruction_too_small;
                 mMoveCloserCount = 0;
             }
@@ -628,32 +630,38 @@ public class ImageProcessor {
         return new Rect(RESULT_WINDOW_X, RESULT_WINDOW_Y, RESULT_WINDOW_WIDTH, RESULT_WINDOW_HEIGHT);
     }
 
-    private Rect checkFiducialKMenas(Mat inputMat) {
+    /**
+     * Uses k-means clustering to find if there is a fiducial where we expected
+     * @param inputMat: the input image
+     * @return
+     */
+    private Rect checkFiducialKMeans(Mat inputMat) {
+        // Initialize resources
         int k = 5;
-        TermCriteria criteria = new TermCriteria(TermCriteria.EPS+TermCriteria.MAX_ITER, 100, 1.0);
         Mat data = new Mat();
         inputMat.convertTo(data, CV_32F);
         cvtColor(data, data, COLOR_RGBA2RGB);
-        data = data.reshape(1, (int)data.total());
+        data = data.reshape(1, (int) data.total());
         Mat centers = new Mat();
         Mat labels = new Mat();
 
+        // Perform k-means in RGB
+        TermCriteria criteria = new TermCriteria(TermCriteria.EPS+TermCriteria.MAX_ITER, 100, 1.0);
         kmeans(data, k, labels, criteria, 10, KMEANS_PP_CENTERS, centers);
 
+        // Extract results and place them in data structures
         centers = centers.reshape(3, centers.rows());
         data = data.reshape(3, data.rows());
-
         for (int i = 0; i < data.rows(); i++) {
-            int centerId = (int)labels.get(i,0)[0];
+            int centerId = (int) labels.get(i,0)[0];
             data.put(i, 0, centers.get(centerId,0));
         }
-
         data = data.reshape(3, inputMat.rows());
         data.convertTo(data, CV_8UC3);
 
+        // Identify center with darkest value
         double[] minCenter = new double[3];
         double minCenterVal = Double.MAX_VALUE;
-
         for (int i = 0; i < centers.rows(); i++) {
             double val = centers.get(i,0)[0] + centers.get(i,0)[1] + centers.get(i,0)[2];
             if (val < minCenterVal) {
@@ -662,57 +670,57 @@ public class ImageProcessor {
             }
         }
 
-        double thres = 0.299 * minCenter[0] + 0.587 * minCenter[1] + 0.114 * minCenter[2] + 20.0;
-
+        // Convert to lightness value and binarize the image according to that threshold
+        double thresh = 0.299 * minCenter[0] + 0.587 * minCenter[1] + 0.114 * minCenter[2] + 20.0;
         cvtColor(data, data, COLOR_RGB2GRAY);
         Mat threshold = new Mat();
-        Imgproc.threshold(data, threshold, thres, 255, THRESH_BINARY_INV);
+        Imgproc.threshold(data, threshold, thresh, 255, THRESH_BINARY_INV);
 
+        // Clean up the mask
         Mat element_erode = Imgproc.getStructuringElement(Imgproc.MORPH_ELLIPSE, new Size(5, 5));
         Mat element_dilate = Imgproc.getStructuringElement(Imgproc.MORPH_ELLIPSE, new Size(20, 20));
         Imgproc.erode(threshold, threshold, element_erode);
         Imgproc.dilate(threshold, threshold, element_dilate);
         Imgproc.GaussianBlur(threshold, threshold, new Size(5, 5), 2, 2);
 
+        // Identify large blobs
         List<MatOfPoint> contours = new ArrayList<>();
         Mat hierarchy = new Mat();
-
         Imgproc.findContours(threshold, contours, hierarchy, Imgproc.RETR_EXTERNAL, Imgproc.CHAIN_APPROX_SIMPLE, new Point(0, 0));
 
+        // Draw rectangles around the blobs and see if their position makes sense
         List<Rect> fiducialRects = new ArrayList<>();
         Rect fiducialRect = new Rect(0, 0, 0, 0);
-
         for (int i = 0; i < contours.size(); i++) {
             Rect rect = Imgproc.boundingRect(contours.get(i));
             double rectPos = rect.x + rect.width;
-            if (FIDUCIAL_POSITION_MIN < rectPos && rectPos < FIDUCIAL_POSITION_MAX && FIDUCIAL_MIN_HEIGHT < rect.height && FIDUCIAL_MIN_WIDTH < rect.width && rect.width < FIDUCIAL_MAX_WIDTH) {
+            if (FIDUCIAL_POSITION_MIN < rectPos && rectPos < FIDUCIAL_POSITION_MAX && FIDUCIAL_MIN_HEIGHT < rect.height &&
+                    FIDUCIAL_MIN_WIDTH < rect.width && rect.width < FIDUCIAL_MAX_WIDTH) {
                 fiducialRects.add(rect);
                 if (DEBUG_FLAG)
-                    Log.d(TAG, String.format("Control line rect size: %s %s %s", rect.tl(), rect.br(), rect.size()));
+                    Log.d(TAG, String.format("Fiducial rect size: %s %s %s", rect.tl(), rect.br(), rect.size()));
             }
         }
 
-        if (fiducialRects.size() == FIDUCIAL_COUNT) { //should
-            double center0 = fiducialRects.get(0).x + fiducialRects.get(0).width;
-            double center1 = fiducialRects.get(0).x + fiducialRects.get(0).width;
+        // check positioning between the fiducials assuming there are 2
+        if (fiducialRects.size() == FIDUCIAL_COUNT) {
+            // Calculate the fiducials' x position
+            double center0x = fiducialRects.get(0).x + fiducialRects.get(0).width;
+            double center1x = fiducialRects.get(1).x + fiducialRects.get(1).width;
 
-            if (fiducialRects.size() > 1) {
-                center1 = fiducialRects.get(1).x + fiducialRects.get(1).width;
-            }
-
-            int midpoint = (int) ((center0 + center1) / 2);
-            double diff = abs(center0 - center1);
-
+            // Calculate their midpoint, distance, scale, and offset
+            int midpoint = (int) ((center0x + center1x) / 2);
+            double diff = abs(center0x - center1x);
             double scale = FIDUCIAL_DISTANCE == 0 ? 1 : diff / FIDUCIAL_DISTANCE;
             double offset = scale * FIDUCIAL_TO_CONTROL_LINE_OFFSET;
 
+            // Generate a rectangle for the result window
             Point tl = new Point(midpoint + offset - RESULT_WINDOW_RECT_HEIGHT * scale / 2.0, RESULT_WINDOW_RECT_WIDTH_PADDING);
             Point br = new Point(midpoint + offset + RESULT_WINDOW_RECT_HEIGHT * scale / 2.0, inputMat.size().height - RESULT_WINDOW_RECT_WIDTH_PADDING);
-
             fiducialRect = new Rect(tl, br);
         }
 
-
+        // Release resources
         labels.release();
         centers.release();
         data.release();
@@ -865,34 +873,41 @@ public class ImageProcessor {
         return enhanceImage(inputMat, tile);
     }
 
+    /**
+     * Applies perspective correction to the RDT, checks for fiducials,
+     * and provides the result window if that passes
+     * @param inputMat: the input image
+     * @param boundary: the MatOfPoint2f bounding box around the identified RDT
+     * @return the cropped, perspective corrected test window
+     */
     private Mat cropResultWindow(Mat inputMat, MatOfPoint2f boundary) {
+        // Get template corners
         Mat refBoundary = new Mat(4, 1, CvType.CV_32FC2);
-
         double[] a = new double[]{0, 0};
         double[] b = new double[]{mRefImg.cols() - 1, 0};
         double[] c = new double[]{mRefImg.cols() - 1, mRefImg.rows() - 1};
         double[] d = new double[]{0, mRefImg.rows() - 1};
-
-
-        //get corners from object
         refBoundary.put(0, 0, a);
         refBoundary.put(1, 0, b);
         refBoundary.put(2, 0, c);
         refBoundary.put(3, 0, d);
 
+        // Apply the inverse transform transform to correct the perspective of the RDT
         Mat M = getPerspectiveTransform(boundary, refBoundary);
         Mat correctedMat = new Mat(mRefImg.rows(), mRefImg.cols(), mRefImg.type());
         warpPerspective(inputMat, correctedMat, M, new Size(mRefImg.cols(), mRefImg.rows()));
 
-        //Rect resultWindowRect = checkFiducialAndReturnResultWindowRect(correctedMat);
-        Rect resultWindowRect = checkFiducialKMenas(correctedMat);
-        //Rect resultWindowRect = returnResultWindowRect(correctedMat);
+        // Apply k-means to ensure that the fiducials are in place
+//        Rect resultWindowRect = checkFiducialAndReturnResultWindowRect(correctedMat);
+//        Rect resultWindowRect = returnResultWindowRect(correctedMat);
+        Rect resultWindowRect = checkFiducialKMeans(correctedMat);
 
+        // Provide the cropped result window if everything is successful
         correctedMat = new Mat(correctedMat, resultWindowRect);
         if (correctedMat.width() > 0 && correctedMat.height() > 0) {
-            resize(correctedMat, correctedMat, new Size(RESULT_WINDOW_RECT_HEIGHT, mRefImg.rows() - 2 * RESULT_WINDOW_RECT_WIDTH_PADDING));
+            resize(correctedMat, correctedMat, new Size(RESULT_WINDOW_RECT_HEIGHT,
+                    mRefImg.rows() - 2*RESULT_WINDOW_RECT_WIDTH_PADDING));
         }
-
         return correctedMat;
     }
 
@@ -1253,29 +1268,6 @@ public class ImageProcessor {
         Features2d.drawMatches(mRefImg, siftRefKeypoints, tempInputMat, inKeypoints, goodMatchesMat, resultMat);
         Bitmap bitmap = Bitmap.createBitmap(inputMat.cols(), inputMat.rows(), Bitmap.Config.ARGB_8888);
         Utils.matToBitmap(resultMat, bitmap);
-    }
-
-    private void calcuateAverageMat(Mat inputMat){
-        float[] avgIntensities = new float[inputMat.cols()];
-        float[] avgHues = new float[inputMat.cols()];
-        float[] avgSats = new float[inputMat.cols()];
-
-        for (int i = 0; i < inputMat.cols(); i++) {
-            float sumIntensity=0;
-            float sumHue=0;
-            float sumSat=0;
-            for (int j = 0; j < inputMat.rows(); j++) {
-                sumHue+=inputMat.get(j, i)[0];
-                sumIntensity+=inputMat.get(j, i)[1];
-                sumSat+=inputMat.get(j, i)[2];
-            }
-            avgIntensities[i] = sumIntensity/inputMat.rows();
-            avgHues[i] = sumHue/inputMat.rows();
-            avgSats[i] = sumSat/inputMat.rows();
-
-            if (DEBUG_FLAG)
-                Log.d(TAG, String.format("HLS at %d (%.2f, %.2f, %.2f) type %d", i,  avgHues[i]*2, avgIntensities[i]/255*100, avgSats[i]/255*100, inputMat.type()));
-        }
     }
 
     // Mali-specific computations
