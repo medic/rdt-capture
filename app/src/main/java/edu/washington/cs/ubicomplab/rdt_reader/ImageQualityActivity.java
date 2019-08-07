@@ -9,6 +9,8 @@ import android.widget.Button;
 
 import org.opencv.core.Mat;
 
+import static edu.washington.cs.ubicomplab.rdt_reader.Constants.TAG;
+
 public class ImageQualityActivity extends Activity implements ImageQualityView.ImageQualityViewListener, Button.OnClickListener {
     ImageQualityView mImageQualityView;
     Button mFlashButton;
@@ -91,6 +93,11 @@ public class ImageQualityActivity extends Activity implements ImageQualityView.I
             }
         });
         return ImageQualityView.RDTDectedResult.STOP;
+    }
+
+    @Override
+    public void onRDTInterpreting(long timeTaken) {
+        Log.d(TAG, "Time taken: " + timeTaken);
     }
 
     @Override
