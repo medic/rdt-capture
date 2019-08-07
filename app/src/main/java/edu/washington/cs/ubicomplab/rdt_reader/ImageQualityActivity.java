@@ -4,18 +4,25 @@ import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.View;
+import android.widget.Button;
 
 import org.opencv.core.Mat;
 
-public class ImageQualityActivity extends Activity implements ImageQualityView.ImageQualityViewListener {
+public class ImageQualityActivity extends Activity implements ImageQualityView.ImageQualityViewListener, Button.OnClickListener {
     ImageQualityView mImageQualityView;
+    Button mFlashButton;
+    private boolean mFlashOn;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        mFlashOn = true;
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_image_quality);
         mImageQualityView = findViewById(R.id.imageQualityView);
         mImageQualityView.setImageQualityViewListener(this);
+        mFlashButton = findViewById(R.id.flashButton);
+        mFlashButton.setOnClickListener(this);
     }
 
 
@@ -84,5 +91,13 @@ public class ImageQualityActivity extends Activity implements ImageQualityView.I
             }
         });
         return ImageQualityView.RDTDectedResult.STOP;
+    }
+
+    @Override
+    public void onClick(View v) {
+        if (v == mFlashButton) {
+            mFlashOn = !mFlashOn;
+            mImageQualityView.setFlashEnabled(mFlashOn);
+        }
     }
 }
