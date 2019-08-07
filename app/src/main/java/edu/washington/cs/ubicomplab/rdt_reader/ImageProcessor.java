@@ -718,6 +718,10 @@ public class ImageProcessor {
 
         Log.d(TAG, String.format("Interpretation results: %s %s %s", control, testA, testB));
 
+        grayMat.release();
+        mu.release();
+        sigma.release();
+
         return new InterpretationResult(resultMat, control, testA, testB);
     }
 
