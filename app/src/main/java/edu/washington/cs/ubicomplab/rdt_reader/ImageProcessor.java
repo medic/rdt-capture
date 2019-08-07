@@ -234,47 +234,41 @@ public class ImageProcessor {
         //check sharpness (refactored)
         boolean isSharp = checkSharpness(greyMat.submat(getViewfinderRect(greyMat)));
 
-        //preform detectRDT only if those two quality checks are passed
-        if (exposureResult == ExposureResult.NORMAL && isSharp) {
-
-            MatOfPoint2f boundary = new MatOfPoint2f();
-            boundary = detectRDTWithSIFT(greyMat, 5);
-            //boundary = detectRDT(greyMat);
-            boolean isCentered = false;
-            SizeResult sizeResult = SizeResult.INVALID;
-            boolean isRightOrientation = false;
-            double angle = 0.0;
+        //preform detectRDT
+        MatOfPoint2f boundary = new MatOfPoint2f();
+        boundary = detectRDTWithSIFT(greyMat, 5);
+        //boundary = detectRDT(greyMat);
+        boolean isCentered = false;
+        SizeResult sizeResult = SizeResult.INVALID;
+        boolean isRightOrientation = false;
+        double angle = 0.0;
 
 
-            //Size size = new Size();
-            if (boundary.size().width > 0 && boundary.size().height > 0) {
-                isCentered = checkIfCentered(boundary, greyMat.size());
-                sizeResult = checkSize(boundary, greyMat.size());
-                isRightOrientation = checkOrientation(boundary);
-                angle = measureOrientation(boundary);
-            }
-
-            passed = sizeResult == SizeResult.RIGHT_SIZE && isCentered && isRightOrientation;
-
-            boolean fiducial = false;
-            if (passed) {
-                Mat resultMat = cropResultWindow(inputMat, boundary);
-                if (resultMat.width() > 0 && resultMat.height() > 0) {
-                    fiducial = true;
-                }
-                resultMat.release();
-                passed = passed & fiducial;
-                Log.d(TAG, String.format("fiducial: %b", fiducial));
-            }
-
-            greyMat.release();
-            return new CaptureResult(passed, cropRDT(inputMat), fiducial, exposureResult, sizeResult, isCentered, isRightOrientation, angle, isSharp, false, boundary);
-        }
-        else {
-            greyMat.release();
-            return new CaptureResult(passed, null, false, exposureResult, SizeResult.INVALID, false, false, 0.0, isSharp, false, new MatOfPoint2f());
+        //Size size = new Size();
+        //check size and position
+        if (boundary.size().width > 0 && boundary.size().height > 0) {
+            isCentered = checkIfCentered(boundary, greyMat.size());
+            sizeResult = checkSize(boundary, greyMat.size());
+            isRightOrientation = checkOrientation(boundary);
+            angle = measureOrientation(boundary);
         }
 
+        passed = exposureResult == ExposureResult.NORMAL && isSharp && sizeResult == SizeResult.RIGHT_SIZE && isCentered && isRightOrientation;
+
+        //check fiducial
+        boolean fiducial = false;
+        if (passed) {
+            Mat resultMat = cropResultWindow(inputMat, boundary);
+            if (resultMat.width() > 0 && resultMat.height() > 0) {
+                fiducial = true;
+            }
+            resultMat.release();
+            passed = passed & fiducial;
+            Log.d(TAG, String.format("fiducial: %b", fiducial));
+        }
+
+        greyMat.release();
+        return new CaptureResult(passed, cropRDT(inputMat), fiducial, exposureResult, sizeResult, isCentered, isRightOrientation, angle, isSharp, false, boundary);
     }
 
     private MatOfPoint2f detectRDT(Mat inputMat) {
