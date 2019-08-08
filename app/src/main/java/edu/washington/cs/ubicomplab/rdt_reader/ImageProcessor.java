@@ -68,6 +68,7 @@ import static org.opencv.core.CvType.CV_8U;
 import static org.opencv.core.CvType.CV_8UC3;
 import static org.opencv.imgproc.Imgproc.COLOR_RGB2GRAY;
 import static org.opencv.imgproc.Imgproc.COLOR_RGBA2RGB;
+import static org.opencv.imgproc.Imgproc.INTER_LINEAR;
 import static org.opencv.imgproc.Imgproc.Laplacian;
 import static org.opencv.imgproc.Imgproc.THRESH_BINARY_INV;
 import static org.opencv.imgproc.Imgproc.contourArea;
@@ -182,6 +183,7 @@ public class ImageProcessor {
         mFeatureDetector.detectAndCompute(mRefImg, new Mat(), mRefKeypoints, mRefDescriptor);
 
         Imgproc.GaussianBlur(mRefImg, mRefImg, new Size(5, 5), 0, 0);
+        Imgproc.resize(mRefImg, mRefImg, new Size(), REF_IMAGE_SCALE, REF_IMAGE_SCALE, Imgproc.INTER_LINEAR);
         refImgSharpness = calculateSharpness(mRefImg);
 
         siftDetector = SIFT.create();
@@ -191,6 +193,7 @@ public class ImageProcessor {
         if (DEBUG_FLAG) {
             Log.d(TAG, "BRISK keypoints: " + mRefKeypoints.toArray().length);
             Log.d(TAG, "SIFT keypoints: " + siftRefKeypoints.toArray().length);
+            Log.d(TAG, "Ref sharpness: " + refImgSharpness);
             Log.d(TAG, "REFERENCE LOAD/DETECT/COMPUTE: " + (System.currentTimeMillis() - startTime));
         }
     }
@@ -896,6 +899,7 @@ public class ImageProcessor {
         Mat M = getPerspectiveTransform(boundary, refBoundary);
         Mat correctedMat = new Mat(mRefImg.rows(), mRefImg.cols(), mRefImg.type());
         warpPerspective(inputMat, correctedMat, M, new Size(mRefImg.cols(), mRefImg.rows()));
+        resize(correctedMat, correctedMat, new Size(), 1/REF_IMAGE_SCALE, 1/REF_IMAGE_SCALE, Imgproc.INTER_LINEAR);
 
         // Apply k-means to ensure that the fiducials are in place
 //        Rect resultWindowRect = checkFiducialAndReturnResultWindowRect(correctedMat);
@@ -905,8 +909,10 @@ public class ImageProcessor {
         // Provide the cropped result window if everything is successful
         correctedMat = new Mat(correctedMat, resultWindowRect);
         if (correctedMat.width() > 0 && correctedMat.height() > 0) {
+            if (DEBUG_FLAG)
+                Log.d(TAG, "Result RECT: " + resultWindowRect.toString());
             resize(correctedMat, correctedMat, new Size(RESULT_WINDOW_RECT_HEIGHT,
-                    mRefImg.rows() - 2*RESULT_WINDOW_RECT_WIDTH_PADDING));
+                    mRefImg.rows()/REF_IMAGE_SCALE - 2*RESULT_WINDOW_RECT_WIDTH_PADDING));
         }
         return correctedMat;
     }
@@ -1083,9 +1089,8 @@ public class ImageProcessor {
         MatOfPoint2f boundary = new MatOfPoint2f();
 
         // Downsample the image to save time
-        double scale = 0.5;
         Mat scaledMat = new Mat();
-        Imgproc.resize(inputMat, scaledMat, new Size(), scale, scale, Imgproc.INTER_LINEAR);
+        Imgproc.resize(inputMat, scaledMat, new Size(), FRAME_IMAGE_SCALE, FRAME_IMAGE_SCALE, Imgproc.INTER_LINEAR);
 
         // Create a mask for where to generate features
         // TODO: can we make this tighter regardless of OpenCV's bug?
@@ -1199,9 +1204,9 @@ public class ImageProcessor {
             rotatedRect.points(v);
             for (int i = 0; i < 4; i++) {
                 if (rotatedRect.angle < -45)
-                    bound[(i+2) % 4] = new Point(v[i].x/scale, v[i].y/scale);
+                    bound[(i+2) % 4] = new Point(v[i].x/FRAME_IMAGE_SCALE, v[i].y/FRAME_IMAGE_SCALE);
                 else
-                    bound[(i+3) % 4] = new Point(v[i].x/scale, v[i].y/scale);
+                    bound[(i+3) % 4] = new Point(v[i].x/FRAME_IMAGE_SCALE, v[i].y/FRAME_IMAGE_SCALE);
             }
             boundary.fromArray(bound);
         }

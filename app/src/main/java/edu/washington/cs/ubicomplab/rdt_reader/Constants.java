@@ -86,4 +86,6 @@ public final class Constants {
     public static int FIDUCIAL_COUNT = 2;
 
     public static double ENHANCING_THRESHOLD = 4.50;
+    public static double REF_IMAGE_SCALE = 1.0;
+    public static double FRAME_IMAGE_SCALE = 0.5;
 }
