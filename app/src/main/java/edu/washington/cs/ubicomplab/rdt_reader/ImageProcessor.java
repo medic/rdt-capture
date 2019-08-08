@@ -87,16 +87,13 @@ public class ImageProcessor {
     private Mat mRefImg;
     private Mat mRefDescriptor;
     private MatOfKeyPoint mRefKeypoints;
-
     private SIFT siftDetector;
     private BFMatcher siftMatcher;
     private MatOfKeyPoint siftRefKeypoints;
     private Mat siftRefDescriptor;
-
     private double refImgSharpness = Double.MIN_VALUE;
-
     private int mMoveCloserCount = 0;
-
+    private boolean DEBUG_FLAG = false;
 
     public enum ExposureResult {
         UNDER_EXPOSED, NORMAL, OVER_EXPOSED
@@ -164,7 +161,6 @@ public class ImageProcessor {
         }
     }
 
-
     public ImageProcessor (Activity activity) {
         mFeatureDetector = BRISK.create(45, 4, 1.0f);
         mMatcher = BFMatcher.create(BFMatcher.BRUTEFORCE_HAMMING, false);
@@ -187,16 +183,16 @@ public class ImageProcessor {
 
         Imgproc.GaussianBlur(mRefImg, mRefImg, new Size(5, 5), 0, 0);
         refImgSharpness = calculateSharpness(mRefImg);
-        Log.d(TAG, String.format("mRefImg sharpness: %.2f", refImgSharpness));
 
         siftDetector = SIFT.create();
         siftMatcher = BFMatcher.create(BFMatcher.BRUTEFORCE, false);
         siftDetector.detectAndCompute(mRefImg, new Mat(), siftRefKeypoints, siftRefDescriptor);
 
-        Log.d(TAG, "RefImg Size: " + mRefImg.size().toString());
-        Log.d(TAG, "BRISK keypoints: " + mRefKeypoints.toArray().length);
-        Log.d(TAG, "SIFT keypoints: " + siftRefKeypoints.toArray().length);
-        Log.d(TAG, "REFERENCE LOAD/DETECT/COMPUTE: " + (System.currentTimeMillis() - startTime));
+        if (DEBUG_FLAG) {
+            Log.d(TAG, "BRISK keypoints: " + mRefKeypoints.toArray().length);
+            Log.d(TAG, "SIFT keypoints: " + siftRefKeypoints.toArray().length);
+            Log.d(TAG, "REFERENCE LOAD/DETECT/COMPUTE: " + (System.currentTimeMillis() - startTime));
+        }
     }
 
     public static ImageProcessor getInstance(Activity activity) {
@@ -217,35 +213,31 @@ public class ImageProcessor {
 
     }
 
-    public void configureCamera() {
-
-    }
-
-
+    /**
+     * Attempts to identify the presence of the RDT within the image
+     * @param inputMat: the input image
+     * @return a CaptureResult object with details for feedback
+     */
     public CaptureResult captureRDT(Mat inputMat) {
+        // Convert the input to grayscale
         Mat greyMat = new Mat();
         cvtColor(inputMat, greyMat, Imgproc.COLOR_RGBA2GRAY);
-        double matchDistance = -1.0;
-        boolean passed = false;
 
-        //check brightness (refactored)
-        ExposureResult exposureResult = (checkBrightness(greyMat));
+        // Check brightness
+        ExposureResult exposureResult = checkBrightness(greyMat);
 
-        //check sharpness (refactored)
+        // Check sharpness
         boolean isSharp = checkSharpness(greyMat.submat(getViewfinderRect(greyMat)));
 
-        //preform detectRDT
-        MatOfPoint2f boundary = new MatOfPoint2f();
-        boundary = detectRDTWithSIFT(greyMat, 5);
-        //boundary = detectRDT(greyMat);
+        // Attempt to detect the RDT using homography
+        MatOfPoint2f boundary = detectRDTWithSIFT(greyMat, 5);
+//        MatOfPoint2f boundary = detectRDT(greyMat);
+
+        // Check the detected RDT's size, position, and orientation
         boolean isCentered = false;
         SizeResult sizeResult = SizeResult.INVALID;
         boolean isRightOrientation = false;
         double angle = 0.0;
-
-
-        //Size size = new Size();
-        //check size and position
         if (boundary.size().width > 0 && boundary.size().height > 0) {
             isCentered = checkIfCentered(boundary, greyMat.size());
             sizeResult = checkSize(boundary, greyMat.size());
@@ -253,224 +245,104 @@ public class ImageProcessor {
             angle = measureOrientation(boundary);
         }
 
-        passed = exposureResult == ExposureResult.NORMAL && isSharp && sizeResult == SizeResult.RIGHT_SIZE && isCentered && isRightOrientation;
+        // Determine intermediate result before checking fiducials
+        boolean passed = exposureResult == ExposureResult.NORMAL &&
+                isSharp &&
+                sizeResult == SizeResult.RIGHT_SIZE &&
+                isCentered &&
+                isRightOrientation;
 
-        //check fiducial
+        // Check for fiducials for QuickVue strip
         boolean fiducial = false;
         if (passed) {
             Mat resultMat = cropResultWindow(inputMat, boundary);
-            if (resultMat.width() > 0 && resultMat.height() > 0) {
-                fiducial = true;
-            }
+            fiducial = resultMat.width() > 0 && resultMat.height() > 0;
             resultMat.release();
-            passed = passed & fiducial;
-            Log.d(TAG, String.format("fiducial: %b", fiducial));
+            passed = fiducial;
+            if (DEBUG_FLAG)
+                Log.d(TAG, String.format("fiducial: %b", fiducial));
         }
 
+        // Release resources
         greyMat.release();
-        return new CaptureResult(passed, cropRDT(inputMat), fiducial, exposureResult, sizeResult, isCentered, isRightOrientation, angle, isSharp, false, boundary);
+
+        // Return a CaptureResult object
+        return new CaptureResult(passed, cropRDT(inputMat), fiducial, exposureResult, sizeResult,
+                isCentered, isRightOrientation, angle, isSharp, false, boundary);
     }
 
-    private MatOfPoint2f detectRDT(Mat inputMat) {
-        long veryStart = System.currentTimeMillis();
-        MatOfPoint2f boundary = new MatOfPoint2f();
-
-        Mat descriptors = new Mat();
-        MatOfKeyPoint keypoints = new MatOfKeyPoint();
-
-        long startTime = System.currentTimeMillis();
-        Mat mask = new Mat(inputMat.size(), CV_8U, Scalar.all(0));
-        Point p1 = new Point(0, inputMat.size().height*(1-VIEW_FINDER_SCALE_W/CROP_RATIO)/2);
-        Point p2 = new Point(inputMat.size().width-p1.x, inputMat.size().height-p1.y);
-        Imgproc.rectangle(mask, p1, p2, Scalar.all(255), -1);
-
-        mFeatureDetector.detectAndCompute(inputMat, mask, keypoints, descriptors);
-        Log.d(TAG, "detect/compute TIME: " + (System.currentTimeMillis()-startTime));
-
-        if (descriptors.size().equals(new Size(0,0))) {
-            Log.d(TAG, String.format("no features on input"));
-            return boundary;
-        }
-
-        // Matching
-        MatOfDMatch matches = new MatOfDMatch();
-        mMatcher.match(mRefDescriptor, descriptors, matches);
-
-        List<DMatch> matchesList = matches.toList();
-        Log.d(TAG, "matching TIME: " + (System.currentTimeMillis()-veryStart));
-        Comparator<DMatch> comparator = new Comparator<DMatch>() {
-            @Override
-            public int compare(DMatch dMatch, DMatch t1) {
-                if (dMatch.distance == t1.distance)
-                    return 0;
-                else if (dMatch.distance < t1.distance) //reverse order
-                    return -1;
-                else
-                    return 1;
-            }
-        };
-
-        Collections.sort(matchesList, comparator);
-
-        double sum = 0;
-        double distance = 0;
-        int count = 0;
-
-        List<DMatch> goodMatches = matchesList; //matchesList.size() > 50 ? matchesList.subList(0, 50): matchesList;
-        MatOfDMatch goodMatchesMat = new MatOfDMatch();
-        goodMatchesMat.fromList(goodMatches);
-
-        //put keypoints mats into lists
-        List<KeyPoint> keypoints1_List = mRefKeypoints.toList();
-        List<KeyPoint> keypoints2_List = keypoints.toList();
-
-        //put keypoints into point2f mats so calib3d can use them to find homography
-        List<Point> objList = new ArrayList<>();
-        List<Point> sceneList = new ArrayList<>();
-        for (int i = 0; i < goodMatches.size(); i++) {
-            objList.add(keypoints1_List.get(goodMatches.get(i).queryIdx).pt);
-            sceneList.add(keypoints2_List.get(goodMatches.get(i).trainIdx).pt);
-        }
-
-        Log.d(TAG, String.format("Good match: %d", goodMatches.size()));
-        Log.d(TAG, String.format("Input Size: %d, %d", inputMat.cols(), inputMat.rows()));
-
-        MatOfPoint2f objMat = new MatOfPoint2f();
-        MatOfPoint2f sceneMat = new MatOfPoint2f();
-        objMat.fromList(objList);
-        sceneMat.fromList(sceneList);
-
-        // HOMOGRAPHY!
-        if (goodMatches.size() > GOOD_MATCH_COUNT) {
-            //run homography on object and scene points
-            Mat H = Calib3d.findHomography(objMat, sceneMat, Calib3d.RANSAC, 5);
-            Log.d(TAG, "find homography TIME: " + (System.currentTimeMillis()-veryStart));
-
-            if (H.cols() >= 3 && H.rows() >= 3) {
-                Mat objCorners = new Mat(4, 1, CvType.CV_32FC2);
-                Mat sceneCorners = new Mat(4, 1, CvType.CV_32FC2);
-                //Mat obj_corners = new Mat(4, 1, CvType.CV_32FC2);
-
-                double[] a = new double[]{0, 0};
-                double[] b = new double[]{mRefImg.cols() - 1, 0};
-                double[] c = new double[]{mRefImg.cols() - 1, mRefImg.rows() - 1};
-                double[] d = new double[]{0, mRefImg.rows() - 1};
-
-                //get corners from object
-                objCorners.put(0, 0, a);
-                objCorners.put(1, 0, b);
-                objCorners.put(2, 0, c);
-                objCorners.put(3, 0, d);
-
-                Log.d(TAG, String.format("H size: %d, %d", H.cols(), H.rows()));
-
-                perspectiveTransform(objCorners, sceneCorners, H);
-
-                Log.d(TAG, String.format("transformed -- BRISK: (%.2f, %.2f) (%.2f, %.2f) (%.2f, %.2f) (%.2f, %.2f), width: %d, height: %d",
-                        sceneCorners.get(0, 0)[0], sceneCorners.get(0, 0)[1],
-                        sceneCorners.get(1, 0)[0], sceneCorners.get(1, 0)[1],
-                        sceneCorners.get(2, 0)[0], sceneCorners.get(2, 0)[1],
-                        sceneCorners.get(3, 0)[0], sceneCorners.get(3, 0)[1], sceneCorners.width(), sceneCorners.height()));
-
-                ArrayList<Point> listOfBoundary = new ArrayList<>();
-                listOfBoundary.add(new Point(sceneCorners.get(0, 0)));
-                listOfBoundary.add(new Point(sceneCorners.get(1, 0)));
-                listOfBoundary.add(new Point(sceneCorners.get(2, 0)));
-                listOfBoundary.add(new Point(sceneCorners.get(3, 0)));
-                boundary.fromList(listOfBoundary);
-
-                objCorners.release();
-                sceneCorners.release();
-
-                RotatedRect rotatedRect = minAreaRect(boundary);
-                Point[] v = new Point[4];
-                Point[] bound = new Point[4];
-                rotatedRect.points(v);
-
-                for (int i = 0; i < 4; i++) {
-                    if(rotatedRect.angle < -45)
-                        bound[(i+2)%4] = v[i];
-                    else
-                        bound[(i+3)%4] = v[i];
-                }
-
-                boundary.fromArray(bound);
-
-                Log.d(TAG, String.format("Average DISTANCE: %.2f, good matches: %d", sum/count, count));
-                Log.d(TAG, String.format("Center: %s", measureCentering(boundary).toString()));
-                Log.d(TAG, String.format("Size: %.2f", measureSize(boundary)));
-            }
-
-            Log.d(TAG, "draw homography TIME: " + (System.currentTimeMillis()-veryStart));
-
-            H.release();
-        }
-
-        objMat.release();
-        sceneMat.release();
-        //goodMatches.release();
-        matches.release();
-        descriptors.release();
-        keypoints.release();
-        mask.release();
-
-        Log.d(TAG, "Detect RDT TIME: " + (System.currentTimeMillis()-veryStart));
-
-        return boundary;
-    }
-
+    /**
+     * Determines if the input image is sufficiently sharp
+     * @param inputMat: the input image
+     * @return a boolean that describes whether the sharpness is good enough or not
+     */
     private boolean checkSharpness(Mat inputMat) {
+        // Resize the image
         Mat resized = new Mat();
-        resize(inputMat, resized, new Size(inputMat.size().width*mRefImg.size().width/inputMat.size().width, inputMat.size().height*mRefImg.size().width/inputMat.size().width));
+        double scaleFactor = mRefImg.size().width/inputMat.size().width;
+        resize(inputMat, resized, new Size(inputMat.size().width*scaleFactor,
+                inputMat.size().height*scaleFactor));
 
+        // Calculate sharpness
         double sharpness = calculateSharpness(resized);
-        //Log.d(TAG, String.format("inputMat sharpness: %.2f, %.2f",calculateSharpness(resized), calculateSharpness(inputMat)));
-        Log.d(TAG, String.format("inputMat sharpness: %.2f",calculateSharpness(resized)));
+        if (DEBUG_FLAG)
+            Log.d(TAG, String.format("inputMat sharpness: %.2f", sharpness));
 
-        boolean isSharp = sharpness > (refImgSharpness * (1-SHARPNESS_THRESHOLD));
-        Log.d(TAG, "Sharpness: "+sharpness);
-
+        // Release resources
         inputMat.release();
         resized.release();
 
-        return isSharp;
+        // Compare sharpness to requirement
+        return sharpness > (refImgSharpness * (1-SHARPNESS_THRESHOLD));
     }
 
+    /**
+     * Computes a sharpness value for the input image
+     * @param input: the input image
+     * @return mBuff: the squared standard deviation of the Laplacian
+     */
     private double calculateSharpness(Mat input) {
-        Mat des = new Mat();
-        Laplacian(input, des, CvType.CV_64F);
+        // Compute Laplacian
+        Mat laplace = new Mat();
+        Laplacian(input, laplace, CvType.CV_64F);
 
+        // Compute Laplacian's mean and stdev
         MatOfDouble median = new MatOfDouble();
         MatOfDouble std = new MatOfDouble();
+        meanStdDev(laplace, median, std);
 
-        meanStdDev(des, median, std);
+        // Release resources
+        laplace.release();
 
-
-        double sharpness = pow(std.get(0,0)[0],2);
-        des.release();
-        return sharpness;
+        // Return squared stdev
+        return pow(std.get(0,0)[0], 2);
     }
 
+    /**
+     * Determines if the input image is sufficiently exposed
+     * @param inputMat: the input image
+     * @return exposureResult: an ExposureResult enum value that can be {NORMAL,
+     * OVER_EXPOSED, UNDER_EXPOSED}
+     */
     private ExposureResult checkBrightness(Mat inputMat) {
-
-        // Brightness Calculation
+        // Compute brightness histograms
         float[] histograms = calculateBrightness(inputMat);
 
+        // Calculate brightest value
         int maxWhite = 0;
-        float whiteCount = 0;
-
-        for (int i = 0; i < histograms.length; i++) {
+        for (int i = histograms.length-1; i >= 0; i--) {
             if (histograms[i] > 0) {
                 maxWhite = i;
-            }
-            if (i == histograms.length - 1) {
-                whiteCount = histograms[i];
+                break;
             }
         }
 
-        // Check Brightness starts
+        // Compute amount of clipping
+        float clippingCount = histograms[histograms.length-1];
+
+        // Compare exposure to requirements
         ExposureResult exposureResult;
-        if (maxWhite >= OVER_EXP_THRESHOLD && whiteCount > OVER_EXP_WHITE_COUNT) {
+        if (maxWhite >= OVER_EXP_THRESHOLD && clippingCount > OVER_EXP_WHITE_COUNT) {
             exposureResult = ExposureResult.OVER_EXPOSED;
             return exposureResult;
         } else if (maxWhite < UNDER_EXP_THRESHOLD) {
@@ -482,112 +354,115 @@ public class ImageProcessor {
         }
     }
 
+    /**
+     * Computes a brightness histogram for the input image
+     * @param input: the input image
+     * @return mBuff: a float[] histogram with 256 elements
+     */
     private float[] calculateBrightness(Mat input) {
-        int mHistSizeNum =256;
+        // Initialize variables
+        int mHistSizeNum = 256;
         MatOfInt mHistSize = new MatOfInt(mHistSizeNum);
         Mat hist = new Mat();
-        final float []mBuff = new float[mHistSizeNum];
+        final float[] mBuff = new float[mHistSizeNum];
         MatOfFloat histogramRanges = new MatOfFloat(0f, 256f);
         MatOfInt mChannels[] = new MatOfInt[] { new MatOfInt(0)};
         org.opencv.core.Size sizeRgba = input.size();
 
-        // GRAY
-        for(int c=0; c<1; c++) {
-            Imgproc.calcHist(Arrays.asList(input), mChannels[c], new Mat(), hist,
+        // Go through each channel, normalize the histogram, and add it to mBuff
+        // TODO: this for loop is somewhat set up to handle multi-channel, but not done
+        for (int ch = 0; ch < input.channels(); ch++) {
+            Imgproc.calcHist(Arrays.asList(input), mChannels[ch], new Mat(), hist,
                     mHistSize, histogramRanges);
             Core.normalize(hist, hist, sizeRgba.height/2, 0, Core.NORM_INF);
             hist.get(0, 0, mBuff);
-            mChannels[c].release();
+            mChannels[ch].release();
         }
 
+        // Release resources
         mHistSize.release();
         histogramRanges.release();
         hist.release();
         return mBuff;
     }
 
-    private double measureSize(MatOfPoint2f boundary) {
+    /**
+     * Measures the height of the bounding box regardless of its orientation
+     * @param boundary: the MatOfPoint2f bounding box around the identified RDT
+     * @return the height of the bounding box
+     */
+    private double measureHeight(MatOfPoint2f boundary) {
         RotatedRect rotatedRect = minAreaRect(boundary);
-
         boolean isUpright = rotatedRect.size.height > rotatedRect.size.width;
-        double angle = 0;
-        double height = 0;
-
-        if (isUpright) {
-            angle = 90 - abs(rotatedRect.angle);
-            height = rotatedRect.size.height;
-        } else {
-            angle = abs(rotatedRect.angle);
-            height = rotatedRect.size.width;
-        }
-
-        return height;
+        return isUpright ? rotatedRect.size.height : rotatedRect.size.width;
     }
 
+    /**
+     * Determines if the detected RDT bounding box has a reasonable size
+     * @param boundary: the MatOfPoint2f bounding box around the identified RDT
+     * @param size: the bounding box's ideal size
+     * @return sizeResult: a SizeResult enum value that can be {RIGHT_SIZE, LARGE, SMALL}
+     */
     private SizeResult checkSize(MatOfPoint2f boundary, Size size) {
-        double height = measureSize(boundary);
-        boolean isRightSize = height < size.width*VIEW_FINDER_SCALE_H+size.width*SIZE_THRESHOLD && height > size.width*VIEW_FINDER_SCALE_H-size.width*SIZE_THRESHOLD;
-
-        SizeResult sizeResult = SizeResult.INVALID;
-
-        if (isRightSize) {
-            sizeResult = SizeResult.RIGHT_SIZE;
-        } else {
-            if (height > size.width*VIEW_FINDER_SCALE_H+size.width*SIZE_THRESHOLD) {
-                sizeResult = SizeResult.LARGE;
-            } else if (height < size.width*VIEW_FINDER_SCALE_H-size.width*SIZE_THRESHOLD) {
-                sizeResult = SizeResult.SMALL;
-            } else {
-                sizeResult = SizeResult.INVALID;
-            }
-        }
-
+        double height = measureHeight(boundary);
+        SizeResult sizeResult = SizeResult.RIGHT_SIZE;
+        if (height > size.width*(VIEW_FINDER_SCALE_H+SIZE_THRESHOLD))
+            sizeResult = SizeResult.LARGE;
+        else if (height < size.width*(VIEW_FINDER_SCALE_H-SIZE_THRESHOLD))
+            sizeResult = SizeResult.SMALL;
         return sizeResult;
-
     }
 
+    /**
+     * Determines if the detected RDT is sufficiently centered
+     * @param boundary: the MatOfPoint2f bounding box around the identified RDT
+     * @param size: the bounding box's ideal size
+     * @return a boolean that describes whether the bounding box is sufficiently centered
+     */
     private boolean checkIfCentered(MatOfPoint2f boundary, Size size) {
-
+        // Compute the center of the bounding box
         Point center = measureCentering(boundary);
-        Point trueCenter = new Point(size.width/2, size.height/2);
-        boolean isCentered = center.x < trueCenter.x + (size.width*POSITION_THRESHOLD) && center.x > trueCenter.x-(size.width*POSITION_THRESHOLD)
-                && center.y < trueCenter.y+(size.height*POSITION_THRESHOLD) && center.y > trueCenter.y-(size.height*POSITION_THRESHOLD);
 
-        return isCentered;
+        // Compare the centering relative to the viewfinder's center
+        Point trueCenter = new Point(size.width/2, size.height/2);
+        boolean isXCentered = center.x > trueCenter.x-(size.width*POSITION_THRESHOLD) &&
+                center.x < trueCenter.x+(size.width*POSITION_THRESHOLD);
+        boolean isYCentered = center.y > trueCenter.y-(size.height*POSITION_THRESHOLD) &&
+                center.y < trueCenter.y+(size.height*POSITION_THRESHOLD);
+        return isXCentered && isYCentered;
 
     }
 
-     private Point measureCentering (MatOfPoint2f boundary) {
+    /**
+     * Computes the center of a bounding box
+     * @param boundary: a MatOfPoint2f bounding box
+     * @return the (x, y) coordinate of the center
+     */
+    private Point measureCentering(MatOfPoint2f boundary) {
         RotatedRect rotatedRect = minAreaRect(boundary);
         return rotatedRect.center;
     }
 
-     private double measureOrientation(MatOfPoint2f boundary) {
+    /**
+     * Computes the orientation of a bounding box
+     * @param boundary: a MatOfPoint2f bounding box
+     * @return the angle between -90 and 90 degrees
+     */
+    private double measureOrientation(MatOfPoint2f boundary) {
+        // Compute min enclosing rectangle and check if it is upright
         RotatedRect rotatedRect = minAreaRect(boundary);
+        boolean isUpright = rotatedRect.size.height > rotatedRect.size.width;
 
-         boolean isUpright = rotatedRect.size.height > rotatedRect.size.width;
-         double angle = 0;
-         double height = 0;
-
-         if (isUpright) {
-             if (rotatedRect.angle < 0) {
-                 angle = 90 + rotatedRect.angle;
-             } else {
-                 angle = rotatedRect.angle - 90;
-             }
-         } else {
-             angle = rotatedRect.angle;
-         }
-
+        // Compute the angle of the rotated rectangle
+        double angle = rotatedRect.angle;
+        if (isUpright)
+            angle = (rotatedRect.angle < 0) ? rotatedRect.angle + 90: rotatedRect.angle - 90;
         return angle;
     }
 
     private boolean checkOrientation(MatOfPoint2f boundary) {
         double angle = measureOrientation(boundary);
-
-        boolean isOriented = abs(angle) < ANGLE_THRESHOLD;
-
-        return isOriented;
+        return abs(angle) < ANGLE_THRESHOLD;
     }
 
     private Mat cropRDT(Mat inputMat) {
@@ -608,9 +483,9 @@ public class ImageProcessor {
         if (sizeResult == SizeResult.RIGHT_SIZE && isCentered && isRightOrientation){
             instructions = R.string.instruction_detected;
         } else if (mMoveCloserCount > MOVE_CLOSER_COUNT) {
-            if (sizeResult != SizeResult.INVALID && sizeResult == SizeResult.SMALL) {
-                 instructions = R.string.instruction_too_small;
-                 mMoveCloserCount = 0;
+            if (sizeResult == SizeResult.SMALL) {
+                instructions = R.string.instruction_too_small;
+                mMoveCloserCount = 0;
             }
         } else {
             instructions = R.string.instruction_too_small;
@@ -701,10 +576,11 @@ public class ImageProcessor {
         Core.meanStdDev(grayMat, mu, sigma);
         Core.MinMaxLocResult minMaxLocResult = Core.minMaxLoc(grayMat);
 
-        Log.d(TAG, String.format("stdev %.2f, minval %.2f at %s, maxval %.2f at %s",
-                sigma.get(0,0)[0],
-                minMaxLocResult.minVal, minMaxLocResult.minLoc,
-                minMaxLocResult.maxVal, minMaxLocResult.maxLoc));
+        if (DEBUG_FLAG)
+            Log.d(TAG, String.format("stdev %.2f, minval %.2f at %s, maxval %.2f at %s",
+                    sigma.get(0,0)[0],
+                    minMaxLocResult.minVal, minMaxLocResult.minLoc,
+                    minMaxLocResult.maxVal, minMaxLocResult.maxLoc));
 
         if (sigma.get(0,0)[0] > ENHANCING_THRESHOLD)
             resultMat = enhanceResultWindow(resultMat, new Size(5, resultMat.cols()));
@@ -715,8 +591,6 @@ public class ImageProcessor {
         control = readControlLine(resultMat, new Point(CONTROL_LINE_POSITION, 0));
         testA = readTestLine(resultMat, new Point(TEST_A_LINE_POSITION, 0));
         testB = readTestLine(resultMat, new Point(TEST_B_LINE_POSITION, 0));
-
-        Log.d(TAG, String.format("Interpretation results: %s %s %s", control, testA, testB));
 
         grayMat.release();
         mu.release();
@@ -738,11 +612,12 @@ public class ImageProcessor {
         do {
             cnt++;
             boundary = detectRDTWithSIFT(grayMat, cnt);
-            Log.d(TAG, "SIFT boundary size: " + boundary.size());
             isSizeable = checkSize(boundary, new Size(inputMat.size().width/CROP_RATIO, inputMat.size().height/CROP_RATIO));
             isCentered = checkIfCentered(boundary, inputMat.size());
             isUpright = checkOrientation(boundary);
-            Log.d(TAG, String.format("SIFT-right size %s, center %s, orientation %s, (%.2f, %.2f), cnt %d", isSizeable, isCentered, isUpright, inputMat.size().width, inputMat.size().height, cnt));
+            if (DEBUG_FLAG)
+                Log.d(TAG, String.format("SIFT-right size %s, center %s, orientation %s, (%.2f, %.2f), cnt %d",
+                        isSizeable, isCentered, isUpright, inputMat.size().width, inputMat.size().height, cnt));
         } while(!(isSizeable==SizeResult.RIGHT_SIZE && isCentered && isUpright) && cnt < 8);
 
         if (boundary.size().width <= 0 && boundary.size().height <= 0)
@@ -755,32 +630,38 @@ public class ImageProcessor {
         return new Rect(RESULT_WINDOW_X, RESULT_WINDOW_Y, RESULT_WINDOW_WIDTH, RESULT_WINDOW_HEIGHT);
     }
 
-    private Rect checkFiducialKMenas(Mat inputMat) {
+    /**
+     * Uses k-means clustering to find if there is a fiducial where we expected
+     * @param inputMat: the input image
+     * @return
+     */
+    private Rect checkFiducialKMeans(Mat inputMat) {
+        // Initialize resources
         int k = 5;
-        TermCriteria criteria = new TermCriteria(TermCriteria.EPS+TermCriteria.MAX_ITER, 100, 1.0);
         Mat data = new Mat();
         inputMat.convertTo(data, CV_32F);
         cvtColor(data, data, COLOR_RGBA2RGB);
-        data = data.reshape(1, (int)data.total());
+        data = data.reshape(1, (int) data.total());
         Mat centers = new Mat();
         Mat labels = new Mat();
 
+        // Perform k-means in RGB
+        TermCriteria criteria = new TermCriteria(TermCriteria.EPS+TermCriteria.MAX_ITER, 100, 1.0);
         kmeans(data, k, labels, criteria, 10, KMEANS_PP_CENTERS, centers);
 
+        // Extract results and place them in data structures
         centers = centers.reshape(3, centers.rows());
         data = data.reshape(3, data.rows());
-
         for (int i = 0; i < data.rows(); i++) {
-            int centerId = (int)labels.get(i,0)[0];
+            int centerId = (int) labels.get(i,0)[0];
             data.put(i, 0, centers.get(centerId,0));
         }
-
         data = data.reshape(3, inputMat.rows());
         data.convertTo(data, CV_8UC3);
 
+        // Identify center with darkest value
         double[] minCenter = new double[3];
         double minCenterVal = Double.MAX_VALUE;
-
         for (int i = 0; i < centers.rows(); i++) {
             double val = centers.get(i,0)[0] + centers.get(i,0)[1] + centers.get(i,0)[2];
             if (val < minCenterVal) {
@@ -789,56 +670,57 @@ public class ImageProcessor {
             }
         }
 
-        double thres = 0.299 * minCenter[0] + 0.587 * minCenter[1] + 0.114 * minCenter[2] + 20.0;
-
+        // Convert to lightness value and binarize the image according to that threshold
+        double thresh = 0.299 * minCenter[0] + 0.587 * minCenter[1] + 0.114 * minCenter[2] + 20.0;
         cvtColor(data, data, COLOR_RGB2GRAY);
         Mat threshold = new Mat();
-        Imgproc.threshold(data, threshold, thres, 255, THRESH_BINARY_INV);
+        Imgproc.threshold(data, threshold, thresh, 255, THRESH_BINARY_INV);
 
+        // Clean up the mask
         Mat element_erode = Imgproc.getStructuringElement(Imgproc.MORPH_ELLIPSE, new Size(5, 5));
         Mat element_dilate = Imgproc.getStructuringElement(Imgproc.MORPH_ELLIPSE, new Size(20, 20));
         Imgproc.erode(threshold, threshold, element_erode);
         Imgproc.dilate(threshold, threshold, element_dilate);
         Imgproc.GaussianBlur(threshold, threshold, new Size(5, 5), 2, 2);
 
+        // Identify large blobs
         List<MatOfPoint> contours = new ArrayList<>();
         Mat hierarchy = new Mat();
-
         Imgproc.findContours(threshold, contours, hierarchy, Imgproc.RETR_EXTERNAL, Imgproc.CHAIN_APPROX_SIMPLE, new Point(0, 0));
 
+        // Draw rectangles around the blobs and see if their position makes sense
         List<Rect> fiducialRects = new ArrayList<>();
         Rect fiducialRect = new Rect(0, 0, 0, 0);
-
         for (int i = 0; i < contours.size(); i++) {
             Rect rect = Imgproc.boundingRect(contours.get(i));
             double rectPos = rect.x + rect.width;
-            if (FIDUCIAL_POSITION_MIN < rectPos && rectPos < FIDUCIAL_POSITION_MAX && FIDUCIAL_MIN_HEIGHT < rect.height && FIDUCIAL_MIN_WIDTH < rect.width && rect.width < FIDUCIAL_MAX_WIDTH) {
+            if (FIDUCIAL_POSITION_MIN < rectPos && rectPos < FIDUCIAL_POSITION_MAX && FIDUCIAL_MIN_HEIGHT < rect.height &&
+                    FIDUCIAL_MIN_WIDTH < rect.width && rect.width < FIDUCIAL_MAX_WIDTH) {
                 fiducialRects.add(rect);
-                Log.d(TAG, String.format("Control line rect size: %s %s %s", rect.tl(), rect.br(), rect.size()));
+                if (DEBUG_FLAG)
+                    Log.d(TAG, String.format("Fiducial rect size: %s %s %s", rect.tl(), rect.br(), rect.size()));
             }
         }
 
-        if (fiducialRects.size() == FIDUCIAL_COUNT) { //should
-            double center0 = fiducialRects.get(0).x + fiducialRects.get(0).width;
-            double center1 = fiducialRects.get(0).x + fiducialRects.get(0).width;
+        // check positioning between the fiducials assuming there are 2
+        if (fiducialRects.size() == FIDUCIAL_COUNT) {
+            // Calculate the fiducials' x position
+            double center0x = fiducialRects.get(0).x + fiducialRects.get(0).width;
+            double center1x = fiducialRects.get(1).x + fiducialRects.get(1).width;
 
-            if (fiducialRects.size() > 1) {
-                center1 = fiducialRects.get(1).x + fiducialRects.get(1).width;
-            }
-
-            int midpoint = (int) ((center0 + center1) / 2);
-            double diff = abs(center0 - center1);
-
+            // Calculate their midpoint, distance, scale, and offset
+            int midpoint = (int) ((center0x + center1x) / 2);
+            double diff = abs(center0x - center1x);
             double scale = FIDUCIAL_DISTANCE == 0 ? 1 : diff / FIDUCIAL_DISTANCE;
             double offset = scale * FIDUCIAL_TO_CONTROL_LINE_OFFSET;
 
+            // Generate a rectangle for the result window
             Point tl = new Point(midpoint + offset - RESULT_WINDOW_RECT_HEIGHT * scale / 2.0, RESULT_WINDOW_RECT_WIDTH_PADDING);
             Point br = new Point(midpoint + offset + RESULT_WINDOW_RECT_HEIGHT * scale / 2.0, inputMat.size().height - RESULT_WINDOW_RECT_WIDTH_PADDING);
-
             fiducialRect = new Rect(tl, br);
         }
 
-
+        // Release resources
         labels.release();
         centers.release();
         data.release();
@@ -891,7 +773,8 @@ public class ImageProcessor {
                 double rectCenter = rect.x + rect.width / 2.0;
                 if (FIDUCIAL_POSITION_MIN < rectCenter && rectCenter < FIDUCIAL_POSITION_MAX && FIDUCIAL_MIN_HEIGHT < rect.height && FIDUCIAL_MIN_WIDTH < rect.width && rect.width < FIDUCIAL_MAX_WIDTH) {
                     fiducialRects.add(rect);
-                    Log.d(TAG, String.format("Control line rect size: %s %s %s", rect.tl(), rect.br(), rect.size()));
+                    if (DEBUG_FLAG)
+                        Log.d(TAG, String.format("Control line rect size: %s %s %s", rect.tl(), rect.br(), rect.size()));
                 }
             }
 
@@ -978,11 +861,11 @@ public class ImageProcessor {
     }
 
     private boolean readControlLine(Mat inputMat, Point position) {
-            return readLine(inputMat, position, true);
+        return readLine(inputMat, position, true);
     }
 
     private boolean readTestLine(Mat inputMat, Point position) {
-            return readLine(inputMat, position, false);
+        return readLine(inputMat, position, false);
     }
 
 
@@ -990,73 +873,245 @@ public class ImageProcessor {
         return enhanceImage(inputMat, tile);
     }
 
+    /**
+     * Applies perspective correction to the RDT, checks for fiducials,
+     * and provides the result window if that passes
+     * @param inputMat: the input image
+     * @param boundary: the MatOfPoint2f bounding box around the identified RDT
+     * @return the cropped, perspective corrected test window
+     */
     private Mat cropResultWindow(Mat inputMat, MatOfPoint2f boundary) {
+        // Get template corners
         Mat refBoundary = new Mat(4, 1, CvType.CV_32FC2);
-
         double[] a = new double[]{0, 0};
         double[] b = new double[]{mRefImg.cols() - 1, 0};
         double[] c = new double[]{mRefImg.cols() - 1, mRefImg.rows() - 1};
         double[] d = new double[]{0, mRefImg.rows() - 1};
-
-
-        //get corners from object
         refBoundary.put(0, 0, a);
         refBoundary.put(1, 0, b);
         refBoundary.put(2, 0, c);
         refBoundary.put(3, 0, d);
 
+        // Apply the inverse transform transform to correct the perspective of the RDT
         Mat M = getPerspectiveTransform(boundary, refBoundary);
         Mat correctedMat = new Mat(mRefImg.rows(), mRefImg.cols(), mRefImg.type());
         warpPerspective(inputMat, correctedMat, M, new Size(mRefImg.cols(), mRefImg.rows()));
 
-        //Rect resultWindowRect = checkFiducialAndReturnResultWindowRect(correctedMat);
-        Rect resultWindowRect = checkFiducialKMenas(correctedMat);
-        //Rect resultWindowRect = returnResultWindowRect(correctedMat);
+        // Apply k-means to ensure that the fiducials are in place
+//        Rect resultWindowRect = checkFiducialAndReturnResultWindowRect(correctedMat);
+//        Rect resultWindowRect = returnResultWindowRect(correctedMat);
+        Rect resultWindowRect = checkFiducialKMeans(correctedMat);
 
+        // Provide the cropped result window if everything is successful
         correctedMat = new Mat(correctedMat, resultWindowRect);
         if (correctedMat.width() > 0 && correctedMat.height() > 0) {
-            resize(correctedMat, correctedMat, new Size(RESULT_WINDOW_RECT_HEIGHT, mRefImg.rows() - 2 * RESULT_WINDOW_RECT_WIDTH_PADDING));
+            resize(correctedMat, correctedMat, new Size(RESULT_WINDOW_RECT_HEIGHT,
+                    mRefImg.rows() - 2*RESULT_WINDOW_RECT_WIDTH_PADDING));
         }
-
         return correctedMat;
     }
 
-    private MatOfPoint2f detectRDTWithSIFT(Mat inputMat, int ransac){
-        double scale = 0.5;
-        Mat scaledMat = new Mat();
-        Imgproc.resize(inputMat, scaledMat, new Size(), scale, scale, Imgproc.INTER_LINEAR);
-        double currentTime = System.currentTimeMillis();
+    /**
+     * Attempts to identify the bounding box around the RDT within the input image using BRISK, if it is there
+     * TODO: we've gotta merge this with the other detectRDT method at some point
+     * @param inputMat: the input image
+     * @return boundary: the MatOfPoint2f bounding box around the identified RDT
+     */
+    private MatOfPoint2f detectRDT(Mat inputMat) {
+        // Initialize data structures and start timer
+        long startTime = System.currentTimeMillis();
+        Mat descriptors = new Mat();
+        MatOfKeyPoint keypoints = new MatOfKeyPoint();
+        MatOfPoint2f boundary = new MatOfPoint2f();
+
+        // Create a mask for where to generate features
+        // TODO: can we make this tighter regardless of OpenCV's bug?
+        Mat mask = new Mat(inputMat.size(), CV_8U, Scalar.all(0));
+        Point p1 = new Point(0, inputMat.size().height*(1-VIEW_FINDER_SCALE_W/CROP_RATIO)/2);
+        Point p2 = new Point(inputMat.size().width-p1.x, inputMat.size().height-p1.y);
+        Imgproc.rectangle(mask, p1, p2, Scalar.all(255), -1);
+
+        // Compute features and descriptors
+        mFeatureDetector.detectAndCompute(inputMat, mask, keypoints, descriptors);
+        if (DEBUG_FLAG)
+            Log.d(TAG, "detect/compute TIME: " + (System.currentTimeMillis()-startTime));
+
+        // Break early if no features found
+        if (descriptors.size().equals(new Size(0,0))) {
+            descriptors.release();
+            keypoints.release();
+            boundary.release();
+            return boundary;
+        }
+
+        // Compute matches
+        MatOfDMatch matches = new MatOfDMatch();
+        mMatcher.match(mRefDescriptor, descriptors, matches);
+        if (DEBUG_FLAG)
+            Log.d(TAG, "matching TIME: " + (System.currentTimeMillis()-startTime));
+
+        // Sort matches from lowest to highest distance
+        List<DMatch> matchesList = matches.toList();
+        Comparator<DMatch> comparator = new Comparator<DMatch>() {
+            @Override
+            public int compare(DMatch dMatch, DMatch t1) {
+                if (dMatch.distance == t1.distance)
+                    return 0;
+                else if (dMatch.distance < t1.distance)
+                    return -1;
+                else
+                    return 1;
+            }
+        };
+        Collections.sort(matchesList, comparator);
+        if (DEBUG_FLAG)
+            Log.d(TAG, "match sorting TIME: " + (System.currentTimeMillis()-startTime));
+
+        // Save only the good matches
+        List<DMatch> goodMatches = matchesList;
+//        List<DMatch> goodMatches =  matchesList.size() > 50 ? matchesList.subList(0, 50): matchesList;
+        MatOfDMatch goodMatchesMat = new MatOfDMatch();
+        goodMatchesMat.fromList(goodMatches);
+        if (DEBUG_FLAG)
+            Log.d(TAG, String.format("Good match: %d", goodMatches.size()));
+
+        // Break early if not enough good matches
+        if (goodMatches.size() <= GOOD_MATCH_COUNT) {
+            descriptors.release();
+            keypoints.release();
+            mask.release();
+            goodMatchesMat.release();
+            return boundary;
+        }
+
+        // Put KeyPoints from Mats into Lists
+        List<KeyPoint> keypoints1_List = mRefKeypoints.toList();
+        List<KeyPoint> keypoints2_List = keypoints.toList();
+
+        // Put Points from good matches into MatOfPoint2f
+        List<Point> objList = new ArrayList<>();
+        List<Point> sceneList = new ArrayList<>();
+        for (int i = 0; i < goodMatches.size(); i++) {
+            objList.add(keypoints1_List.get(goodMatches.get(i).queryIdx).pt);
+            sceneList.add(keypoints2_List.get(goodMatches.get(i).trainIdx).pt);
+        }
+        MatOfPoint2f objMat = new MatOfPoint2f();
+        MatOfPoint2f sceneMat = new MatOfPoint2f();
+        objMat.fromList(objList);
+        sceneMat.fromList(sceneList);
+
+
+        // Compute homography
+        Mat H = Calib3d.findHomography(objMat, sceneMat, Calib3d.RANSAC, 5);
+        if (DEBUG_FLAG)
+            Log.d(TAG, "find homography TIME: " + (System.currentTimeMillis()-startTime));
+
+        // If the homography is valid, map corners of template into input image
+        if (H.cols() >= 3 && H.rows() >= 3) {
+            // Get template corners
+            Mat objCorners = new Mat(4, 1, CvType.CV_32FC2);
+            double[] a = new double[]{0, 0};
+            double[] b = new double[]{mRefImg.cols() - 1, 0};
+            double[] c = new double[]{mRefImg.cols() - 1, mRefImg.rows() - 1};
+            double[] d = new double[]{0, mRefImg.rows() - 1};
+            objCorners.put(0, 0, a);
+            objCorners.put(1, 0, b);
+            objCorners.put(2, 0, c);
+            objCorners.put(3, 0, d);
+
+            // Apply transform to get corresponding corners in input image
+            Mat sceneCorners = new Mat(4, 1, CvType.CV_32FC2);
+            perspectiveTransform(objCorners, sceneCorners, H);
+            if (DEBUG_FLAG)
+                Log.d(TAG, String.format("transformed -- BRISK: (%.2f, %.2f) (%.2f, %.2f) (%.2f, %.2f) (%.2f, %.2f), width: %d, height: %d",
+                        sceneCorners.get(0, 0)[0], sceneCorners.get(0, 0)[1],
+                        sceneCorners.get(1, 0)[0], sceneCorners.get(1, 0)[1],
+                        sceneCorners.get(2, 0)[0], sceneCorners.get(2, 0)[1],
+                        sceneCorners.get(3, 0)[0], sceneCorners.get(3, 0)[1], sceneCorners.width(), sceneCorners.height()));
+
+            // Extract those points
+            ArrayList<Point> listOfBoundary = new ArrayList<>();
+            listOfBoundary.add(new Point(sceneCorners.get(0, 0)));
+            listOfBoundary.add(new Point(sceneCorners.get(1, 0)));
+            listOfBoundary.add(new Point(sceneCorners.get(2, 0)));
+            listOfBoundary.add(new Point(sceneCorners.get(3, 0)));
+            boundary.fromList(listOfBoundary);
+
+            // Release resources
+            objCorners.release();
+            sceneCorners.release();
+
+            RotatedRect rotatedRect = minAreaRect(boundary);
+            Point[] v = new Point[4];
+            Point[] bound = new Point[4];
+            rotatedRect.points(v);
+
+            // Properly orders the points depending on the orientation
+            for (int i = 0; i < 4; i++) {
+                if(rotatedRect.angle < -45)
+                    bound[(i+2)%4] = v[i];
+                else
+                    bound[(i+3)%4] = v[i];
+            }
+            boundary.fromArray(bound);
+        }
+
+        // Release resources
+        descriptors.release();
+        keypoints.release();
+        mask.release();
+        matches.release();
+        objMat.release();
+        sceneMat.release();
+        H.release();
+        if (DEBUG_FLAG)
+            Log.d(TAG, "Detect RDT TIME: " + (System.currentTimeMillis()-startTime));
+        return boundary;
+    }
+
+    /**
+     * Attempts to identify the bounding box around the RDT within the input image using SIFT, if it is there
+     * @param inputMat: the input image
+     * @param ransac: the ransac reprojection error threshold // TODO is this needed?
+     * @return boundary: the MatOfPoint2f bounding box around the identified RDT
+     */
+    private MatOfPoint2f detectRDTWithSIFT(Mat inputMat, int ransac) {
+        // Initialize data structures and start timer
+        double startTime = System.currentTimeMillis();
         Mat inDescriptor = new Mat();
         MatOfKeyPoint inKeypoints = new MatOfKeyPoint();
         MatOfPoint2f boundary = new MatOfPoint2f();
 
-        Mat mask = new Mat(scaledMat.cols(), scaledMat.rows(), CV_8U, new Scalar(0));
+        // Downsample the image to save time
+        double scale = 0.5;
+        Mat scaledMat = new Mat();
+        Imgproc.resize(inputMat, scaledMat, new Size(), scale, scale, Imgproc.INTER_LINEAR);
 
+        // Create a mask for where to generate features
+        // TODO: can we make this tighter regardless of OpenCV's bug?
+        Mat mask = new Mat(scaledMat.cols(), scaledMat.rows(), CV_8U, new Scalar(0));
         Point p1 = new Point(0, scaledMat.size().height*(1-VIEW_FINDER_SCALE_W/CROP_RATIO)/2);
         Point p2 = new Point(scaledMat.size().width-p1.x, scaledMat.size().height-p1.y);
         Imgproc.rectangle(mask, p1, p2, new Scalar(255), -1);
 
+        // Compute features and descriptors
         siftDetector.detectAndCompute(scaledMat, mask, inKeypoints, inDescriptor);
 
-        if (inDescriptor.size().equals(new Size(0,0))) { // No features found!
+        // Break early if no features found
+        if (inDescriptor.size().equals(new Size(0,0)) ||
+                siftRefDescriptor.size().equals(new Size(0,0))) {
+            inDescriptor.release();
+            inKeypoints.release();
+            scaledMat.release();
+            mask.release();
             return boundary;
         }
 
-        if (siftRefDescriptor.size().equals(new Size(0,0))) { // No features found!
-            Log.d(TAG, "Empty sift ref descriptor!!!");
-            return boundary;
-        }
-
-        // Matching
+        // Compute matches
         List<MatOfDMatch> matches = new ArrayList<>();
         siftMatcher.knnMatch(siftRefDescriptor, inDescriptor, matches, 2, new Mat(), false);
 
-        double maxDist = Double.MIN_VALUE;
-        double minDist = Double.MAX_VALUE;
-
-        double sum = 0;
-        int count = 0;
-
+        // Save only the good matches
         ArrayList<DMatch> goodMatches = new ArrayList<>();
         for (int i = 0; i < matches.size(); i++) {
             DMatch[] dMatches = matches.get(i).toArray();
@@ -1065,99 +1120,114 @@ public class ImageProcessor {
                 DMatch n = dMatches[1];
                 if (m.distance <= 0.80 * n.distance) {
                     goodMatches.add(m);
-                    sum += m.distance;
-                    count++;
                 }
             }
         }
-
         MatOfDMatch goodMatchesMat = new MatOfDMatch();
         goodMatchesMat.fromList(goodMatches);
 
-        //put keypoints mats into lists
+        // Break early if not enough good matches
+        if (goodMatches.size() <= GOOD_MATCH_COUNT) {
+            inDescriptor.release();
+            inKeypoints.release();
+            scaledMat.release();
+            mask.release();
+            goodMatchesMat.release();
+            return boundary;
+        }
+
+        // Put KeyPoints from Mats into Lists
         List<KeyPoint> keypointsList1 = siftRefKeypoints.toList();
         List<KeyPoint> keypointsList2 = inKeypoints.toList();
 
+        // Put Points from good matches into MatOfPoint2f
         List<Point> objList = new ArrayList<>();
         List<Point> sceneList = new ArrayList<>();
-
-        for(int i=0;i<goodMatches.size();i++)
-        {
-            objList.add(keypointsList1.get(goodMatches.get(i).queryIdx).pt);
-            sceneList.add(keypointsList2.get(goodMatches.get(i).trainIdx).pt);
+        for(int i = 0; i < goodMatches.size(); i++) {
+            DMatch m = goodMatches.get(i);
+            objList.add(keypointsList1.get(m.queryIdx).pt);
+            sceneList.add(keypointsList2.get(m.trainIdx).pt);
         }
-
         MatOfPoint2f objMat = new MatOfPoint2f();
         MatOfPoint2f sceneMat = new MatOfPoint2f();
         objMat.fromList(objList);
         sceneMat.fromList(sceneList);
 
-        // HOMOGRAPHY!
-        if (goodMatches.size() > GOOD_MATCH_COUNT) {
-            Mat H = Calib3d.findHomography(objMat, sceneMat, Calib3d.RANSAC, ransac);
+        // Compute homography
+        Mat H = Calib3d.findHomography(objMat, sceneMat, Calib3d.RANSAC, ransac);
 
-            if (H.cols() >= 3 && H.rows() >= 3) {
-                Mat objCorners = new Mat(4, 1, CvType.CV_32FC2);
-                Mat sceneCorners = new Mat(4, 1, CvType.CV_32FC2);
+        // If the homography is valid, map corners of template into input image
+        if (H.cols() >= 3 && H.rows() >= 3) {
+            // Get template corners
+            Mat objCorners = new Mat(4, 1, CvType.CV_32FC2);
+            double[] a = new double[]{0, 0};
+            double[] b = new double[]{mRefImg.cols() - 1, 0};
+            double[] c = new double[]{mRefImg.cols() - 1, mRefImg.rows() - 1};
+            double[] d = new double[]{0, mRefImg.rows() - 1};
+            objCorners.put(0, 0, a);
+            objCorners.put(1, 0, b);
+            objCorners.put(2, 0, c);
+            objCorners.put(3, 0, d);
 
-                double[] a = new double[]{0, 0};
-                double[] b = new double[]{mRefImg.cols() - 1, 0};
-                double[] c = new double[]{mRefImg.cols() - 1, mRefImg.rows() - 1};
-                double[] d = new double[]{0, mRefImg.rows() - 1};
-
-                //get corners from object
-                objCorners.put(0, 0, a);
-                objCorners.put(1, 0, b);
-                objCorners.put(2, 0, c);
-                objCorners.put(3, 0, d);
-
-                perspectiveTransform(objCorners, sceneCorners, H);
-
+            // Apply transform to get corresponding corners in input image
+            Mat sceneCorners = new Mat(4, 1, CvType.CV_32FC2);
+            perspectiveTransform(objCorners, sceneCorners, H);
+            if (DEBUG_FLAG)
                 Log.d(TAG, String.format("transformed -- SIFT: (%.2f, %.2f) (%.2f, %.2f) (%.2f, %.2f) (%.2f, %.2f), width: %d, height: %d",
                         sceneCorners.get(0, 0)[0], sceneCorners.get(0, 0)[1],
                         sceneCorners.get(1, 0)[0], sceneCorners.get(1, 0)[1],
                         sceneCorners.get(2, 0)[0], sceneCorners.get(2, 0)[1],
                         sceneCorners.get(3, 0)[0], sceneCorners.get(3, 0)[1], sceneCorners.width(), sceneCorners.height()));
 
-                ArrayList<Point> listOfBoundary = new ArrayList<>();
-                listOfBoundary.add(new Point(sceneCorners.get(0, 0)));
-                listOfBoundary.add(new Point(sceneCorners.get(1, 0)));
-                listOfBoundary.add(new Point(sceneCorners.get(2, 0)));
-                listOfBoundary.add(new Point(sceneCorners.get(3, 0)));
+            // Extract those points
+            ArrayList<Point> listOfBoundary = new ArrayList<>();
+            listOfBoundary.add(new Point(sceneCorners.get(0, 0)));
+            listOfBoundary.add(new Point(sceneCorners.get(1, 0)));
+            listOfBoundary.add(new Point(sceneCorners.get(2, 0)));
+            listOfBoundary.add(new Point(sceneCorners.get(3, 0)));
+            boundary.fromList(listOfBoundary);
 
-                boundary.fromList(listOfBoundary);
-                objCorners.release();
-                sceneCorners.release();
+            // Release resources
+            objCorners.release();
+            sceneCorners.release();
 
-                RotatedRect rotatedRect = minAreaRect(boundary);
-                Point[] v = new Point[4];
-                Point[] bound = new Point[4];
-                rotatedRect.points(v);
-
-                for (int i = 0; i < 4; i++) {
-                    if(rotatedRect.angle < -45)
-                        bound[(i+2)%4] = new Point(v[i].x/scale, v[i].y/scale);
-                    else
-                        bound[(i+3)%4] = new Point(v[i].x/scale, v[i].y/scale);
-                }
-
-                boundary.fromArray(bound);
+            // Properly orders the points depending on the orientation and
+            // scales the points back to the original image's size
+            RotatedRect rotatedRect = minAreaRect(boundary);
+            Point[] v = new Point[4];
+            Point[] bound = new Point[4];
+            rotatedRect.points(v);
+            for (int i = 0; i < 4; i++) {
+                if (rotatedRect.angle < -45)
+                    bound[(i+2) % 4] = new Point(v[i].x/scale, v[i].y/scale);
+                else
+                    bound[(i+3) % 4] = new Point(v[i].x/scale, v[i].y/scale);
             }
-            H.release();
+            boundary.fromArray(bound);
         }
+
+        // Release resources
+        inKeypoints.release();
+        inDescriptor.release();
         scaledMat.release();
+        mask.release();
         goodMatchesMat.release();
         objMat.release();
         sceneMat.release();
-        mask.release();
-        inDescriptor.release();
-        inKeypoints.release();
-        Log.d(TAG, "Detect RDT TIME: " + (System.currentTimeMillis()-currentTime));
+        H.release();
+        if (DEBUG_FLAG)
+            Log.d(TAG, "Detect RDT TIME: " + (System.currentTimeMillis()-startTime));
         return boundary;
     }
 
+    /**
+     * Generates a bounding box Rect based on the viewfinder window specifications
+     * @param inputMat: the input image
+     * @return a Rect object describing the viewfinder
+     */
     private Rect getViewfinderRect(Mat inputMat) {
-        Point p1 = new Point(inputMat.size().width*(1-VIEW_FINDER_SCALE_H)/2, inputMat.size().height*(1-VIEW_FINDER_SCALE_W)/2);
+        Point p1 = new Point(inputMat.size().width*(1-VIEW_FINDER_SCALE_H)/2,
+                inputMat.size().height*(1-VIEW_FINDER_SCALE_W)/2);
         Point p2 = new Point(inputMat.size().width-p1.x, inputMat.size().height-p1.y);
         return new Rect(p1, p2);
     }
@@ -1200,28 +1270,6 @@ public class ImageProcessor {
         Utils.matToBitmap(resultMat, bitmap);
     }
 
-    private void calcuateAverageMat(Mat inputMat){
-        float[] avgIntensities = new float[inputMat.cols()];
-        float[] avgHues = new float[inputMat.cols()];
-        float[] avgSats = new float[inputMat.cols()];
-
-        for (int i = 0; i < inputMat.cols(); i++) {
-            float sumIntensity=0;
-            float sumHue=0;
-            float sumSat=0;
-            for (int j = 0; j < inputMat.rows(); j++) {
-                sumHue+=inputMat.get(j, i)[0];
-                sumIntensity+=inputMat.get(j, i)[1];
-                sumSat+=inputMat.get(j, i)[2];
-            }
-            avgIntensities[i] = sumIntensity/inputMat.rows();
-            avgHues[i] = sumHue/inputMat.rows();
-            avgSats[i] = sumSat/inputMat.rows();
-
-            Log.d(TAG, String.format("HLS at %d (%.2f, %.2f, %.2f) type %d", i,  avgHues[i]*2, avgIntensities[i]/255*100, avgSats[i]/255*100, inputMat.type()));
-        }
-    }
-
     // Mali-specific computations
     private boolean checkWindowPosition(Mat resultWindowMat) {
         Point line = new Point(resultWindowMat.width()*0.35-resultWindowMat.width()*0.15, 0);
@@ -1236,9 +1284,11 @@ public class ImageProcessor {
 
         Core.MinMaxLocResult result = Core.minMaxLoc(channels.get(2), null);
 
-        Log.d(TAG, "MIN MAX LOC Rect: "+crop.size().width+", "+ cropgray.size().width);
-        Log.d(TAG, "MIN MAX LOC Rect: "+crop.size().height+", "+ cropgray.size().height);
-        Log.d(TAG, "MIN MAX LOC: "+result.minLoc + ", " + result.minVal + ", " + result.maxLoc + ", " + result.maxVal);
+        if (DEBUG_FLAG) {
+            Log.d(TAG, "MIN MAX LOC Rect: " + crop.size().width + ", " + cropgray.size().width);
+            Log.d(TAG, "MIN MAX LOC Rect: " + crop.size().height + ", " + cropgray.size().height);
+            Log.d(TAG, "MIN MAX LOC: " + result.minLoc + ", " + result.minVal + ", " + result.maxLoc + ", " + result.maxVal);
+        }
 
         double minColSum = Double.MAX_VALUE;
         int minColIndex = -2;
@@ -1247,28 +1297,29 @@ public class ImageProcessor {
                     channels.get(2).get((int)result.minLoc.y, (int)result.minLoc.x+i+1)[0] +
                     channels.get(2).get((int)result.minLoc.y, (int)result.minLoc.x+i+2)[0];
 
-            Log.d(TAG, String.format("MIN MAX explore: %d: %d, %d, %d", (int)result.minLoc.x+i, (int)channels.get(2).get((int)result.minLoc.y, (int)result.minLoc.x+i)[0],
-                    (int)channels.get(2).get((int)result.minLoc.y, (int)result.minLoc.x+i+1)[0], (int)channels.get(2).get((int)result.minLoc.y, (int)result.minLoc.x+i+2)[0]));
+            if (DEBUG_FLAG)
+                Log.d(TAG, String.format("MIN MAX explore: %d: %d, %d, %d", (int)result.minLoc.x+i, (int)channels.get(2).get((int)result.minLoc.y, (int)result.minLoc.x+i)[0],
+                        (int)channels.get(2).get((int)result.minLoc.y, (int)result.minLoc.x+i+1)[0], (int)channels.get(2).get((int)result.minLoc.y, (int)result.minLoc.x+i+2)[0]));
 
             minColIndex = (colSum < minColSum) ? i : minColIndex;
             minColSum = (colSum < minColSum) ? colSum : minColSum;
         }
 
-        Log.d(TAG, "MIN MAX col: " + minColIndex);
-
         double sum = 0;
         for (int i = minColIndex; i < minColIndex+3; i++) {
             for (int j = 0; j < channels.get(2).height(); j++) {
-                Log.d(TAG, "MIN MAX coor: "+(result.minLoc.x+i)+","+j+", " +channels.get(2).get(j, (int)(result.minLoc.x+i))[0]);
+                if (DEBUG_FLAG)
+                    Log.d(TAG, "MIN MAX coor: "+(result.minLoc.x+i)+","+j+", " +channels.get(2).get(j, (int)(result.minLoc.x+i))[0]);
                 sum += channels.get(2).get(j, (int) (result.minLoc.x + i))[0];
-                //}
             }
         }
 
         double avg = sum/(double)(channels.get(0).height()*3);
 
-        Log.d(TAG, "MIN MAX Row Avg: " + avg + " And, MIN VAL: "+result.minVal);
-        Log.d(TAG, "MIN MAX Row Loc: " + line + " And, MIN VAL: "+result.minLoc);
+        if (DEBUG_FLAG) {
+            Log.d(TAG, "MIN MAX Row Avg: " + avg + " And, MIN VAL: " + result.minVal);
+            Log.d(TAG, "MIN MAX Row Loc: " + line + " And, MIN VAL: " + result.minLoc);
+        }
 
         return (0 < avg && avg < result.minVal+30 && result.minLoc.x - 0.1*channels.get(2).width() < line.x && line.x < result.minLoc.x + 0.1*channels.get(2).width());
     }
@@ -1288,29 +1339,19 @@ public class ImageProcessor {
         refPoints.put(2, 0, c);
         refPoints.put(3, 0, d);
 
-        Log.d(TAG, "perspective ref" + refPoints.dump());
-
-
-
         a = new double[]{RESULT_WINDOW_X, RESULT_WINDOW_Y};
         b = new double[]{RESULT_WINDOW_X+RESULT_WINDOW_WIDTH, RESULT_WINDOW_Y};
         c = new double[]{RESULT_WINDOW_X+RESULT_WINDOW_WIDTH, RESULT_WINDOW_Y+RESULT_WINDOW_HEIGHT};
         d = new double[]{RESULT_WINDOW_X, RESULT_WINDOW_Y+RESULT_WINDOW_HEIGHT};
-
 
         refResultPoints.put(0, 0, a);
         refResultPoints.put(1, 0, b);
         refResultPoints.put(2, 0, c);
         refResultPoints.put(3, 0, d);
 
-        Log.d(TAG, "perspective results" + refResultPoints.dump());
-        Log.d(TAG, "perspective bound" + boundary.dump());
-
         Mat M = getPerspectiveTransform(refPoints, boundary);
-        Log.d(TAG, "perspective transform" + M.dump());
         Mat imgResultPointsMat = new Mat();
         perspectiveTransform(refResultPoints, imgResultPointsMat, M);
-        Log.d(TAG, "perspective window" + imgResultPointsMat.dump());
 
         MatOfPoint imgResultPoints = new MatOfPoint();
 
@@ -1329,8 +1370,6 @@ public class ImageProcessor {
         Mat enhancedImg = enhanceImage(resultImg, new org.opencv.core.Size(2, resultRect.height));
         enhancedImg = correctGamma(enhancedImg, 1.2);
         boolean windowPosition = checkWindowPosition(resultImg);
-
-        Log.d(TAG, "MIN MAX position right: " + windowPosition);
 
         if (windowPosition) {
             enhancedImg.copyTo(resultImg);
