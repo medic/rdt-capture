@@ -68,7 +68,6 @@ import static org.opencv.core.CvType.CV_8U;
 import static org.opencv.core.CvType.CV_8UC3;
 import static org.opencv.imgproc.Imgproc.COLOR_RGB2GRAY;
 import static org.opencv.imgproc.Imgproc.COLOR_RGBA2RGB;
-import static org.opencv.imgproc.Imgproc.INTER_LINEAR;
 import static org.opencv.imgproc.Imgproc.Laplacian;
 import static org.opencv.imgproc.Imgproc.THRESH_BINARY_INV;
 import static org.opencv.imgproc.Imgproc.contourArea;
@@ -94,7 +93,7 @@ public class ImageProcessor {
     private Mat siftRefDescriptor;
     private double refImgSharpness = Double.MIN_VALUE;
     private int mMoveCloserCount = 0;
-    private boolean DEBUG_FLAG = true;
+    private boolean DEBUG_FLAG = false;
 
     public enum ExposureResult {
         UNDER_EXPOSED, NORMAL, OVER_EXPOSED
@@ -258,7 +257,8 @@ public class ImageProcessor {
         // Check for fiducials for QuickVue strip
         boolean fiducial = false;
         if (passed) {
-            Mat resultMat = cropResultWindow(inputMat, boundary);
+            Mat correctedMat = cropRDT(inputMat, boundary);
+            Mat resultMat = cropResultWindow(correctedMat);
             fiducial = resultMat.width() > 0 && resultMat.height() > 0;
             resultMat.release();
             passed = fiducial;
@@ -270,7 +270,7 @@ public class ImageProcessor {
         greyMat.release();
 
         // Return a CaptureResult object
-        return new CaptureResult(passed, cropRDT(inputMat), fiducial, exposureResult, sizeResult,
+        return new CaptureResult(passed, crop(inputMat), fiducial, exposureResult, sizeResult,
                 isCentered, isRightOrientation, angle, isSharp, false, boundary);
     }
 
@@ -468,7 +468,7 @@ public class ImageProcessor {
         return abs(angle) < ANGLE_THRESHOLD;
     }
 
-    private Mat cropRDT(Mat inputMat) {
+    private Mat crop(Mat inputMat) {
         int width = (int)(inputMat.cols() * CROP_RATIO);
         int height = (int)(inputMat.rows() * CROP_RATIO);
         int x = (int)(inputMat.cols() * (1.0-CROP_RATIO)/2);
@@ -565,7 +565,8 @@ public class ImageProcessor {
     }
 
     public InterpretationResult interpretResult(Mat inputMat, MatOfPoint2f boundary) {
-        Mat resultMat = cropResultWindow(inputMat, boundary);
+        Mat correctedMat = cropRDT(inputMat, boundary);
+        Mat resultMat = cropResultWindow(correctedMat);
         boolean control, testA, testB;
 
         if (resultMat.width() == 0 && resultMat.height() == 0) {
@@ -877,13 +878,12 @@ public class ImageProcessor {
     }
 
     /**
-     * Applies perspective correction to the RDT, checks for fiducials,
-     * and provides the result window if that passes
+     * Applies perspective correction to the RDT and provides the RDT
      * @param inputMat: the input image
      * @param boundary: the MatOfPoint2f bounding box around the identified RDT
-     * @return the cropped, perspective corrected test window
+     * @return the cropped, perspective corrected RDT
      */
-    private Mat cropResultWindow(Mat inputMat, MatOfPoint2f boundary) {
+    private Mat cropRDT(Mat inputMat, MatOfPoint2f boundary) {
         // Get template corners
         Mat refBoundary = new Mat(4, 1, CvType.CV_32FC2);
         double[] a = new double[]{0, 0};
@@ -901,6 +901,15 @@ public class ImageProcessor {
         warpPerspective(inputMat, correctedMat, M, new Size(mRefImg.cols(), mRefImg.rows()));
         resize(correctedMat, correctedMat, new Size(), 1/REF_IMAGE_SCALE, 1/REF_IMAGE_SCALE, Imgproc.INTER_LINEAR);
 
+        return correctedMat;
+    }
+
+    /**
+     * Checks for fiducials and provides the result window if that passes
+     * @param correctedMat: the input image
+     * @return the cropped, perspective corrected test window
+     */
+    private Mat cropResultWindow(Mat correctedMat) {
         // Apply k-means to ensure that the fiducials are in place
 //        Rect resultWindowRect = checkFiducialAndReturnResultWindowRect(correctedMat);
 //        Rect resultWindowRect = returnResultWindowRect(correctedMat);
