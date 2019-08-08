@@ -32,7 +32,6 @@ import android.hardware.camera2.params.StreamConfigurationMap;
 import android.media.Image;
 import android.media.ImageReader;
 import android.os.AsyncTask;
-import android.os.Build;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.support.annotation.NonNull;
@@ -383,6 +382,9 @@ public class ImageQualityView extends LinearLayout implements View.OnClickListen
             }
             if (captureResult.resultMat != null) {
                 captureResult.resultMat.release();
+            }
+            if (captureResult.croppedRDTMat != null) {
+                captureResult.croppedRDTMat.release();
             }
             if (interpretationResult != null &&
                     interpretationResult.resultMat != null) {

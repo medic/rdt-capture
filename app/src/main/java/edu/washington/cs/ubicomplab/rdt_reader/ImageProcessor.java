@@ -107,6 +107,7 @@ public class ImageProcessor {
     public class CaptureResult {
         public boolean allChecksPassed;
         public Mat resultMat;
+        public Mat croppedRDTMat;
         public MatOfPoint2f boundary;
         public ExposureResult exposureResult;
         public SizeResult sizeResult;
@@ -117,11 +118,12 @@ public class ImageProcessor {
         public boolean fiducial;
         public double angle;
 
-        public CaptureResult(boolean allChecksPassed, Mat resultMat, boolean fiducial,
+        public CaptureResult(boolean allChecksPassed, Mat resultMat, Mat croppedRDT, boolean fiducial,
                              ExposureResult exposureResult, SizeResult sizeResult,  boolean isCentered,
                              boolean isRightOrientation, double angle, boolean isSharp, boolean isShadow, MatOfPoint2f boundary){
             this.allChecksPassed = allChecksPassed;
             this.resultMat = resultMat;
+            this.croppedRDTMat = croppedRDT;
             this.fiducial = fiducial;
             this.exposureResult = exposureResult;
             this.sizeResult = sizeResult;
@@ -256,8 +258,9 @@ public class ImageProcessor {
 
         // Check for fiducials for QuickVue strip
         boolean fiducial = false;
+        Mat correctedMat = new Mat();
         if (passed) {
-            Mat correctedMat = cropRDT(inputMat, boundary);
+            correctedMat = cropRDT(inputMat, boundary);
             Mat resultMat = cropResultWindow(correctedMat);
             fiducial = resultMat.width() > 0 && resultMat.height() > 0;
             resultMat.release();
@@ -270,7 +273,7 @@ public class ImageProcessor {
         greyMat.release();
 
         // Return a CaptureResult object
-        return new CaptureResult(passed, crop(inputMat), fiducial, exposureResult, sizeResult,
+        return new CaptureResult(passed, crop(inputMat), correctedMat, fiducial, exposureResult, sizeResult,
                 isCentered, isRightOrientation, angle, isSharp, false, boundary);
     }
 
