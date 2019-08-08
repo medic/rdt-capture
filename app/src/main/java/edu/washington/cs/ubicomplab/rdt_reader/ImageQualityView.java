@@ -728,7 +728,7 @@ public class ImageQualityView extends LinearLayout implements View.OnClickListen
 
             final android.graphics.Rect sensor = characteristics.get(CameraCharacteristics.SENSOR_INFO_ACTIVE_ARRAY_SIZE);
             Log.d(TAG, "Sensor size: " + sensor.width() + ", " + sensor.height());
-            MeteringRectangle mr = new MeteringRectangle(sensor.width() / 2 - 50, sensor.height() / 2 - 50, 100 + (mCounter % 2), 100 + (mCounter % 2),
+            MeteringRectangle mr = new MeteringRectangle(sensor.width() / 2 - 100, sensor.height() / 2 - 100, 200 + (mCounter % 2), 200 + (mCounter % 2),
                     MeteringRectangle.METERING_WEIGHT_MAX - 1);
 
             Log.d(TAG, String.format("Sensor Size (%d, %d), Metering %s", sensor.width(), sensor.height(), mr.toString()));
