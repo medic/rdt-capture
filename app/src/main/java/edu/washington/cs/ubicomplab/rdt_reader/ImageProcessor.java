@@ -94,7 +94,7 @@ public class ImageProcessor {
     private Mat siftRefDescriptor;
     private double refImgSharpness = Double.MIN_VALUE;
     private int mMoveCloserCount = 0;
-    private boolean DEBUG_FLAG = false;
+    private boolean DEBUG_FLAG = true;
 
     public enum ExposureResult {
         UNDER_EXPOSED, NORMAL, OVER_EXPOSED
@@ -1094,13 +1094,18 @@ public class ImageProcessor {
 
         // Create a mask for where to generate features
         // TODO: can we make this tighter regardless of OpenCV's bug?
-        Mat mask = new Mat(scaledMat.cols(), scaledMat.rows(), CV_8U, new Scalar(0));
-        Point p1 = new Point(0, scaledMat.size().height*(1-VIEW_FINDER_SCALE_W/CROP_RATIO)/2);
-        Point p2 = new Point(scaledMat.size().width-p1.x, scaledMat.size().height-p1.y);
+        Point tl = new Point(scaledMat.size().height*(1-VIEW_FINDER_SCALE_W/CROP_RATIO)/2, 0);
+        Point br = new Point(scaledMat.size().width-tl.x, scaledMat.height());
+        Rect roi = new Rect(tl, br);
+        Mat croppedMat = scaledMat.submat(roi);
+
+        Mat mask = new Mat(croppedMat.cols(), croppedMat.rows(), CV_8U, new Scalar(0));
+        Point p1 = new Point(0, croppedMat.size().height*(1-VIEW_FINDER_SCALE_W/CROP_RATIO)/2);
+        Point p2 = new Point(croppedMat.size().width-p1.x, croppedMat.size().height-p1.y);
         Imgproc.rectangle(mask, p1, p2, new Scalar(255), -1);
 
         // Compute features and descriptors
-        siftDetector.detectAndCompute(scaledMat, mask, inKeypoints, inDescriptor);
+        siftDetector.detectAndCompute(croppedMat, mask, inKeypoints, inDescriptor);
 
         // Break early if no features found
         if (inDescriptor.size().equals(new Size(0,0)) ||
@@ -1108,6 +1113,7 @@ public class ImageProcessor {
             inDescriptor.release();
             inKeypoints.release();
             scaledMat.release();
+            croppedMat.release();
             mask.release();
             return boundary;
         }
@@ -1136,6 +1142,7 @@ public class ImageProcessor {
             inDescriptor.release();
             inKeypoints.release();
             scaledMat.release();
+            croppedMat.release();
             mask.release();
             goodMatchesMat.release();
             return boundary;
@@ -1204,9 +1211,9 @@ public class ImageProcessor {
             rotatedRect.points(v);
             for (int i = 0; i < 4; i++) {
                 if (rotatedRect.angle < -45)
-                    bound[(i+2) % 4] = new Point(v[i].x/FRAME_IMAGE_SCALE, v[i].y/FRAME_IMAGE_SCALE);
+                    bound[(i+2) % 4] = new Point((v[i].x+tl.x)/FRAME_IMAGE_SCALE, v[i].y/FRAME_IMAGE_SCALE);
                 else
-                    bound[(i+3) % 4] = new Point(v[i].x/FRAME_IMAGE_SCALE, v[i].y/FRAME_IMAGE_SCALE);
+                    bound[(i+3) % 4] = new Point((v[i].x+tl.x)/FRAME_IMAGE_SCALE, v[i].y/FRAME_IMAGE_SCALE);
             }
             boundary.fromArray(bound);
         }
@@ -1215,6 +1222,7 @@ public class ImageProcessor {
         inKeypoints.release();
         inDescriptor.release();
         scaledMat.release();
+        croppedMat.release();
         mask.release();
         goodMatchesMat.release();
         objMat.release();
