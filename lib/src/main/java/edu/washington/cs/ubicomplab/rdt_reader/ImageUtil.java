@@ -209,7 +209,7 @@ public final class ImageUtil {
         }
     }
 
-    public static void saveImage(final Context context, final byte[] byteArray, final long timeTaken, final OnImageSavedCallBack onImageSavedCallBack) {
+    public static void saveImage(final Context context, final byte[] byteArray, final long timeTaken, final boolean testResult, final OnImageSavedCallBack onImageSavedCallBack) {
 
         class SaveImageTask extends AsyncTask<SaveImageParams, Void, String> {
             private OnImageSavedCallBack imageSavedCallBack;
@@ -233,7 +233,7 @@ public final class ImageUtil {
                     imageParams.getContext().sendBroadcast(new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE, Uri.parse("file://" + filePath)));
 
                     Log.i(TAG, "Image successfully saved!");
-                    imageSavedCallBack.onImageSaved(filePath);
+                    imageSavedCallBack.onImageSaved(filePath + "," + testResult);
                 } catch (Exception e) {
                     Log.e(TAG, "Error saving image file: " + e.getMessage());
                 }

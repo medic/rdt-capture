@@ -40,7 +40,7 @@ public final class Constants {
 
     public static int MOVE_CLOSER_COUNT = 5;
 
-    public static String SAVED_IMAGE_FILE_PATH = "saved_image_file_path";
+    public static String SAVED_IMAGE_META_DATA = "saved_image_meta_data";
 
     public static final int REQUEST_CAMERA_PERMISSION = 1;
 
