@@ -30,8 +30,13 @@ public class RDTCaptureActivity extends ImageQualityActivity implements Activity
     @Override
     protected void useCapturedImage(byte[] captureByteArray, byte[] windowByteArray, ImageProcessor.InterpretationResult interpretationResult, long timeTaken) {
         Log.i(TAG, "Processing captured image");
-        boolean testResult = false; // todo: get interpretation
+        boolean testResult = interpretTestResult(interpretationResult);
         presenter.saveImage(getApplicationContext(), captureByteArray, System.currentTimeMillis(), testResult, this);
+    }
+
+    protected boolean interpretTestResult(ImageProcessor.InterpretationResult interpretationResult) {
+        return  interpretationResult.control && interpretationResult.testA
+                || interpretationResult.control && interpretationResult.testB;
     }
 
     @Override
