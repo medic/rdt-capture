@@ -215,7 +215,7 @@ public final class ImageUtil {
             private OnImageSavedCallBack imageSavedCallBack;
             @Override
             protected String doInBackground(SaveImageParams... params) {
-                String filePath = null;
+                String filePath = "";
                 SaveImageParams imageParams = params[0];
                 File sdIconStorageDir = new File(Constants.RDT_IMAGE_DIR);
                 sdIconStorageDir.mkdirs();
@@ -233,16 +233,15 @@ public final class ImageUtil {
                     imageParams.getContext().sendBroadcast(new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE, Uri.parse("file://" + filePath)));
 
                     Log.i(TAG, "Image successfully saved!");
-                    imageSavedCallBack.onImageSaved(filePath + "," + testResult);
                 } catch (Exception e) {
                     Log.e(TAG, "Error saving image file: " + e.getMessage());
                 }
-                return filePath;
+                return filePath + "," + testResult;
             }
 
-            protected void onPostExecute(String imageFilePath) {
+            protected void onPostExecute(String imageMetaData) {
                 if (imageSavedCallBack != null) {
-                    imageSavedCallBack.onImageSaved(imageFilePath);
+                    imageSavedCallBack.onImageSaved(imageMetaData);
                 }
             }
         }
