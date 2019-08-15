@@ -13,7 +13,7 @@ import edu.washington.cs.ubicomplab.rdt_reader.ImageQualityActivity;
 import edu.washington.cs.ubicomplab.rdt_reader.callback.OnImageSavedCallBack;
 import edu.washington.cs.ubicomplab.rdt_reader.presenter.RDTCapturePresenter;
 
-import static edu.washington.cs.ubicomplab.rdt_reader.Constants.SAVED_IMAGE_META_DATA;
+import static edu.washington.cs.ubicomplab.rdt_reader.Constants.SAVED_IMAGE_FILE_PATH;
 
 public class RDTCaptureActivity extends ImageQualityActivity implements ActivityCompat.OnRequestPermissionsResultCallback, OnImageSavedCallBack {
 
@@ -37,7 +37,7 @@ public class RDTCaptureActivity extends ImageQualityActivity implements Activity
     public void onImageSaved(String imageMetaData) {
         if (imageMetaData != null) {
             Map<String, String> keyVals = new HashMap();
-            keyVals.put(SAVED_IMAGE_META_DATA, imageMetaData);
+            keyVals.put(SAVED_IMAGE_FILE_PATH, imageMetaData);
             setResult(RESULT_OK, getResultIntent(keyVals));
         } else {
             Log.e(TAG, "Could not save null image path");
