@@ -17,7 +17,7 @@ public class RDTCaptureInteractor {
         this.presenter = presenter;
     }
 
-    public void saveImage(Context context, byte[] imageByteArray, long timeTaken, OnImageSavedCallBack onImageSavedCallBack) {
-        ImageUtil.saveImage(context, imageByteArray, timeTaken, onImageSavedCallBack);
+    public void saveImage(Context context, byte[] imageByteArray, long timeTaken, boolean testResult, OnImageSavedCallBack onImageSavedCallBack) {
+        ImageUtil.saveImage(context, imageByteArray, timeTaken, testResult, onImageSavedCallBack);
     }
 }

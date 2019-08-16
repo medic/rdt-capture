@@ -42,6 +42,8 @@ public final class Constants {
 
     public static String SAVED_IMAGE_FILE_PATH = "saved_image_file_path";
 
+    public static String SAVED_IMAGE_RESULT = "saved_image_result";
+
     public static final int REQUEST_CAMERA_PERMISSION = 1;
 
     public static double CROP_RATIO = 1.0;

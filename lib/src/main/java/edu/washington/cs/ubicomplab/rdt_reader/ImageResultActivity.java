@@ -107,7 +107,7 @@ public class ImageResultActivity extends AppCompatActivity implements View.OnCli
     @Override
     public void onClick(View view) {
         if (view.getId() == R.id.saveButton) {
-            saveImage(getApplicationContext(), capturedByteArray, timeTaken, null);
+            saveImage(getApplicationContext(), capturedByteArray, timeTaken, false, null);
             isImageSaved = true;
             if (isImageSaved) {
                 Toast.makeText(this,"Image is already saved.", Toast.LENGTH_LONG).show();
