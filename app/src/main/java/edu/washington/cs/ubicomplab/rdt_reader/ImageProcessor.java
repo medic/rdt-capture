@@ -106,6 +106,7 @@ public class ImageProcessor {
 
     public class CaptureResult {
         public boolean allChecksPassed;
+        public boolean testStripDetected;
         public Mat resultMat;
         public Mat croppedRDTMat;
         public MatOfPoint2f boundary;
@@ -118,7 +119,7 @@ public class ImageProcessor {
         public boolean fiducial;
         public double angle;
 
-        public CaptureResult(boolean allChecksPassed, Mat resultMat, Mat croppedRDT, boolean fiducial,
+        public CaptureResult(boolean allChecksPassed, boolean testStripDetected, Mat resultMat, Mat croppedRDT, boolean fiducial,
                              ExposureResult exposureResult, SizeResult sizeResult,  boolean isCentered,
                              boolean isRightOrientation, double angle, boolean isSharp, boolean isShadow, MatOfPoint2f boundary){
             this.allChecksPassed = allChecksPassed;
@@ -242,7 +243,9 @@ public class ImageProcessor {
         SizeResult sizeResult = SizeResult.INVALID;
         boolean isRightOrientation = false;
         double angle = 0.0;
+        boolean testStripDetected = false;
         if (boundary.size().width > 0 && boundary.size().height > 0) {
+            testStripDetected = true;
             isCentered = checkIfCentered(boundary, greyMat.size());
             sizeResult = checkSize(boundary, greyMat.size());
             isRightOrientation = checkOrientation(boundary);
@@ -273,7 +276,7 @@ public class ImageProcessor {
         greyMat.release();
 
         // Return a CaptureResult object
-        return new CaptureResult(passed, crop(inputMat), correctedMat, fiducial, exposureResult, sizeResult,
+        return new CaptureResult(passed, testStripDetected, crop(inputMat), correctedMat, fiducial, exposureResult, sizeResult,
                 isCentered, isRightOrientation, angle, isSharp, false, boundary);
     }
 
