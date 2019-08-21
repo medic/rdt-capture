@@ -35,8 +35,8 @@ public class RDTCaptureActivity extends ImageQualityActivity implements Activity
     }
 
     protected boolean interpretTestResult(ImageProcessor.InterpretationResult interpretationResult) {
-        return  interpretationResult.control && interpretationResult.testA
-                || interpretationResult.control && interpretationResult.testB;
+        return  interpretationResult.topLine && interpretationResult.middleLine
+                || interpretationResult.topLine && interpretationResult.bottomLine;
     }
 
     @Override
