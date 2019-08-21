@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  ~ Copyright (C) 2019 University of Washington Ubicomp Lab
+  ~ All rights reserved.
+  ~
+  ~ This software may be modified and distributed under the terms
+  ~ of a BSD-style license that can be found in the LICENSE file.
+  -->
+
+<adaptive-icon xmlns:android="http://schemas.android.com/apk/res/android">
+    <background android:drawable="@drawable/ic_launcher_background" />
+    <foreground android:drawable="@drawable/ic_launcher_foreground" />
+</adaptive-icon>
