@@ -51,7 +51,7 @@ public class ImageQualityActivity extends Activity implements ImageQualityView.I
     }
 
     @Override
-    public void onRDTCameraReady() {
+    public void onRDTCameraReady(boolean supportsTorchMode) {
     }
 
     @Override
