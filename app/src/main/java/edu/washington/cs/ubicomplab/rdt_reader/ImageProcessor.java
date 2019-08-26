@@ -597,6 +597,8 @@ public class ImageProcessor {
 
         //resultMat = enhanceResultWindow(resultMat, new Size(10, 10));
         //resultMat = correctGamma(resultMat, 0.75);
+        int lines = detectLinesWithPeak(resultMat);
+
 
         control = readControlLine(resultMat, new Point(CONTROL_LINE_POSITION, 0));
         testA = readTestLine(resultMat, new Point(TEST_A_LINE_POSITION, 0));
@@ -1351,6 +1353,25 @@ public class ImageProcessor {
 
         return (0 < avg && avg < result.minVal+30 && result.minLoc.x - 0.1*channels.get(2).width() < line.x && line.x < result.minLoc.x + 0.1*channels.get(2).width());
     }
+
+
+    private int detectLinesWithPeak(Mat resultMat) {
+        ArrayList<Mat> channels = new ArrayList<>();
+        Core.split(resultMat, channels);
+
+        //        HSL so only take the L channel to distinguish lines
+        Mat colLightness = channels.get(1);
+        MatOfDouble mean = new MatOfDouble();
+        MatOfDouble std = new MatOfDouble();
+        Core.meanStdDev(colLightness, mean, std);
+        // Inverse the L channel so that the lines will be detected as peak, not bottom like the original array
+        Core.subtract(new MatOfDouble(255.0), mean, mean);
+        // Find peak and peak should correspond to lines
+        List<List<Double>> maxtab = ImageUtil.peakDetection(mean, 40.0);
+        return maxtab.size();
+    }
+
+
 
     private Mat enhanceResultWindow(Mat input, MatOfPoint2f boundary) {
         Mat refPoints = new Mat(4, 1, CvType.CV_32FC2);
