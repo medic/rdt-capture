@@ -689,7 +689,8 @@ public class ImageProcessor {
                 int midpoint = (int) ((center0 + center1) / 2);
                 double diff = abs(center0 - center1);
 
-                double scale = mRDT.fiducialDistance == 0 ? 1 : diff / mRDT.fiducialDistance;
+                //double scale = mRDT.fiducialDistance == 0 ? 1 : diff / mRDT.fiducialDistance;
+                double scale = 1;
                 double offset = scale * mRDT.fiducialToResultWindowOffset;
 
                 Point tl = new Point(midpoint + offset - mRDT.resultWindowRectH * scale / 2.0, mRDT.resultWindowRectWPadding);
@@ -903,28 +904,29 @@ public class ImageProcessor {
                         sceneCorners.get(3, 0)[0], sceneCorners.get(3, 0)[1], sceneCorners.width(), sceneCorners.height()));
 
                 ArrayList<Point> listOfBoundary = new ArrayList<>();
-                listOfBoundary.add(new Point(sceneCorners.get(0, 0)));
-                listOfBoundary.add(new Point(sceneCorners.get(1, 0)));
-                listOfBoundary.add(new Point(sceneCorners.get(2, 0)));
-                listOfBoundary.add(new Point(sceneCorners.get(3, 0)));
+                listOfBoundary.add(new Point(sceneCorners.get(0, 0)[0]/scale, sceneCorners.get(0, 0)[1]/scale));
+                listOfBoundary.add(new Point(sceneCorners.get(1, 0)[0]/scale, sceneCorners.get(1, 0)[1]/scale));
+                listOfBoundary.add(new Point(sceneCorners.get(2, 0)[0]/scale, sceneCorners.get(2, 0)[1]/scale));
+                listOfBoundary.add(new Point(sceneCorners.get(3, 0)[0]/scale, sceneCorners.get(3, 0)[1]/scale));
 
                 boundary.fromList(listOfBoundary);
-                objCorners.release();
-                sceneCorners.release();
-
-                RotatedRect rotatedRect = minAreaRect(boundary);
-                Point[] v = new Point[4];
-                Point[] bound = new Point[4];
-                rotatedRect.points(v);
-
-                for (int i = 0; i < 4; i++) {
-                    if(rotatedRect.angle < -45)
-                        bound[(i+2)%4] = new Point(v[i].x/scale, v[i].y/scale);
-                    else
-                        bound[(i+3)%4] = new Point(v[i].x/scale, v[i].y/scale);
-                }
-
-                boundary.fromArray(bound);
+                //quidel specific code
+//                objCorners.release();
+//                sceneCorners.release();
+//
+//                RotatedRect rotatedRect = minAreaRect(boundary);
+//                Point[] v = new Point[4];
+//                Point[] bound = new Point[4];
+//                rotatedRect.points(v);
+//
+//                for (int i = 0; i < 4; i++) {
+//                    if(rotatedRect.angle < -45)
+//                        bound[(i+2)%4] = new Point(v[i].x, v[i].y);
+//                    else
+//                        bound[(i+3)%4] = new Point(v[i].x, v[i].y);
+//                }
+//
+//                boundary.fromArray(bound);
             }
             H.release();
         }
