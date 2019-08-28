@@ -11,7 +11,6 @@ package edu.washington.cs.ubicomplab.rdt_reader;
 import android.app.Activity;
 import android.content.Context;
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.util.Log;
 
 import org.opencv.android.BaseLoaderCallback;
@@ -36,13 +35,10 @@ import org.opencv.core.Rect;
 import org.opencv.core.RotatedRect;
 import org.opencv.core.Size;
 import org.opencv.core.TermCriteria;
-import org.opencv.features2d.BFMatcher;
-import org.opencv.features2d.BRISK;
 import org.opencv.features2d.Features2d;
 import org.opencv.imgproc.CLAHE;
 import org.opencv.imgproc.Imgproc;
 import org.opencv.core.Scalar;
-import org.opencv.xfeatures2d.SIFT;
 
 
 import java.io.File;
@@ -50,8 +46,6 @@ import java.io.FileOutputStream;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
-import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
 
@@ -82,7 +76,7 @@ import static org.opencv.imgproc.Imgproc.warpPerspective;
 public class ImageProcessor {
     private static String TAG = "ImageProcessor";
     private static ImageProcessor instance = null;
-    RDT mRDT;
+    static RDT mRDT;
 
     private int mMoveCloserCount = 0;
 
@@ -127,31 +121,41 @@ public class ImageProcessor {
     }
 
     public static class InterpretationResult {
-        public boolean control;
-        public boolean testA;
-        public boolean testB;
+        public boolean topLine;
+        public boolean middleLine;
+        public boolean bottomLine;
+        public String topLineName;
+        public String middleLineName;
+        public String bottomLineName;
         public Mat resultMat;
         public Bitmap resultBitmap;
 
         public InterpretationResult() {
-            control = false;
-            testA = false;
-            testB = false;
+            topLine = false;
+            middleLine = false;
+            bottomLine = false;
+            topLineName = "Top Line";
+            middleLineName = "Middle Line";
+            bottomLineName = "Bottom Line";
             resultMat = new Mat();
             resultBitmap = null;
         }
 
-        public InterpretationResult(Mat resultMat, boolean control, boolean testA, boolean testB) {
+        public InterpretationResult(Mat resultMat, boolean topLine, boolean middleLine, boolean bottomLine) {
             this.resultMat = resultMat;
-            this.control = control;
-            this.testA = testA;
-            this.testB = testB;
+            this.topLine = topLine;
+            this.middleLine = middleLine;
+            this.bottomLine = bottomLine;
+            this.topLineName = mRDT.topLineName;
+            this.middleLineName = mRDT.middleLineName;
+            this.bottomLineName = mRDT.bottomLineName;
             if (resultMat.cols() > 0 && resultMat.rows() > 0) {
                 this.resultBitmap = Bitmap.createBitmap(resultMat.cols(), resultMat.rows(), Bitmap.Config.ARGB_8888);
                 Utils.matToBitmap(resultMat, resultBitmap);
             }
         }
     }
+
 
     public ImageProcessor (Activity activity, String rdtName) {
         long startTime = System.currentTimeMillis();
@@ -234,7 +238,12 @@ public class ImageProcessor {
             }
 
             greyMat.release();
-            return new CaptureResult(passed, cropRDT(inputMat), fiducial, exposureResult, sizeResult, isCentered, isRightOrientation, angle, isSharp, false, boundary);
+
+            // Apply crops if necessary
+            Mat croppedMat = cropRDTMat(inputMat);
+            MatOfPoint2f croppedBoundary = cropRDTBoundary(inputMat, boundary);
+
+            return new CaptureResult(passed, croppedMat, fiducial, exposureResult, sizeResult, isCentered, isRightOrientation, angle, isSharp, false, croppedBoundary);
         }
         else {
             greyMat.release();
@@ -414,16 +423,43 @@ public class ImageProcessor {
         return isOriented;
     }
 
-    private Mat cropRDT(Mat inputMat) {
+    /**
+     * Crops the input image
+     * @param inputMat the input image
+     * @return the adjusted image
+     */
+    private Mat cropRDTMat(Mat inputMat) {
+        // Compute the crop ROI
         int width = (int)(inputMat.cols() * CROP_RATIO);
         int height = (int)(inputMat.rows() * CROP_RATIO);
         int x = (int)(inputMat.cols() * (1.0-CROP_RATIO)/2);
         int y = (int)(inputMat.rows() * (1.0-CROP_RATIO)/2);
-
         Rect roi = new Rect(x, y, width, height);
-        Mat cropped = new Mat(inputMat, roi);
 
-        return cropped;
+        // Crop the image
+        return new Mat(inputMat, roi);
+    }
+
+    /**
+     * Adjusts the bounding box coordinates according to how the input matrix should be cropped
+     * @param inputMat the input image
+     * @param boundary the bounding box
+     * @return the adjusted bounding box
+     */
+    private MatOfPoint2f cropRDTBoundary(Mat inputMat, MatOfPoint2f boundary) {
+        // Compute the offset
+        int x = (int)(inputMat.cols() * (1.0-CROP_RATIO)/2);
+        int y = (int)(inputMat.rows() * (1.0-CROP_RATIO)/2);
+
+        // Apply the offset
+        Point[] boundaryPts = boundary.toArray();
+        for (Point p: boundaryPts) {
+            p.x -= x;
+            p.y -= y;
+        }
+
+        // Return the new boundary
+        return new MatOfPoint2f(boundaryPts);
     }
 
     public int getInstructionText(SizeResult sizeResult, boolean isCentered, boolean isRightOrientation) {
@@ -512,23 +548,37 @@ public class ImageProcessor {
 
     public InterpretationResult interpretResult(Mat inputMat, MatOfPoint2f boundary) {
         Mat resultMat = cropResultWindow(inputMat, boundary);
-        boolean control, testA, testB;
+        boolean topLine, middleLine, bottomLine;
 
         if (resultMat.width() == 0 && resultMat.height() == 0) {
             return new InterpretationResult(resultMat, false, false, false);
         }
 
-        resultMat = enhanceResultWindow(resultMat, new Size(5, resultMat.cols()));
+        Mat grayMat = new Mat();
+        cvtColor(resultMat, grayMat, COLOR_RGB2GRAY);
+        MatOfDouble mu = new MatOfDouble();
+        MatOfDouble sigma = new MatOfDouble();
+        Core.meanStdDev(grayMat, mu, sigma);
+        Core.MinMaxLocResult minMaxLocResult = Core.minMaxLoc(grayMat);
+
+        Log.d(TAG, String.format("stdev %.2f, minval %.2f at %s, maxval %.2f at %s",
+                sigma.get(0,0)[0],
+                minMaxLocResult.minVal, minMaxLocResult.minLoc,
+                minMaxLocResult.maxVal, minMaxLocResult.maxLoc));
+
+        if (sigma.get(0,0)[0] > ENHANCING_THRESHOLD)
+            resultMat = enhanceResultWindow(resultMat, new Size(5, resultMat.cols()));
+
         //resultMat = enhanceResultWindow(resultMat, new Size(10, 10));
         //resultMat = correctGamma(resultMat, 0.75);
 
-        control = readControlLine(resultMat, new Point(mRDT.controlLinePosition, 0));
-        testA = readTestLine(resultMat, new Point(mRDT.testALinePosition, 0));
-        testB = readTestLine(resultMat, new Point(mRDT.testBLinePosition, 0));
+        topLine = readControlLine(resultMat, new Point(mRDT.topLinePosition, 0));
+        middleLine = readTestLine(resultMat, new Point(mRDT.middleLinePosition, 0));
+        bottomLine = readTestLine(resultMat, new Point(mRDT.bottomLinePosition, 0));
 
-        Log.d(TAG, String.format("Interpretation results: %s %s %s", control, testA, testB));
+        Log.d(TAG, String.format("Interpretation results: %s %s %s", topLine, middleLine, bottomLine));
 
-        return new InterpretationResult(resultMat, control, testA, testB);
+        return new InterpretationResult(resultMat, topLine, middleLine, bottomLine);
     }
 
     public InterpretationResult interpretResult(Mat inputMat) {
@@ -561,6 +611,7 @@ public class ImageProcessor {
         if (mRDT.fiducialCount == 0) {
             Point tl = new Point(mRDT.fiducialToResultWindowOffset - mRDT.resultWindowRectH / 2.0, mRDT.resultWindowRectWPadding);
             Point br = new Point(mRDT.fiducialToResultWindowOffset + mRDT.resultWindowRectH / 2.0, inputMat.size().height - mRDT.resultWindowRectWPadding);
+
             Rect fiducialRect = new Rect(tl, br);
 
             return fiducialRect;

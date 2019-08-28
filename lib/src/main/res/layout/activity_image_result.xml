@@ -22,7 +22,7 @@
         android:layout_marginEnd="8dp"
         android:layout_marginStart="8dp"
         android:adjustViewBounds="true"
-        app:layout_constraintBottom_toTopOf="@+id/textView25"
+        app:layout_constraintBottom_toTopOf="@+id/topLineNameTextView"
         app:layout_constraintEnd_toStartOf="@+id/WindowImageView"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/TimeTextView"
@@ -70,7 +70,7 @@
         app:layout_constraintTop_toTopOf="parent" />
 
     <TextView
-        android:id="@+id/TestATextView"
+        android:id="@+id/middleLineTextView"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginBottom="8dp"
@@ -79,12 +79,12 @@
         android:text="TextView"
         android:textAlignment="center"
         app:layout_constraintBottom_toTopOf="@+id/saveButton"
-        app:layout_constraintEnd_toStartOf="@+id/TestBTextView"
-        app:layout_constraintStart_toEndOf="@+id/ControlTextView"
+        app:layout_constraintEnd_toStartOf="@+id/bottomLineTextView"
+        app:layout_constraintStart_toEndOf="@+id/topLineTextView"
         tools:text="False" />
 
     <TextView
-        android:id="@+id/ControlTextView"
+        android:id="@+id/topLineTextView"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginBottom="8dp"
@@ -93,12 +93,12 @@
         android:text="TextView"
         android:textAlignment="center"
         app:layout_constraintBottom_toTopOf="@+id/saveButton"
-        app:layout_constraintEnd_toStartOf="@+id/TestATextView"
+        app:layout_constraintEnd_toStartOf="@+id/middleLineTextView"
         app:layout_constraintStart_toStartOf="parent"
         tools:text="False" />
 
     <TextView
-        android:id="@+id/TestBTextView"
+        android:id="@+id/bottomLineTextView"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginBottom="8dp"
@@ -108,46 +108,46 @@
         android:textAlignment="center"
         app:layout_constraintBottom_toTopOf="@+id/sendButton"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toEndOf="@+id/TestATextView" />
+        app:layout_constraintStart_toEndOf="@+id/middleLineTextView" />
 
     <TextView
-        android:id="@+id/textView25"
+        android:id="@+id/topLineNameTextView"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_marginBottom="8dp"
-        android:layout_marginEnd="8dp"
         android:layout_marginStart="8dp"
-        android:text="Control"
+        android:layout_marginEnd="8dp"
+        android:layout_marginBottom="8dp"
+        android:text="Top Line"
         android:textAlignment="center"
-        app:layout_constraintBottom_toTopOf="@+id/ControlTextView"
-        app:layout_constraintEnd_toStartOf="@+id/textView26"
+        app:layout_constraintBottom_toTopOf="@+id/topLineTextView"
+        app:layout_constraintEnd_toStartOf="@+id/middleLineNameTextView"
         app:layout_constraintStart_toStartOf="parent" />
 
     <TextView
-        android:id="@+id/textView26"
+        android:id="@+id/middleLineNameTextView"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_marginBottom="8dp"
-        android:layout_marginEnd="8dp"
         android:layout_marginStart="8dp"
-        android:text="TestA"
+        android:layout_marginEnd="8dp"
+        android:layout_marginBottom="8dp"
+        android:text="Middle Line"
         android:textAlignment="center"
-        app:layout_constraintBottom_toTopOf="@+id/TestATextView"
-        app:layout_constraintEnd_toStartOf="@+id/textView27"
-        app:layout_constraintStart_toEndOf="@+id/textView25" />
+        app:layout_constraintBottom_toTopOf="@+id/middleLineTextView"
+        app:layout_constraintEnd_toStartOf="@+id/bottomLineNameTextView"
+        app:layout_constraintStart_toEndOf="@+id/topLineNameTextView" />
 
     <TextView
-        android:id="@+id/textView27"
+        android:id="@+id/bottomLineNameTextView"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_marginBottom="8dp"
-        android:layout_marginEnd="8dp"
         android:layout_marginStart="8dp"
-        android:text="TestB"
+        android:layout_marginEnd="8dp"
+        android:layout_marginBottom="8dp"
+        android:text="Bottom Line"
         android:textAlignment="center"
-        app:layout_constraintBottom_toTopOf="@+id/TestBTextView"
+        app:layout_constraintBottom_toTopOf="@+id/bottomLineTextView"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toEndOf="@+id/textView26" />
+        app:layout_constraintStart_toEndOf="@+id/middleLineNameTextView" />
 
     <ImageView
         android:id="@+id/WindowImageView"
@@ -157,7 +157,7 @@
         android:layout_marginEnd="8dp"
         android:layout_marginStart="8dp"
         android:layout_marginTop="8dp"
-        app:layout_constraintBottom_toTopOf="@+id/textView26"
+        app:layout_constraintBottom_toTopOf="@+id/middleLineNameTextView"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toEndOf="@+id/RDTImageView"
         app:layout_constraintTop_toBottomOf="@+id/TimeTextView"
