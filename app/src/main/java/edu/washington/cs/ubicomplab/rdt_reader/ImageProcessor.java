@@ -597,12 +597,19 @@ public class ImageProcessor {
 
         //resultMat = enhanceResultWindow(resultMat, new Size(10, 10));
         //resultMat = correctGamma(resultMat, 0.75);
-        int lines = detectLinesWithPeak(resultMat);
+        List<List<Double>> lines = detectLinesWithPeak(resultMat);
+        Log.d(TAG, "number of lines: " +  lines.size());
 
 
-        control = readControlLine(resultMat, new Point(CONTROL_LINE_POSITION, 0));
-        testA = readTestLine(resultMat, new Point(TEST_A_LINE_POSITION, 0));
-        testB = readTestLine(resultMat, new Point(TEST_B_LINE_POSITION, 0));
+        //control = readControlLine(resultMat, new Point(CONTROL_LINE_POSITION, 0));
+        //testA = readTestLine(resultMat, new Point(TEST_A_LINE_POSITION, 0));
+        //testB = readTestLine(resultMat, new Point(TEST_B_LINE_POSITION, 0));
+
+        boolean[] results = readLines(lines);
+
+        testA = results[0];
+        control = results[1];
+        testB = results[2];
 
         grayMat.release();
         mu.release();
@@ -870,6 +877,45 @@ public class ImageProcessor {
         } else {
             return min < INTENSITY_THRESHOLD && abs(min-max) > TEST_INTENSITY_PEAK_THRESHOLD;
         }
+    }
+
+    private boolean[] readLines(List<List<Double>> lines) {
+        boolean results[] = {false, false, false};
+
+        for (List<Double> line: lines) {
+            Log.d(TAG, "line loc: " + line.get(0) + ", " + line.get(2));
+            //test a
+            int lower_bound = TEST_A_LINE_POSITION-LINE_SEARCH_WIDTH < 0 ? 0 : TEST_A_LINE_POSITION-LINE_SEARCH_WIDTH;
+            int upper_bound = TEST_A_LINE_POSITION+LINE_SEARCH_WIDTH;
+
+            if (lower_bound <= line.get(0) && line.get(0) <= upper_bound) {
+                Log.d(TAG, "line loc: testA");
+                results[0] = true;
+                continue;
+            }
+
+            //control line
+            lower_bound = CONTROL_LINE_POSITION-LINE_SEARCH_WIDTH < 0 ? 0 : CONTROL_LINE_POSITION-LINE_SEARCH_WIDTH;
+            upper_bound = CONTROL_LINE_POSITION+LINE_SEARCH_WIDTH;
+
+            if (lower_bound <= line.get(0) && line.get(0) <= upper_bound) {
+                Log.d(TAG, "line loc: control");
+                results[1] = true;
+                continue;
+            }
+
+            //test b
+            lower_bound = TEST_B_LINE_POSITION-LINE_SEARCH_WIDTH < 0 ? 0 : TEST_B_LINE_POSITION-LINE_SEARCH_WIDTH;
+            upper_bound = TEST_B_LINE_POSITION+LINE_SEARCH_WIDTH;
+
+            if (lower_bound <= line.get(0) && line.get(0) <= upper_bound) {
+                Log.d(TAG, "line loc: testB");
+                results[2] = true;
+                continue;
+            }
+        }
+
+        return results;
     }
 
     private boolean readControlLine(Mat inputMat, Point position) {
@@ -1355,7 +1401,7 @@ public class ImageProcessor {
     }
 
 
-    private int detectLinesWithPeak(Mat resultMat) {
+    private List<List<Double>> detectLinesWithPeak(Mat resultMat) {
         ArrayList<Mat> channels = new ArrayList<>();
         Core.split(resultMat, channels);
 
@@ -1367,8 +1413,8 @@ public class ImageProcessor {
         // Inverse the L channel so that the lines will be detected as peak, not bottom like the original array
         Core.subtract(new MatOfDouble(255.0), mean, mean);
         // Find peak and peak should correspond to lines
-        List<List<Double>> maxtab = ImageUtil.peakDetection(mean, 40.0);
-        return maxtab.size();
+        List<List<Double>> maxtab = ImageUtil.peakDetection(mean, TEST_INTENSITY_PEAK_THRESHOLD);
+        return maxtab;
     }
 
 

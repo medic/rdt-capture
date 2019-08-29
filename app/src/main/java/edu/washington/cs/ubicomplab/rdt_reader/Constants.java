@@ -64,7 +64,7 @@ public final class Constants {
 
     public static float INTENSITY_THRESHOLD = 190;
     public static float CONTROL_INTENSITY_PEAK_THRESHOLD = 150;
-    public static float TEST_INTENSITY_PEAK_THRESHOLD = 50;
+    public static float TEST_INTENSITY_PEAK_THRESHOLD = 75;
     public static int LINE_SEARCH_WIDTH = 13;
     public static int CONTROL_LINE_POSITION = 45;
     public static int TEST_A_LINE_POSITION = 15;
