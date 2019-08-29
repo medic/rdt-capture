@@ -92,12 +92,12 @@ public final class ImageUtil {
             double curr = mat.get(0, i)[0];
             if (curr > max) {
                 max = curr;
-                mxpos = mat.get(0, i)[0];
+                mxpos = i;
                 maxWidth++;
             }
             if (curr < min) {
                 min = curr;
-                mnpos = mat.get(0, i)[0];
+                mnpos = i;
                 minWidth++;
             }
 
@@ -112,7 +112,7 @@ public final class ImageUtil {
                     }
                     min = curr;
                     maxWidth = 0;
-                    mnpos = mat.get(0, i)[0];
+                    mnpos = i;
                     lookForMax = false;
                 }
             } else {
@@ -126,7 +126,7 @@ public final class ImageUtil {
                     }
                     max = curr;
                     minWidth = 0;
-                    mxpos = mat.get(0, i)[0];
+                    mxpos = i;
                     lookForMax = true;
                 }
             }

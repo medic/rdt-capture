@@ -1363,7 +1363,7 @@ public class ImageProcessor {
         Mat colLightness = channels.get(1);
         MatOfDouble mean = new MatOfDouble();
         MatOfDouble std = new MatOfDouble();
-        Core.meanStdDev(colLightness, mean, std);
+        Core.reduce(colLightness, mean,0, Core.REDUCE_AVG);
         // Inverse the L channel so that the lines will be detected as peak, not bottom like the original array
         Core.subtract(new MatOfDouble(255.0), mean, mean);
         // Find peak and peak should correspond to lines
