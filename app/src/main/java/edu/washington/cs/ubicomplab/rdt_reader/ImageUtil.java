@@ -15,6 +15,8 @@ import android.graphics.Rect;
 import android.graphics.YuvImage;
 import android.media.Image;
 import android.util.Base64;
+import java.util.List;
+import java.util.ArrayList;
 
 import org.opencv.android.Utils;
 import org.opencv.core.CvType;
@@ -40,6 +42,96 @@ public final class ImageUtil {
                     image.getWidth(), image.getHeight());
         }
         return data;
+    }
+
+    private static double findPeakWidth(double idx, Mat mat, double val, boolean findMax) {
+        double width = 0;
+
+        if (findMax) {
+//            Find the furthest minimum left
+            int i = (int) idx - 1;
+            while (i > 0 && mat.get(0, i)[0] > mat.get(0, i - 1)[0]) {
+                width++;
+                i--;
+            }
+            i = (int) idx;
+            while (i < mat.cols() && mat.get(0, i)[0] > mat.get(0, i + 1)[0]) {
+                width++;
+                i++;
+            }
+        } else {
+            int i = (int) idx;
+            while (i > 0 && mat.get(0, i)[0] < mat.get(0, i - 1)[0]) {
+                width++;
+                i--;
+            }
+            i = (int) idx;
+            while (i < mat.cols() && mat.get(0, i)[0] < mat.get(0, i + 1)[0]) {
+                width++;
+                i++;
+            }
+        }
+
+        return width;
+    }
+
+    public static List<List<Double>> peakDetection(Mat mat, double delta) {
+        List<List<Double>> maxtab = new ArrayList<>();
+        List<List<Double>> mintab = new ArrayList<>();
+        if (mat == null) {
+            return null;
+        }
+
+        double min = mat.get(0, 0)[0], max = mat.get(0, 0)[0];
+        double mnpos = -1, mxpos = -1;
+        boolean lookForMax = true;
+        int maxWidth = 0;
+        int minWidth = 0;
+
+        for (int i = 1; i < mat.cols(); i++) {
+            double curr = mat.get(0, i)[0];
+            if (curr > max) {
+                max = curr;
+                mxpos = mat.get(0, i)[0];
+                maxWidth++;
+            }
+            if (curr < min) {
+                min = curr;
+                mnpos = mat.get(0, i)[0];
+                minWidth++;
+            }
+
+            if (lookForMax) {
+                if (curr < max - delta) {
+                    if (mxpos != -1) {
+                        List<Double> res = new ArrayList<>();
+                        res.add(mxpos);
+                        res.add(max);
+                        res.add(findPeakWidth(mxpos, mat, max, true));
+                        maxtab.add(res);
+                    }
+                    min = curr;
+                    maxWidth = 0;
+                    mnpos = mat.get(0, i)[0];
+                    lookForMax = false;
+                }
+            } else {
+                if (curr > min + delta) {
+                    if (mnpos != -1) {
+                        List<Double> res = new ArrayList<>();
+                        res.add(mnpos);
+                        res.add(min);
+                        res.add(findPeakWidth(mnpos, mat, min, false));
+                        mintab.add(res);
+                    }
+                    max = curr;
+                    minWidth = 0;
+                    mxpos = mat.get(0, i)[0];
+                    lookForMax = true;
+                }
+            }
+        }
+        return maxtab;
     }
 
     private static byte[] YUV_420_888toNV21(Image image) {
