@@ -21,10 +21,13 @@ import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.DisplayMetrics;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
+import android.widget.EditText;
+import android.widget.TextView;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -110,8 +113,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             Intent intent = new Intent(this, ExpirationDateActivity.class);
             startActivity(intent);
         } else if (view.getId() == R.id.imagequalButton) {
+            EditText rdtName = (EditText) findViewById(R.id.rdtname);
             Intent intent = new Intent(this, ImageQualityActivity.class);
-            intent.putExtra("rdt_name", "carestart");
+            intent.putExtra("rdt_name", rdtName.getText().toString());
+            Log.d(TAG, "RDT Name: " +  rdtName.getText().toString());
             startActivity(intent);
         } else if (view.getId() == R.id.camera2TestButton) {
 //            Intent intent = new Intent(this, ImageQualityOpencvActivity.class);
