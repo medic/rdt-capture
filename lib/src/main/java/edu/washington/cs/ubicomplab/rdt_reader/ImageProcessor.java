@@ -176,6 +176,10 @@ public class ImageProcessor {
         return instance;
     }
 
+    public static void destroy() {
+        instance = null;
+    }
+
     public static void loadOpenCV(Context context, BaseLoaderCallback mLoaderCallback) {
         if (!OpenCVLoader.initDebug()) {
             Log.d(TAG, "Internal OpenCV library not found. Using OpenCV Manager for initialization");

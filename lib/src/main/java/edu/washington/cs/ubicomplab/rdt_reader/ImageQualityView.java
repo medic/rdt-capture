@@ -501,6 +501,8 @@ public class ImageQualityView extends LinearLayout implements View.OnClickListen
     public void onPause() {
         closeCamera();
         stopBackgroundThread();
+        ImageProcessor.destroy();
+        Log.d(TAG, "onpause called");
     }
 
     @Override
