@@ -28,6 +28,7 @@ import android.view.Menu;
 import android.view.SurfaceView;
 import android.view.View;
 import android.view.WindowManager;
+import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -58,6 +59,8 @@ public class ExpirationDateActivity extends AppCompatActivity implements CvCamer
     private RDTCameraView mOpenCvCameraView;
     private TextRecognizer mTextRecognizer;
     private TextView mExpDateResultView;
+    private Button mFlashButton;
+    private boolean mFlashOn;
 
     private OCRTask ocrTask;
 
@@ -82,6 +85,7 @@ public class ExpirationDateActivity extends AppCompatActivity implements CvCamer
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_expiration_date);
+        mFlashOn = false;
         initViews();
     }
 
@@ -97,6 +101,20 @@ public class ExpirationDateActivity extends AppCompatActivity implements CvCamer
         mTextRecognizer = new TextRecognizer.Builder(getApplicationContext()).build();
 
         mExpDateResultView = findViewById(R.id.exp_date_result_view);
+
+        mFlashButton = findViewById(R.id.flashButton);
+        mFlashButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (mFlashOn) {
+                    mOpenCvCameraView.turnOffTheFlash();
+                    mFlashOn = false;
+                } else {
+                    mOpenCvCameraView.turnOnTheFlash();
+                    mFlashOn = true;
+                }
+            }
+        });
     }
 
     @Override

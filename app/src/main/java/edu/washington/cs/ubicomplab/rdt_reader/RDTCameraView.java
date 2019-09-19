@@ -192,4 +192,16 @@ public class RDTCameraView extends JavaCameraView implements Camera.AutoFocusCal
     public void onAutoFocus(boolean arg0, Camera arg1) {
 
     }
+
+    public void turnOffTheFlash() {
+        Camera.Parameters params = mCamera.getParameters();
+        params.setFlashMode(params.FLASH_MODE_OFF);
+        mCamera.setParameters(params);
+    }
+
+    public void turnOnTheFlash() {
+        Camera.Parameters params = mCamera.getParameters();
+        params.setFlashMode(params.FLASH_MODE_TORCH);
+        mCamera.setParameters(params);
+    }
 }
