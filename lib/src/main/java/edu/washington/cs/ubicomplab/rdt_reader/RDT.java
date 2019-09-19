@@ -44,6 +44,7 @@ class RDT {
     MatOfKeyPoint refKeypoints;
     SIFT detector;
     BFMatcher matcher;
+    String rdtName;
 
     public RDT(Context context, String rdtName) {
         try {
@@ -95,6 +96,8 @@ class RDT {
             detector = SIFT.create();
             matcher = BFMatcher.create(BFMatcher.BRUTEFORCE, false);
             detector.detectAndCompute(refImg, new Mat(), refKeypoints, refDescriptor);
+
+            this.rdtName = rdtName;
 
         } catch (Exception ex) {
             ex.printStackTrace();
