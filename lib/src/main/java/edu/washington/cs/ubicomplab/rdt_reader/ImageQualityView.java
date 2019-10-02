@@ -953,7 +953,7 @@ public class ImageQualityView extends LinearLayout implements View.OnClickListen
         } else if (currFocusState == FocusState.FOCUSING) {
             mInstructionText.setText(getResources().getString(R.string.instruction_focusing));
         }
-        mViewport.setBackgroundColoId(R.color.black_overlay);
+        //mViewport.setBackgroundColoId(R.color.black_overlay);
     }
 
     private void displayQualityResultFocusChanged() {

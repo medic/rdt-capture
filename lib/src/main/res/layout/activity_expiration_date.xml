@@ -17,6 +17,12 @@
     android:layout_height="match_parent"
     tools:context="edu.washington.cs.ubicomplab.rdt_reader.ExpirationDateActivity">
 
+    <Button
+        android:id="@+id/flashButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="flash" />
+
     <edu.washington.cs.ubicomplab.rdt_reader.RDTCameraView
         android:id="@+id/exp_date_check_camera_view"
         android:layout_width="fill_parent"
@@ -45,6 +51,8 @@
         android:layout_weight=".5"
         android:background="@color/black_overlay"
         custom:heightScale="0.3"
-        custom:widthScale="0.9"/>
+        custom:widthScale="0.9">
+
+    </edu.washington.cs.ubicomplab.rdt_reader.Viewport>
 
 </android.support.constraint.ConstraintLayout>
