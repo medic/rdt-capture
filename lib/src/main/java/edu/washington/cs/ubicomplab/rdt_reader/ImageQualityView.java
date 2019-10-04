@@ -67,7 +67,7 @@ import static edu.washington.cs.ubicomplab.rdt_reader.Constants.CAPTURE_COUNT;
 import static edu.washington.cs.ubicomplab.rdt_reader.Constants.MY_PERMISSION_REQUEST_CODE;
 
 
-public class ImageQualityView extends LinearLayout implements View.OnClickListener, ActivityCompat.OnRequestPermissionsResultCallback {
+public class ImageQualityView extends LinearLayout implements ActivityCompat.OnRequestPermissionsResultCallback {
     private ImageProcessor processor;
     private Activity mActivity;
     private TextView mImageQualityFeedbackView;
@@ -823,18 +823,10 @@ public class ImageQualityView extends LinearLayout implements View.OnClickListen
         mTextureView.setTransform(matrix);
     }
 
-    @Override
-    public void onClick(View view) {
-        if (view.getId() == R.id.img_quality_check_viewport) {
-                updateRepeatingRequest();
-        }
-    }
 
     /**
      * Imported from ImageQualityOpencvActivity
      **/
-
-
     private BaseLoaderCallback mLoaderCallback = new BaseLoaderCallback(mActivity) {
         @Override
         public void onManagerConnected(int status) {
@@ -862,13 +854,7 @@ public class ImageQualityView extends LinearLayout implements View.OnClickListen
         mActivity.getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN);
 
         // Instructions are set here
-
         mViewport = findViewById(R.id.img_quality_check_viewport);
-        if (showViewport) {
-            mViewport.setOnClickListener(this);
-        } else {
-            mViewport.setVisibility(GONE);
-        }
         mImageQualityFeedbackView = findViewById(R.id.img_quality_feedback_view);
         mProgress = findViewById(R.id.progressCircularBar);
         mProgressBackgroundView = findViewById(R.id.progressBackground);
@@ -926,6 +912,12 @@ public class ImageQualityView extends LinearLayout implements View.OnClickListen
                 break;
         }
 
+        findViewById(R.id.manual_img_capture).setOnClickListener(new OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                captureImage();
+            }
+        });
     }
 
     private void displayQualityResult(ImageProcessor.SizeResult sizeResult, boolean isCentered, boolean isRightOrientation, boolean isSharp, ImageProcessor.ExposureResult exposureResult) {
@@ -980,4 +972,29 @@ public class ImageQualityView extends LinearLayout implements View.OnClickListen
         }
     }
 
+    private void captureImage() {
+        mImageReader.setOnImageAvailableListener(new ImageReader.OnImageAvailableListener() {
+            @Override
+            public void onImageAvailable(ImageReader reader) {
+                Image image = reader.acquireLatestImage();
+
+                if (image == null) {
+                    return;
+                }
+
+                if (imageQueue.size() > 0) {
+                    image.close();
+                    return;
+                }
+
+                imageQueue.add(image);
+
+                Intent i = new Intent();
+                i.putExtra("data", ImageUtil.imageToByteArray(image));
+                i.putExtra("timeTaken", timeTaken);
+                mActivity.setResult(Activity.RESULT_OK, i);
+                mActivity.finish();
+            }
+        }, null);
+    }
 }
