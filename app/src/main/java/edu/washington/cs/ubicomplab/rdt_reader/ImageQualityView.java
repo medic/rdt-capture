@@ -79,7 +79,7 @@ public class ImageQualityView extends LinearLayout implements View.OnClickListen
     private State mCurrentState = State.QUALITY_CHECK;
     private boolean showViewport;
     private boolean showFeedback;
-    private boolean flashEnabled = true;
+    public boolean flashEnabled = true;
     private String rdtName;
 
     private long timeTaken = 0;
