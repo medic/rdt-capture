@@ -989,12 +989,10 @@ public class ImageQualityView extends LinearLayout implements ActivityCompat.OnR
 
                 imageQueue.add(image);
 
-                Intent i = new Intent();
-                i.putExtra("data", ImageUtil.imageToByteArray(image));
-                i.putExtra("timeTaken", timeTaken);
-                mActivity.setResult(Activity.RESULT_OK, i);
-                mActivity.finish();
+                byte[] imageByteArr = ImageUtil.imageToByteArray(image);
+                ((ImageQualityActivity) mActivity).useCapturedImage(imageByteArr, imageByteArr, new ImageProcessor.InterpretationResult(), 0);
             }
+
         }, null);
     }
 }
