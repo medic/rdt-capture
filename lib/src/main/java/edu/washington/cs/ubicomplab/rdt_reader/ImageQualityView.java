@@ -67,7 +67,7 @@ import static edu.washington.cs.ubicomplab.rdt_reader.Constants.CAPTURE_COUNT;
 import static edu.washington.cs.ubicomplab.rdt_reader.Constants.MY_PERMISSION_REQUEST_CODE;
 
 
-public class ImageQualityView extends LinearLayout implements View.OnClickListener, ActivityCompat.OnRequestPermissionsResultCallback {
+public class ImageQualityView extends LinearLayout implements ActivityCompat.OnRequestPermissionsResultCallback {
     private ImageProcessor processor;
     private Activity mActivity;
     private TextView mImageQualityFeedbackView;
@@ -309,24 +309,14 @@ public class ImageQualityView extends LinearLayout implements View.OnClickListen
             }
 
             final Image image = reader.acquireLatestImage();
-
-            if (image == null) {
-                return;
+            if (continueProcessingImg(image)) {
+                if (mFocusState != FocusState.FOCUSED) {
+                    image.close();
+                    return;
+                }
+                imageQueue.add(image);
+                new ImageProcessAsyncTask().execute(image);
             }
-
-            if (imageQueue.size() > 0) {
-                image.close();
-                return;
-            }
-
-            //Log.d(TAG, "LOCAL FOCUS STATE: " + mFocusState + ", " + FocusState.FOCUSED);
-            if (mFocusState != FocusState.FOCUSED) {
-                image.close();
-                return;
-            }
-
-            imageQueue.add(image);
-            new ImageProcessAsyncTask().execute(image);
         }
 
     };
@@ -823,18 +813,10 @@ public class ImageQualityView extends LinearLayout implements View.OnClickListen
         mTextureView.setTransform(matrix);
     }
 
-    @Override
-    public void onClick(View view) {
-        if (view.getId() == R.id.img_quality_check_viewport) {
-                updateRepeatingRequest();
-        }
-    }
 
     /**
      * Imported from ImageQualityOpencvActivity
      **/
-
-
     private BaseLoaderCallback mLoaderCallback = new BaseLoaderCallback(mActivity) {
         @Override
         public void onManagerConnected(int status) {
@@ -862,13 +844,7 @@ public class ImageQualityView extends LinearLayout implements View.OnClickListen
         mActivity.getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN);
 
         // Instructions are set here
-
         mViewport = findViewById(R.id.img_quality_check_viewport);
-        if (showViewport) {
-            mViewport.setOnClickListener(this);
-        } else {
-            mViewport.setVisibility(GONE);
-        }
         mImageQualityFeedbackView = findViewById(R.id.img_quality_feedback_view);
         mProgress = findViewById(R.id.progressCircularBar);
         mProgressBackgroundView = findViewById(R.id.progressBackground);
@@ -926,6 +902,12 @@ public class ImageQualityView extends LinearLayout implements View.OnClickListen
                 break;
         }
 
+        findViewById(R.id.manual_img_capture).setOnClickListener(new OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                captureImage();
+            }
+        });
     }
 
     private void displayQualityResult(ImageProcessor.SizeResult sizeResult, boolean isCentered, boolean isRightOrientation, boolean isSharp, ImageProcessor.ExposureResult exposureResult) {
@@ -980,4 +962,31 @@ public class ImageQualityView extends LinearLayout implements View.OnClickListen
         }
     }
 
+    private void captureImage() {
+        mImageReader.setOnImageAvailableListener(new ImageReader.OnImageAvailableListener() {
+            @Override
+            public void onImageAvailable(ImageReader reader) {
+                final Image image = reader.acquireLatestImage();
+                if (continueProcessingImg(image)) {
+                    imageQueue.add(image);
+                    final byte[] imageByteArr = ImageUtil.imageToByteArray(image);
+                    ((ImageQualityActivity) mActivity).useCapturedImage(imageByteArr, imageByteArr, new ImageProcessor.InterpretationResult(), 0);
+                }
+            }
+
+        }, null);
+    }
+
+    private boolean continueProcessingImg(Image image) {
+        if (image == null) {
+            return false;
+        }
+
+        if (imageQueue.size() > 0) {
+            image.close();
+            return false;
+        }
+
+        return true;
+    }
 }

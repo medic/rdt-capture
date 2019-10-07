@@ -69,7 +69,7 @@ public class ImageQualityActivity extends Activity implements ImageQualityView.I
         return ImageQualityView.RDTDectedResult.STOP;
     }
 
-    protected void useCapturedImage(byte[] captureByteArray, byte[] windowByteArray, ImageProcessor.InterpretationResult interpretationResult, long timeTaken) {
+    public void useCapturedImage(byte[] captureByteArray, byte[] windowByteArray, ImageProcessor.InterpretationResult interpretationResult, long timeTaken) {
         moveToResultActivity(captureByteArray, windowByteArray, interpretationResult, timeTaken);
     }
 
