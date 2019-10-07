@@ -309,24 +309,14 @@ public class ImageQualityView extends LinearLayout implements ActivityCompat.OnR
             }
 
             final Image image = reader.acquireLatestImage();
-
-            if (image == null) {
-                return;
+            if (continueProcessingImg(image)) {
+                if (mFocusState != FocusState.FOCUSED) {
+                    image.close();
+                    return;
+                }
+                imageQueue.add(image);
+                new ImageProcessAsyncTask().execute(image);
             }
-
-            if (imageQueue.size() > 0) {
-                image.close();
-                return;
-            }
-
-            //Log.d(TAG, "LOCAL FOCUS STATE: " + mFocusState + ", " + FocusState.FOCUSED);
-            if (mFocusState != FocusState.FOCUSED) {
-                image.close();
-                return;
-            }
-
-            imageQueue.add(image);
-            new ImageProcessAsyncTask().execute(image);
         }
 
     };
@@ -976,23 +966,27 @@ public class ImageQualityView extends LinearLayout implements ActivityCompat.OnR
         mImageReader.setOnImageAvailableListener(new ImageReader.OnImageAvailableListener() {
             @Override
             public void onImageAvailable(ImageReader reader) {
-                Image image = reader.acquireLatestImage();
-
-                if (image == null) {
-                    return;
+                final Image image = reader.acquireLatestImage();
+                if (continueProcessingImg(image)) {
+                    imageQueue.add(image);
+                    final byte[] imageByteArr = ImageUtil.imageToByteArray(image);
+                    ((ImageQualityActivity) mActivity).useCapturedImage(imageByteArr, imageByteArr, new ImageProcessor.InterpretationResult(), 0);
                 }
-
-                if (imageQueue.size() > 0) {
-                    image.close();
-                    return;
-                }
-
-                imageQueue.add(image);
-
-                byte[] imageByteArr = ImageUtil.imageToByteArray(image);
-                ((ImageQualityActivity) mActivity).useCapturedImage(imageByteArr, imageByteArr, new ImageProcessor.InterpretationResult(), 0);
             }
 
         }, null);
+    }
+
+    private boolean continueProcessingImg(Image image) {
+        if (image == null) {
+            return false;
+        }
+
+        if (imageQueue.size() > 0) {
+            image.close();
+            return false;
+        }
+
+        return true;
     }
 }
