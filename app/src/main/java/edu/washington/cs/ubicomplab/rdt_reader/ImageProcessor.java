@@ -102,10 +102,11 @@ public class ImageProcessor {
         public boolean isShadow;
         public boolean fiducial;
         public double angle;
+        public boolean flashEnabled;
 
         public CaptureResult(boolean allChecksPassed, Mat resultMat, boolean fiducial,
                              ExposureResult exposureResult, SizeResult sizeResult,  boolean isCentered,
-                             boolean isRightOrientation, double angle, boolean isSharp, boolean isShadow, MatOfPoint2f boundary){
+                             boolean isRightOrientation, double angle, boolean isSharp, boolean isShadow, MatOfPoint2f boundary, boolean flashEnabled){
             this.allChecksPassed = allChecksPassed;
             this.resultMat = resultMat;
             this.fiducial = fiducial;
@@ -117,6 +118,7 @@ public class ImageProcessor {
             this.isShadow = isShadow;
             this.angle = angle;
             this.boundary = boundary;
+            this.flashEnabled = flashEnabled;
         }
     }
 
@@ -196,7 +198,7 @@ public class ImageProcessor {
     }
 
 
-    public CaptureResult captureRDT(Mat inputMat) {
+    public CaptureResult captureRDT(Mat inputMat, boolean flashEnabled) {
         Mat greyMat = new Mat();
         cvtColor(inputMat, greyMat, Imgproc.COLOR_RGBA2GRAY);
         double matchDistance = -1.0;
@@ -247,11 +249,11 @@ public class ImageProcessor {
             Mat croppedMat = cropRDTMat(inputMat);
             MatOfPoint2f croppedBoundary = cropRDTBoundary(inputMat, boundary);
 
-            return new CaptureResult(passed, croppedMat, fiducial, exposureResult, sizeResult, isCentered, isRightOrientation, angle, isSharp, false, croppedBoundary);
+            return new CaptureResult(passed, croppedMat, fiducial, exposureResult, sizeResult, isCentered, isRightOrientation, angle, isSharp, false, croppedBoundary, flashEnabled);
         }
         else {
             greyMat.release();
-            return new CaptureResult(passed, null, false, exposureResult, SizeResult.INVALID, false, false, 0.0, isSharp, false, new MatOfPoint2f());
+            return new CaptureResult(passed, null, false, exposureResult, SizeResult.INVALID, false, false, 0.0, isSharp, false, new MatOfPoint2f(), flashEnabled);
         }
 
     }
