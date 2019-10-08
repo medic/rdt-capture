@@ -8,7 +8,7 @@ import android.util.Log;
 import static edu.washington.cs.ubicomplab.rdt_reader.Constants.DEFAULT_RDT_NAME;
 
 public class ImageQualityActivity extends Activity implements ImageQualityView.ImageQualityViewListener {
-    ImageQualityView mImageQualityView;
+    protected ImageQualityView mImageQualityView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {

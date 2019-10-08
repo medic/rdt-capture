@@ -962,7 +962,7 @@ public class ImageQualityView extends LinearLayout implements ActivityCompat.OnR
         }
     }
 
-    private void captureImage() {
+    public void captureImage() {
         mImageReader.setOnImageAvailableListener(new ImageReader.OnImageAvailableListener() {
             @Override
             public void onImageAvailable(ImageReader reader) {
