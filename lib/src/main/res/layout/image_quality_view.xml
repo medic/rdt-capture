@@ -27,19 +27,6 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
-    <TextView
-        android:id="@+id/img_quality_feedback_view"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:background="@color/transparent_overlay"
-        android:gravity="bottom"
-        android:paddingHorizontal="5dp"
-        android:paddingVertical="5dp"
-        android:textAlignment="center"
-        android:textColor="@android:color/white"
-        android:textSize="20sp"
-        app:layout_constraintStart_toStartOf="parent" />
-
     <edu.washington.cs.ubicomplab.rdt_reader.ViewportUsingBitmap
         android:id="@+id/img_quality_check_viewport"
         android:layout_width="fill_parent"
@@ -58,18 +45,20 @@
         app:layout_constraintTop_toTopOf="parent" />
 
     <Button
-        android:id="@+id/manual_img_capture"
+        android:id="@+id/btn_manual_img_capture"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:background="#ffffff"
+        android:background="@drawable/rounded_grey_bg"
         android:padding="10dp"
         android:textColor="#000000"
-        android:text="manual capture"
+        android:text="Capture image"
         app:layout_constraintTop_toBottomOf="@id/img_quality_check_viewport"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintRight_toRightOf="parent"
-        android:layout_marginBottom="30dp"/>
+        android:layout_marginBottom="80dp"
+        android:gravity="center"
+        android:visibility="gone"/>
 
     <ProgressBar
         android:id="@+id/progressCircularBar"
@@ -141,5 +130,18 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
         tools:visibility="visible" />
+
+    <TextView
+        android:id="@+id/img_quality_feedback_view"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@color/transparent_overlay"
+        android:gravity="bottom"
+        android:paddingHorizontal="5dp"
+        android:paddingVertical="5dp"
+        android:textAlignment="center"
+        android:textColor="@android:color/white"
+        android:textSize="20sp"
+        app:layout_constraintStart_toStartOf="parent" />
 
 </android.support.constraint.ConstraintLayout>
