@@ -65,6 +65,8 @@ import static edu.washington.cs.ubicomplab.rdt_reader.Constants.CAMERA2_IMAGE_SI
 import static edu.washington.cs.ubicomplab.rdt_reader.Constants.CAMERA2_PREVIEW_SIZE;
 import static edu.washington.cs.ubicomplab.rdt_reader.Constants.CAPTURE_COUNT;
 import static edu.washington.cs.ubicomplab.rdt_reader.Constants.MY_PERMISSION_REQUEST_CODE;
+import static edu.washington.cs.ubicomplab.rdt_reader.util.Utils.hideProgressDialog;
+import static edu.washington.cs.ubicomplab.rdt_reader.util.Utils.showProgressDialog;
 
 
 public class ImageQualityView extends LinearLayout implements ActivityCompat.OnRequestPermissionsResultCallback {
@@ -342,7 +344,7 @@ public class ImageQualityView extends LinearLayout implements ActivityCompat.OnR
             ImageProcessor.InterpretationResult interpretationResult = null;
             if (captureResult.allChecksPassed) {
                 Log.d(TAG, String.format("Captured MAT size: %s", captureResult.resultMat.size()));
-
+                showProgressDialogInFG();
                 //interpretation
                 interpretationResult = processor.interpretResult(captureResult.resultMat, captureResult.boundary);
                 image.close();
@@ -371,8 +373,28 @@ public class ImageQualityView extends LinearLayout implements ActivityCompat.OnR
                 mOnImageAvailableThread.interrupt();
             }
 
+            hideProgressDialogFromFG();
+
             return null;
         }
+    }
+
+    private void showProgressDialogInFG() {
+        mActivity.runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                showProgressDialog(R.string.please_wait, R.string.processing_image, getContext());
+            }
+        });
+    }
+
+    private void hideProgressDialogFromFG() {
+        mActivity.runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                hideProgressDialog();
+            }
+        });
     }
 
     /**
@@ -901,13 +923,6 @@ public class ImageQualityView extends LinearLayout implements ActivityCompat.OnR
                 });
                 break;
         }
-
-        findViewById(R.id.manual_img_capture).setOnClickListener(new OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                captureImage();
-            }
-        });
     }
 
     private void displayQualityResult(ImageProcessor.SizeResult sizeResult, boolean isCentered, boolean isRightOrientation, boolean isSharp, ImageProcessor.ExposureResult exposureResult) {
