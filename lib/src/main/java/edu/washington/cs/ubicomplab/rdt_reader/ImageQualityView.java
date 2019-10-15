@@ -329,7 +329,7 @@ public class ImageQualityView extends LinearLayout implements ActivityCompat.OnR
         protected Void doInBackground(Image... images) {
             Image image = images[0];
             final Mat rgbaMat = ImageUtil.imageToRGBMat(image);
-            final ImageProcessor.CaptureResult captureResult = processor.captureRDT(rgbaMat);
+            final ImageProcessor.CaptureResult captureResult = processor.captureRDT(rgbaMat, flashEnabled);
             //ImageProcessor.SizeResult sizeResult, boolean isCentered, boolean isRightOrientation, boolean isSharp, ImageProcessor.ExposureResult exposureResult
             mActivity.runOnUiThread(new Runnable() {
                 @Override
