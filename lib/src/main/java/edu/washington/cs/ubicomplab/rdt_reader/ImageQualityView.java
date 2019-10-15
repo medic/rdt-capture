@@ -983,8 +983,9 @@ public class ImageQualityView extends LinearLayout implements ActivityCompat.OnR
                 final Image image = reader.acquireLatestImage();
                 if (continueProcessingImg(image)) {
                     imageQueue.add(image);
-                    final byte[] imageByteArr = ImageUtil.imageToByteArray(image);
-                    ((ImageQualityActivity) mActivity).useCapturedImage(imageByteArr, imageByteArr, new ImageProcessor.InterpretationResult(), 0);
+                    Mat capturedMat = ImageUtil.imageToMat(image);
+                    ImageProcessor.CaptureResult captureResult = new ImageProcessor.CaptureResult(capturedMat);
+                    ((ImageQualityActivity) mActivity).useCapturedImage(captureResult, new ImageProcessor.InterpretationResult(), 0);
                 }
             }
 
