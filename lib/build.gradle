@@ -3,7 +3,7 @@ apply plugin: 'maven-publish'
 apply plugin: 'com.jfrog.bintray'
 
 group = "io.ona.rdt-capture"
-version = '1.0.4'
+version = '1.0.5'
 def home = System.properties['user.home']
 
 android {

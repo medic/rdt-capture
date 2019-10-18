@@ -55,5 +55,7 @@
     <string name="preference_shadow">shadow</string>
     <string name="preference_file_key">rdt-capture-pref</string>
     <string name="cancel">Cancel</string>
-
+    <string name="please_wait">Please wait</string>
+    <string name="processing_image">Processing captured image</string>
+    <string name="manual_capture_instructions">RDT not detected.\nFit RDT and take photo instead.</string>
 </resources>
