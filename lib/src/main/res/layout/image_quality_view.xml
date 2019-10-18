@@ -27,14 +27,6 @@
         app:layout_constraintTop_toTopOf="parent" />
 
 
-    <View
-        android:id="@+id/manual_capture_instructions"
-        android:layout_width="match_parent"
-        android:layout_height="100dp"
-        app:layout_constraintTop_toTopOf="parent"
-        android:background="#2D2D2D"
-        android:text="manual capture instructions"/>
-
     <edu.washington.cs.ubicomplab.rdt_reader.ViewportUsingBitmap
         android:id="@+id/img_quality_check_viewport"
         android:layout_width="fill_parent"
@@ -87,6 +79,19 @@
         app:layout_constraintTop_toBottomOf="@+id/progressCircularBar" />
 
     <TextView
+        android:id="@+id/manual_capture_instructions"
+        android:layout_width="match_parent"
+        android:layout_height="100dp"
+        app:layout_constraintTop_toTopOf="parent"
+        android:background="#2D2D2D"
+        android:text="@string/manual_capture_instructions"
+        android:gravity="center"
+        android:textColor="@color/colorWhite"
+        android:textSize="20sp"
+        android:textStyle="bold"
+        android:visibility="gone" />
+
+    <TextView
         android:id="@+id/textInstruction"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
@@ -137,23 +142,23 @@
         app:layout_constraintStart_toStartOf="parent" />
 
     <LinearLayout
+        android:id="@+id/btn_manual_img_capture"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         app:layout_constraintBottom_toBottomOf="parent"
         android:padding="10dp"
         android:gravity="center"
-        android:background="#2D2D2D">
+        android:background="#2D2D2D"
+        android:visibility="gone">
 
         <ImageButton
-            android:id="@+id/btn_manual_img_capture"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:background="@drawable/ic_rdt_camera_icon"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintLeft_toLeftOf="parent"
             app:layout_constraintRight_toRightOf="parent"
-            android:gravity="center"
-            android:visibility="gone" />
+            android:gravity="center" />
     </LinearLayout>
 
 </android.support.constraint.ConstraintLayout>
