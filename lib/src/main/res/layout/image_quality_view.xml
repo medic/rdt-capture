@@ -142,7 +142,7 @@
         app:layout_constraintStart_toStartOf="parent" />
 
     <LinearLayout
-        android:id="@+id/btn_manual_img_capture"
+        android:id="@+id/bottom_manual_camera_controls"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         app:layout_constraintBottom_toBottomOf="parent"
