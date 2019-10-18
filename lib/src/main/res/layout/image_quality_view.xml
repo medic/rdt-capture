@@ -152,6 +152,7 @@
         android:visibility="gone">
 
         <ImageButton
+            android:id="@+id/btn_manual_capture"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:background="@drawable/ic_rdt_camera_icon"
