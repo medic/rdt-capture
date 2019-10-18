@@ -61,15 +61,14 @@ public class ImageQualityActivity extends Activity implements ImageQualityView.I
         }
         Log.i("ImageQualityActivity", "Detected and Passed!");
 
-        final byte[] captureByteArray = ImageUtil.matToRotatedByteArray(captureResult.resultMat);
-        final byte[] windowByteArray = ImageUtil.matToRotatedByteArray(interpretationResult.resultMat);
-
-        useCapturedImage(captureByteArray, windowByteArray, interpretationResult, timeTaken);
+        useCapturedImage(captureResult, interpretationResult, timeTaken);
 
         return ImageQualityView.RDTDectedResult.STOP;
     }
 
-    public void useCapturedImage(byte[] captureByteArray, byte[] windowByteArray, ImageProcessor.InterpretationResult interpretationResult, long timeTaken) {
+    public void useCapturedImage(ImageProcessor.CaptureResult captureResult, ImageProcessor.InterpretationResult interpretationResult, long timeTaken) {
+        final byte[] captureByteArray = ImageUtil.matToRotatedByteArray(captureResult.resultMat);
+        final byte[] windowByteArray = ImageUtil.matToRotatedByteArray(interpretationResult.resultMat);
         moveToResultActivity(captureByteArray, windowByteArray, interpretationResult, timeTaken);
     }
 

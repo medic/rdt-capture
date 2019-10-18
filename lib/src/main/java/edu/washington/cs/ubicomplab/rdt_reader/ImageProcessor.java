@@ -90,7 +90,7 @@ public class ImageProcessor {
 
     }
 
-    public class CaptureResult {
+    public static class CaptureResult {
         public boolean allChecksPassed;
         public Mat resultMat;
         public MatOfPoint2f boundary;
@@ -119,6 +119,10 @@ public class ImageProcessor {
             this.angle = angle;
             this.boundary = boundary;
             this.flashEnabled = flashEnabled;
+        }
+
+        public CaptureResult(Mat resultMat) {
+            this.resultMat = resultMat;
         }
     }
 
