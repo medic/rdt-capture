@@ -10,6 +10,7 @@ import java.util.Map;
 
 import edu.washington.cs.ubicomplab.rdt_reader.ImageProcessor;
 import edu.washington.cs.ubicomplab.rdt_reader.ImageQualityActivity;
+import edu.washington.cs.ubicomplab.rdt_reader.ImageUtil;
 import edu.washington.cs.ubicomplab.rdt_reader.callback.OnImageSavedCallBack;
 import edu.washington.cs.ubicomplab.rdt_reader.presenter.RDTCapturePresenter;
 
@@ -28,8 +29,9 @@ public class RDTCaptureActivity extends ImageQualityActivity implements Activity
     }
 
     @Override
-    public void useCapturedImage(byte[] captureByteArray, byte[] windowByteArray, ImageProcessor.InterpretationResult interpretationResult, long timeTaken) {
+    public void useCapturedImage(ImageProcessor.CaptureResult captureResult, ImageProcessor.InterpretationResult interpretationResult, long timeTaken) {
         Log.i(TAG, "Processing captured image");
+        final byte[] captureByteArray = ImageUtil.matToRotatedByteArray(captureResult.resultMat);
         boolean testResult = interpretTestResult(interpretationResult);
         presenter.saveImage(getApplicationContext(), captureByteArray, System.currentTimeMillis(), testResult, this);
     }
