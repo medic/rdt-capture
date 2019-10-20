@@ -26,11 +26,11 @@ def getVersionName = {
 }
 
 android {
-    compileSdkVersion 26
+    compileSdkVersion 28
     defaultConfig {
         applicationId "edu.washington.cs.ubicomplab.rdt_reader"
         minSdkVersion 21
-        targetSdkVersion 26
+        targetSdkVersion 28
         versionCode getVersionCode()
         versionName getVersionName()
         archivesBaseName = "${project.name}-${versionName}"
