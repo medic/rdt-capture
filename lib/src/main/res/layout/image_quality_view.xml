@@ -164,7 +164,7 @@
                         android:layout_gravity="center"/>
 
                     <TextView
-                        android:id="@+id/flash_on_status"
+                        android:id="@+id/img_quality_flash_on_status"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:textColor="@android:color/white"

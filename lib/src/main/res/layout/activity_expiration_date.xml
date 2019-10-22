@@ -53,14 +53,14 @@
             android:layout_weight="1">
 
             <ImageButton
-                android:id="@+id/btn_img_quality_flash_toggle"
+                android:id="@+id/btn_exp_flash_toggle"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:background="@drawable/ic_toggle_flash_on"
                 android:layout_gravity="center"/>
 
             <TextView
-                android:id="@+id/flash_on_status"
+                android:id="@+id/exp_flash_on_status"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:textColor="@android:color/white"
