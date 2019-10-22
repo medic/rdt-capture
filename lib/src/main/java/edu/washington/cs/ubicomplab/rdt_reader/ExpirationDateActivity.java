@@ -269,10 +269,10 @@ public class ExpirationDateActivity extends AppCompatActivity implements CvCamer
     protected void onResult(String Date, boolean isValid) {
         if (isValid) {
             mExpDateResultView.setText(getResources().getText(R.string.exp_date_valid));
-            mExpDateResultView.setBackgroundColor(getResources().getColor(R.color.green_overlay));
+            mExpDateResultView.setTextColor(getResources().getColor(R.color.green_overlay));
         } else {
             mExpDateResultView.setText(getResources().getText(R.string.exp_date_expired));
-            mExpDateResultView.setBackgroundColor(getResources().getColor(R.color.red_overlay));
+            mExpDateResultView.setTextColor(getResources().getColor(R.color.red_overlay));
         }
     }
 }
