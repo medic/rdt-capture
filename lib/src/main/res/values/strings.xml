@@ -22,7 +22,7 @@
     <string name="over_exposed_msg">TOO BRIGHT </string>
     <string name="under_exposed_msg">TOO DARK </string>
     <string name="quality_msg_format"> <![CDATA[POSITION/SIZE: %s <br> SHARPNESS: %s <br> BRIGHTNESS: %s <br> NO SHADOW: %s]]></string>
-    <string name="quality_msg_format_text"> <![CDATA[%s <br> %s <br> %s <br> %s]]></string>
+    <string name="quality_msg_format_text"> <![CDATA[%s<br>%s<br>%s<br>%s]]></string>
     <string name="exp_date_undetected"><![CDATA[EXP DATE NOT DETECTED.\n ]]></string>
     <string name="exp_date_expired"><![CDATA[EXPIRED!\n DO NOT USE THIS RDT! ]]></string>
     <string name="exp_date_valid"><![CDATA[VALID!\n YOU CAN USE THIS RDT. ]]></string>

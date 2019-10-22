@@ -136,7 +136,6 @@ public class ImageQualityView extends LinearLayout implements ActivityCompat.OnR
         timeTaken = System.currentTimeMillis();
 
         initViews();
-
     }
 
     public boolean isExternalIntent() {
@@ -887,6 +886,13 @@ public class ImageQualityView extends LinearLayout implements ActivityCompat.OnR
             mInstructionText.setVisibility(GONE);
             mCaptureProgressBar.setVisibility(GONE);
         }
+
+        findViewById(R.id.btn_img_quality_flash_toggle).setOnClickListener(new OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                setFlashEnabled(!flashEnabled);
+            }
+        });
     }
 
     public void setShowViewfinder(boolean showViewport) {
@@ -939,8 +945,7 @@ public class ImageQualityView extends LinearLayout implements ActivityCompat.OnR
 
         if (currFocusState == FocusState.FOCUSED) {
             String[] qChecks = processor.getQualityCheckText(sizeResult, isCentered, isRightOrientation, isSharp, exposureResult);
-            String message = String.format(getResources()
-                    .getString(R.string.quality_msg_format_text),
+            String message = String.format(getResources().getString(R.string.quality_msg_format_text),
                     getHtmlFormattedText(qChecks[0]),
                     getHtmlFormattedText(qChecks[1]),
                     getHtmlFormattedText(qChecks[2]),

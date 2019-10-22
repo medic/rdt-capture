@@ -129,7 +129,7 @@
         tools:visibility="visible" />
 
     <LinearLayout
-        android:id="@+id/bottom_manual_camera_controls"
+        android:id="@+id/img_quality_camera_controls"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         app:layout_constraintBottom_toBottomOf="parent"
@@ -157,7 +157,7 @@
                     android:layout_marginLeft="15dp" >
 
                     <ImageButton
-                        android:id="@+id/btn_flash_toggle"
+                        android:id="@+id/btn_img_quality_flash_toggle"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:background="@drawable/ic_toggle_flash_on"
