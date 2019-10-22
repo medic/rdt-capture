@@ -38,6 +38,7 @@ import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.text.Html;
+import android.text.Spanned;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.util.Size;
@@ -938,7 +939,12 @@ public class ImageQualityView extends LinearLayout implements ActivityCompat.OnR
 
         if (currFocusState == FocusState.FOCUSED) {
             String[] qChecks = processor.getQualityCheckText(sizeResult, isCentered, isRightOrientation, isSharp, exposureResult);
-            String message = String.format(getResources().getString(R.string.quality_msg_format_text), qChecks[0], qChecks[1], qChecks[2], qChecks[3]);
+            String message = String.format(getResources()
+                    .getString(R.string.quality_msg_format_text),
+                    getHtmlFormattedText(qChecks[0]),
+                    getHtmlFormattedText(qChecks[1]),
+                    getHtmlFormattedText(qChecks[2]),
+                    getHtmlFormattedText(qChecks[3]));
 
             mInstructionText.setText(getResources().getText(processor.getInstructionText(sizeResult, isCentered, isRightOrientation)));
 
@@ -950,6 +956,10 @@ public class ImageQualityView extends LinearLayout implements ActivityCompat.OnR
         } else if (currFocusState == FocusState.FOCUSING) {
             mInstructionText.setText(getResources().getString(R.string.instruction_focusing));
         }
+    }
+
+    private Spanned getHtmlFormattedText(String message) {
+        return Html.fromHtml(message);
     }
 
     private void displayQualityResultFocusChanged() {

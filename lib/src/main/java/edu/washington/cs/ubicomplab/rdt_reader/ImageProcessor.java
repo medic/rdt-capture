@@ -493,23 +493,23 @@ public class ImageProcessor {
     }
 
     public String[] getQualityCheckText(SizeResult sizeResult, boolean isCentered, boolean isRightOrientation, boolean isSharp, ExposureResult exposureResult) {
-
+        final String greenTick = "<![CDATA[<b><font color=#3EBB22>&#x2713;</font></b>]]> ";
+        final String redX = "<![CDATA[<b><font color=#d50000>&#x2717;</font></b>]]> ";
         String[] texts = new String[4];
+        texts[0] = isSharp ? greenTick + "Sharpness: passed": redX + "Sharpness: failed";
 
-        texts[0] = isSharp ? "&#x2713; Sharpness: passed": "Sharpness: failed";
         if (exposureResult == ExposureResult.NORMAL) {
-            texts[1] = "&#x2713; Brightness: passed";
+            texts[1] = greenTick + "Brightness: passed";
         } else if (exposureResult == ExposureResult.OVER_EXPOSED) {
-            texts[1] = "Brightness: too bright";
+            texts[1] = redX + "Brightness: too bright";
         } else if (exposureResult == ExposureResult.UNDER_EXPOSED) {
-            texts[1] = "Brightness: too dark";
+            texts[1] = redX + "Brightness: too dark";
         }
 
-        texts[2] = sizeResult == SizeResult.RIGHT_SIZE && isCentered && isRightOrientation ? "&#x2713; Position/Size: passed": "Position/Size: failed";
-        texts[3] = "&#x2713; Shadow: passed";
+        texts[2] = sizeResult == SizeResult.RIGHT_SIZE && isCentered && isRightOrientation ? greenTick + "Position/Size: passed": redX + "Position/Size: failed";
+        texts[3] = greenTick + "Shadow: passed";
 
         return texts;
-
     }
 
     private Mat correctGamma(Mat enhancedImg, double gamma) {

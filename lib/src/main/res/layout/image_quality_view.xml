@@ -192,7 +192,6 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:background="@color/transparent_overlay"
-            android:paddingHorizontal="5dp"
             android:textAlignment="center"
             android:textColor="@android:color/white"
             android:textSize="18sp"
