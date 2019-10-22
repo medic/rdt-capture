@@ -144,37 +144,45 @@
             android:layout_weight="1"
             android:orientation="horizontal">
 
-            <LinearLayout
-                android:layout_width="wrap_content"
-                android:layout_height="match_parent"
-                android:orientation="vertical"
-                android:gravity="center"
-                android:layout_marginLeft="15dp" >
+            <RelativeLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent">
+
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:layout_centerVertical="true"
+                    android:layout_marginLeft="15dp" >
+
+                    <ImageButton
+                        android:id="@+id/btn_flash_toggle"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:background="@drawable/ic_toggle_flash_on"
+                        android:layout_gravity="center"/>
+
+                    <TextView
+                        android:id="@+id/flash_on_status"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:textColor="@android:color/white"
+                        android:textSize="12sp"
+                        android:text="Light on"
+                        android:textAllCaps="false"
+                        android:layout_gravity="center"/>
+
+                </LinearLayout>
 
                 <ImageButton
-                    android:id="@+id/btn_flash_toggle"
+                    android:id="@+id/btn_manual_capture"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:background="@drawable/ic_toggle_flash_on" />
+                    android:background="@drawable/ic_rdt_camera_icon"
+                    android:layout_centerInParent="true"
+                    android:visibility="gone" />
 
-                <TextView
-                    android:id="@+id/flash_on_status"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:textColor="@android:color/white"
-                    android:textSize="12sp"
-                    android:text="Light on"
-                    android:textAllCaps="false" />
-
-            </LinearLayout>
-
-            <ImageButton
-                android:id="@+id/btn_manual_capture"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:background="@drawable/ic_rdt_camera_icon"
-                android:layout_gravity="center"
-                android:visibility="gone" />
+            </RelativeLayout>
 
         </LinearLayout>
 
@@ -190,9 +198,7 @@
             android:textSize="20sp"
             android:text="test"
             android:layout_weight="2"
-            android:layout_gravity="center_vertical"
-            android:visibility="gone"/>
-
+            android:layout_gravity="center_vertical" />
 
     </LinearLayout>
 
