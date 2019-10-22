@@ -193,10 +193,9 @@
             android:layout_height="wrap_content"
             android:background="@color/transparent_overlay"
             android:paddingHorizontal="5dp"
-            android:paddingVertical="5dp"
             android:textAlignment="center"
             android:textColor="@android:color/white"
-            android:textSize="20sp"
+            android:textSize="18sp"
             android:layout_weight="2"
             android:layout_gravity="center_vertical" />
 
