@@ -25,19 +25,6 @@
         opencv:camera_id="any"
         opencv:show_fps="true" />
 
-    <TextView
-        android:id="@+id/exp_date_result_view"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:background="@color/gray_overlay"
-        android:gravity="bottom"
-        android:paddingHorizontal="10dp"
-        android:paddingVertical="20dp"
-        android:text="Expiration Date not detected!"
-        android:textAlignment="center"
-        android:textColor="@android:color/white"
-        android:textSize="30sp" />
-
     <edu.washington.cs.ubicomplab.rdt_reader.Viewport
         android:id="@+id/exp_date_check_viewport"
         android:layout_width="fill_parent"
@@ -57,12 +44,43 @@
         android:padding="10dp"
         android:background="#2D2D2D"
         android:orientation="horizontal">
-        <ImageButton
-            android:id="@+id/btn_exp_flash_toggle"
-            android:layout_width="wrap_content"
+
+        <LinearLayout
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:background="@drawable/ic_toggle_flash_on"
-            android:layout_gravity="center" />
+            android:orientation="vertical"
+            android:layout_gravity="center_vertical"
+            android:layout_weight="1">
+
+            <ImageButton
+                android:id="@+id/btn_img_quality_flash_toggle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:background="@drawable/ic_toggle_flash_on"
+                android:layout_gravity="center"/>
+
+            <TextView
+                android:id="@+id/flash_on_status"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textColor="@android:color/white"
+                android:textSize="12sp"
+                android:text="Light on"
+                android:textAllCaps="false"
+                android:layout_gravity="center"/>
+
+        </LinearLayout>
+
+        <TextView
+            android:id="@+id/exp_date_result_view"
+            android:layout_width="0dp"
+            android:layout_weight="2"
+            android:layout_height="wrap_content"
+            android:text="Expiration Date not detected!"
+            android:textAlignment="center"
+            android:textColor="@android:color/white"
+            android:textSize="30sp" />
+
     </LinearLayout>
 
 </android.support.constraint.ConstraintLayout>
