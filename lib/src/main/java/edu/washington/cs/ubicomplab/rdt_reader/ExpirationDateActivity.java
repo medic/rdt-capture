@@ -17,22 +17,28 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.graphics.ImageFormat;
+import android.graphics.drawable.Drawable;
 import android.media.Image;
 import android.os.AsyncTask;
+import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.util.SparseArray;
+import android.view.Gravity;
 import android.view.Menu;
 import android.view.SurfaceView;
 import android.view.View;
 import android.view.WindowManager;
 import android.widget.Button;
+import android.widget.ImageButton;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import com.google.android.gms.vision.Frame;
+import com.google.android.gms.vision.text.Line;
 import com.google.android.gms.vision.text.Text;
 import com.google.android.gms.vision.text.TextBlock;
 import com.google.android.gms.vision.text.TextRecognizer;
@@ -59,7 +65,7 @@ public class ExpirationDateActivity extends AppCompatActivity implements CvCamer
     private RDTCameraView mOpenCvCameraView;
     private TextRecognizer mTextRecognizer;
     private TextView mExpDateResultView;
-    private Button mFlashButton;
+    private ImageButton mFlashButton;
     private boolean mFlashOn;
 
     private OCRTask ocrTask;
@@ -102,7 +108,7 @@ public class ExpirationDateActivity extends AppCompatActivity implements CvCamer
 
         mExpDateResultView = findViewById(R.id.exp_date_result_view);
 
-        mFlashButton = findViewById(R.id.flashButton);
+        mFlashButton = findViewById(R.id.btn_exp_flash_toggle);
         mFlashButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -113,8 +119,19 @@ public class ExpirationDateActivity extends AppCompatActivity implements CvCamer
                     mOpenCvCameraView.turnOnTheFlash();
                     mFlashOn = true;
                 }
+                updateFlashIndicators(mFlashOn);
             }
         });
+    }
+
+    private void updateFlashIndicators(boolean isFlashOn) {
+        int drawableId = isFlashOn ? R.drawable.ic_toggle_flash_off : R.drawable.ic_toggle_flash_on;
+        Drawable drawable = ContextCompat.getDrawable(getApplicationContext(), drawableId);
+        mFlashButton.setBackground(drawable);
+
+        TextView tvFlashOnStatus = findViewById(R.id.exp_flash_on_status);
+        int stringId = isFlashOn ? R.string.light_off : R.string.light_on;
+        tvFlashOnStatus.setText(stringId);
     }
 
     @Override
@@ -256,7 +273,6 @@ public class ExpirationDateActivity extends AppCompatActivity implements CvCamer
                     Date now = new Date();
                     if (expDate.getTime() == new Date(0).getTime()) {
                         mExpDateResultView.setText(getResources().getText(R.string.exp_date_undetected));
-                        mExpDateResultView.setBackgroundColor(getResources().getColor(R.color.gray_overlay));
                     } else {
                         onResult(expDate.toString(), now.before(expDate));
                     }
@@ -266,12 +282,22 @@ public class ExpirationDateActivity extends AppCompatActivity implements CvCamer
     }
 
     protected void onResult(String Date, boolean isValid) {
+        View viewPort = findViewById(R.id.exp_date_check_viewport);
+        View cameraControlLayout = findViewById(R.id.exp_date_camera_controls);
+        cameraControlLayout.setBackgroundColor(Color.parseColor("#00ff0000"));
+        findViewById(R.id.light_toggle_layout).setVisibility(View.GONE);
+
+        LinearLayout.LayoutParams params = (LinearLayout.LayoutParams) mExpDateResultView.getLayoutParams();
+        params.bottomMargin = 50;
+        mExpDateResultView.setPadding(20, 0, 0, 20);
+        mExpDateResultView.setGravity(Gravity.CENTER);
+        mExpDateResultView.setLayoutParams(params);
         if (isValid) {
             mExpDateResultView.setText(getResources().getText(R.string.exp_date_valid));
-            mExpDateResultView.setBackgroundColor(getResources().getColor(R.color.green_overlay));
+            viewPort.setBackgroundColor(getResources().getColor(R.color.green_overlay));
         } else {
             mExpDateResultView.setText(getResources().getText(R.string.exp_date_expired));
-            mExpDateResultView.setBackgroundColor(getResources().getColor(R.color.red_overlay));
+            viewPort.setBackgroundColor(getResources().getColor(R.color.red_overlay));
         }
     }
 }

@@ -19,6 +19,7 @@ import android.graphics.ImageFormat;
 import android.graphics.Matrix;
 import android.graphics.RectF;
 import android.graphics.SurfaceTexture;
+import android.graphics.drawable.Drawable;
 import android.hardware.camera2.CameraAccessException;
 import android.hardware.camera2.CameraCaptureSession;
 import android.hardware.camera2.CameraCharacteristics;
@@ -38,6 +39,7 @@ import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.text.Html;
+import android.text.Spanned;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.util.Size;
@@ -46,6 +48,7 @@ import android.view.Surface;
 import android.view.TextureView;
 import android.view.View;
 import android.view.WindowManager;
+import android.widget.ImageButton;
 import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.TextView;
@@ -83,6 +86,8 @@ public class ImageQualityView extends LinearLayout implements ActivityCompat.OnR
     private boolean showFeedback;
     public boolean flashEnabled = true;
     private String rdtName;
+
+    private ImageButton btnFlashToggle;
 
     private long timeTaken = 0;
 
@@ -135,7 +140,6 @@ public class ImageQualityView extends LinearLayout implements ActivityCompat.OnR
         timeTaken = System.currentTimeMillis();
 
         initViews();
-
     }
 
     public boolean isExternalIntent() {
@@ -151,10 +155,22 @@ public class ImageQualityView extends LinearLayout implements ActivityCompat.OnR
         if (this.flashEnabled == flashEnabled) {
             return;
         }
+
         this.flashEnabled = flashEnabled;
+        updateFlashIndicators(flashEnabled);
         if (mCameraId != null) {
             this.updateRepeatingRequest();
         }
+    }
+
+    private void updateFlashIndicators(boolean isFlashEnabled) {
+        int drawableId = isFlashEnabled ? R.drawable.ic_toggle_flash_off : R.drawable.ic_toggle_flash_on;
+        Drawable drawable = ContextCompat.getDrawable(mActivity.getApplicationContext(), drawableId);
+        btnFlashToggle.setBackground(drawable);
+
+        TextView tvFlashOnStatus = findViewById(R.id.img_quality_flash_on_status);
+        int stringId = isFlashEnabled ? R.string.light_off : R.string.light_on;
+        tvFlashOnStatus.setText(stringId);
     }
 
     /**
@@ -886,6 +902,14 @@ public class ImageQualityView extends LinearLayout implements ActivityCompat.OnR
             mInstructionText.setVisibility(GONE);
             mCaptureProgressBar.setVisibility(GONE);
         }
+
+        btnFlashToggle = findViewById(R.id.btn_img_quality_flash_toggle);
+        btnFlashToggle.setOnClickListener(new OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                setFlashEnabled(!flashEnabled);
+            }
+        });
     }
 
     public void setShowViewfinder(boolean showViewport) {
@@ -938,7 +962,11 @@ public class ImageQualityView extends LinearLayout implements ActivityCompat.OnR
 
         if (currFocusState == FocusState.FOCUSED) {
             String[] qChecks = processor.getQualityCheckText(sizeResult, isCentered, isRightOrientation, isSharp, exposureResult);
-            String message = String.format(getResources().getString(R.string.quality_msg_format_text), qChecks[0], qChecks[1], qChecks[2], qChecks[3]);
+            String message = String.format(getResources().getString(R.string.quality_msg_format_text),
+                    getHtmlFormattedText(qChecks[0]),
+                    getHtmlFormattedText(qChecks[1]),
+                    getHtmlFormattedText(qChecks[2]),
+                    getHtmlFormattedText(qChecks[3]));
 
             mInstructionText.setText(getResources().getText(processor.getInstructionText(sizeResult, isCentered, isRightOrientation)));
 
@@ -950,6 +978,10 @@ public class ImageQualityView extends LinearLayout implements ActivityCompat.OnR
         } else if (currFocusState == FocusState.FOCUSING) {
             mInstructionText.setText(getResources().getString(R.string.instruction_focusing));
         }
+    }
+
+    private Spanned getHtmlFormattedText(String message) {
+        return Html.fromHtml(message);
     }
 
     private void displayQualityResultFocusChanged() {
