@@ -46,6 +46,7 @@
         android:padding="10dp">
 
         <LinearLayout
+            android:id="@+id/light_toggle_layout"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:orientation="vertical"

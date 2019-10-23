@@ -26,16 +26,19 @@ import android.os.Bundle;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.util.SparseArray;
+import android.view.Gravity;
 import android.view.Menu;
 import android.view.SurfaceView;
 import android.view.View;
 import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.ImageButton;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import com.google.android.gms.vision.Frame;
+import com.google.android.gms.vision.text.Line;
 import com.google.android.gms.vision.text.Text;
 import com.google.android.gms.vision.text.TextBlock;
 import com.google.android.gms.vision.text.TextRecognizer;
@@ -270,7 +273,6 @@ public class ExpirationDateActivity extends AppCompatActivity implements CvCamer
                     Date now = new Date();
                     if (expDate.getTime() == new Date(0).getTime()) {
                         mExpDateResultView.setText(getResources().getText(R.string.exp_date_undetected));
-                        mExpDateResultView.setBackgroundColor(getResources().getColor(R.color.gray_overlay));
                     } else {
                         onResult(expDate.toString(), now.before(expDate));
                     }
@@ -280,13 +282,21 @@ public class ExpirationDateActivity extends AppCompatActivity implements CvCamer
     }
 
     protected void onResult(String Date, boolean isValid) {
+        View viewPort = findViewById(R.id.exp_date_check_viewport);
+        View cameraControlLayout = findViewById(R.id.exp_date_camera_controls);
+        cameraControlLayout.setBackgroundColor(Color.parseColor("#00ff0000"));
+        findViewById(R.id.light_toggle_layout).setVisibility(View.GONE);
+
+        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(mExpDateResultView.getWidth(), mExpDateResultView.getHeight());
+        params.bottomMargin = 60;
+        params.gravity = Gravity.CENTER;
+        mExpDateResultView.setLayoutParams(params);
         if (isValid) {
             mExpDateResultView.setText(getResources().getText(R.string.exp_date_valid));
-            findViewById(R.id.exp_date_check_viewport).setBackgroundColor(getResources().getColor(R.color.green_overlay));
+            viewPort.setBackgroundColor(getResources().getColor(R.color.green_overlay));
         } else {
             mExpDateResultView.setText(getResources().getText(R.string.exp_date_expired));
-            mExpDateResultView.setTextColor(getResources().getColor(R.color.red_overlay));
-            findViewById(R.id.exp_date_check_viewport).setBackgroundColor(getResources().getColor(R.color.red_overlay));
+            viewPort.setBackgroundColor(getResources().getColor(R.color.red_overlay));
         }
     }
 }
