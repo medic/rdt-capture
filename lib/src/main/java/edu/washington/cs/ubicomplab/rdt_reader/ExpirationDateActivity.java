@@ -287,9 +287,9 @@ public class ExpirationDateActivity extends AppCompatActivity implements CvCamer
         cameraControlLayout.setBackgroundColor(Color.parseColor("#00ff0000"));
         findViewById(R.id.light_toggle_layout).setVisibility(View.GONE);
 
-        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(mExpDateResultView.getWidth(), mExpDateResultView.getHeight());
+        LinearLayout.LayoutParams params = (LinearLayout.LayoutParams) mExpDateResultView.getLayoutParams();
         params.bottomMargin = 60;
-        params.gravity = Gravity.CENTER;
+        mExpDateResultView.setGravity(Gravity.CENTER);
         mExpDateResultView.setLayoutParams(params);
         if (isValid) {
             mExpDateResultView.setText(getResources().getText(R.string.exp_date_valid));
