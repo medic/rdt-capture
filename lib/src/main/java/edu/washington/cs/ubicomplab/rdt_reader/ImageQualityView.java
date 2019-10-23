@@ -156,20 +156,21 @@ public class ImageQualityView extends LinearLayout implements ActivityCompat.OnR
             return;
         }
 
-        int drawableId = flashEnabled ? R.drawable.ic_toggle_flash_off : R.drawable.ic_toggle_flash_on;
-        Drawable drawable = ContextCompat.getDrawable(mActivity.getApplicationContext(), drawableId);
-        TextView tvFlashOnStatus = findViewById(R.id.img_quality_flash_on_status);
-        if (flashEnabled) {
-            btnFlashToggle.setBackground(drawable);
-            tvFlashOnStatus.setText(R.string.light_off);
-        } else {
-            btnFlashToggle.setBackground(drawable);
-            tvFlashOnStatus.setText(R.string.light_on);
-        }
         this.flashEnabled = flashEnabled;
+        updateFlashIndicators(flashEnabled);
         if (mCameraId != null) {
             this.updateRepeatingRequest();
         }
+    }
+
+    private void updateFlashIndicators(boolean isFlashEnabled) {
+        int drawableId = isFlashEnabled ? R.drawable.ic_toggle_flash_off : R.drawable.ic_toggle_flash_on;
+        Drawable drawable = ContextCompat.getDrawable(mActivity.getApplicationContext(), drawableId);
+        btnFlashToggle.setBackground(drawable);
+
+        TextView tvFlashOnStatus = findViewById(R.id.img_quality_flash_on_status);
+        int stringId = isFlashEnabled ? R.string.light_off : R.string.light_on;
+        tvFlashOnStatus.setText(stringId);
     }
 
     /**

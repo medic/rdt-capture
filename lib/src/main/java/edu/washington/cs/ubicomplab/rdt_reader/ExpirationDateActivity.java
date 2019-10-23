@@ -109,22 +109,26 @@ public class ExpirationDateActivity extends AppCompatActivity implements CvCamer
         mFlashButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                int drawableId = mFlashOn ? R.drawable.ic_toggle_flash_on : R.drawable.ic_toggle_flash_off;
-                Drawable drawable = ContextCompat.getDrawable(getApplicationContext(), drawableId);
-                TextView tvFlashOnStatus = findViewById(R.id.exp_flash_on_status);
                 if (mFlashOn) {
                     mOpenCvCameraView.turnOffTheFlash();
                     mFlashOn = false;
-                    mFlashButton.setBackground(drawable);
-                    tvFlashOnStatus.setText(R.string.light_on);
                 } else {
                     mOpenCvCameraView.turnOnTheFlash();
                     mFlashOn = true;
-                    mFlashButton.setBackground(drawable);
-                    tvFlashOnStatus.setText(R.string.light_off);
                 }
+                updateFlashIndicators(mFlashOn);
             }
         });
+    }
+
+    private void updateFlashIndicators(boolean isFlashOn) {
+        int drawableId = isFlashOn ? R.drawable.ic_toggle_flash_off : R.drawable.ic_toggle_flash_on;
+        Drawable drawable = ContextCompat.getDrawable(getApplicationContext(), drawableId);
+        mFlashButton.setBackground(drawable);
+
+        TextView tvFlashOnStatus = findViewById(R.id.exp_flash_on_status);
+        int stringId = isFlashOn ? R.string.light_off : R.string.light_on;
+        tvFlashOnStatus.setText(stringId);
     }
 
     @Override
