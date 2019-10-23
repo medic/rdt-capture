@@ -288,7 +288,8 @@ public class ExpirationDateActivity extends AppCompatActivity implements CvCamer
         findViewById(R.id.light_toggle_layout).setVisibility(View.GONE);
 
         LinearLayout.LayoutParams params = (LinearLayout.LayoutParams) mExpDateResultView.getLayoutParams();
-        params.bottomMargin = 60;
+        params.bottomMargin = 50;
+        mExpDateResultView.setPadding(20, 0, 0, 20);
         mExpDateResultView.setGravity(Gravity.CENTER);
         mExpDateResultView.setLayoutParams(params);
         if (isValid) {
