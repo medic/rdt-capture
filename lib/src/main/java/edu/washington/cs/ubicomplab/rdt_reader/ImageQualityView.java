@@ -19,6 +19,7 @@ import android.graphics.ImageFormat;
 import android.graphics.Matrix;
 import android.graphics.RectF;
 import android.graphics.SurfaceTexture;
+import android.graphics.drawable.Drawable;
 import android.hardware.camera2.CameraAccessException;
 import android.hardware.camera2.CameraCaptureSession;
 import android.hardware.camera2.CameraCharacteristics;
@@ -47,6 +48,7 @@ import android.view.Surface;
 import android.view.TextureView;
 import android.view.View;
 import android.view.WindowManager;
+import android.widget.ImageButton;
 import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.TextView;
@@ -84,6 +86,8 @@ public class ImageQualityView extends LinearLayout implements ActivityCompat.OnR
     private boolean showFeedback;
     public boolean flashEnabled = true;
     private String rdtName;
+
+    private ImageButton btnFlashToggle;
 
     private long timeTaken = 0;
 
@@ -150,6 +154,17 @@ public class ImageQualityView extends LinearLayout implements ActivityCompat.OnR
     public void setFlashEnabled(boolean flashEnabled) {
         if (this.flashEnabled == flashEnabled) {
             return;
+        }
+
+        int drawableId = flashEnabled ? R.drawable.ic_toggle_flash_off : R.drawable.ic_toggle_flash_on;
+        Drawable drawable = ContextCompat.getDrawable(mActivity.getApplicationContext(), drawableId);
+        TextView tvFlashOnStatus = findViewById(R.id.img_quality_flash_on_status);
+        if (flashEnabled) {
+            btnFlashToggle.setBackground(drawable);
+            tvFlashOnStatus.setText(R.string.light_off);
+        } else {
+            btnFlashToggle.setBackground(drawable);
+            tvFlashOnStatus.setText(R.string.light_on);
         }
         this.flashEnabled = flashEnabled;
         if (mCameraId != null) {
@@ -887,7 +902,8 @@ public class ImageQualityView extends LinearLayout implements ActivityCompat.OnR
             mCaptureProgressBar.setVisibility(GONE);
         }
 
-        findViewById(R.id.btn_img_quality_flash_toggle).setOnClickListener(new OnClickListener() {
+        btnFlashToggle = findViewById(R.id.btn_img_quality_flash_toggle);
+        btnFlashToggle.setOnClickListener(new OnClickListener() {
             @Override
             public void onClick(View v) {
                 setFlashEnabled(!flashEnabled);

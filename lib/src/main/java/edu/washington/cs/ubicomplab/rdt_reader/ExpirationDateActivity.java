@@ -17,8 +17,10 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.graphics.ImageFormat;
+import android.graphics.drawable.Drawable;
 import android.media.Image;
 import android.os.AsyncTask;
+import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.DisplayMetrics;
@@ -107,12 +109,19 @@ public class ExpirationDateActivity extends AppCompatActivity implements CvCamer
         mFlashButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                int drawableId = mFlashOn ? R.drawable.ic_toggle_flash_on : R.drawable.ic_toggle_flash_off;
+                Drawable drawable = ContextCompat.getDrawable(getApplicationContext(), drawableId);
+                TextView tvFlashOnStatus = findViewById(R.id.exp_flash_on_status);
                 if (mFlashOn) {
                     mOpenCvCameraView.turnOffTheFlash();
                     mFlashOn = false;
+                    mFlashButton.setBackground(drawable);
+                    tvFlashOnStatus.setText(R.string.light_on);
                 } else {
                     mOpenCvCameraView.turnOnTheFlash();
                     mFlashOn = true;
+                    mFlashButton.setBackground(drawable);
+                    tvFlashOnStatus.setText(R.string.light_off);
                 }
             }
         });
