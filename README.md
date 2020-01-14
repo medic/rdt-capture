@@ -1,7 +1,7 @@
 # RDT Capture
 This RDT Scanner prototype is designed for image capture and interpretation of Rapid Diagnostic Test results using OpenCV and machine learning techniques. Field testing is currently ongoing, with an initial focus on malaria RDTs. The app is designed to be used in tandem with Muso's community health app, which was built using the community health toolkit. The user is sent from Muso's CHW app to the RDT Capture app and back using Android Intents, as in this demo:
 
-<img src="https://github.com/medic/medic-docs/blob/isaacholeman-patch-1/configuration/img/mRDT%20capture%20demo.gif" />
+<img src="./docs/img/mRDT-capture-demo.gif" />
 
 The current version is <a href="https://play.google.com/store/apps/details?id=edu.washington.cs.ubicomplab.rdt_reader&hl=en_US">available in the Play Store</a>. The app was co-designed by the <a href="https://ubicomplab.cs.washington.edu">UbiComp lab</a> at the University of Washington, <a href="https://www.musohealth.org">Muso</a>, and <a href="https://medicmobile.org">Medic Mobile</a> with financial support from the Bill and Melinda Gates Foundation. Initial prototyping is taking place within the Muso-led community health innovation network in Mali.
 
