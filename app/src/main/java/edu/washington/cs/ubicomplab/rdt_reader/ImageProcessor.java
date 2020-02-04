@@ -48,6 +48,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
+import java.util.stream.IntStream;
 
 import static edu.washington.cs.ubicomplab.rdt_reader.Constants.*;
 import static java.lang.Math.pow;
@@ -60,6 +61,7 @@ import static org.opencv.core.Core.perspectiveTransform;
 import static org.opencv.core.CvType.CV_32F;
 import static org.opencv.core.CvType.CV_8U;
 import static org.opencv.core.CvType.CV_8UC3;
+import static org.opencv.imgproc.Imgproc.COLOR_BGR2HLS;
 import static org.opencv.imgproc.Imgproc.COLOR_RGB2GRAY;
 import static org.opencv.imgproc.Imgproc.COLOR_RGBA2RGB;
 import static org.opencv.imgproc.Imgproc.Laplacian;
@@ -578,11 +580,17 @@ public class ImageProcessor {
         //resultMat = enhanceResultWindow(resultMat, new Size(10, 10));
         //resultMat = correctGamma(resultMat, 0.75);
 
-        topLine = readControlLine(resultMat, new Point(mRDT.topLinePosition, 0));
-        middleLine = readTestLine(resultMat, new Point(mRDT.middleLinePosition, 0));
-        bottomLine = readTestLine(resultMat, new Point(mRDT.bottomLinePosition, 0));
+//        topLine = readControlLine(resultMat, new Point(mRDT.topLinePosition, 0));
+//        middleLine = readTestLine(resultMat, new Point(mRDT.middleLinePosition, 0));
+//        bottomLine = readTestLine(resultMat, new Point(mRDT.bottomLinePosition, 0));
+//
+//        Log.d(TAG, String.format("Interpretation results: %s %s %s", topLine, middleLine, bottomLine));
 
-        Log.d(TAG, String.format("Interpretation results: %s %s %s", topLine, middleLine, bottomLine));
+        boolean[] results = detectLinesWithPeak(resultMat);
+
+        topLine = results[0];
+        middleLine = results[1];
+        bottomLine = results[2];
 
         return new InterpretationResult(resultMat, topLine, middleLine, bottomLine);
     }
@@ -951,6 +959,129 @@ public class ImageProcessor {
         Point p1 = new Point(inputMat.size().width*(1-mRDT.viewFinderScaleH)/2, inputMat.size().height*(1-mRDT.viewFinderScaleW)/2);
         Point p2 = new Point(inputMat.size().width-p1.x, inputMat.size().height-p1.y);
         return new Rect(p1, p2);
+    }
+
+    private boolean[] detectLinesWithPeak(Mat inputMat) {
+        Mat hls = new Mat();
+        cvtColor(inputMat, hls, COLOR_BGR2HLS);
+
+        List<Mat> channels = new ArrayList<>();
+        Core.split(hls, channels);
+
+        Mat lightness = channels.get(1);
+
+        double[] avgIntensities = new double[channels.get(1).cols()];
+        double sumLightness = 0;
+        for (int i = 0; i < channels.get(1).cols(); i++) {
+            for (int j = 0; j < channels.get(1).rows(); j++) {
+                sumLightness += channels.get(1).get(j, i)[0];
+            }
+            avgIntensities[i] = sumLightness/channels.get(1).rows();
+        }
+
+        ArrayList<double[]> peaks = peakdet(avgIntensities, mRDT.controlIntensityPeakThreshold, true);
+        boolean[] results = detectLinesWithRelativeLocation(peaks);
+
+        return results;
+    }
+
+    private ArrayList<double[]> peakdet(double[] v, double delta, boolean max) {
+        double mn = v[0];
+        double mx = v[0];
+        int mnpos = Integer.MIN_VALUE;
+        int mxpos = Integer.MIN_VALUE;
+
+        int maxWidth = 0;
+        int minWidth = 0;
+
+        ArrayList<double[]> maxTab = new ArrayList<>();
+        ArrayList<double[]> minTab = new ArrayList<>();
+
+        int[] x = new int[v.length];
+
+        for (int i = 0; i < v.length; i++) {
+            x[i] = i;
+        }
+
+        for (int i = 0; i < v.length; i++) {
+            double curr = v[i];
+            if (curr > mx) {
+                mx = curr;
+                mxpos = x[i];
+                maxWidth += 1;
+            }
+            if (curr < mn) {
+                mn = curr;
+                mnpos = x[i];
+                minWidth += 1;
+            }
+
+            if (max) {
+                if (curr < mx-delta) {
+                    if (mxpos != Integer.MIN_VALUE) {
+                        maxTab.add(new double[]{mxpos, mx, findPeakWidth(mxpos, v, true)});
+                    }
+                    mn = curr;
+                    maxWidth = 0;
+                    mnpos = x[i];
+                    max = false;
+                }
+            } else {
+                if (curr > mn+delta) {
+                    if (mnpos != Integer.MIN_VALUE) {
+                        minTab.add(new double[]{mnpos, mn, findPeakWidth(mnpos, v, false)});
+                    }
+                    mx = curr;
+                    minWidth = 0;
+                    mxpos = x[i];
+                    max = true;
+                }
+            }
+        }
+
+        return (max? maxTab : minTab);
+    }
+
+    private double findPeakWidth(int idx, double[] arr, boolean max) {
+        double width = 0;
+        int i;
+        if (max) {
+            i = idx - 1;
+
+            while (i > 0 && arr[i] > arr[i - 1]){
+                width += 1;
+                i -= 1;
+            }
+            i = idx;
+            while (i < arr.length - 1 && arr[i] >arr[i + 1]){
+                width += 1;
+                i += 1;
+            }
+        } else {
+            i = idx;
+            while (i > 0 && arr[i] < arr[i - 1]){
+                width += 1;
+                i -= 1;
+            }
+            i = idx;
+            while (i < arr.length - 1 && arr[i] <arr[i + 1]){
+                width += 1;
+                i += 1;
+            }
+        }
+        return width;
+    }
+
+    private boolean[] detectLinesWithRelativeLocation(ArrayList<double[]> peaks) {
+        boolean[] results = new boolean[]{false, false, false};
+
+        for (double[] p : peaks) {
+            results[0] = results[0] || (p[0] > mRDT.topLinePosition - mRDT.lineSearchWidth && p[0] < mRDT.topLinePosition + mRDT.lineSearchWidth);
+            results[1] = results[1] || (p[1] > mRDT.middleLinePosition - mRDT.lineSearchWidth && p[1] < mRDT.middleLinePosition + mRDT.lineSearchWidth);
+            results[2] = results[2] || (p[2] > mRDT.bottomLinePosition - mRDT.lineSearchWidth && p[2] < mRDT.bottomLinePosition + mRDT.lineSearchWidth);
+        }
+
+        return results;
     }
 
     //methods for debugging
