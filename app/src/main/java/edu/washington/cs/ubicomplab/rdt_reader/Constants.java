@@ -43,5 +43,5 @@ public final class Constants {
 
     public static double CROP_RATIO = 0.75;
 
-    public static double ENHANCING_THRESHOLD = 4.50;
+    public static double ENHANCING_THRESHOLD = 10.0;
 }

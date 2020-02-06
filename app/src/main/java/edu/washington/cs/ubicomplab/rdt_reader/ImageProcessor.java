@@ -971,15 +971,21 @@ public class ImageProcessor {
         Mat lightness = channels.get(1);
 
         double[] avgIntensities = new double[channels.get(1).cols()];
-        double sumLightness = 0;
         for (int i = 0; i < channels.get(1).cols(); i++) {
+            avgIntensities[i] = 0;
+            double sumLightness = 0;
             for (int j = 0; j < channels.get(1).rows(); j++) {
                 sumLightness += channels.get(1).get(j, i)[0];
             }
             avgIntensities[i] = sumLightness/channels.get(1).rows();
         }
 
-        ArrayList<double[]> peaks = peakdet(avgIntensities, mRDT.controlIntensityPeakThreshold, true);
+        ArrayList<double[]> peaks = peakdet(avgIntensities, mRDT.controlIntensityPeakThreshold, false);
+
+        for (double[] p : peaks) {
+            Log.d(TAG, String.format("%.2f, %.2f, %.2f", p[0], p[1], p[2]));
+        }
+
         boolean[] results = detectLinesWithRelativeLocation(peaks);
 
         return results;
@@ -993,6 +999,8 @@ public class ImageProcessor {
 
         int maxWidth = 0;
         int minWidth = 0;
+
+        boolean lookingForMax = true;
 
         ArrayList<double[]> maxTab = new ArrayList<>();
         ArrayList<double[]> minTab = new ArrayList<>();
@@ -1016,7 +1024,7 @@ public class ImageProcessor {
                 minWidth += 1;
             }
 
-            if (max) {
+            if (lookingForMax) {
                 if (curr < mx-delta) {
                     if (mxpos != Integer.MIN_VALUE) {
                         maxTab.add(new double[]{mxpos, mx, findPeakWidth(mxpos, v, true)});
@@ -1024,7 +1032,7 @@ public class ImageProcessor {
                     mn = curr;
                     maxWidth = 0;
                     mnpos = x[i];
-                    max = false;
+                    lookingForMax = false;
                 }
             } else {
                 if (curr > mn+delta) {
@@ -1034,7 +1042,7 @@ public class ImageProcessor {
                     mx = curr;
                     minWidth = 0;
                     mxpos = x[i];
-                    max = true;
+                    lookingForMax = true;
                 }
             }
         }
@@ -1076,9 +1084,17 @@ public class ImageProcessor {
         boolean[] results = new boolean[]{false, false, false};
 
         for (double[] p : peaks) {
-            results[0] = results[0] || (p[0] > mRDT.topLinePosition - mRDT.lineSearchWidth && p[0] < mRDT.topLinePosition + mRDT.lineSearchWidth);
-            results[1] = results[1] || (p[1] > mRDT.middleLinePosition - mRDT.lineSearchWidth && p[1] < mRDT.middleLinePosition + mRDT.lineSearchWidth);
-            results[2] = results[2] || (p[2] > mRDT.bottomLinePosition - mRDT.lineSearchWidth && p[2] < mRDT.bottomLinePosition + mRDT.lineSearchWidth);
+            if (p[0] > mRDT.topLinePosition - mRDT.lineSearchWidth && p[0] < mRDT.topLinePosition + mRDT.lineSearchWidth) {
+                results[0] = true;
+            }
+
+            if (p[0] > mRDT.middleLinePosition - mRDT.lineSearchWidth && p[0] < mRDT.middleLinePosition + mRDT.lineSearchWidth) {
+                results[1] = true;
+            }
+
+            if (p[0] > mRDT.bottomLinePosition - mRDT.lineSearchWidth && p[0] < mRDT.bottomLinePosition + mRDT.lineSearchWidth) {
+                results[2] = true;
+            }
         }
 
         return results;
