@@ -10,7 +10,6 @@ package edu.washington.cs.ubicomplab.rdt_reader;
 
 import android.os.Environment;
 
-import org.opencv.core.Scalar;
 import org.opencv.core.Size;
 
 public final class Constants {
@@ -43,13 +42,11 @@ public final class Constants {
 
     public static double CROP_RATIO = 0.75;
 
-    public static double ENHANCING_THRESHOLD = 4.50;
-
-    public static final String ONA_RDT = "experimental";
-
     public static final int REQUEST_CAMERA_PERMISSION = 1;
 
     public static String SAVED_IMAGE_FILE_PATH = "saved_image_file_path";
 
     public static String SAVED_IMAGE_RESULT = "saved_image_result";
+
+    public static double ENHANCING_THRESHOLD = 10.0;
 }
