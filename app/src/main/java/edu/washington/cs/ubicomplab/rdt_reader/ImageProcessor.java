@@ -48,7 +48,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
-import java.util.stream.IntStream;
 
 import static edu.washington.cs.ubicomplab.rdt_reader.Constants.*;
 import static java.lang.Math.pow;
@@ -56,8 +55,10 @@ import static java.lang.StrictMath.abs;
 import static org.opencv.core.Core.KMEANS_PP_CENTERS;
 import static org.opencv.core.Core.LUT;
 import static org.opencv.core.Core.kmeans;
+import static org.opencv.core.Core.max;
 import static org.opencv.core.Core.meanStdDev;
 import static org.opencv.core.Core.perspectiveTransform;
+import static org.opencv.core.Core.split;
 import static org.opencv.core.CvType.CV_32F;
 import static org.opencv.core.CvType.CV_8U;
 import static org.opencv.core.CvType.CV_8UC3;
@@ -105,10 +106,11 @@ public class ImageProcessor {
         public boolean fiducial;
         public double angle;
         public boolean flashEnabled;
+        public boolean isGlared;
 
         public CaptureResult(boolean allChecksPassed, Mat resultMat, boolean fiducial,
                              ExposureResult exposureResult, SizeResult sizeResult,  boolean isCentered,
-                             boolean isRightOrientation, double angle, boolean isSharp, boolean isShadow, MatOfPoint2f boundary, boolean flashEnabled){
+                             boolean isRightOrientation, double angle, boolean isSharp, boolean isShadow, boolean isGlared, MatOfPoint2f boundary, boolean flashEnabled){
             this.allChecksPassed = allChecksPassed;
             this.resultMat = resultMat;
             this.fiducial = fiducial;
@@ -121,6 +123,7 @@ public class ImageProcessor {
             this.angle = angle;
             this.boundary = boundary;
             this.flashEnabled = flashEnabled;
+            this.isGlared = isGlared;
         }
     }
 
@@ -250,14 +253,53 @@ public class ImageProcessor {
             // Apply crops if necessary
             Mat croppedMat = cropRDTMat(inputMat);
             MatOfPoint2f croppedBoundary = cropRDTBoundary(inputMat, boundary);
+            
+            //check for glare
+            boolean isGlared = false;
+            if (passed)
+                 isGlared = checkIfGlared(croppedMat, croppedBoundary);
 
-            return new CaptureResult(passed, croppedMat, fiducial, exposureResult, sizeResult, isCentered, isRightOrientation, angle, isSharp, false, croppedBoundary, flashEnabled);
+            return new CaptureResult(passed, croppedMat, fiducial, exposureResult, sizeResult, isCentered, isRightOrientation, angle, isSharp, false, isGlared, croppedBoundary, flashEnabled);
         }
         else {
             greyMat.release();
-            return new CaptureResult(passed, null, false, exposureResult, SizeResult.INVALID, false, false, 0.0, isSharp, false, new MatOfPoint2f(), flashEnabled);
+            return new CaptureResult(passed, null, false, exposureResult, SizeResult.INVALID, false, false, 0.0, isSharp, false, false, new MatOfPoint2f(), flashEnabled);
         }
 
+    }
+
+    private boolean checkIfGlared(Mat inputMat, MatOfPoint2f boundary) {
+        Mat resultWindow = cropResultWindow(inputMat, boundary);
+        saveImage(inputMat);
+        saveImage(resultWindow);
+        resultWindow = enhanceResultWindow(resultWindow, new Size(5, resultWindow.cols()));
+        saveImage(resultWindow);
+
+        Mat hsl = new Mat();
+        cvtColor(resultWindow, hsl, COLOR_BGR2HLS);
+        ArrayList<Mat> channels = new ArrayList<>();
+        Core.split(hsl, channels);
+
+        // Brightness Calculation
+        float[] histograms = calculateBrightness(channels.get(1)); //get L channel for brightness calculation
+
+        int maxWhite = 0;
+        float clippingCount = 0;
+
+        for (int i = 0; i < histograms.length; i++) {
+            if (histograms[i] > 0) {
+                maxWhite = i;
+            }
+            if (i == histograms.length - 1) {
+                clippingCount = histograms[i];
+            }
+        }
+
+        Log.d(TAG, String.format("maxWhite: %d, clippingCount: %.2f", maxWhite, clippingCount));
+
+        boolean isGlared = maxWhite == 255 && clippingCount > GLARE_WHITE_COUNT;
+
+        return isGlared;
     }
 
     private boolean checkSharpness(Mat inputMat) {
@@ -328,6 +370,7 @@ public class ImageProcessor {
         MatOfInt mHistSize = new MatOfInt(mHistSizeNum);
         Mat hist = new Mat();
         final float []mBuff = new float[mHistSizeNum];
+        final float []mBuff2 = new float[mHistSizeNum];
         MatOfFloat histogramRanges = new MatOfFloat(0f, 256f);
         MatOfInt mChannels[] = new MatOfInt[] { new MatOfInt(0)};
         org.opencv.core.Size sizeRgba = input.size();
@@ -336,7 +379,9 @@ public class ImageProcessor {
         for(int c=0; c<1; c++) {
             Imgproc.calcHist(Arrays.asList(input), mChannels[c], new Mat(), hist,
                     mHistSize, histogramRanges);
-            Core.normalize(hist, hist, sizeRgba.height/2, 0, Core.NORM_INF);
+            hist.get(0, 0, mBuff2);
+            //Core.normalize(hist, hist, sizeRgba.area(), 0, Core.NORM_INF);
+            Core.divide(hist, new Scalar(sizeRgba.area()), hist);
             hist.get(0, 0, mBuff);
             mChannels[c].release();
         }
