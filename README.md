@@ -26,7 +26,7 @@ TODO: mention NDK, OpenCV
 | Result window corners     | :heavy_check_mark:  | (`int`, `int`) <br> (`int`, `int`)  | The (x, y) pixel coordinates denoting the top-left and bottom-right corners of the general region where the results will appear |
 | Control line position     | :heavy_check_mark:  | `int`                               | The pixel position of the control line along the result window's wider axis |
 | Test line position(s)     | :heavy_check_mark:  | `int`(s)                            | The pixel position of the test line(s) along the result window's wider axis |
-| Meanings of test lines(s) | :heavy_check_mark:  | `String`(s)                         | The diagnostic decision that would be made if the corresponding line is visible and the test is performed correctly (e.g., `control`, `malaria Pf`) |
+| Meanings of test lines(s) | :heavy_check_mark:  | `String`(s)                         | The diagnostic decision that would be made if the corresponding line is visible and the test is performed correctly (e.g., `"control"`, `"malaria Pf"`) |
 | Desired RDT scale         | :heavy_check_mark:  | `float`                             | The ideal scale of the RDT relative to the width of the camera's standard image width |
 | Fiducial locations        | :heavy_minus_sign:  | (`int`, `int`) <br> (`int`, `int`)  | The (x, y) pixel coordinates denoting the top-left and bottom-right corners of variable dark-colored markings that have a fixed location (e.g., QR code, bar code) |
 | Line hues                 | :heavy_minus_sign: | `int`(s)                            | The expected hues of the control and test lines (range: 0-179) |
