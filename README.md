@@ -11,7 +11,7 @@ RDTScan is designed to work with a variety of RDT designs, only requiring a sing
 * Blank RDT cassettes with little or no lettering
 * RDTs with inconsistent patterns due to a QR code, bar code, etc.
 
-![Examples of bad RDTs](image.png)
+<img src="readme_assets/rdt_examples.png" alt="Examples photographs of RDTs that work well and do not work well with RDTScan" width="300"/>
 
 **Disclaimer:** Please note that although RDTScan has been tested through multiple in-lab studies and real-world deployments, the library has not been FDA-approved.
 
