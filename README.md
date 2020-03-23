@@ -20,6 +20,7 @@ The best way to use this library is to clone this directory directly and build y
 
 TODO: mention NDK, OpenCV
 
+## Configuration
 | **Data Field**            | **Required?**       | **Data Types** | **Description**    |
 | :------------------------ | :-----------------: | :------------- | :----------------- |
 | Template image            | :heavy_check_mark:  | Any image format accepted by OpenCV's [`imread()`](https://docs.opencv.org/3.4/d4/da8/group__imgcodecs.html#ga288b8b3da0892bd651fce07b3bbd3a56) method (e.g., `.jpg`, `.png`) | A non-skewed, tightly cropped photo of the RDT |
