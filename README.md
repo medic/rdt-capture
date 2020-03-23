@@ -15,12 +15,12 @@ RDTScan uses a SIFT feature-based template-matching approach for RDT recognition
 
 **Disclaimer:** Although RDTScan has been tested through multiple in-lab studies and real-world deployments, this library has not been FDA-approved.
 
-## Installation
+# Installation
 The best way to use this library is to clone this directory directly and build your app on top of the this codebase. This is because 
 
 TODO: mention NDK, OpenCV
 
-## Configuration
+# Configuration
 | **Data Field**            | **Required?**       | **Data Types** | **Description**    |
 | :------------------------ | :-----------------: | :------------- | :----------------- |
 | Template image            | :heavy_check_mark:  | Any image format accepted by OpenCV's [`imread()`](https://docs.opencv.org/3.4/d4/da8/group__imgcodecs.html#ga288b8b3da0892bd651fce07b3bbd3a56) method (e.g., `.jpg`, `.png`) | A non-skewed, tightly cropped photo of the RDT |
@@ -29,11 +29,12 @@ TODO: mention NDK, OpenCV
 | Test line position(s)     | :heavy_check_mark:  | `int`          | The pixel position of the test line(s) along the result window's wider axis |
 | Meanings of test lines(s) | :heavy_check_mark:  | `String`       | The diagnostic decision that would be made if the corresponding line is visible and the test is performed correctly (e.g., `"control"`, `"malaria Pf"`) |
 | Desired RDT scale         | :heavy_check_mark:  | `float`        | The ideal scale of the RDT relative to the width of the camera's standard image width |
+| Line intensity            | :heavy_minus_sign:  | `int`          | TODO | 
 | Fiducial locations        | :heavy_minus_sign:  | `(int, int)`   | The (x, y) pixel coordinates denoting the top-left and bottom-right corners of variable dark-colored markings that have a fixed location (e.g., QR code, bar code) |
 | Line hues                 | :heavy_minus_sign: | `int`           | The expected hues of the control and test lines (range: 0-179) |
 
-## API
-# Table of Contents
+# API
+## Table of Contents
 * [`configureCamera()`](#configureCamera)
 * [`detectRDT()`](#detectRDT)
 * [`checkSizePositionOrientation()`](#checkSizePositionOrientation)
