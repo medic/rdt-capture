@@ -17,15 +17,13 @@ RDTScan uses a SIFT feature-based template-matching approach for RDT recognition
 
 # Installation
 RDTScan utilizes [OpenCV for Android](https://opencv.org/android/) for many of the image processing steps, which in turn relies on [Android's Native Development Kit (NDK)](https://developer.android.com/ndk/). Setting these resources up properly can be difficult for some developers, so there are two options:
-#### **No existing project**  
-If you are making a smartphone app from scratch, you can simply clone the repository directly and build your app on top of what has already been provided. This repository has all of the resources properly configured along with a fully-functioning user interface.
-#### **Exiting project** 
-If you have a smartphone app that has already been made and you are looking to add RDTScan to it, you will still need to add OpenCV for Android to your project. The [official tutorial](https://docs.opencv.org/2.4/doc/tutorials/introduction/android_binary_package/O4A_SDK.html) for doing this is fairly outdated, but there are plenty of other tutorials out there depending on your environment. Once you have done that, copy `RDT.java`, `ImageProcessor.java`, and `RDTCameraView.java` over to your project.
+* **No existing project:** If you are making a smartphone app from scratch, you can simply clone the repository directly and build your app on top of what has already been provided. This repository has all of the resources properly configured along with a fully-functioning user interface.
+* **Exiting project:** If you have a smartphone app that has already been made and you are looking to add RDTScan to it, you will still need to add OpenCV for Android to your project. The [official tutorial](https://docs.opencv.org/2.4/doc/tutorials/introduction/android_binary_package/O4A_SDK.html) for doing this is fairly outdated, but there are plenty of other tutorials out there depending on your environment. Once you have done that, copy `RDT.java`, `ImageProcessor.java`, and `RDTCameraView.java` over to your project.
 
 ## Troubleshooting:
 * **Unable to locate NDK installation** If you have not already installed NDK, follow the instructions at this [link](https://developer.android.com/studio/projects/install-ndk) to do so. Once that is done, NDK should be installed at a path that either looks like `C:/Users/username/AppData/Local/Android/ndk/xx.x.xxxxxxx` (Windows) or `/Users/username/Library/Android/sdk/ndk/xx.x.xxxxxxx` (OSX). Refering to this filepath as `NDK_HOME` There are two ways to point your project to this filepath: 
-1. Go to **File > Project Structure > SDK Location** and then set the path variable in **Android NDK Location** to `NDK_HOME`.
-2. Open the `local.properties` file and add the following line: `ndk.dir=NDK_HOME`
+  1. Go to **File > Project Structure > SDK Location** and then set the path variable in **Android NDK Location** to `NDK_HOME`.
+  2. Open the `local.properties` file and add the following line: `ndk.dir=NDK_HOME`
 
 # Configuration
 | **Data Field**            | **Required?**       | **Data Types** | **Description**    |
