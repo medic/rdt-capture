@@ -7,23 +7,29 @@ RDTScan uses image processing to check the quality of images intercepted from th
 **2. Robust Result Interpretation**  
 Assuming a satisfactory image has been captured, RDTScan can post-process the image to emphasize any faint lines that may appear on the immunoassay. The end-user can view that image for themselves to make an informed decision about their test results. Alternatively, RDTScan provides an algorithm that interprets the test results on the end-user's behalf.
 
-RDTScan is designed to work with a variety of RDT designs, only requiring a single example image and some metadata about test itself. There are only a few cases where RDTScan is less likely to work:
-* Blank RDT cassettes with little or no lettering
-* RDTs with inconsistent patterns due to a QR code, bar code, etc.
+RDTScan uses a SIFT feature-based template-matching approach for RDT recognition. This means that unlike model-driven approaches that require a dataset of example images for model training, RDTScan only requires a single example image and some metadata about the test itself (e.g., relative position and meaning of each line). Although RDTScan is designed to be as generalizable as possible, its template-matching approach is less amenable to the following RDT characteristics:
+* Blank cassettes with little or no lettering
+* Inconsistent patterns (e.g., QR code, bar code, etc.)
 
 <img src="readme_assets/rdt_examples.png" alt="Examples photographs of RDTs that work well and do not work well with RDTScan" width="300"/>
 
-**Disclaimer:** Please note that although RDTScan has been tested through multiple in-lab studies and real-world deployments, the library has not been FDA-approved.
+**Disclaimer:** Although RDTScan has been tested through multiple in-lab studies and real-world deployments, this library has not been FDA-approved.
 
 ## Installation
 
-| **Data Field**          | **Data Type**     | **Description**    |
-| :---------------------- | :---------------- | :----------------- |
-| Template image          | More Stuff        | And Again    |
-| Result window corners   | Put Pipes In      | Like this    |
-| Control line position   | Put Pipes In      | Like this    |
+| **Data Field**            | **Required?**       | **Data Type**     | **Description**    |
+| :------------------------ | :------------------ | :----------------- | :----------------- |
+| Template image            | :heavy_check_mark:  | Any image format accepted by OpenCV's [`imread()`](https://docs.opencv.org/3.4/d4/da8/group__imgcodecs.html#ga288b8b3da0892bd651fce07b3bbd3a56) method (e.g., `.jpg`, `.png`) | A non-skewed, tightly cropped photo of the RDT |
+| Result window corners     | :heavy_check_mark:  | (`int`, `int`) <br> (`int`, `int`) | The (x, y) pixel coordinates denoting the top-left  and bottom-right corners of the general region where the results will appear |
+| Control line position     | :heavy_check_mark:  | More Stuff        | And Again    |
+| Test line position(s)     | :heavy_check_mark:  | More Stuff        | And Again    |
+| Meanings of test lines(s) | :heavy_check_mark:  | More Stuff        | And Again    |
+| Desired RDT scale         | :heavy_check_mark:  | More Stuff        | And Again    |
+| Fiducial locations        | :x:                 | More Stuff        | And Again    |
+| Line hues                 | :x:                 | More Stuff        | And Again    |
 
 ## API
+
 
 ## Attribution
 Developers are allowed to use RDTScan as they please provided that they abide by the project's licence: [BSD-3-Clause](LICENSE). However, we would greatly appreciate attribution where possible. For example, any conference or journal publications that result from a tool built with our library should cite the following paper (note that it is in submission):
