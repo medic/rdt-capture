@@ -2,17 +2,26 @@
 RDTScan is an open-source library for developers who are interested in creating Android apps that support the digital curation and interpretation of [rapid diagnostic tests (RDTs)](https://en.wikipedia.org/wiki/Rapid_diagnostic_test). RDTScan provides the following functionality:
 
 **1. Real-Time Quality Checking During Image Capture**
-checks image quality using image processing and provides real-time feedback to end-users so they can capture the clearest image possible of their RDT. 
+checks image quality using image processing and provides real-time feedback to end-users so they can capture the clearest image possible of their RDT. TODO
 
 **2. Robust Result Interpretation**
 Assuming a satisfactory image has been captured, RDTScan can post-process the image to emphasize any faint lines that may appear on the immunoassay. The end-user can view that image for themselves to make an informed decision about their test results. Alternatively, RDTScan provides an algorithm that interprets the test results on the end-user's behalf.
 
-RDTScan is designed to work with 
+RDTScan is designed to work with a variety of RDT designs, only requiring a single example image and some metadata about test itself. There are only a few cases where RDTScan is less likely to work:
+* Blank RDT cassettes with little or no lettering
+* RDTs with inconsistent patterns due to a QR code, bar code, etc.
 
-**Disclaimer:** Please note that the app has not yet been clinically validated.
+![Examples of bad RDTs](image.png)
+
+**Disclaimer:** Please note that although RDTScan has been tested through multiple in-lab studies and real-world deployments, the library has not been FDA-approved.
 
 ## Installation
 
+| **Data Field**          | **Data Type**     | **Description**    |
+| :---------------------- | :---------------- | :----------------- |
+| Template image          | More Stuff        | And Again    |
+| Result window corners   | Put Pipes In      | Like this    |
+| Control line position   | Put Pipes In      | Like this    |
 
 ## API
 
