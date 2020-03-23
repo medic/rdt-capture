@@ -1,18 +1,49 @@
 # Overview
-RDTScan is an open-source library for developers who are interested in developing Android apps for capturing and interpreting images of rapid diagnostic tests (RDTs). RDTScan checks image quality using image processing and provides real-time feedback to end-users so they can capture the clearest image possible of their RDT. 
-* Interpretation can be done by providing enhanced image
-* or by reading the lines themselves
+RDTScan is an open-source library for developers who are interested in creating Android apps that support the digital curation and interpretation of [rapid diagnostic tests (RDTs (https://en.wikipedia.org/wiki/Rapid_diagnostic_test))]. RDTScan provides the following functionality:
 
-This work is financial supported by the Bill and Melinda Gates Foundation. Please note that the app has not yet been clinically validated.
+**1. Real-Time Quality Checking During Image Capture**
+checks image quality using image processing and provides real-time feedback to end-users so they can capture the clearest image possible of their RDT. 
+
+**2. Robust Result Interpretation**
+Assuming a satisfactory image has been captured, RDTScan can post-process the image to emphasize any faint lines that may appear on the immunoassay. The end-user can view that image for themselves to make an informed decision about their test results. Alternatively, RDTScan provides an algorithm that interprets the test results on the end-user's behalf.
+
+RDTScan is designed to work with 
+
+**Disclaimer:** Please note that the app has not yet been clinically validated.
 
 ## Installation
+
 
 ## API
 
 ## Attribution
-RDTScan is open-source, so anybody is allowed to use it. However, we would greatly appreciate that people recognize us. Any publication that uses RDTScan should cite the following paper:
+Developers are allowed to use RDTScan as they please provided that they abide by the project's licence: [BSD-3-Clause](LICENSE). However, we would greatly appreciate attribution where possible. For example, any conference or journal publications that result from a tool built with our library should cite the following paper (note that it is in submission):
 
-WHICH PAPER?
+BibTex
+```
+@inproceedings{park2020supporting,
+  author = {Park, Chunjong and Mariakakis, Alex and Patel, Shwetak and Yang, Jane and Lassala, Diego and Johnson, Ari and Wassuna, Beatrice and Fall, Fatou and Soda Gaye, Marème and Holeman, Isaac},
+  title = {Supporting Smartphone-Based Image Capture of Rapid Diagnostic Tests in Low-Resource Settings},
+  booktitle = {Proceedings of the 2020 International Conference on Information and Communication Technologies and Development},
+  series = {ICTD '20},
+  year = {2020},
+  location = {Guayaquil, Ecuador},
+  pages = {145--156},
+  numpages = {12},
+  url = {TBD},
+  doi = {TBD},
+  publisher = {ACM},
+  address = {New York, NY, USA},
+}
+```
+
+Chicago-Style
+```
+Chunjong Park, Alex Mariakakis, Shwetak Patel, Jane Yang, Diego Lassala, Ari Johnson, Beatrice Wassuna, Fatou Fall, Marème Soda Gaye, Isaac Holeman. Supporting Smartphone-Based Image Capture of Rapid Diagnostic Tests in Low-Resource Settings. To appear in Proceedings of the 2020 International Conference on Information and Communication Technologies and Development. Association for Computing Machinery, New York, NY, USA, vol. 14. 2020. DOI: TBD
+```
+
+## Acknowledgement
+This work is financial supported by the [Bill and Melinda Gates Foundation](https://www.gatesfoundation.org/). 
 
 ## Licensing
 The software is provided under [BSD-3-Clause](LICENSE). Contributions to this project are accepted under the same license.
