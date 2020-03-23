@@ -30,14 +30,14 @@ RDTScan uses a SIFT feature-based template-matching approach for RDT recognition
 
 ## API
 # Table of Contents
-* [`configureCamera()`](#configureCamera())
+* [`configureCamera()`](###configureCamera())
 * [`detectRDT()`](#detectRDT())
 * [`checkSizePositionOrientation()`](#checkSizePositionOrientation())
 * [`checkFiducial()`](#checkFiducial())
 * [`checkBrightness()`](#checkBrightness())
 * [`checkSharpness()`](#checkSharpness())
 * [`captureRDT()`](#captureRDT())
-* [`interpretRDT()`](#interpretRDT())
+* [`interpretRDT()`](###interpretRDT())
 
 ### configureCamera()
 `configureCamera()`
