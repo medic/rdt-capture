@@ -9,24 +9,27 @@ Assuming a satisfactory image has been captured, RDTScan can post-process the im
 
 RDTScan uses a SIFT feature-based template-matching approach for RDT recognition. This means that unlike model-driven approaches that require a dataset of example images for model training, RDTScan only requires a single example image and some metadata about the test itself (e.g., relative position and meaning of each line). Although RDTScan is designed to be as generalizable as possible, its template-matching approach is less amenable to the following RDT characteristics:
 * Blank cassettes with little or no lettering
-* Inconsistent patterns (e.g., QR code, bar code, etc.)
+* Inconsistent patterns (e.g., QR code, bar code)
 
 <img src="readme_assets/rdt_examples.png" alt="Examples photographs of RDTs that work well and do not work well with RDTScan" width="300" class="center"/>
 
 **Disclaimer:** Although RDTScan has been tested through multiple in-lab studies and real-world deployments, this library has not been FDA-approved.
 
 ## Installation
+The best way to use this library is to clone this directory directly and build your app on top of the this codebase. This is because 
 
-| **Data Field**            | **Required?**       | **Data Type**     | **Description**    |
-| :------------------------ | :------------------ | :----------------- | :----------------- |
+TODO: mention NDK, OpenCV
+
+| **Data Field**            | **Required?**       | **Data Types**        | **Description**    |
+| :------------------------ | :------------------ | :---------------------------------- | :----------------- |
 | Template image            | :heavy_check_mark:  | Any image format accepted by OpenCV's [`imread()`](https://docs.opencv.org/3.4/d4/da8/group__imgcodecs.html#ga288b8b3da0892bd651fce07b3bbd3a56) method (e.g., `.jpg`, `.png`) | A non-skewed, tightly cropped photo of the RDT |
-| Result window corners     | :heavy_check_mark:  | (`int`, `int`) <br> (`int`, `int`) | The (x, y) pixel coordinates denoting the top-left  and bottom-right corners of the general region where the results will appear |
-| Control line position     | :heavy_check_mark:  | More Stuff        | And Again    |
-| Test line position(s)     | :heavy_check_mark:  | More Stuff        | And Again    |
-| Meanings of test lines(s) | :heavy_check_mark:  | More Stuff        | And Again    |
-| Desired RDT scale         | :heavy_check_mark:  | More Stuff        | And Again    |
-| Fiducial locations        | :x:                 | More Stuff        | And Again    |
-| Line hues                 | :x:                 | More Stuff        | And Again    |
+| Result window corners     | :heavy_check_mark:  | (`int`, `int`) <br> (`int`, `int`)  | The (x, y) pixel coordinates denoting the top-left and bottom-right corners of the general region where the results will appear |
+| Control line position     | :heavy_check_mark:  | `int`                               | The pixel position of the control line along the result window's wider axis |
+| Test line position(s)     | :heavy_check_mark:  | `int`(s)                            | The pixel position of the test line(s) along the result window's wider axis |
+| Meanings of test lines(s) | :heavy_check_mark:  | `String`(s)                         | The diagnostic decision that would be made if the corresponding line is visible and the test is performed correctly (e.g., `control`, `malaria Pf`) |
+| Desired RDT scale         | :heavy_check_mark:  | `float`                             | The ideal scale of the RDT relative to the width of the camera's standard image width |
+| Fiducial locations        | :x:                 | (`int`, `int`) <br> (`int`, `int`)  | The (x, y) pixel coordinates denoting the top-left and bottom-right corners of variable dark-colored markings that have a fixed location (e.g., QR code, bar code) |
+| Line hues                 | :x:                 | `int`(s)                            | The expected hues of the control and test lines (range: 0-179) |
 
 ## API
 # Table of Contents
@@ -122,7 +125,7 @@ Chunjong Park, Alex Mariakakis, Shwetak Patel, Jane Yang, Diego Lassala, Ari Joh
 ```
 
 ## Acknowledgement
-This work is financial supported by the [Bill and Melinda Gates Foundation](https://www.gatesfoundation.org/). 
+RDTScan is built for [Android](https://www.android.com/) devices and therefore inherently tied to the platform. To perform image processing on-device, RDTScan utilizes [OpenCV for Android](https://opencv.org/android/). This work is financial supported by the [Bill and Melinda Gates Foundation](https://www.gatesfoundation.org/). 
 
 ## Licensing
 The software is provided under [BSD-3-Clause](LICENSE). Contributions to this project are accepted under the same license.
