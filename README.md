@@ -1,5 +1,5 @@
 # Overview
-RDTScan is an open-source library for developers who are interested in creating Android apps that support the digital curation and interpretation of [rapid diagnostic tests (RDTs (https://en.wikipedia.org/wiki/Rapid_diagnostic_test))]. RDTScan provides the following functionality:
+RDTScan is an open-source library for developers who are interested in creating Android apps that support the digital curation and interpretation of [rapid diagnostic tests (RDTs)](https://en.wikipedia.org/wiki/Rapid_diagnostic_test). RDTScan provides the following functionality:
 
 **1. Real-Time Quality Checking During Image Capture**
 checks image quality using image processing and provides real-time feedback to end-users so they can capture the clearest image possible of their RDT. 
