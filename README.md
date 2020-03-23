@@ -11,7 +11,7 @@ RDTScan uses a SIFT feature-based template-matching approach for RDT recognition
 * Blank cassettes with little or no lettering
 * Inconsistent patterns (e.g., QR code, bar code, etc.)
 
-<img src="readme_assets/rdt_examples.png" alt="Examples photographs of RDTs that work well and do not work well with RDTScan" width="300"/>
+<img src="readme_assets/rdt_examples.png" alt="Examples photographs of RDTs that work well and do not work well with RDTScan" width="300" class="center"/>
 
 **Disclaimer:** Although RDTScan has been tested through multiple in-lab studies and real-world deployments, this library has not been FDA-approved.
 
@@ -29,7 +29,71 @@ RDTScan uses a SIFT feature-based template-matching approach for RDT recognition
 | Line hues                 | :x:                 | More Stuff        | And Again    |
 
 ## API
+# Table of Contents
+* [`configureCamera()`](#configureCamera())
+* [`detectRDT()`](#detectRDT())
+* [`checkSizePositionOrientation()`](#checkSizePositionOrientation())
+* [`checkFiducial()`](#checkFiducial())
+* [`checkBrightness()`](#checkBrightness())
+* [`checkSharpness()`](#checkSharpness())
+* [`captureRDT()`](#captureRDT())
+* [`interpretRDT()`](#interpretRDT())
 
+### configureCamera()
+`configureCamera()`
+Parameters:
+* N/A
+
+What does it do
+
+### detectRDT()
+`detectRDT()`
+Parameters:
+* N/A
+
+What does it do
+
+### checkSizePositionOrientation()
+`checkSizePositionOrientation()`
+Parameters:
+* N/A
+
+What does it do
+
+### checkFiducial()
+`checkFiducial()`
+Parameters:
+* N/A
+
+What does it do
+
+### checkBrightness()
+`checkBrightness()`
+Parameters:
+* N/A
+
+What does it do
+
+### checkSharpness()
+`checkSharpness()`
+Parameters:
+* N/A
+
+What does it do
+
+### captureRDT()
+`captureRDT()`
+Parameters:
+* N/A
+
+What does it do
+
+### interpretRDT()
+`interpretRDT()`
+Parameters:
+* N/A
+
+What does it do
 
 ## Attribution
 Developers are allowed to use RDTScan as they please provided that they abide by the project's licence: [BSD-3-Clause](LICENSE). However, we would greatly appreciate attribution where possible. For example, any conference or journal publications that result from a tool built with our library should cite the following paper (note that it is in submission):
