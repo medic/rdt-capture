@@ -1,10 +1,10 @@
 # Overview
 RDTScan is an open-source library for developers who are interested in creating Android apps that support the digital curation and interpretation of [rapid diagnostic tests (RDTs)](https://en.wikipedia.org/wiki/Rapid_diagnostic_test). RDTScan provides the following functionality:
 
-**1. Real-Time Quality Checking During Image Capture**
-checks image quality using image processing and provides real-time feedback to end-users so they can capture the clearest image possible of their RDT. TODO
+**1. Real-Time Quality Checking During Image Capture**  
+RDTScan uses image processing to check the quality of images intercepted from the smartphone's camera while the user moves their smartphone over the RDT. RDTScan provides functions for checking the blurriness and lighitng of incoming camera frames. If the RDT is detected within the image, RDTScan, also checks the scale and orientation of the RDT in the image. To help end-users capture the clearest image possible, RDTScan intelligently generates instructions based on these quality checks.
 
-**2. Robust Result Interpretation**
+**2. Robust Result Interpretation**  
 Assuming a satisfactory image has been captured, RDTScan can post-process the image to emphasize any faint lines that may appear on the immunoassay. The end-user can view that image for themselves to make an informed decision about their test results. Alternatively, RDTScan provides an algorithm that interprets the test results on the end-user's behalf.
 
 RDTScan is designed to work with a variety of RDT designs, only requiring a single example image and some metadata about test itself. There are only a few cases where RDTScan is less likely to work:
