@@ -11,7 +11,7 @@ RDTScan uses a SIFT feature-based template-matching approach for RDT recognition
 * Blank cassettes with little or no lettering
 * Inconsistent patterns (e.g., QR code, bar code)
 
-<img src="readme_assets/rdt_examples.png" alt="Examples photographs of RDTs that work well and do not work well with RDTScan" width="300" class="center"/>
+<center><img src="readme_assets/rdt_examples.png" alt="Examples photographs of RDTs that work well and do not work well with RDTScan" width="300"/></center>
 
 **Disclaimer:** Although RDTScan has been tested through multiple in-lab studies and real-world deployments, this library has not been FDA-approved.
 
