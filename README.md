@@ -41,6 +41,9 @@ RDTScan utilizes [OpenCV for Android](https://opencv.org/android/) for many of t
 # API
 ## Table of Contents
 ### Objects
+* [`RDT`](#RDT)
+* [`CaptureResult`](#captureResult)
+* [`InterpretationResult`](#interpretationResult)
 
 ### Methods
 * [`configureCamera()`](#configureCamera)
@@ -54,6 +57,33 @@ RDTScan utilizes [OpenCV for Android](https://opencv.org/android/) for many of t
 * [`captureRDT()`](#captureRDT)
 * [`enhanceResultWindow()`](#enhanceResultWindow)
 * [`interpretRDT()`](#interpretRDT)
+
+#### RDT
+**Signature:** `RDT(Context context, String rdtName)`  
+**Purpose:** xxx
+**Parameters:**
+* `xxx`: xxx
+
+**Attributes:**
+* `xxx`: xxx
+
+#### CaptureResult
+**Signature:** `xxx`  
+**Purpose:** xxx  
+**Parameters:**
+* `xxx`: xxx
+
+**Attributes:**
+* `xxx`: xxx
+
+#### InterpretationResult
+**Signature:** `xxx`  
+**Purpose:** xxx  
+**Parameters:**
+* `xxx`: xxx
+
+**Attributes:**
+* `xxx`: xxx
 
 #### configureCamera()
 **Signature:** `xxx`  
