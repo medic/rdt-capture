@@ -81,7 +81,7 @@ What does it do
 
 ### calculateBrightness()
 **Signature:** `float[] mBuff = calculateBrightness(Mat input)`  
-**Purpose:** Calculates the brightness histogram of the candidate video frame
+**Purpose:** Calculates the brightness histogram of the candidate video frame  
 **Parameters:**
 * `Mat input`: the candidate video frame
 **Returns:**
@@ -89,15 +89,23 @@ What does it do
 
 ### checkBrightness()
 **Signature:** `ExposureResult exposureResult = checkBrightness(Mat input)`  
-**Purpose:** Determines whether the candidate video frame has sufficient lighting without being too bright
+**Purpose:** Determines whether the candidate video frame has sufficient lighting without being too bright  
 **Parameters:**
 * `Mat input`: the candidate video frame
 **Returns:**
 * `ExposureResult exposureResult`: an `enum` object that describes whether `input` satisfies the brightness thresholds in the configuration file. `ExposureResult` has one of the following values: `UNDER_EXPOSED`, `NORMAL`, or `OVER_EXPOSED`
 
+### calculateSharpness()
+**Signature:** `double sharpness = calculateSharpness(Mat input)`  
+**Purpose:** Calculates the Laplacian variance of the candidate video frame  
+**Parameters:**
+* `Mat input`: the candidate video frame
+**Returns:**
+* `double sharpness`: the Laplacian variance of `input`
+
 ### checkSharpness()
 **Signature:** `boolean isSharp = checkSharpness(Mat input)`  
-**Purpose:** Determines whether the candidate video frame is focused
+**Purpose:** Determines whether the candidate video frame is focused  
 **Parameters:**
 * `Mat input`: the candidate video frame
 **Returns:**
