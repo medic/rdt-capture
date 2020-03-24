@@ -85,11 +85,10 @@ Parameters:
 What does it do
 
 ### checkSharpness()
-`checkSharpness()`
-Parameters:
-* N/A
-
-What does it do
+`checkSharpness(Mat input)`  
+**Purpose:** Determines whether the candidate video frame is focused enough for RDT interpretation
+**Parameters:**
+* `Mat input`: the candidate video frame
 
 ### captureRDT()
 `captureRDT()`
