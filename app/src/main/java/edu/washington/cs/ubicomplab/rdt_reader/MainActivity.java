@@ -27,6 +27,7 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.Spinner;
 import android.widget.TextView;
 
 import java.io.File;
@@ -113,10 +114,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             Intent intent = new Intent(this, ExpirationDateActivity.class);
             startActivity(intent);
         } else if (view.getId() == R.id.imagequalButton) {
-            EditText rdtName = (EditText) findViewById(R.id.rdtname);
+            Spinner rdtName = (Spinner) findViewById(R.id.rdtname);
             Intent intent = new Intent(this, ImageQualityActivity.class);
-            intent.putExtra("rdt_name", rdtName.getText().toString());
-            Log.d(TAG, "RDT Name: " +  rdtName.getText().toString());
+            intent.putExtra("rdt_name", rdtName.getSelectedItem().toString());
+            Log.d(TAG, "RDT Name: " +  rdtName.getSelectedItem().toString());
             startActivity(intent);
         } else if (view.getId() == R.id.camera2TestButton) {
 //            Intent intent = new Intent(this, ImageQualityOpencvActivity.class);

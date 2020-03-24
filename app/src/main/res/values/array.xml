@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string-array name="spinnerItems">
+        <item>quickvue</item>
+        <item>carestart</item>
+        <item>experimental</item>
+        <item>covid19</item>
+    </string-array>
+</resources>
