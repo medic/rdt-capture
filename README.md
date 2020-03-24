@@ -84,6 +84,7 @@ What does it do
 **Purpose:** Calculates the brightness histogram of the candidate video frame  
 **Parameters:**
 * `Mat input`: the candidate video frame
+
 **Returns:**
 * `float[] mBuff`: a 256-element histogram that quantifies the number of pixels at each brightness level for the greyscale version of `input`
 
@@ -92,6 +93,7 @@ What does it do
 **Purpose:** Determines whether the candidate video frame has sufficient lighting without being too bright  
 **Parameters:**
 * `Mat input`: the candidate video frame
+
 **Returns:**
 * `ExposureResult exposureResult`: an `enum` object that describes whether `input` satisfies the brightness thresholds in the configuration file. `ExposureResult` has one of the following values: `UNDER_EXPOSED`, `NORMAL`, or `OVER_EXPOSED`
 
@@ -100,6 +102,7 @@ What does it do
 **Purpose:** Calculates the Laplacian variance of the candidate video frame  
 **Parameters:**
 * `Mat input`: the candidate video frame
+
 **Returns:**
 * `double sharpness`: the Laplacian variance of `input`
 
@@ -108,6 +111,7 @@ What does it do
 **Purpose:** Determines whether the candidate video frame is focused  
 **Parameters:**
 * `Mat input`: the candidate video frame
+
 **Returns:**
 * `boolean isSharp`: whether `input` satisfies the sharpness threshold specified in the configuration file
 
