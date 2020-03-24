@@ -57,7 +57,7 @@ RDTScan utilizes [OpenCV for Android](https://opencv.org/android/) for many of t
 
 #### configureCamera()
 **Signature:** `xxx`  
-**Purpose:** xxx
+**Purpose:** xxx  
 **Parameters:**
 * `xxx`: xxx
 
@@ -102,7 +102,7 @@ RDTScan utilizes [OpenCV for Android](https://opencv.org/android/) for many of t
 
 #### checkSizePositionOrientation()
 **Signature:** `xxx`  
-**Purpose:** xxx
+**Purpose:** xxx  
 **Parameters:**
 * `xxx`: xxx
 
@@ -111,7 +111,7 @@ RDTScan utilizes [OpenCV for Android](https://opencv.org/android/) for many of t
 
 #### checkFiducial()
 **Signature:** `xxx`  
-**Purpose:** xxx
+**Purpose:** xxx  
 **Parameters:**
 * `xxx`: xxx
 
@@ -120,7 +120,7 @@ RDTScan utilizes [OpenCV for Android](https://opencv.org/android/) for many of t
 
 ### detectRDT()
 **Signature:** `xxx`  
-**Purpose:** xxx
+**Purpose:** xxx  
 **Parameters:**
 * `xxx`: xxx
 
@@ -129,7 +129,7 @@ RDTScan utilizes [OpenCV for Android](https://opencv.org/android/) for many of t
 
 #### captureRDT()
 **Signature:** `xxx`  
-**Purpose:** xxx
+**Purpose:** xxx  
 **Parameters:**
 * `xxx`: xxx
 
@@ -138,7 +138,7 @@ RDTScan utilizes [OpenCV for Android](https://opencv.org/android/) for many of t
 
 #### enhanceResultWindow()
 **Signature:** `xxx`  
-**Purpose:** xxx
+**Purpose:** xxx  
 **Parameters:**
 * `xxx`: xxx
 
