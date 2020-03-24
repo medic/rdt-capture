@@ -40,46 +40,31 @@ RDTScan utilizes [OpenCV for Android](https://opencv.org/android/) for many of t
 
 # API
 ## Table of Contents
+### Objects
+
+### Methods
 * [`configureCamera()`](#configureCamera)
-* [`detectRDT()`](#detectRDT)
-* [`checkSizePositionOrientation()`](#checkSizePositionOrientation)
-* [`checkFiducial()`](#checkFiducial)
 * [`calculateBrightness()`](#calculateBrightness)
 * [`checkBrightness()`](#checkBrightness)
 * [`calculateSharpness()`](#calculateSharpness)
 * [`checkSharpness()`](#checkSharpness)
+* [`checkSizePositionOrientation()`](#checkSizePositionOrientation)
+* [`checkFiducial()`](#checkFiducial)
+* [`detectRDT()`](#detectRDT)
 * [`captureRDT()`](#captureRDT)
+* [`enhanceResultWindow()`](#enhanceResultWindow)
 * [`interpretRDT()`](#interpretRDT)
 
-### configureCamera()
-`configureCamera()`
-Parameters:
-* N/A
+#### configureCamera()
+**Signature:** `xxx`  
+**Purpose:** xxx
+**Parameters:**
+* `xxx`: xxx
 
-What does it do
+**Returns:**
+* `xxx`: xxx
 
-### detectRDT()
-`detectRDT()`
-Parameters:
-* N/A
-
-What does it do
-
-### checkSizePositionOrientation()
-`checkSizePositionOrientation()`
-Parameters:
-* N/A
-
-What does it do
-
-### checkFiducial()
-`checkFiducial()`
-Parameters:
-* N/A
-
-What does it do
-
-### calculateBrightness()
+#### calculateBrightness()
 **Signature:** `float[] mBuff = calculateBrightness(Mat input)`  
 **Purpose:** Calculates the brightness histogram of the candidate video frame  
 **Parameters:**
@@ -88,7 +73,7 @@ What does it do
 **Returns:**
 * `float[] mBuff`: a 256-element histogram that quantifies the number of pixels at each brightness level for the greyscale version of `input`
 
-### checkBrightness()
+#### checkBrightness()
 **Signature:** `ExposureResult exposureResult = checkBrightness(Mat input)`  
 **Purpose:** Determines whether the candidate video frame has sufficient lighting without being too bright  
 **Parameters:**
@@ -97,7 +82,7 @@ What does it do
 **Returns:**
 * `ExposureResult exposureResult`: an `enum` object that describes whether `input` satisfies the brightness thresholds in the configuration file. `ExposureResult` has one of the following values: `UNDER_EXPOSED`, `NORMAL`, or `OVER_EXPOSED`
 
-### calculateSharpness()
+#### calculateSharpness()
 **Signature:** `double sharpness = calculateSharpness(Mat input)`  
 **Purpose:** Calculates the Laplacian variance of the candidate video frame  
 **Parameters:**
@@ -106,7 +91,7 @@ What does it do
 **Returns:**
 * `double sharpness`: the Laplacian variance of `input`
 
-### checkSharpness()
+#### checkSharpness()
 **Signature:** `boolean isSharp = checkSharpness(Mat input)`  
 **Purpose:** Determines whether the candidate video frame is focused  
 **Parameters:**
@@ -115,19 +100,60 @@ What does it do
 **Returns:**
 * `boolean isSharp`: whether `input` satisfies the sharpness threshold specified in the configuration file
 
-### captureRDT()
-`captureRDT()`
-Parameters:
-* N/A
+#### checkSizePositionOrientation()
+**Signature:** `xxx`  
+**Purpose:** xxx
+**Parameters:**
+* `xxx`: xxx
 
-What does it do
+**Returns:**
+* `xxx`: xxx
 
-### interpretRDT()
-`interpretRDT()`
-Parameters:
-* N/A
+#### checkFiducial()
+**Signature:** `xxx`  
+**Purpose:** xxx
+**Parameters:**
+* `xxx`: xxx
 
-What does it do
+**Returns:**
+* `xxx`: xxx
+
+### detectRDT()
+**Signature:** `xxx`  
+**Purpose:** xxx
+**Parameters:**
+* `xxx`: xxx
+
+**Returns:**
+* `xxx`: xxx
+
+#### captureRDT()
+**Signature:** `xxx`  
+**Purpose:** xxx
+**Parameters:**
+* `xxx`: xxx
+
+**Returns:**
+* `xxx`: xxx
+
+#### enhanceResultWindow()
+**Signature:** `xxx`  
+**Purpose:** xxx
+**Parameters:**
+* `xxx`: xxx
+
+**Returns:**
+* `xxx`: xxx
+
+#### interpretResult()
+**Signature:** `InterpretationResult interpResult = interpretResult(Mat inputMat, MatOfPoint2f boundary)`
+**Purpose:** 
+**Parameters:**
+* `Mat inputMat`: the image known to have a clear RDT in the video frame
+* `MatOfPoint2f boundary`: the corners of the bounding box around the detected RDT
+
+**Returns:**
+* `InterpretationResult interpResult`: 
 
 ## Attribution
 Developers are allowed to use RDTScan as they please provided that they abide by the project's licence: [BSD-3-Clause](LICENSE). However, we would greatly appreciate attribution where possible. For example, any conference or journal publications that result from a tool built with our library should cite the following paper (note that it is in submission):
