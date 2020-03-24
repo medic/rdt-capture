@@ -44,7 +44,9 @@ RDTScan utilizes [OpenCV for Android](https://opencv.org/android/) for many of t
 * [`detectRDT()`](#detectRDT)
 * [`checkSizePositionOrientation()`](#checkSizePositionOrientation)
 * [`checkFiducial()`](#checkFiducial)
+* [`calculateBrightness()`](#calculateBrightness)
 * [`checkBrightness()`](#checkBrightness)
+* [`calculateSharpness()`](#calculateSharpness)
 * [`checkSharpness()`](#checkSharpness)
 * [`captureRDT()`](#captureRDT)
 * [`interpretRDT()`](#interpretRDT)
@@ -77,18 +79,29 @@ Parameters:
 
 What does it do
 
-### checkBrightness()
-`checkBrightness()`
-Parameters:
-* N/A
-
-What does it do
-
-### checkSharpness()
-`checkSharpness(Mat input)`  
-**Purpose:** Determines whether the candidate video frame is focused enough for RDT interpretation
+### calculateBrightness()
+**Signature:** `float[] mBuff = calculateBrightness(Mat input)`  
+**Purpose:** Calculates the brightness histogram of the candidate video frame
 **Parameters:**
 * `Mat input`: the candidate video frame
+**Returns:**
+* `float[] mBuff`: a 256-element histogram that quantifies the number of pixels at each brightness level for the greyscale version of `input`
+
+### checkBrightness()
+**Signature:** `ExposureResult exposureResult = checkBrightness(Mat input)`  
+**Purpose:** Determines whether the candidate video frame has sufficient lighting without being too bright
+**Parameters:**
+* `Mat input`: the candidate video frame
+**Returns:**
+* `ExposureResult exposureResult`: an `enum` object that describes whether `input` satisfies the brightness thresholds in the configuration file. `ExposureResult` has one of the following values: `UNDER_EXPOSED`, `NORMAL`, or `OVER_EXPOSED`
+
+### checkSharpness()
+**Signature:** `boolean isSharp = checkSharpness(Mat input)`  
+**Purpose:** Determines whether the candidate video frame is focused
+**Parameters:**
+* `Mat input`: the candidate video frame
+**Returns:**
+* `boolean isSharp`: whether `input` satisfies the sharpness threshold specified in the configuration file
 
 ### captureRDT()
 `captureRDT()`
