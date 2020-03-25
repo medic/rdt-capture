@@ -68,7 +68,7 @@ The information
 * `String rdtName`: the `String` used to reference the RDT design in `config.json`
 
 #### CaptureResult
-**Signature:** `CaptureResult(boolean allChecksPassed, Mat resultMat, boolean fiducial, ExposureResult exposureResult, SizeResult sizeResult,  boolean isCentered, boolean isRightOrientation, double angle, boolean isSharp, boolean isShadow, MatOfPoint2f boundary, boolean flashEnabled`  
+**Signature:** `CaptureResult(boolean allChecksPassed, Mat resultMat, boolean fiducial, ExposureResult exposureResult, SizeResult sizeResult,  boolean isCentered, boolean isRightOrientation, double angle, boolean isSharp, boolean isShadow, MatOfPoint2f boundary, boolean flashEnabled)`  
 **Purpose:** Holds all of the parameters   
 **Parameters:**
 * `boolean allChecksPassed`: xxx
@@ -80,10 +80,10 @@ The information
 **Signature:** `InterpretationResult(Mat resultMat, boolean topLine, boolean middleLine, boolean bottomLine)`  
 **Purpose:** xxx  
 **Parameters:**
-* `Mat resultMat`: xxx
-* `boolean topLine`: xxx
-* `boolean middleLine`: xxx
-* `boolean bottomLine`: xxx
+* `Mat resultMat`: a cropped version of the image known to have a clear RDT in the video frame so that only the result window is showing
+* `boolean topLine`: whether the top line was detected in the result window
+* `boolean middleLine`: whether the middle line was detected in the result window
+* `boolean bottomLine`: whether the bottom line was detected in the result window
 
 #### configureCamera()
 **Signature:** `xxx`  
