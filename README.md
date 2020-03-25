@@ -41,13 +41,12 @@ The information
 | Line hues                 | :heavy_minus_sign: | `int`           | The expected hues of the control and test lines (range: 0-179) |
 
 # API
-## Table of Contents
-### Objects
+## Objects
 * [`RDT`](#RDT)
 * [`CaptureResult`](#captureResult)
 * [`InterpretationResult`](#interpretationResult)
 
-### Methods
+## Methods
 * [`configureCamera()`](#configureCamera)
 * [`calculateBrightness()`](#calculateBrightness)
 * [`checkBrightness()`](#checkBrightness)
@@ -60,14 +59,14 @@ The information
 * [`enhanceResultWindow()`](#enhanceResultWindow)
 * [`interpretRDT()`](#interpretRDT)
 
-#### RDT
+### RDT
 **Signature:** `RDT(Context context, String rdtName)`  
 **Purpose:** Holds all of the parameters that are loaded from the configuration file for the RDT  
 **Parameters:**
 * `Context context`: the `Context` object for the app's `Activity` 
 * `String rdtName`: the `String` used to reference the RDT design in `config.json`
 
-#### CaptureResult
+### CaptureResult
 **Signature:** `CaptureResult(boolean allChecksPassed, Mat resultMat, boolean fiducial, ExposureResult exposureResult, SizeResult sizeResult,  boolean isCentered, boolean isRightOrientation, double angle, boolean isSharp, boolean isShadow, MatOfPoint2f boundary, boolean flashEnabled)`  
 **Purpose:** Holds all of the parameters   
 **Parameters:**
@@ -76,7 +75,7 @@ The information
 * `boolean fiducial`: xxx
 * `ExposureResult exposureResult`: xxx
 
-#### InterpretationResult
+### InterpretationResult
 **Signature:** `InterpretationResult(Mat resultMat, boolean topLine, boolean middleLine, boolean bottomLine)`  
 **Purpose:** xxx  
 **Parameters:**
@@ -85,7 +84,7 @@ The information
 * `boolean middleLine`: whether the middle line was detected in the result window
 * `boolean bottomLine`: whether the bottom line was detected in the result window
 
-#### configureCamera()
+### configureCamera()
 **Signature:** `xxx`  
 **Purpose:** xxx  
 **Parameters:**
@@ -94,7 +93,7 @@ The information
 **Returns:**
 * `xxx`: xxx
 
-#### calculateBrightness()
+### calculateBrightness()
 **Signature:** `float[] mBuff = calculateBrightness(Mat input)`  
 **Purpose:** Calculates the brightness histogram of the candidate video frame  
 **Parameters:**
@@ -112,7 +111,7 @@ The information
 **Returns:**
 * `ExposureResult exposureResult`: an `enum` object that describes whether `input` satisfies the brightness thresholds in the configuration file. `ExposureResult` has one of the following values: `UNDER_EXPOSED`, `NORMAL`, or `OVER_EXPOSED`
 
-#### calculateSharpness()
+### calculateSharpness()
 **Signature:** `double sharpness = calculateSharpness(Mat input)`  
 **Purpose:** Calculates the Laplacian variance of the candidate video frame  
 **Parameters:**
@@ -121,7 +120,7 @@ The information
 **Returns:**
 * `double sharpness`: the Laplacian variance of `input`
 
-#### checkSharpness()
+### checkSharpness()
 **Signature:** `boolean isSharp = checkSharpness(Mat input)`  
 **Purpose:** Determines whether the candidate video frame is focused  
 **Parameters:**
@@ -130,7 +129,7 @@ The information
 **Returns:**
 * `boolean isSharp`: whether `input` satisfies the sharpness threshold specified in the configuration file
 
-#### checkSizePositionOrientation()
+### checkSizePositionOrientation()
 **Signature:** `xxx`  
 **Purpose:** xxx  
 **Parameters:**
@@ -139,7 +138,7 @@ The information
 **Returns:**
 * `xxx`: xxx
 
-#### checkFiducial()
+### checkFiducial()
 **Signature:** `xxx`  
 **Purpose:** xxx  
 **Parameters:**
@@ -157,7 +156,7 @@ The information
 **Returns:**
 * `xxx`: xxx
 
-#### captureRDT()
+### captureRDT()
 **Signature:** `xxx`  
 **Purpose:** xxx  
 **Parameters:**
@@ -166,7 +165,7 @@ The information
 **Returns:**
 * `xxx`: xxx
 
-#### enhanceResultWindow()
+### enhanceResultWindow()
 **Signature:** `xxx`  
 **Purpose:** xxx  
 **Parameters:**
@@ -175,7 +174,7 @@ The information
 **Returns:**
 * `xxx`: xxx
 
-#### interpretResult()
+### interpretResult()
 **Signature:** `InterpretationResult interpResult = interpretResult(Mat inputMat, MatOfPoint2f boundary)`
 **Purpose:** 
 **Parameters:**
