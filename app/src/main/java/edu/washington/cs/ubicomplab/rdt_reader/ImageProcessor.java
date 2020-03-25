@@ -215,6 +215,8 @@ public class ImageProcessor {
         //check sharpness (refactored)
         boolean isSharp = checkSharpness(greyMat.submat(getViewfinderRect(greyMat)));
 
+        passed = exposureResult == ExposureResult.NORMAL && isSharp;
+
         //preform detectRDT only if those two quality checks are passed
         if (exposureResult == ExposureResult.NORMAL && isSharp) {
 
@@ -235,7 +237,7 @@ public class ImageProcessor {
                 angle = measureOrientation(boundary);
             }
 
-            passed = sizeResult == SizeResult.RIGHT_SIZE && isCentered && isRightOrientation;
+            passed = passed && sizeResult == SizeResult.RIGHT_SIZE && isCentered && isRightOrientation;
 
             boolean fiducial = false;
             if (passed) {
@@ -257,7 +259,8 @@ public class ImageProcessor {
             //check for glare
             boolean isGlared = false;
             if (passed)
-                 isGlared = checkIfGlared(croppedMat, croppedBoundary);
+                isGlared = checkIfGlared(croppedMat, croppedBoundary);
+                passed = passed && !isGlared;
 
             return new CaptureResult(passed, croppedMat, fiducial, exposureResult, sizeResult, isCentered, isRightOrientation, angle, isSharp, false, isGlared, croppedBoundary, flashEnabled);
         }
@@ -270,10 +273,7 @@ public class ImageProcessor {
 
     private boolean checkIfGlared(Mat inputMat, MatOfPoint2f boundary) {
         Mat resultWindow = cropResultWindow(inputMat, boundary);
-        saveImage(inputMat);
-        saveImage(resultWindow);
-        resultWindow = enhanceResultWindow(resultWindow, new Size(5, resultWindow.cols()));
-        saveImage(resultWindow);
+        //resultWindow = enhanceResultWindow(resultWindow, new Size(5, resultWindow.cols()));
 
         Mat hsl = new Mat();
         cvtColor(resultWindow, hsl, COLOR_BGR2HLS);
@@ -295,7 +295,7 @@ public class ImageProcessor {
             }
         }
 
-        Log.d(TAG, String.format("maxWhite: %d, clippingCount: %.2f", maxWhite, clippingCount));
+        Log.d(TAG, String.format("maxWhite: %d, clippingCount: %.5f", maxWhite, clippingCount));
 
         boolean isGlared = maxWhite == 255 && clippingCount > GLARE_WHITE_COUNT;
 
@@ -515,10 +515,12 @@ public class ImageProcessor {
         return new MatOfPoint2f(boundaryPts);
     }
 
-    public int getInstructionText(SizeResult sizeResult, boolean isCentered, boolean isRightOrientation) {
+    public int getInstructionText(SizeResult sizeResult, boolean isCentered, boolean isGlared, boolean isRightOrientation) {
         int instructions = R.string.instruction_pos;
 
-        if (sizeResult == SizeResult.RIGHT_SIZE && isCentered && isRightOrientation){
+        if (isGlared) {
+            instructions = R.string.instruction_glare;
+        } else if (sizeResult == SizeResult.RIGHT_SIZE && isCentered && isRightOrientation){
             instructions = R.string.instruction_detected;
         } else if (mMoveCloserCount > MOVE_CLOSER_COUNT) {
             if (sizeResult != SizeResult.INVALID && sizeResult == SizeResult.SMALL) {
@@ -535,9 +537,9 @@ public class ImageProcessor {
 
     }
 
-    public String[] getQualityCheckText(SizeResult sizeResult, boolean isCentered, boolean isRightOrientation, boolean isSharp, ExposureResult exposureResult) {
+    public String[] getQualityCheckText(SizeResult sizeResult, boolean isCentered, boolean isRightOrientation, boolean isSharp, boolean isGlared, ExposureResult exposureResult) {
 
-        String[] texts = new String[4];
+        String[] texts = new String[5];
 
         texts[0] = isSharp ? "&#x2713; Sharpness: passed": "Sharpness: failed";
         if (exposureResult == ExposureResult.NORMAL) {
@@ -549,7 +551,8 @@ public class ImageProcessor {
         }
 
         texts[2] = sizeResult == SizeResult.RIGHT_SIZE && isCentered && isRightOrientation ? "&#x2713; Position/Size: passed": "Position/Size: failed";
-        texts[3] = "&#x2713; Shadow: passed";
+        texts[3] = isGlared ? "&#x2713; No glare: passed" : "No glare: failed";
+        texts[4] = "&#x2713; Shadow: passed";
 
         return texts;
 
