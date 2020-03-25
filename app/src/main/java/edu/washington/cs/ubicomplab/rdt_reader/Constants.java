@@ -22,7 +22,9 @@ public final class Constants {
     public static double SHARPNESS_THRESHOLD = 0.8;
     public static double OVER_EXP_THRESHOLD = 255;
     public static double UNDER_EXP_THRESHOLD = 120;
-    public static double OVER_EXP_WHITE_COUNT = 100;
+    public static double OVER_EXP_WHITE_COUNT = 0.2;
+
+    public static double GLARE_WHITE_COUNT = 0.001;
 
     public static double SIZE_THRESHOLD = 0.15;
     public static double POSITION_THRESHOLD = 0.15;

@@ -342,7 +342,7 @@ public class ImageQualityView extends LinearLayout implements View.OnClickListen
             mActivity.runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
-                    displayQualityResult(captureResult.sizeResult, captureResult.isCentered, captureResult.isRightOrientation, captureResult.isSharp, captureResult.exposureResult);
+                    displayQualityResult(captureResult.sizeResult, captureResult.isCentered, captureResult.isRightOrientation, captureResult.isSharp, captureResult.isGlared, captureResult.exposureResult);
                 }
             });
 
@@ -932,7 +932,7 @@ public class ImageQualityView extends LinearLayout implements View.OnClickListen
 
     }
 
-    private void displayQualityResult(ImageProcessor.SizeResult sizeResult, boolean isCentered, boolean isRightOrientation, boolean isSharp, ImageProcessor.ExposureResult exposureResult) {
+    private void displayQualityResult(ImageProcessor.SizeResult sizeResult, boolean isCentered, boolean isRightOrientation, boolean isSharp, boolean isGlared, ImageProcessor.ExposureResult exposureResult) {
         if (!showFeedback) {
             return;
         }
@@ -944,10 +944,10 @@ public class ImageQualityView extends LinearLayout implements View.OnClickListen
         }
 
         if (currFocusState == FocusState.FOCUSED) {
-            String[] qChecks = processor.getQualityCheckText(sizeResult, isCentered, isRightOrientation, isSharp, exposureResult);
+            String[] qChecks = processor.getQualityCheckText(sizeResult, isCentered, isRightOrientation, isSharp, isGlared, exposureResult);
             String message = String.format(getResources().getString(R.string.quality_msg_format_text), qChecks[0], qChecks[1], qChecks[2], qChecks[3]);
 
-            mInstructionText.setText(getResources().getText(processor.getInstructionText(sizeResult, isCentered, isRightOrientation)));
+            mInstructionText.setText(getResources().getText(processor.getInstructionText(sizeResult, isCentered, isGlared, isRightOrientation)));
 
             mImageQualityFeedbackView.setText(Html.fromHtml(message));
         } else if (currFocusState == FocusState.INACTIVE) {
