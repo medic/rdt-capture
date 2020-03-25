@@ -10,6 +10,7 @@ Assuming a satisfactory image has been captured, RDTScan can post-process the im
 RDTScan uses a SIFT feature-based template-matching approach for RDT recognition. This means that unlike model-driven approaches that require a dataset of example images for model training, RDTScan only requires a single example image and some metadata about the test itself (e.g., relative position and meaning of each line). Although RDTScan is designed to be as generalizable as possible, its template-matching approach is less amenable to the following RDT characteristics:
 * Blank cassettes with little or no lettering
 * Inconsistent patterns (e.g., QR code, bar code)
+* More than three result lines
 
 <center><img src="readme_assets/rdt_examples.png" alt="Examples photographs of RDTs that work well and do not work well with RDTScan" width="300"/></center>
 
@@ -17,7 +18,7 @@ RDTScan uses a SIFT feature-based template-matching approach for RDT recognition
 
 # Installation
 RDTScan utilizes [OpenCV for Android](https://opencv.org/android/) for many of the image processing steps, which in turn relies on [Android's Native Development Kit (NDK)](https://developer.android.com/ndk/). Setting up these resources can be difficult for some developers, so there are two options for getting started with RDTScan:
-* **No existing project:** If you are making a smartphone app from scratch, you can simply clone the repository directly and build your app on top of what has already been provided. This repository has all of the resources properly configured along with a fully-functioning user interface.
+* **No existing project:** If you are making a smartphone app from scratch, you can simply clone the repository directly and build your app on top of what has already been provided. This repository has all of the dependencies properly configured along with a fully-functioning app that developers can use to get started.
 * **Existing project:** If you have a smartphone app that has already been made and you are looking to add RDTScan to it, you will still need to add OpenCV for Android to your project. The [official tutorial](https://docs.opencv.org/2.4/doc/tutorials/introduction/android_binary_package/O4A_SDK.html) for doing this is fairly outdated, but there are plenty of other tutorials out there depending on your environment. Once you have done that, copy `RDT.java`, `ImageProcessor.java`, and `RDTCameraView.java` over to your project.
 
 ## Troubleshooting:
@@ -26,6 +27,7 @@ RDTScan utilizes [OpenCV for Android](https://opencv.org/android/) for many of t
   2. Open the `local.properties` file and add the following line: `ndk.dir=NDK_HOME`
 
 # Configuration
+The information 
 | **Data Field**            | **Required?**       | **Data Types** | **Description**    |
 | :------------------------ | :-----------------: | :------------- | :----------------- |
 | Template image            | :heavy_check_mark:  | Any image format accepted by OpenCV's [`imread()`](https://docs.opencv.org/3.4/d4/da8/group__imgcodecs.html#ga288b8b3da0892bd651fce07b3bbd3a56) method (e.g., `.jpg`, `.png`) | A non-skewed, tightly cropped photo of the RDT |
@@ -60,30 +62,28 @@ RDTScan utilizes [OpenCV for Android](https://opencv.org/android/) for many of t
 
 #### RDT
 **Signature:** `RDT(Context context, String rdtName)`  
-**Purpose:** xxx
+**Purpose:** Holds all of the parameters that are loaded from the configuration file for the RDT  
 **Parameters:**
-* `xxx`: xxx
-
-**Attributes:**
-* `xxx`: xxx
+* `Context context`: the `Context` object for the app's `Activity` 
+* `String rdtName`: the `String` used to reference the RDT design in `config.json`
 
 #### CaptureResult
-**Signature:** `xxx`  
-**Purpose:** xxx  
+**Signature:** `CaptureResult(boolean allChecksPassed, Mat resultMat, boolean fiducial, ExposureResult exposureResult, SizeResult sizeResult,  boolean isCentered, boolean isRightOrientation, double angle, boolean isSharp, boolean isShadow, MatOfPoint2f boundary, boolean flashEnabled`  
+**Purpose:** Holds all of the parameters   
 **Parameters:**
-* `xxx`: xxx
-
-**Attributes:**
-* `xxx`: xxx
+* `boolean allChecksPassed`: xxx
+* `Mat resultMat`: xxx
+* `boolean fiducial`: xxx
+* `ExposureResult exposureResult`: xxx
 
 #### InterpretationResult
-**Signature:** `xxx`  
+**Signature:** `InterpretationResult(Mat resultMat, boolean topLine, boolean middleLine, boolean bottomLine)`  
 **Purpose:** xxx  
 **Parameters:**
-* `xxx`: xxx
-
-**Attributes:**
-* `xxx`: xxx
+* `Mat resultMat`: xxx
+* `boolean topLine`: xxx
+* `boolean middleLine`: xxx
+* `boolean bottomLine`: xxx
 
 #### configureCamera()
 **Signature:** `xxx`  
