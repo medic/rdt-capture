@@ -41,8 +41,10 @@ The information
 | Line hues                 | :heavy_minus_sign: | `int`           | The expected hues of the control and test lines (range: 0-179) |
 
 # API
-## Objects
+## Classes/Enums
 * [`RDT`](#RDT)
+* [`ExposureResult`](#exposureResult)
+* [`SizeResult`](#sizeResult)
 * [`CaptureResult`](#captureResult)
 * [`InterpretationResult`](#interpretationResult)
 
@@ -66,14 +68,40 @@ The information
 * `Context context`: the `Context` object for the app's `Activity` 
 * `String rdtName`: the `String` used to reference the RDT design in `config.json`
 
+### ExposureResult
+**Signature:** `enum ExposureResult`  
+**Purpose:** TODO  
+**Possible Values:**
+* `UNDER_EXPOSED`: 
+* `NORMAL`:
+* `OVER_EXPOSED`:
+
+### SizeResult
+**Signature:** `enum SizeResult`  
+**Purpose:** TODO  
+**Possible Values:**
+* `RIGHT_SIZE`: 
+* `LARGE`:
+* `SMALL`:
+* `INVALID`:
+
+
 ### CaptureResult
-**Signature:** `CaptureResult(boolean allChecksPassed, Mat resultMat, boolean fiducial, ExposureResult exposureResult, SizeResult sizeResult,  boolean isCentered, boolean isRightOrientation, double angle, boolean isSharp, boolean isShadow, MatOfPoint2f boundary, boolean flashEnabled)`  
-**Purpose:** Holds all of the parameters   
+**Signature:** `CaptureResult(boolean allChecksPassed, Mat resultMat, boolean fiducial, ExposureResult exposureResult, SizeResult sizeResult, boolean isCentered, boolean isRightOrientation, double angle, boolean isSharp, boolean isShadow, MatOfPoint2f boundary, boolean flashEnabled)`  
+**Purpose:** Holds all of the parameters that describe whether a candidate video framed passed all of the quality checks  
 **Parameters:**
 * `boolean allChecksPassed`: xxx
 * `Mat resultMat`: xxx
 * `boolean fiducial`: xxx
 * `ExposureResult exposureResult`: xxx
+* `SizeResult sizeResult`: xxx
+* `boolean isCentered`: xxx
+* `boolean isRightOrientation`: xxx
+* `double angle`: xxx
+* `boolean isSharp`: xxx
+* `boolean isShadow`: xxx
+* `MatOfPoint2f boundary`: xxx
+* `boolean flashEnabled`: xxx
 
 ### InterpretationResult
 **Signature:** `InterpretationResult(Mat resultMat, boolean topLine, boolean middleLine, boolean bottomLine)`  
@@ -102,14 +130,14 @@ The information
 **Returns:**
 * `float[] mBuff`: a 256-element histogram that quantifies the number of pixels at each brightness level for the greyscale version of `input`
 
-#### checkBrightness()
+### checkBrightness()
 **Signature:** `ExposureResult exposureResult = checkBrightness(Mat input)`  
 **Purpose:** Determines whether the candidate video frame has sufficient lighting without being too bright  
 **Parameters:**
 * `Mat input`: the candidate video frame
 
 **Returns:**
-* `ExposureResult exposureResult`: an `enum` object that describes whether `input` satisfies the brightness thresholds in the configuration file. `ExposureResult` has one of the following values: `UNDER_EXPOSED`, `NORMAL`, or `OVER_EXPOSED`
+* `ExposureResult exposureResult`: whether `input` satisfies the brightness thresholds in the configuration file.
 
 ### calculateSharpness()
 **Signature:** `double sharpness = calculateSharpness(Mat input)`  
