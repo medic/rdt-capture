@@ -50,8 +50,8 @@ import java.util.Date;
 import java.util.List;
 
 import edu.washington.cs.ubicomplab.rdt_reader.R;
-import edu.washington.cs.ubicomplab.rdt_reader.models.RdtCaptureResult;
-import edu.washington.cs.ubicomplab.rdt_reader.models.RdtInterpretationResult;
+import edu.washington.cs.ubicomplab.rdt_reader.models.RDTCaptureResult;
+import edu.washington.cs.ubicomplab.rdt_reader.models.RDTInterpretationResult;
 import edu.washington.cs.ubicomplab.rdt_reader.utils.Constants;
 import edu.washington.cs.ubicomplab.rdt_reader.utils.ImageUtil;
 
@@ -138,7 +138,7 @@ public class ImageProcessor {
     }
 
 
-    public RdtCaptureResult captureRDT(Mat inputMat, boolean flashEnabled) {
+    public RDTCaptureResult captureRDT(Mat inputMat, boolean flashEnabled) {
         Mat greyMat = new Mat();
         cvtColor(inputMat, greyMat, Imgproc.COLOR_RGBA2GRAY);
         double matchDistance = -1.0;
@@ -197,11 +197,11 @@ public class ImageProcessor {
                 isGlared = checkIfGlared(croppedMat, croppedBoundary);
                 passed = passed && !isGlared;
 
-            return new RdtCaptureResult(passed, croppedMat, fiducial, exposureResult, sizeResult, isCentered, isRightOrientation, angle, isSharp, false, isGlared, croppedBoundary, flashEnabled);
+            return new RDTCaptureResult(passed, croppedMat, fiducial, exposureResult, sizeResult, isCentered, isRightOrientation, angle, isSharp, false, isGlared, croppedBoundary, flashEnabled);
         }
         else {
             greyMat.release();
-            return new RdtCaptureResult(passed, null, false, exposureResult, SizeResult.INVALID, false, false, 0.0, isSharp, false, false, new MatOfPoint2f(), flashEnabled);
+            return new RDTCaptureResult(passed, null, false, exposureResult, SizeResult.INVALID, false, false, 0.0, isSharp, false, false, new MatOfPoint2f(), flashEnabled);
         }
 
     }
@@ -531,18 +531,18 @@ public class ImageProcessor {
         return result;
     }
 
-    public RdtInterpretationResult interpretResult(Bitmap img) {
+    public RDTInterpretationResult interpretResult(Bitmap img) {
         Mat resultMat = new Mat();
         Utils.bitmapToMat(img, resultMat);
         return interpretResult(resultMat);
     }
 
-    public RdtInterpretationResult interpretResult(Mat inputMat, MatOfPoint2f boundary) {
+    public RDTInterpretationResult interpretResult(Mat inputMat, MatOfPoint2f boundary) {
         Mat resultMat = cropResultWindow(inputMat, boundary);
         boolean topLine, middleLine, bottomLine;
 
         if (resultMat.width() == 0 && resultMat.height() == 0) {
-            return new RdtInterpretationResult(resultMat, false, false, false, mRDT.topLineName, mRDT.middleLineName,
+            return new RDTInterpretationResult(resultMat, false, false, false, mRDT.topLineName, mRDT.middleLineName,
                         mRDT.bottomLineName);
         }
 
@@ -576,7 +576,7 @@ public class ImageProcessor {
         middleLine = results[1];
         bottomLine = results[2];
 
-        return new RdtInterpretationResult(resultMat, topLine, middleLine, bottomLine, mRDT.topLineName, mRDT.middleLineName, mRDT.topLineName);
+        return new RDTInterpretationResult(resultMat, topLine, middleLine, bottomLine, mRDT.topLineName, mRDT.middleLineName, mRDT.topLineName);
     }
 
     public boolean detectBlood(Mat mat, double bloodThreshold) {
@@ -584,7 +584,7 @@ public class ImageProcessor {
         return bloodPercentage > BLOOD_PERCENTAGE_THRESHOLD;
     }
 
-    public RdtInterpretationResult interpretResult(Mat inputMat) {
+    public RDTInterpretationResult interpretResult(Mat inputMat) {
         MatOfPoint2f boundary = new MatOfPoint2f();
         Mat grayMat = new Mat();
         cvtColor(inputMat, grayMat, Imgproc.COLOR_RGBA2GRAY);
@@ -605,7 +605,7 @@ public class ImageProcessor {
         } while(!(isSizeable==SizeResult.RIGHT_SIZE && isCentered && isUpright) && cnt < 8);
 
         if (boundary.size().width <= 0 && boundary.size().height <= 0)
-            return new RdtInterpretationResult();
+            return new RDTInterpretationResult();
 
         return interpretResult(inputMat, boundary);
     }

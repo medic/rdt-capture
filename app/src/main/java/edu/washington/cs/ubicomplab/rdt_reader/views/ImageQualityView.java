@@ -66,8 +66,8 @@ import java.util.concurrent.TimeUnit;
 import edu.washington.cs.ubicomplab.rdt_reader.R;
 import edu.washington.cs.ubicomplab.rdt_reader.core.ImageProcessor;
 import edu.washington.cs.ubicomplab.rdt_reader.interfaces.ImageQualityViewListener;
-import edu.washington.cs.ubicomplab.rdt_reader.models.RdtCaptureResult;
-import edu.washington.cs.ubicomplab.rdt_reader.models.RdtInterpretationResult;
+import edu.washington.cs.ubicomplab.rdt_reader.models.RDTCaptureResult;
+import edu.washington.cs.ubicomplab.rdt_reader.models.RDTInterpretationResult;
 import edu.washington.cs.ubicomplab.rdt_reader.utils.ImageUtil;
 
 import static edu.washington.cs.ubicomplab.rdt_reader.utils.Constants.*;
@@ -335,7 +335,7 @@ public class ImageQualityView extends LinearLayout implements View.OnClickListen
         protected Void doInBackground(Image... images) {
             Image image = images[0];
             final Mat rgbaMat = ImageUtil.imageToRGBMat(image);
-            final RdtCaptureResult captureResult = processor.captureRDT(rgbaMat, flashEnabled);
+            final RDTCaptureResult captureResult = processor.captureRDT(rgbaMat, flashEnabled);
             //ImageProcessor.SizeResult sizeResult, boolean isCentered, boolean isRightOrientation, boolean isSharp, ImageProcessor.ExposureResult exposureResult
             mActivity.runOnUiThread(new Runnable() {
                 @Override
@@ -347,7 +347,7 @@ public class ImageQualityView extends LinearLayout implements View.OnClickListen
             Log.d(TAG, String.format("Capture time: %d", System.currentTimeMillis() - timeTaken));
             Log.d(TAG, String.format("Captured result: %b", captureResult.allChecksPassed));
 
-            RdtInterpretationResult interpretationResult = null;
+            RDTInterpretationResult interpretationResult = null;
             if (captureResult.allChecksPassed) {
                 Log.d(TAG, String.format("Captured MAT size: %s", captureResult.resultMat.size()));
 
@@ -428,7 +428,7 @@ public class ImageQualityView extends LinearLayout implements View.OnClickListen
                         //Log.d(TAG, "FOCUS STATE: focusing");
                         mFocusState = FocusState.FOCUSING;
                     } else {
-                        //Log.d(TAG, "FOCUS STATE: unknown state " + result.get(RdtCaptureResult.CONTROL_AF_STATE).toString());
+                        //Log.d(TAG, "FOCUS STATE: unknown state " + result.get(RDTCaptureResult.CONTROL_AF_STATE).toString());
                     }
 
                     if (showFeedback && previousFocusState != mFocusState) {
