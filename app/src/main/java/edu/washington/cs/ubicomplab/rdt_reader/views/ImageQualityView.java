@@ -65,6 +65,7 @@ import java.util.concurrent.TimeUnit;
 
 import edu.washington.cs.ubicomplab.rdt_reader.R;
 import edu.washington.cs.ubicomplab.rdt_reader.core.ImageProcessor;
+import edu.washington.cs.ubicomplab.rdt_reader.interfaces.ImageQualityViewListener;
 import edu.washington.cs.ubicomplab.rdt_reader.models.RdtCaptureResult;
 import edu.washington.cs.ubicomplab.rdt_reader.models.RdtInterpretationResult;
 import edu.washington.cs.ubicomplab.rdt_reader.utils.ImageUtil;
@@ -109,14 +110,6 @@ public class ImageQualityView extends LinearLayout implements View.OnClickListen
 
     public enum RDTDetectedResult {
         STOP, CONTINUE
-    }
-    public interface ImageQualityViewListener {
-        void onRDTCameraReady();
-        RDTDetectedResult onRDTDetected(
-                RdtCaptureResult captureResult,
-                RdtInterpretationResult rdtInterpretationResult,
-                long timeTaken
-        );
     }
 
     public ImageQualityView(Context context, AttributeSet attrs) {
