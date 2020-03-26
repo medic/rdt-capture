@@ -18,7 +18,7 @@ For a relatively easy-to-understand explanation of how feature-matching works an
 ### 1. Getting a suitable template
 RDTScan requires a clear, upright, and tightly cropped image of an unused RDT. Below are some examples of good and bad images:
 
-TODO: example images that are good and bad
+*TODO: example images that are good and bad*
 
 There are two ways to get such an image:
 1. Use a document scanning app like [OfficeLens](https://play.google.com/store/apps/details?id=com.microsoft.office.officelens&hl=en). As long as the RDT is on a clean and distinct background, the app will perform perspective correction and crop the image tightly around the RDT. 
@@ -27,7 +27,10 @@ There are two ways to get such an image:
 Once you have the template image, add it to the following folder in your Android code: `app/src/main/res/drawable/nodpi/`.
 
 ### 2. Identifying regions of interest
-TODO: open in image editor, include screenshots
+TODO: open in image editor
+
+*TODO: image showing different regions of interest*
+*TODO: image showing how to find pixel locations for one of those regions of interest*
 
 ### 3. Modifying the configuration file
 If you are working directly on our repository, open the file `app/src/main/assets/config.json`. If not, copy that file over to oyr file 
