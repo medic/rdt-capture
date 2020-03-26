@@ -24,6 +24,7 @@
 * [`checkFiducial()`](#checkFiducial)
 
 # Methods for RDT Interpretation
+* [`cropResultWindow()`](#cropResultWindow)
 * [`enhanceResultWindow()`](#enhanceResultWindow)
 * [`interpretRDT()`](#interpretRDT)
 
@@ -212,6 +213,17 @@
 * `xxx`: xxx
 
 - - -
+
+## cropResultWindow()
+**Signature:** `Mat resultWindow = cropResultWindow(Mat inputMat, MatOfPoint2f boundary)`  
+**Purpose:** xxx  
+**Parameters:**
+* `Mat inputMat`: the candidate video frame
+* `MatOfPoint2f boundary`: the corners of the bounding box around the detected RDT
+
+**Returns:**
+* `Mat resultWindow`: the RDT image tightly cropped around the result window
+
 
 ## enhanceResultWindow()
 **Signature:** `xxx`  
