@@ -18,7 +18,7 @@ RDTScan utilizes [OpenCV for Android](https://opencv.org/android/) for many of t
   * [`RDT.java`](app/src/main/java/edu/washington/cs/ubicomplab/rdt_reader/RDT.java)
   * [`ImageProcessor.java`](app/src/main/java/edu/washington/cs/ubicomplab/rdt_reader/ImageProcessor.java)
   * [`RDTCameraView.java`](app/src/main/java/edu/washington/cs/ubicomplab/rdt_reader/RDTCameraView.java)
-  * [`config.json`](`app/src/main/assets/config.json`)
+  * [`config.json`](app/src/main/assets/config.json)
 
 ### Troubleshooting:
 * **Unable to locate NDK installation** If you have not already installed NDK, follow the instructions at this [link](https://developer.android.com/studio/projects/install-ndk) to do so. Once that is done, NDK should be installed at a path that either looks like `C:/Users/username/AppData/Local/Android/ndk/xx.x.xxxxxxx` (Windows) or `/Users/username/Library/Android/sdk/ndk/xx.x.xxxxxxx` (OSX). Refering to this filepath as `NDK_HOME` There are two ways to point your project to this filepath: 
