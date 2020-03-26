@@ -27,8 +27,7 @@ There are two ways to get such an image:
 Once you have the template image, add it to the following folder in your Android code: `app/src/main/res/drawable/nodpi/`.
 
 ### 2. Identifying regions of interest
-TODO: open in image editor
-
+*TODO: open in image editor*
 *TODO: image showing different regions of interest*
 *TODO: image showing how to find pixel locations for one of those regions of interest*
 
@@ -43,12 +42,12 @@ If you are working directly on our repository, open the file `app/src/main/asset
 | `VIEW_FINDER_SCALE_W`               | :heavy_check_mark:  | `double`        | TODO |
 | `RESULT_WINDOW_RECT_HEIGHT`         | :heavy_minus_sign:  | `double`        | TODO |
 | `RESULT_WINDOW_RECT_WIDTH_PADDING`  | :heavy_minus_sign:  | `double`        | TODO |
-| `TOP_LINE_POSITION`                 | :heavy_check_mark:  | `double`        | The meaning of the top line (e.g., "Control", "Influenza A") |
-| `MIDDLE_LINE_POSITION`              | :heavy_check_mark:  | `double`        | The meaning of the middle line (e.g., "Control", "Influenza A") |
-| `BOTTOM_LINE_POSITION`              | :heavy_check_mark:  | `double`        | The meaning of the bottom line (e.g., "Control", "Influenza A") |
-| `TOP_LINE_NAME`                     | :heavy_check_mark:  | `String`        | TODO |
-| `MIDDLE_LINE_NAME`                  | :heavy_check_mark:  | `String`        | TODO |
-| `BOTTOM_LINE_NAME`                  | :heavy_check_mark:  | `String`        | TODO |
+| `TOP_LINE_POSITION`                 | :heavy_check_mark:  | `double`        | TODO |
+| `MIDDLE_LINE_POSITION`              | :heavy_check_mark:  | `double`        | TODO |
+| `BOTTOM_LINE_POSITION`              | :heavy_check_mark:  | `double`        | TODO |
+| `TOP_LINE_NAME`                     | :heavy_check_mark:  | `String`        | The meaning of the top line (e.g., "Control", "Influenza A") |
+| `MIDDLE_LINE_NAME`                  | :heavy_check_mark:  | `String`        | The meaning of the middle line (e.g., "Control", "Influenza A") |
+| `BOTTOM_LINE_NAME`                  | :heavy_check_mark:  | `String`        | The meaning of the bottom line (e.g., "Control", "Malaria P.f") |
 | `INTENSITY_THRESHOLD`               | :heavy_minus_sign:  | `int`           | TODO |
 | `CONTROL_INTENSITY_PEAK_THRESHOLD`  | :heavy_check_mark:  | `double`        | TODO |
 | `TEST_INTENSITY_PEAK_THRESHOLD`     | :heavy_check_mark:  | `double`        | TODO |
@@ -61,11 +60,9 @@ If you are working directly on our repository, open the file `app/src/main/asset
 | `FIDUCIAL_TO_RESULT_WINDOW_OFFSET`  | :heavy_minus_sign:  | `double`        | TODO |
 | `FIDUCIAL_DISTANCE`                 | :heavy_minus_sign:  | `double`        | TODO |
 | `FIDUCIAL_COUNT`                    | :heavy_minus_sign:  | `double`        | TODO |
-
 | Result window corners     | :heavy_check_mark:  | `(int, int)`   | The (x, y) pixel coordinates denoting the top-left and bottom-right corners of the general region where the results will appear |
 | Control line position     | :heavy_check_mark:  | `int`          | The pixel position of the control line along the result window's wider axis |
 | Test line position(s)     | :heavy_check_mark:  | `int`          | The pixel position of the test line(s) along the result window's wider axis |
-| Meanings of test lines(s) | :heavy_check_mark:  | `String`       | The diagnostic decision that would be made if the corresponding line is visible and the test is performed correctly (e.g., `"control"`, `"malaria Pf"`) |
 | Desired RDT scale         | :heavy_check_mark:  | `float`        | The ideal scale of the RDT relative to the width of the camera's standard image width |
 | Line intensity            | :heavy_minus_sign:  | `int`          | TODO | 
 | Fiducial locations        | :heavy_minus_sign:  | `(int, int)`   | The (x, y) pixel coordinates denoting the top-left and bottom-right corners of variable dark-colored markings that have a fixed location (e.g., QR code, bar code) |
