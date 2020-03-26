@@ -27,20 +27,20 @@
 
 ## ExposureResult
 **Signature:** `enum ExposureResult`  
-**Purpose:** TODO  
+**Purpose:** An `Enumeration` object for specifying the exposure quality of the image  
 **Possible Values:**
-* `UNDER_EXPOSED`: 
-* `NORMAL`:
-* `OVER_EXPOSED`:
+* `UNDER_EXPOSED`: the image is too dark
+* `NORMAL`: the image has just the right amount of light
+* `OVER_EXPOSED`: the image is too bright
 
 ## SizeResult
 **Signature:** `enum SizeResult`  
-**Purpose:** TODO  
+**Purpose:** An `Enumeration` object for specifying whether the RDT has a reasonable scale in the image  
 **Possible Values:**
-* `RIGHT_SIZE`: 
-* `LARGE`:
-* `SMALL`:
-* `INVALID`:
+* `SMALL`: the RDT is too small
+* `RIGHT_SIZE`: the RDT has just the right size
+* `LARGE`: the RDT is too large
+* `INVALID`: the RDT could not be found
 
 ## CaptureResult
 **Signature:** `CaptureResult(boolean allChecksPassed, Mat resultMat, boolean fiducial, ExposureResult exposureResult, SizeResult sizeResult, boolean isCentered, boolean isRightOrientation, double angle, boolean isSharp, boolean isShadow, MatOfPoint2f boundary, boolean flashEnabled)`  
@@ -67,6 +67,8 @@
 * `boolean topLine`: whether the top line was detected in the result window
 * `boolean middleLine`: whether the middle line was detected in the result window
 * `boolean bottomLine`: whether the bottom line was detected in the result window
+
+- - -
 
 ## configureCamera()
 **Signature:** `xxx`  
@@ -160,7 +162,7 @@
 
 ## interpretResult()
 **Signature:** `InterpretationResult interpResult = interpretResult(Mat inputMat, MatOfPoint2f boundary)`
-**Purpose:** 
+**Purpose:**  
 **Parameters:**
 * `Mat inputMat`: the image known to have a clear RDT in the video frame
 * `MatOfPoint2f boundary`: the corners of the bounding box around the detected RDT
