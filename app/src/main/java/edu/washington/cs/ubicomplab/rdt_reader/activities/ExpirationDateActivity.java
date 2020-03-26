@@ -48,10 +48,11 @@ import java.util.Locale;
 
 import edu.washington.cs.ubicomplab.rdt_reader.R;
 import edu.washington.cs.ubicomplab.rdt_reader.fragments.SettingDialogFragment;
+import edu.washington.cs.ubicomplab.rdt_reader.interfaces.SettingDialogListener;
 import edu.washington.cs.ubicomplab.rdt_reader.utils.Constants;
 import edu.washington.cs.ubicomplab.rdt_reader.views.RDTCameraView;
 
-public class ExpirationDateActivity extends AppCompatActivity implements CvCameraViewListener2, SettingDialogFragment.SettingDialogListener {
+public class ExpirationDateActivity extends AppCompatActivity implements CvCameraViewListener2, SettingDialogListener {
 
     private RDTCameraView mOpenCvCameraView;
     private TextRecognizer mTextRecognizer;

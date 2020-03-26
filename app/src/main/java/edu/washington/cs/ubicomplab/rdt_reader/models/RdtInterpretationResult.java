@@ -5,6 +5,10 @@ import android.graphics.Bitmap;
 import org.opencv.android.Utils;
 import org.opencv.core.Mat;
 
+import static edu.washington.cs.ubicomplab.rdt_reader.utils.Constants.BOTTOM_LINE_NAME;
+import static edu.washington.cs.ubicomplab.rdt_reader.utils.Constants.MIDDLE_LINE_NAME;
+import static edu.washington.cs.ubicomplab.rdt_reader.utils.Constants.TOP_LINE_NAME;
+
 /**
  * Interpretation result represents the image result of RDT image after processing which describes if
  * a particular line of a RDT is appeared (3 lines in this example)
@@ -24,9 +28,9 @@ public class RdtInterpretationResult {
         topLine = false;
         middleLine = false;
         bottomLine = false;
-        topLineName = "Top Line";
-        middleLineName = "Middle Line";
-        bottomLineName = "Bottom Line";
+        topLineName = TOP_LINE_NAME;
+        middleLineName = MIDDLE_LINE_NAME;
+        bottomLineName = BOTTOM_LINE_NAME;
         resultMat = new Mat();
         resultBitmap = null;
     }

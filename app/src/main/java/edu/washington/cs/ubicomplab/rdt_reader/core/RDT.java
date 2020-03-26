@@ -17,6 +17,7 @@ import java.io.InputStream;
 
 import edu.washington.cs.ubicomplab.rdt_reader.utils.Constants;
 
+import static edu.washington.cs.ubicomplab.rdt_reader.utils.ImageUtil.GAUSSIAN_BLUR_WINDOW;
 import static org.opencv.imgproc.Imgproc.cvtColor;
 
 /**
@@ -90,7 +91,7 @@ public class RDT {
             cvtColor(refImg, refImg, Imgproc.COLOR_RGB2GRAY);
 
             // Store the reference's sharpness
-            Imgproc.GaussianBlur(refImg, refImg, new Size(5, 5), 0, 0);
+            Imgproc.GaussianBlur(refImg, refImg, new Size(GAUSSIAN_BLUR_WINDOW, GAUSSIAN_BLUR_WINDOW), 0, 0);
 
             // Load the reference image's features
             refDescriptor = new Mat();

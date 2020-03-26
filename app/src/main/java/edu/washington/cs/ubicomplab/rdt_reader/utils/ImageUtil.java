@@ -25,6 +25,17 @@ import java.io.ByteArrayOutputStream;
 import java.nio.ByteBuffer;
 
 public final class ImageUtil {
+    /**
+     * Image constants
+     */
+    public static final int GAUSSIAN_BLUR_WINDOW = 5;
+
+
+    /**
+     *
+     * @param image
+     * @return
+     */
 
     public static byte[] imageToByteArray(Image image) {
         byte[] data = null;
