@@ -1,11 +1,11 @@
-# Classes/Enums
+# Classes & Enums
 * [`RDT`](#RDT)
 * [`ExposureResult`](#exposureResult)
 * [`SizeResult`](#sizeResult)
 * [`CaptureResult`](#captureResult)
 * [`InterpretationResult`](#interpretationResult)
 
-# Methods
+# Methods for RDT Detection
 * [`configureCamera()`](#configureCamera)
 * [`calculateBrightness()`](#calculateBrightness)
 * [`checkBrightness()`](#checkBrightness)
@@ -15,6 +15,8 @@
 * [`checkFiducial()`](#checkFiducial)
 * [`detectRDT()`](#detectRDT)
 * [`captureRDT()`](#captureRDT)
+
+# Methods for RDT Interpretation
 * [`enhanceResultWindow()`](#enhanceResultWindow)
 * [`interpretRDT()`](#interpretRDT)
 
@@ -150,6 +152,8 @@
 
 **Returns:**
 * `xxx`: xxx
+
+- - -
 
 ## enhanceResultWindow()
 **Signature:** `xxx`  
