@@ -7,6 +7,10 @@
 
 # Methods for RDT Detection
 * [`configureCamera()`](#configureCamera)
+* [`detectRDT()`](#detectRDT)
+* [`captureRDT()`](#captureRDT)
+
+# Methods for Quality Checking
 * [`calculateBrightness()`](#calculateBrightness)
 * [`checkBrightness()`](#checkBrightness)
 * [`calculateSharpness()`](#calculateSharpness)
@@ -18,12 +22,12 @@
 * [`measureOrientation()`](#measureOrientation)
 * [`checkOrientation()`](#checkOrientation)
 * [`checkFiducial()`](#checkFiducial)
-* [`detectRDT()`](#detectRDT)
-* [`captureRDT()`](#captureRDT)
 
 # Methods for RDT Interpretation
 * [`enhanceResultWindow()`](#enhanceResultWindow)
 * [`interpretRDT()`](#interpretRDT)
+
+- - -
 
 ## RDT
 **Signature:** `RDT(Context context, String rdtName)`  
@@ -85,6 +89,26 @@
 
 **Returns:**
 * `xxx`: xxx
+
+## detectRDT()
+**Signature:** `xxx`  
+**Purpose:** xxx  
+**Parameters:**
+* `xxx`: xxx
+
+**Returns:**
+* `xxx`: xxx
+
+## captureRDT()
+**Signature:** `xxx`  
+**Purpose:** xxx  
+**Parameters:**
+* `xxx`: xxx
+
+**Returns:**
+* `xxx`: xxx
+
+- - -
 
 ## calculateBrightness()
 **Signature:** `float[] mBuff = calculateBrightness(Mat input)`  
@@ -179,24 +203,6 @@
 * `boolean isOriented`: xxx
 
 ## checkFiducial()
-**Signature:** `xxx`  
-**Purpose:** xxx  
-**Parameters:**
-* `xxx`: xxx
-
-**Returns:**
-* `xxx`: xxx
-
-## detectRDT()
-**Signature:** `xxx`  
-**Purpose:** xxx  
-**Parameters:**
-* `xxx`: xxx
-
-**Returns:**
-* `xxx`: xxx
-
-## captureRDT()
 **Signature:** `xxx`  
 **Purpose:** xxx  
 **Parameters:**
