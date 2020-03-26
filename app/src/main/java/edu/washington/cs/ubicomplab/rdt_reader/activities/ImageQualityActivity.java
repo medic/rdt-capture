@@ -1,13 +1,20 @@
-package edu.washington.cs.ubicomplab.rdt_reader;
+package edu.washington.cs.ubicomplab.rdt_reader.activities;
 
 import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
 
-import static edu.washington.cs.ubicomplab.rdt_reader.Constants.DEFAULT_RDT_NAME;
+import edu.washington.cs.ubicomplab.rdt_reader.interfaces.ImageQualityViewListener;
+import edu.washington.cs.ubicomplab.rdt_reader.models.RDTCaptureResult;
+import edu.washington.cs.ubicomplab.rdt_reader.views.ImageQualityView;
+import edu.washington.cs.ubicomplab.rdt_reader.R;
+import edu.washington.cs.ubicomplab.rdt_reader.models.RDTInterpretationResult;
+import edu.washington.cs.ubicomplab.rdt_reader.utils.ImageUtil;
 
-public class ImageQualityActivity extends Activity implements ImageQualityView.ImageQualityViewListener {
+import static edu.washington.cs.ubicomplab.rdt_reader.utils.Constants.DEFAULT_RDT_NAME;
+
+public class ImageQualityActivity extends Activity implements ImageQualityViewListener {
     ImageQualityView mImageQualityView;
 
     @Override
@@ -54,19 +61,19 @@ public class ImageQualityActivity extends Activity implements ImageQualityView.I
     }
 
     @Override
-    public ImageQualityView.RDTDectedResult onRDTDetected(
-            final ImageProcessor.CaptureResult captureResult,
-            final ImageProcessor.InterpretationResult interpretationResult,
+    public ImageQualityView.RDTDetectedResult onRDTDetected(
+            final RDTCaptureResult rdtCaptureResult,
+            final RDTInterpretationResult rdtInterpretationResult,
             final long timeTaken) {
         Log.i("ImageQualityActivity", "Detected!");
-        if (!captureResult.allChecksPassed || interpretationResult == null) {
-            return ImageQualityView.RDTDectedResult.CONTINUE;
+        if (!rdtCaptureResult.allChecksPassed || rdtInterpretationResult == null) {
+            return ImageQualityView.RDTDetectedResult.CONTINUE;
         }
         Log.i("ImageQualityActivity", "Detected and Passed!");
         final ImageQualityActivity self = this;
 
-        final byte[] captureByteArray = ImageUtil.matToRotatedByteArray(captureResult.resultMat);
-        final byte[] windowByteArray = ImageUtil.matToRotatedByteArray(interpretationResult.resultMat);
+        final byte[] captureByteArray = ImageUtil.matToRotatedByteArray(rdtCaptureResult.resultMat);
+        final byte[] windowByteArray = ImageUtil.matToRotatedByteArray(rdtInterpretationResult.resultMat);
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
@@ -81,17 +88,17 @@ public class ImageQualityActivity extends Activity implements ImageQualityView.I
                     i.addFlags(Intent.FLAG_ACTIVITY_FORWARD_RESULT);
                     i.putExtra("captured", captureByteArray);
                     i.putExtra("window", windowByteArray);
-                    i.putExtra("topLine", interpretationResult.topLine);
-                    i.putExtra("middleLine", interpretationResult.middleLine);
-                    i.putExtra("bottomLine", interpretationResult.bottomLine);
-                    i.putExtra("topLineName", interpretationResult.topLineName);
-                    i.putExtra("middleLineName", interpretationResult.middleLineName);
-                    i.putExtra("bottomLineName", interpretationResult.bottomLineName);
+                    i.putExtra("topLine", rdtInterpretationResult.topLine);
+                    i.putExtra("middleLine", rdtInterpretationResult.middleLine);
+                    i.putExtra("bottomLine", rdtInterpretationResult.bottomLine);
+                    i.putExtra("topLineName", rdtInterpretationResult.topLineName);
+                    i.putExtra("middleLineName", rdtInterpretationResult.middleLineName);
+                    i.putExtra("bottomLineName", rdtInterpretationResult.bottomLineName);
                     i.putExtra("timeTaken", timeTaken);
                     startActivity(i);
                 }
             }
         });
-        return ImageQualityView.RDTDectedResult.STOP;
+        return ImageQualityView.RDTDetectedResult.STOP;
     }
 }

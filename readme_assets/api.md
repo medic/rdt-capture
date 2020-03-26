@@ -2,8 +2,8 @@
 * [`RDT`](#RDT)
 * [`ExposureResult`](#exposureResult)
 * [`SizeResult`](#sizeResult)
-* [`CaptureResult`](#captureResult)
-* [`InterpretationResult`](#interpretationResult)
+* [`CaptureResult`](#rdtCaptureResult)
+* [`InterpretationResult`](#rdtInterpretationResult)
 
 # Methods
 * [`configureCamera()`](#configureCamera)
