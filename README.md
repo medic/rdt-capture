@@ -7,12 +7,7 @@ RDTScan uses image processing to check the quality of images intercepted from th
 **2. Robust Result Interpretation**  
 Assuming a satisfactory image has been captured, RDTScan can post-process the image to emphasize any faint lines that may appear on the immunoassay. The end-user can view that image for themselves to make an informed decision about their test results. Alternatively, RDTScan provides an algorithm that interprets the test results on the end-user's behalf.
 
-RDTScan uses a SIFT feature-based template-matching approach for RDT recognition. This means that unlike model-driven approaches that require a dataset of example images for model training, RDTScan only requires a single example image and some metadata about the test itself (e.g., relative position and meaning of each line). Although RDTScan is designed to be as generalizable as possible, its template-matching approach is less amenable to the following RDT characteristics:
-* Blank cassettes with little or no lettering
-* Inconsistent patterns (e.g., QR code, bar code)
-* More than three result lines
-
-<center><img src="readme_assets/rdt_examples.png" alt="Examples photographs of RDTs that work well and do not work well with RDTScan" width="300"/></center>
+RDTScan uses a SIFT feature-based template-matching approach for RDT recognition. This means that unlike model-driven approaches that require a dataset of example images for model training, RDTScan only requires a single example image and some metadata about the test itself (e.g., relative position and meaning of each line).
 
 **Disclaimer:** Although RDTScan has been tested through multiple in-lab studies and real-world deployments, this library has not been FDA-approved.
 
@@ -21,22 +16,29 @@ RDTScan utilizes [OpenCV for Android](https://opencv.org/android/) for many of t
 * **No existing project:** If you are making a smartphone app from scratch, you can simply clone the repository directly and build your app on top of what has already been provided. This repository has all of the dependencies properly configured along with a fully-functioning app that developers can use to get started.
 * **Existing project:** If you have a smartphone app that has already been made and you are looking to add RDTScan to it, you will still need to add OpenCV for Android to your project. The [official tutorial](https://docs.opencv.org/2.4/doc/tutorials/introduction/android_binary_package/O4A_SDK.html) for doing this is fairly outdated, but there are plenty of other tutorials out there depending on your environment. Once you have done that, copy `RDT.java`, `ImageProcessor.java`, and `RDTCameraView.java` over to your project.
 
-## Troubleshooting:
+### Troubleshooting:
 * **Unable to locate NDK installation** If you have not already installed NDK, follow the instructions at this [link](https://developer.android.com/studio/projects/install-ndk) to do so. Once that is done, NDK should be installed at a path that either looks like `C:/Users/username/AppData/Local/Android/ndk/xx.x.xxxxxxx` (Windows) or `/Users/username/Library/Android/sdk/ndk/xx.x.xxxxxxx` (OSX). Refering to this filepath as `NDK_HOME` There are two ways to point your project to this filepath: 
   1. Go to **File > Project Structure > SDK Location** and then set the path variable in **Android NDK Location** to `NDK_HOME`.
   2. Open the `local.properties` file and add the following line: `ndk.dir=NDK_HOME`
 
-# Configuration
-This repository already includes the files needed to use RDTScan with a few RDTs that we have encountered during our research:
-1. TODO
-2. TODO
+# Configuration for New RDTs
+This repository already includes the files needed to use RDTScan with a few RDT designs that we have encountered during our research:
+1. TODO (link)
+2. TODO (link)
 
-1. The easiest way to get a suitable template image of the RDT is to use an app like OfficeLens (https://play.google.com/store/apps/details?id=com.microsoft.office.officelens&hl=en). As long as the cartridge is on a distinct background, the app will perform perspective correction and crop the image tightly around the RDT, which is what we need. Alternatively, you can take the photo yourself and crop it in PhotoShop or MSPaint. If you go that route, you should make the image as non-skew as possible (i.e., the phone should be very parallel to the table).
-2. Add the image to the following folder in the Android code: app/src/main/res/drawable/nodpi/ (you should see things like quickvue_ref.jpg)
-3. Add the new RDT into app/src/main/assets/config.json. Key is the name of the RDT, and add the parameters specified in config.json
+Extending RDTScan to accommodate a new RDT is a matter of adding a clean photo of the RDT, identifying some regions-of-interest using an image editing program (e.g., Photoshop, GIMP), and then providing that information and other metadata in a configuration file. This process is outlined below:
 
-TODO: how to take clean photo of an RDT
-[`imread()`](https://docs.opencv.org/3.4/d4/da8/group__imgcodecs.html#ga288b8b3da0892bd651fce07b3bbd3a56) method (e.g., `.jpg`, `.png`)
+**Note:** Although RDTScan is designed to be as generalizable as possible, its template-matching approach is less amenable to the following RDT characteristics:
+* Blank cassettes with little or no lettering
+* Inconsistent patterns (e.g., QR code, bar code)
+* More than three result lines
+
+<center><img src="readme_assets/rdt_examples.png" alt="Examples photographs of RDTs that work well and do not work well with RDTScan" width="300"/></center>
+
+### Getting a suitable template
+1. The easiest way to get a suitable template image of the RDT is to use an app like [OfficeLens] (https://play.google.com/store/apps/details?id=com.microsoft.office.officelens&hl=en). As long as the RDT is on a distinct background, the app will perform perspective correction and crop the image tightly around the RDT, which is what we need. Alternatively, you can take the photo yourself and crop it in PhotoShop or MSPaint. If you go that route, you should make the image as non-skew as possible (i.e., the phone should be very parallel to the table).
+2. Add the image to the following folder in the Android code: `app/src/main/res/drawable/nodpi/` (you should see things like quickvue_ref.jpg)
+3. Add the new RDT into `app/src/main/assets/config.json`. Key is the name of the RDT, and add the parameters specified in config.json
 
 | **Data Field**                      | **Required?**       | **Data Types**  | **Description**    |
 | :---------------------------------- | :-----------------: | :-------------- | :----------------- |
