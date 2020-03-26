@@ -29,6 +29,8 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
 
+import edu.washington.cs.ubicomplab.rdt_reader.utils.Constants;
+
 import static java.text.DateFormat.getDateTimeInstance;
 
 public class ImageResultActivity extends AppCompatActivity implements View.OnClickListener, SettingDialogFragment.SettingDialogListener{

@@ -49,10 +49,12 @@ import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 
-import edu.washington.cs.ubicomplab.rdt_reader.ImageResult.CaptureResult;
-import edu.washington.cs.ubicomplab.rdt_reader.ImageResult.InterpretationResult;
+import edu.washington.cs.ubicomplab.rdt_reader.RdtImageResult.RdtCaptureResult;
+import edu.washington.cs.ubicomplab.rdt_reader.RdtImageResult.RdtInterpretationResult;
+import edu.washington.cs.ubicomplab.rdt_reader.utils.Constants;
+import edu.washington.cs.ubicomplab.rdt_reader.utils.ImageUtil;
 
-import static edu.washington.cs.ubicomplab.rdt_reader.Constants.*;
+import static edu.washington.cs.ubicomplab.rdt_reader.utils.Constants.*;
 import static java.lang.Math.pow;
 import static java.lang.StrictMath.abs;
 import static org.opencv.core.Core.KMEANS_PP_CENTERS;
@@ -95,7 +97,7 @@ public class ImageProcessor {
 
     }
 
-//    public static class InterpretationResult {
+//    public static class RdtInterpretationResult {
 //        public boolean topLine;
 //        public boolean middleLine;
 //        public boolean bottomLine;
@@ -105,7 +107,7 @@ public class ImageProcessor {
 //        public Mat resultMat;
 //        public Bitmap resultBitmap;
 //
-//        public InterpretationResult() {
+//        public RdtInterpretationResult() {
 //            topLine = false;
 //            middleLine = false;
 //            bottomLine = false;
@@ -116,7 +118,7 @@ public class ImageProcessor {
 //            resultBitmap = null;
 //        }
 //
-//        public InterpretationResult(Mat resultMat, boolean topLine, boolean middleLine, boolean bottomLine) {
+//        public RdtInterpretationResult(Mat resultMat, boolean topLine, boolean middleLine, boolean bottomLine) {
 //            this.resultMat = resultMat;
 //            this.topLine = topLine;
 //            this.middleLine = middleLine;
@@ -171,7 +173,7 @@ public class ImageProcessor {
     }
 
 
-    public CaptureResult captureRDT(Mat inputMat, boolean flashEnabled) {
+    public RdtCaptureResult captureRDT(Mat inputMat, boolean flashEnabled) {
         Mat greyMat = new Mat();
         cvtColor(inputMat, greyMat, Imgproc.COLOR_RGBA2GRAY);
         double matchDistance = -1.0;
@@ -230,11 +232,11 @@ public class ImageProcessor {
                 isGlared = checkIfGlared(croppedMat, croppedBoundary);
                 passed = passed && !isGlared;
 
-            return new CaptureResult(passed, croppedMat, fiducial, exposureResult, sizeResult, isCentered, isRightOrientation, angle, isSharp, false, isGlared, croppedBoundary, flashEnabled);
+            return new RdtCaptureResult(passed, croppedMat, fiducial, exposureResult, sizeResult, isCentered, isRightOrientation, angle, isSharp, false, isGlared, croppedBoundary, flashEnabled);
         }
         else {
             greyMat.release();
-            return new CaptureResult(passed, null, false, exposureResult, SizeResult.INVALID, false, false, 0.0, isSharp, false, false, new MatOfPoint2f(), flashEnabled);
+            return new RdtCaptureResult(passed, null, false, exposureResult, SizeResult.INVALID, false, false, 0.0, isSharp, false, false, new MatOfPoint2f(), flashEnabled);
         }
 
     }
@@ -564,18 +566,18 @@ public class ImageProcessor {
         return result;
     }
 
-    public InterpretationResult interpretResult(Bitmap img) {
+    public RdtInterpretationResult interpretResult(Bitmap img) {
         Mat resultMat = new Mat();
         Utils.bitmapToMat(img, resultMat);
         return interpretResult(resultMat);
     }
 
-    public InterpretationResult interpretResult(Mat inputMat, MatOfPoint2f boundary) {
+    public RdtInterpretationResult interpretResult(Mat inputMat, MatOfPoint2f boundary) {
         Mat resultMat = cropResultWindow(inputMat, boundary);
         boolean topLine, middleLine, bottomLine;
 
         if (resultMat.width() == 0 && resultMat.height() == 0) {
-            return new InterpretationResult(resultMat, false, false, false, mRDT.topLineName, mRDT.middleLineName,
+            return new RdtInterpretationResult(resultMat, false, false, false, mRDT.topLineName, mRDT.middleLineName,
                         mRDT.bottomLineName);
         }
 
@@ -609,10 +611,10 @@ public class ImageProcessor {
         middleLine = results[1];
         bottomLine = results[2];
 
-        return new InterpretationResult(resultMat, topLine, middleLine, bottomLine, mRDT.topLineName, mRDT.middleLineName, mRDT.topLineName);
+        return new RdtInterpretationResult(resultMat, topLine, middleLine, bottomLine, mRDT.topLineName, mRDT.middleLineName, mRDT.topLineName);
     }
 
-    public InterpretationResult interpretResult(Mat inputMat) {
+    public RdtInterpretationResult interpretResult(Mat inputMat) {
         MatOfPoint2f boundary = new MatOfPoint2f();
         Mat grayMat = new Mat();
         cvtColor(inputMat, grayMat, Imgproc.COLOR_RGBA2GRAY);
@@ -633,7 +635,7 @@ public class ImageProcessor {
         } while(!(isSizeable==SizeResult.RIGHT_SIZE && isCentered && isUpright) && cnt < 8);
 
         if (boundary.size().width <= 0 && boundary.size().height <= 0)
-            return new InterpretationResult();
+            return new RdtInterpretationResult();
 
         return interpretResult(inputMat, boundary);
     }

@@ -1,4 +1,4 @@
-package edu.washington.cs.ubicomplab.rdt_reader.ImageResult;
+package edu.washington.cs.ubicomplab.rdt_reader.RdtImageResult;
 
 import android.graphics.Bitmap;
 
@@ -10,7 +10,7 @@ import org.opencv.core.Mat;
  * a particular line of a RDT is appeared (3 lines in this example)
  */
 
-public class InterpretationResult {
+public class RdtInterpretationResult {
     public boolean topLine;
     public boolean middleLine;
     public boolean bottomLine;
@@ -20,7 +20,7 @@ public class InterpretationResult {
     public Mat resultMat;
     public Bitmap resultBitmap;
 
-    public InterpretationResult() {
+    public RdtInterpretationResult() {
         topLine = false;
         middleLine = false;
         bottomLine = false;
@@ -31,8 +31,8 @@ public class InterpretationResult {
         resultBitmap = null;
     }
 
-    public InterpretationResult(Mat resultMat, boolean topLine, boolean middleLine, boolean bottomLine,
-                            String topLineName, String middleLineName, String bottomLineName){
+    public RdtInterpretationResult(Mat resultMat, boolean topLine, boolean middleLine, boolean bottomLine,
+                                   String topLineName, String middleLineName, String bottomLineName){
         this.resultMat = resultMat;
         this.topLine = topLine;
         this.middleLine = middleLine;

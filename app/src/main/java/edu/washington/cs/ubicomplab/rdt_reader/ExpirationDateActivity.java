@@ -9,15 +9,11 @@
 package edu.washington.cs.ubicomplab.rdt_reader;
 
 import static com.google.android.gms.vision.Frame.ROTATION_90;
-import static edu.washington.cs.ubicomplab.rdt_reader.Constants.*;
+import static edu.washington.cs.ubicomplab.rdt_reader.utils.Constants.*;
 
 import android.content.Intent;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
-import android.graphics.Color;
-import android.graphics.ImageFormat;
-import android.media.Image;
 import android.os.AsyncTask;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -30,7 +26,6 @@ import android.view.View;
 import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import com.google.android.gms.vision.Frame;
 import com.google.android.gms.vision.text.Text;
@@ -46,13 +41,12 @@ import org.opencv.android.Utils;
 import org.opencv.core.Mat;
 import org.opencv.core.Rect;
 
-import java.nio.ByteBuffer;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
 import java.util.Date;
 import java.util.Locale;
-import java.util.StringTokenizer;
+
+import edu.washington.cs.ubicomplab.rdt_reader.utils.Constants;
 
 public class ExpirationDateActivity extends AppCompatActivity implements CvCameraViewListener2, SettingDialogFragment.SettingDialogListener {
 

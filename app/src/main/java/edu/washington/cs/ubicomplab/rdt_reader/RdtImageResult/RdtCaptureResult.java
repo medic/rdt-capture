@@ -1,4 +1,4 @@
-package edu.washington.cs.ubicomplab.rdt_reader.ImageResult;
+package edu.washington.cs.ubicomplab.rdt_reader.RdtImageResult;
 
 import org.opencv.core.Mat;
 import org.opencv.core.MatOfPoint2f;
@@ -6,11 +6,11 @@ import org.opencv.core.MatOfPoint2f;
 import edu.washington.cs.ubicomplab.rdt_reader.ImageProcessor;
 
 /**
- * CaptureResult represents the initial result of the image before inputting to image processing
+ * RdtCaptureResult represents the initial result of the image before inputting to image processing
  * pipeline. Its purpose is to identify the quality of the image and various features such as
  * directions, lighting quality and blurness
  */
-public class CaptureResult {
+public class RdtCaptureResult {
     public boolean allChecksPassed;
     public Mat resultMat;
     public MatOfPoint2f boundary;
@@ -25,9 +25,9 @@ public class CaptureResult {
     public boolean flashEnabled;
     public boolean isGlared;
 
-    public CaptureResult(boolean allChecksPassed, Mat resultMat, boolean fiducial,
-                         ImageProcessor.ExposureResult exposureResult, ImageProcessor.SizeResult sizeResult, boolean isCentered,
-                         boolean isRightOrientation, double angle, boolean isSharp, boolean isShadow, boolean isGlared, MatOfPoint2f boundary, boolean flashEnabled){
+    public RdtCaptureResult(boolean allChecksPassed, Mat resultMat, boolean fiducial,
+                            ImageProcessor.ExposureResult exposureResult, ImageProcessor.SizeResult sizeResult, boolean isCentered,
+                            boolean isRightOrientation, double angle, boolean isSharp, boolean isShadow, boolean isGlared, MatOfPoint2f boundary, boolean flashEnabled){
         this.allChecksPassed = allChecksPassed;
         this.resultMat = resultMat;
         this.fiducial = fiducial;

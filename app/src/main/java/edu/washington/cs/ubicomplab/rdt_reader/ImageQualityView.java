@@ -32,7 +32,6 @@ import android.hardware.camera2.params.StreamConfigurationMap;
 import android.media.Image;
 import android.media.ImageReader;
 import android.os.AsyncTask;
-import android.os.Build;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.support.annotation.NonNull;
@@ -64,7 +63,11 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 
-import static edu.washington.cs.ubicomplab.rdt_reader.Constants.*;
+import edu.washington.cs.ubicomplab.rdt_reader.RdtImageResult.RdtCaptureResult;
+import edu.washington.cs.ubicomplab.rdt_reader.RdtImageResult.RdtInterpretationResult;
+import edu.washington.cs.ubicomplab.rdt_reader.utils.ImageUtil;
+
+import static edu.washington.cs.ubicomplab.rdt_reader.utils.Constants.*;
 
 
 public class ImageQualityView extends LinearLayout implements View.OnClickListener, ActivityCompat.OnRequestPermissionsResultCallback {
@@ -102,14 +105,14 @@ public class ImageQualityView extends LinearLayout implements View.OnClickListen
         INACTIVE, FOCUSING, FOCUSED, UNFOCUSED
     }
 
-    public enum RDTDectedResult {
+    public enum RDTDetectedResult {
         STOP, CONTINUE
     }
     public interface ImageQualityViewListener {
         void onRDTCameraReady();
-        RDTDectedResult onRDTDetected(
-                ImageProcessor.CaptureResult captureResult,
-                ImageProcessor.InterpretationResult interpretationResult,
+        RDTDetectedResult onRDTDetected(
+                RdtCaptureResult captureResult,
+                RdtInterpretationResult rdtInterpretationResult,
                 long timeTaken
         );
     }
@@ -337,7 +340,7 @@ public class ImageQualityView extends LinearLayout implements View.OnClickListen
         protected Void doInBackground(Image... images) {
             Image image = images[0];
             final Mat rgbaMat = ImageUtil.imageToRGBMat(image);
-            final ImageProcessor.CaptureResult captureResult = processor.captureRDT(rgbaMat, flashEnabled);
+            final RdtCaptureResult captureResult = processor.captureRDT(rgbaMat, flashEnabled);
             //ImageProcessor.SizeResult sizeResult, boolean isCentered, boolean isRightOrientation, boolean isSharp, ImageProcessor.ExposureResult exposureResult
             mActivity.runOnUiThread(new Runnable() {
                 @Override
@@ -349,7 +352,7 @@ public class ImageQualityView extends LinearLayout implements View.OnClickListen
             Log.d(TAG, String.format("Capture time: %d", System.currentTimeMillis() - timeTaken));
             Log.d(TAG, String.format("Captured result: %b", captureResult.allChecksPassed));
 
-            ImageProcessor.InterpretationResult interpretationResult = null;
+            RdtInterpretationResult interpretationResult = null;
             if (captureResult.allChecksPassed) {
                 Log.d(TAG, String.format("Captured MAT size: %s", captureResult.resultMat.size()));
 
@@ -362,7 +365,7 @@ public class ImageQualityView extends LinearLayout implements View.OnClickListen
             }
             rgbaMat.release();
 
-            RDTDectedResult result = RDTDectedResult.CONTINUE;
+            RDTDetectedResult result = RDTDetectedResult.CONTINUE;
             if (mImageQualityViewListener != null) {
                 result = mImageQualityViewListener.onRDTDetected(
                         captureResult,
@@ -377,7 +380,7 @@ public class ImageQualityView extends LinearLayout implements View.OnClickListen
                     interpretationResult.resultMat != null) {
                 interpretationResult.resultMat.release();
             }
-            if (result == RDTDectedResult.STOP) {
+            if (result == RDTDetectedResult.STOP) {
                 mOnImageAvailableThread.interrupt();
             }
 
@@ -430,7 +433,7 @@ public class ImageQualityView extends LinearLayout implements View.OnClickListen
                         //Log.d(TAG, "FOCUS STATE: focusing");
                         mFocusState = FocusState.FOCUSING;
                     } else {
-                        //Log.d(TAG, "FOCUS STATE: unknown state " + result.get(CaptureResult.CONTROL_AF_STATE).toString());
+                        //Log.d(TAG, "FOCUS STATE: unknown state " + result.get(RdtCaptureResult.CONTROL_AF_STATE).toString());
                     }
 
                     if (showFeedback && previousFocusState != mFocusState) {

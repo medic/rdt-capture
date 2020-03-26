@@ -6,7 +6,7 @@
  * of a BSD-style license that can be found in the LICENSE file.
  */
 
-package edu.washington.cs.ubicomplab.rdt_reader;
+package edu.washington.cs.ubicomplab.rdt_reader.utils;
 
 import android.os.Environment;
 

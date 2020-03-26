@@ -13,10 +13,8 @@ import android.app.DialogFragment;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.SharedPreferences;
-import android.content.res.Resources;
 import android.os.Bundle;
 import android.support.v7.app.AlertDialog;
-import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -24,7 +22,7 @@ import android.widget.RadioButton;
 import android.widget.RadioGroup;
 import android.widget.SeekBar;
 
-import java.util.Locale;
+import edu.washington.cs.ubicomplab.rdt_reader.utils.Constants;
 
 public class SettingDialogFragment extends DialogFragment implements RadioGroup.OnCheckedChangeListener {
 

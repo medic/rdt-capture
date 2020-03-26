@@ -15,6 +15,8 @@ import org.opencv.xfeatures2d.SIFT;
 
 import java.io.InputStream;
 
+import edu.washington.cs.ubicomplab.rdt_reader.utils.Constants;
+
 import static org.opencv.imgproc.Imgproc.cvtColor;
 
 /**

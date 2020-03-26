@@ -8,7 +8,7 @@
 
 package edu.washington.cs.ubicomplab.rdt_reader;
 
-import static edu.washington.cs.ubicomplab.rdt_reader.Constants.*;
+import static edu.washington.cs.ubicomplab.rdt_reader.utils.Constants.*;
 import android.Manifest;
 import android.content.Context;
 import android.content.Intent;
@@ -26,13 +26,13 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
-import android.widget.EditText;
 import android.widget.Spinner;
-import android.widget.TextView;
 
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Locale;
+
+import edu.washington.cs.ubicomplab.rdt_reader.utils.Constants;
 
 public class MainActivity extends AppCompatActivity implements View.OnClickListener, SettingDialogFragment.SettingDialogListener {
 
