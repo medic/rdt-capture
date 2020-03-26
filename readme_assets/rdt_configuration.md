@@ -1,8 +1,8 @@
 # Configuration for New RDTs
 This repository already includes the files needed to use RDTScan with a few RDT designs that we have encountered during our research:
-1. SD Bioline Malaria Ag P.f
-2. [CareStart Malaria P.f/P.v](http://www.accessbio.net/eng/products/products01_02.asp)
-3. [Quidel's QuickVue Influenza A+B Test](https://www.quidel.com/immunoassays/rapid-influenza-tests/quickvue-influenza-test)
+* SD Bioline Malaria Ag P.f
+* [CareStart Malaria P.f/P.v](http://www.accessbio.net/eng/products/products01_02.asp)
+* [Quidel's QuickVue Influenza A+B Test](https://www.quidel.com/immunoassays/rapid-influenza-tests/quickvue-influenza-test)
 
 Extending RDTScan to accommodate a new RDT is a matter of adding a clean photo of the RDT, identifying some regions-of-interest using an image editing program (e.g., Photoshop, GIMP), and then providing that information and other metadata in a configuration file. This process is outlined below:
 
@@ -18,12 +18,12 @@ The easiest way to get a suitable template image of the RDT is to use an app lik
 
 Once you have the image, add it to the following folder in your Android code: `app/src/main/res/drawable/nodpi/`.
 
-### 2. Identifying Regions of Interest
+### 2. Identifying regions of interest
 TODO: open in image editor, include screenshots
 
-### 3. Configuration File
+### 3. Modifying the configuration file
 If you are working directly on our repository, open the file `app/src/main/assets/config.json`. If not, copy that file over to oyr file 
-3. Add the new RDT into `app/src/main/assets/config.json`. Key is the name of the RDT, and add the parameters specified in config.json
+3. Key is the name of the RDT, and add the parameters specified in config.json
 
 | **Data Field**                      | **Required?**       | **Data Types**  | **Description**    |
 | :---------------------------------- | :-----------------: | :-------------- | :----------------- |
