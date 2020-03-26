@@ -41,10 +41,27 @@ If you are working directly on our repository, open the file `app/src/main/asset
 | `REF_IMG`                           | :heavy_check_mark:  | `String`        | The filename of the template image for the RDT |
 | `VIEW_FINDER_SCALE_H`               | :heavy_check_mark:  | `double`        | TODO |
 | `VIEW_FINDER_SCALE_W`               | :heavy_check_mark:  | `double`        | TODO |
+| `RESULT_WINDOW_RECT_HEIGHT`         | :heavy_minus_sign:  | `double`        | TODO |
+| `RESULT_WINDOW_RECT_WIDTH_PADDING`  | :heavy_minus_sign:  | `double`        | TODO |
+| `TOP_LINE_POSITION`                 | :heavy_check_mark:  | `double`        | The meaning of the top line (e.g., "Control", "Influenza A") |
+| `MIDDLE_LINE_POSITION`              | :heavy_check_mark:  | `double`        | The meaning of the middle line (e.g., "Control", "Influenza A") |
+| `BOTTOM_LINE_POSITION`              | :heavy_check_mark:  | `double`        | The meaning of the bottom line (e.g., "Control", "Influenza A") |
+| `TOP_LINE_NAME`                     | :heavy_check_mark:  | `String`        | TODO |
+| `MIDDLE_LINE_NAME`                  | :heavy_check_mark:  | `String`        | TODO |
+| `BOTTOM_LINE_NAME`                  | :heavy_check_mark:  | `String`        | TODO |
 | `INTENSITY_THRESHOLD`               | :heavy_minus_sign:  | `int`           | TODO |
 | `CONTROL_INTENSITY_PEAK_THRESHOLD`  | :heavy_check_mark:  | `double`        | TODO |
 | `TEST_INTENSITY_PEAK_THRESHOLD`     | :heavy_check_mark:  | `double`        | TODO |
 | `LINE_SEARCH_WIDTH`                 | :heavy_minus_sign:  | `double`        | TODO |
+| `FIDUCIAL_POSITION_MIN`             | :heavy_minus_sign:  | `double`        | TODO |
+| `FIDUCIAL_POSITION_MAX`             | :heavy_minus_sign:  | `double`        | TODO |
+| `FIDUCIAL_MIN_HEIGHT`               | :heavy_minus_sign:  | `double`        | TODO |
+| `FIDUCIAL_MIN_WIDTH`                | :heavy_minus_sign:  | `double`        | TODO |
+| `FIDUCIAL_MAX_WIDTH`                | :heavy_minus_sign:  | `double`        | TODO |
+| `FIDUCIAL_TO_RESULT_WINDOW_OFFSET`  | :heavy_minus_sign:  | `double`        | TODO |
+| `FIDUCIAL_DISTANCE`                 | :heavy_minus_sign:  | `double`        | TODO |
+| `FIDUCIAL_COUNT`                    | :heavy_minus_sign:  | `double`        | TODO |
+
 | Result window corners     | :heavy_check_mark:  | `(int, int)`   | The (x, y) pixel coordinates denoting the top-left and bottom-right corners of the general region where the results will appear |
 | Control line position     | :heavy_check_mark:  | `int`          | The pixel position of the control line along the result window's wider axis |
 | Test line position(s)     | :heavy_check_mark:  | `int`          | The pixel position of the test line(s) along the result window's wider axis |
