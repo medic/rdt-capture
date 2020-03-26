@@ -14,7 +14,7 @@ import static edu.washington.cs.ubicomplab.rdt_reader.utils.Constants.DEFAULT_TO
  * a particular line of a RDT is appeared (3 lines in this example)
  */
 
-public class RdtInterpretationResult {
+public class RDTInterpretationResult {
     public boolean topLine;
     public boolean middleLine;
     public boolean bottomLine;
@@ -24,7 +24,7 @@ public class RdtInterpretationResult {
     public Mat resultMat;
     public Bitmap resultBitmap;
 
-    public RdtInterpretationResult() {
+    public RDTInterpretationResult() {
         topLine = false;
         middleLine = false;
         bottomLine = false;
@@ -35,7 +35,7 @@ public class RdtInterpretationResult {
         resultBitmap = null;
     }
 
-    public RdtInterpretationResult(Mat resultMat, boolean topLine, boolean middleLine, boolean bottomLine,
+    public RDTInterpretationResult(Mat resultMat, boolean topLine, boolean middleLine, boolean bottomLine,
                                    String topLineName, String middleLineName, String bottomLineName){
         this.resultMat = resultMat;
         this.topLine = topLine;
