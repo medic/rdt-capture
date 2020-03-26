@@ -19,16 +19,44 @@ import android.util.Base64;
 import org.opencv.android.Utils;
 import org.opencv.core.CvType;
 import org.opencv.core.Mat;
+import org.opencv.core.Scalar;
 import org.opencv.imgproc.Imgproc;
 
 import java.io.ByteArrayOutputStream;
 import java.nio.ByteBuffer;
+
+import static org.opencv.core.Core.addWeighted;
+import static org.opencv.core.Core.countNonZero;
+import static org.opencv.core.Core.inRange;
+import static org.opencv.imgproc.Imgproc.cvtColor;
 
 public final class ImageUtil {
     /**
      * Image constants
      */
     public static final int GAUSSIAN_BLUR_WINDOW = 5;
+
+    public static final Scalar RED_COLOR_LOW_HUE_LOWER = new Scalar(0, 100, 100);
+    public static final Scalar RED_COLOR_LOW_HUE_UPPER = new Scalar(10, 255, 255);
+    public static final Scalar RED_COLOR_HIGH_HUE_LOWER = new Scalar(160, 100, 100);
+    public static final Scalar RED_COLOR_HIGH_HUE_UPPER = new Scalar(179, 255, 255);
+
+
+    public static double calculateRedColorPercentage(Mat image) {
+        Mat hsv = new Mat();
+        cvtColor(image, hsv, Imgproc.COLOR_RGB2HSV);
+
+        Mat lowerRedThresh = new Mat();
+        inRange(hsv, RED_COLOR_LOW_HUE_LOWER, RED_COLOR_HIGH_HUE_UPPER, lowerRedThresh);
+        Mat upperRedThresh = new Mat();
+        inRange(hsv, RED_COLOR_HIGH_HUE_LOWER, RED_COLOR_HIGH_HUE_UPPER, upperRedThresh);
+
+        Mat redThresh = new Mat();
+        addWeighted(lowerRedThresh, 1.0, upperRedThresh, 1.0, 0.0,  redThresh);
+
+        return countNonZero(redThresh) / redThresh.size().area();
+    }
+
 
 
     /**
@@ -84,9 +112,9 @@ public final class ImageUtil {
         Mat yuvMat = imageToMat(image);
         Mat bgrMat = new Mat(image.getHeight(), image.getWidth(), CvType.CV_8UC4);
         image.close();
-        Imgproc.cvtColor(yuvMat, bgrMat, Imgproc.COLOR_YUV2BGR_I420);
+        cvtColor(yuvMat, bgrMat, Imgproc.COLOR_YUV2BGR_I420);
         Mat rgbaMat = new Mat();
-        Imgproc.cvtColor(bgrMat, rgbaMat, Imgproc.COLOR_BGR2RGBA, 0);
+        cvtColor(bgrMat, rgbaMat, Imgproc.COLOR_BGR2RGBA, 0);
 
         yuvMat.release();
         bgrMat.release();

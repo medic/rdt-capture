@@ -56,6 +56,7 @@ import edu.washington.cs.ubicomplab.rdt_reader.utils.Constants;
 import edu.washington.cs.ubicomplab.rdt_reader.utils.ImageUtil;
 
 import static edu.washington.cs.ubicomplab.rdt_reader.utils.Constants.*;
+import static edu.washington.cs.ubicomplab.rdt_reader.utils.ImageUtil.calculateRedColorPercentage;
 import static java.lang.Math.pow;
 import static java.lang.StrictMath.abs;
 import static org.opencv.core.Core.KMEANS_PP_CENTERS;
@@ -578,6 +579,11 @@ public class ImageProcessor {
         return new RdtInterpretationResult(resultMat, topLine, middleLine, bottomLine, mRDT.topLineName, mRDT.middleLineName, mRDT.topLineName);
     }
 
+    public boolean detectBlood(Mat mat, double bloodThreshold) {
+        double bloodPercentage = calculateRedColorPercentage(mat);
+        return bloodPercentage > BLOOD_PERCENTAGE_THRESHOLD;
+    }
+
     public RdtInterpretationResult interpretResult(Mat inputMat) {
         MatOfPoint2f boundary = new MatOfPoint2f();
         Mat grayMat = new Mat();
@@ -604,7 +610,7 @@ public class ImageProcessor {
         return interpretResult(inputMat, boundary);
     }
 
-    private Rect checkFiducialKMenas(Mat inputMat) {
+    private Rect checkFiducialKMeans(Mat inputMat) {
         if (mRDT.fiducialCount == 0) {
             Point tl = new Point(mRDT.fiducialToResultWindowOffset - mRDT.resultWindowRectH / 2.0, mRDT.resultWindowRectWPadding);
             Point br = new Point(mRDT.fiducialToResultWindowOffset + mRDT.resultWindowRectH / 2.0, inputMat.size().height - mRDT.resultWindowRectWPadding);
@@ -791,7 +797,7 @@ public class ImageProcessor {
         warpPerspective(inputMat, correctedMat, M, new Size(mRDT.refImg.cols(), mRDT.refImg.rows()));
 
         //Rect resultWindowRect = checkFiducialAndReturnResultWindowRect(correctedMat);
-        Rect resultWindowRect = checkFiducialKMenas(correctedMat);
+        Rect resultWindowRect = checkFiducialKMeans(correctedMat);
         //Rect resultWindowRect = returnResultWindowRect(correctedMat);
 
         correctedMat = new Mat(correctedMat, resultWindowRect);
