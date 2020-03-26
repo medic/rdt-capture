@@ -80,9 +80,9 @@ public class RDT {
             resultWindowRectWPadding = obj.getInt("RESULT_WINDOW_RECT_WIDTH_PADDING");
             fiducialDistance = obj.getInt("FIDUCIAL_DISTANCE");
             fiducialCount = obj.getInt("FIDUCIAL_COUNT");
-            topLineName = obj.getString("TOP_LINE_NAME");
-            middleLineName = obj.getString("MIDDLE_LINE_NAME");
-            bottomLineName = obj.getString("BOTTOM_LINE_NAME");
+            topLineName = obj.getString("DEFAULT_TOP_LINE_NAME");
+            middleLineName = obj.getString("DEFAULT_MIDDLE_LINE_NAME");
+            bottomLineName = obj.getString("DEFAULT_BOTTOM_LINE_NAME");
 
             // Load ref img
             refImg = new Mat();

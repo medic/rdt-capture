@@ -48,10 +48,10 @@ public final class Constants {
     public static double ENHANCING_THRESHOLD = 10.0;
 
     /**
-     * RDT Parameters
+     * Default RDT Parameters
      */
-    public static final String TOP_LINE_NAME = "Top Line Name";
-    public static final String MIDDLE_LINE_NAME = "Middle Line Name";
-    public static final String BOTTOM_LINE_NAME = "Bottom Line Name";
+    public static final String DEFAULT_TOP_LINE_NAME = "Top Line Name";
+    public static final String DEFAULT_MIDDLE_LINE_NAME = "Middle Line Name";
+    public static final String DEFAULT_BOTTOM_LINE_NAME = "Bottom Line Name";
 
 }

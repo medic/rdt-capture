@@ -5,9 +5,9 @@ import android.graphics.Bitmap;
 import org.opencv.android.Utils;
 import org.opencv.core.Mat;
 
-import static edu.washington.cs.ubicomplab.rdt_reader.utils.Constants.BOTTOM_LINE_NAME;
-import static edu.washington.cs.ubicomplab.rdt_reader.utils.Constants.MIDDLE_LINE_NAME;
-import static edu.washington.cs.ubicomplab.rdt_reader.utils.Constants.TOP_LINE_NAME;
+import static edu.washington.cs.ubicomplab.rdt_reader.utils.Constants.DEFAULT_BOTTOM_LINE_NAME;
+import static edu.washington.cs.ubicomplab.rdt_reader.utils.Constants.DEFAULT_MIDDLE_LINE_NAME;
+import static edu.washington.cs.ubicomplab.rdt_reader.utils.Constants.DEFAULT_TOP_LINE_NAME;
 
 /**
  * Interpretation result represents the image result of RDT image after processing which describes if
@@ -28,9 +28,9 @@ public class RdtInterpretationResult {
         topLine = false;
         middleLine = false;
         bottomLine = false;
-        topLineName = TOP_LINE_NAME;
-        middleLineName = MIDDLE_LINE_NAME;
-        bottomLineName = BOTTOM_LINE_NAME;
+        topLineName = DEFAULT_TOP_LINE_NAME;
+        middleLineName = DEFAULT_MIDDLE_LINE_NAME;
+        bottomLineName = DEFAULT_BOTTOM_LINE_NAME;
         resultMat = new Mat();
         resultBitmap = null;
     }
