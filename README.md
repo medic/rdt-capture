@@ -14,7 +14,11 @@ RDTScan uses a SIFT feature-based template-matching approach for RDT recognition
 # Installation
 RDTScan utilizes [OpenCV for Android](https://opencv.org/android/) for many of the image processing steps, which in turn relies on [Android's Native Development Kit (NDK)](https://developer.android.com/ndk/). Setting up these resources can be difficult for some developers, so there are two options for getting started with RDTScan:
 * **No existing project:** If you are making a smartphone app from scratch, you can simply clone the repository directly and build your app on top of what has already been provided. This repository has all of the dependencies properly configured along with a fully-functioning app that developers can use to get started.
-* **Existing project:** If you have a smartphone app that has already been made and you are looking to add RDTScan to it, you will still need to add OpenCV for Android to your project. The [official tutorial](https://docs.opencv.org/2.4/doc/tutorials/introduction/android_binary_package/O4A_SDK.html) for doing this is fairly outdated, but there are plenty of other tutorials out there depending on your environment. Once you have done that, copy `RDT.java`, `ImageProcessor.java`, and `RDTCameraView.java` over to your project.
+* **Existing project:** If you have a smartphone app that has already been made and you are looking to add RDTScan to it, you will still need to add OpenCV for Android to your project. The [official tutorial](https://docs.opencv.org/2.4/doc/tutorials/introduction/android_binary_package/O4A_SDK.html) for doing this is fairly outdated, but there are plenty of other tutorials out there depending on your environment. Once you have done that, copy the following files over to your project (at the same path):
+  * [`RDT.java`](app/src/main/java/edu/washington/cs/ubicomplab/rdt_reader/RDT.java)
+  * [`ImageProcessor.java`](app/src/main/java/edu/washington/cs/ubicomplab/rdt_reader/ImageProcessor.java)
+  * [`RDTCameraView.java`](app/src/main/java/edu/washington/cs/ubicomplab/rdt_reader/RDTCameraView.java)
+  * [`config.json`](`app/src/main/assets/config.json`)
 
 ### Troubleshooting:
 * **Unable to locate NDK installation** If you have not already installed NDK, follow the instructions at this [link](https://developer.android.com/studio/projects/install-ndk) to do so. Once that is done, NDK should be installed at a path that either looks like `C:/Users/username/AppData/Local/Android/ndk/xx.x.xxxxxxx` (Windows) or `/Users/username/Library/Android/sdk/ndk/xx.x.xxxxxxx` (OSX). Refering to this filepath as `NDK_HOME` There are two ways to point your project to this filepath: 
@@ -27,7 +31,7 @@ RDTScan utilizes [OpenCV for Android](https://opencv.org/android/) for many of t
 # API
 [Link to API](readme_assets/api.md)
 
-## Attribution
+# Attribution
 Developers are allowed to use RDTScan as they please provided that they abide by the project's licence: [BSD-3-Clause](LICENSE). However, we would greatly appreciate attribution where possible. For example, any conference or journal publications that result from a tool built with our library should cite the following paper (note that it is in submission):
 
 BibTex
@@ -53,10 +57,10 @@ Chicago-Style
 Chunjong Park, Alex Mariakakis, Shwetak Patel, Jane Yang, Diego Lassala, Ari Johnson, Beatrice Wassuna, Fatou Fall, Marème Soda Gaye, Isaac Holeman. Supporting Smartphone-Based Image Capture of Rapid Diagnostic Tests in Low-Resource Settings. To appear in Proceedings of the 2020 International Conference on Information and Communication Technologies and Development. Association for Computing Machinery, New York, NY, USA, vol. 14. 2020. DOI: TBD
 ```
 
-## Acknowledgement
+# Acknowledgement
 RDTScan is built for [Android](https://www.android.com/) devices and therefore inherently tied to the platform. To perform image processing on-device, RDTScan utilizes [OpenCV for Android](https://opencv.org/android/). This work is financial supported by the [Bill and Melinda Gates Foundation](https://www.gatesfoundation.org/). 
 
-## Licensing
+# Licensing
 The software is provided under [BSD-3-Clause](LICENSE). Contributions to this project are accepted under the same license.
 
 In the United States, or any other jurisdictions where they may apply, the following additional disclaimer of warranty and limitation of liability are hereby incorporated into the terms and conditions of the BSD-3-Clause open source license:
