@@ -14,11 +14,11 @@ RDTScan uses a feature-matching approach for RDT recognition. This means that un
 # Installation
 RDTScan utilizes [OpenCV for Android](https://opencv.org/android/) for many of the image processing steps, which in turn relies on [Android's Native Development Kit (NDK)](https://developer.android.com/ndk/). Setting up these resources can be difficult for some developers, so there are two options for getting started with RDTScan:
 * **No existing project:** If you are making a smartphone app from scratch, you can simply clone the repository directly and build your app on top of what has already been provided. This repository has all of the dependencies properly configured along with a fully-functioning app that developers can use to get started.
-* **Existing project:** If you have a smartphone app that has already been made and you are looking to add RDTScan to it, you will still need to add OpenCV for Android to your project. The [official tutorial](https://docs.opencv.org/2.4/doc/tutorials/introduction/android_binary_package/O4A_SDK.html) for doing this is fairly outdated, but there are plenty of other tutorials out there depending on your environment. Once you have done that, copy the following files over to your project (at the same path):
-  * [`RDT.java`](app/src/main/java/edu/washington/cs/ubicomplab/rdt_reader/RDT.java)
-  * [`ImageProcessor.java`](app/src/main/java/edu/washington/cs/ubicomplab/rdt_reader/ImageProcessor.java)
-  * [`RDTCameraView.java`](app/src/main/java/edu/washington/cs/ubicomplab/rdt_reader/RDTCameraView.java)
-  * [`config.json`](app/src/main/assets/config.json)
+* **Existing project:** If you have a smartphone app that has already been made and you are looking to add RDTScan to it, you will still need to add OpenCV for Android to your project. The [official tutorial](https://docs.opencv.org/2.4/doc/tutorials/introduction/android_binary_package/O4A_SDK.html) for doing this is fairly outdated, but there are plenty of other tutorials out there depending on your environment. Once you have done that, copy the following folders and files to your project (at the same path):
+  * [`src/.../core/*`](app/src/main/java/edu/washington/cs/ubicomplab/rdt_reader/core)
+  * [`src/.../models/*`](app/src/main/java/edu/washington/cs/ubicomplab/rdt_reader/model)
+  * [`src/.../util/*`](app/src/main/java/edu/washington/cs/ubicomplab/rdt_reader/utils)
+  * [`assets/config.json`](app/src/main/assets/config.json)
 
 ### Troubleshooting:
 * **Unable to locate NDK installation** If you have not already installed NDK, follow the instructions at this [link](https://developer.android.com/studio/projects/install-ndk) to do so. Once that is done, NDK should be installed at a path that either looks like `C:/Users/username/AppData/Local/Android/ndk/xx.x.xxxxxxx` (Windows) or `/Users/username/Library/Android/sdk/ndk/xx.x.xxxxxxx` (OSX). Refering to this filepath as `NDK_HOME`, there are two ways to point your project to this filepath: 
