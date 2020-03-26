@@ -11,7 +11,12 @@
 * [`checkBrightness()`](#checkBrightness)
 * [`calculateSharpness()`](#calculateSharpness)
 * [`checkSharpness()`](#checkSharpness)
-* [`checkSizePositionOrientation()`](#checkSizePositionOrientation)
+* [`measureCentering()`](#measureCentering)
+* [`checkIfCentered()`](#checkIfCentered)
+* [`measureSize()`](#measureSize)
+* [`checkSize()`](#checkSize)
+* [`measureOrientation()`](#measureOrientation)
+* [`checkOrientation()`](#checkOrientation)
 * [`checkFiducial()`](#checkFiducial)
 * [`detectRDT()`](#detectRDT)
 * [`captureRDT()`](#captureRDT)
@@ -22,7 +27,7 @@
 
 ## RDT
 **Signature:** `RDT(Context context, String rdtName)`  
-**Purpose:** Holds all of the parameters that are loaded from the configuration file for the RDT  
+**Purpose:** Object for holding all of the parameters that are loaded from the configuration file for the RDT of interest  
 **Parameters:**
 * `Context context`: the `Context` object for the app's `Activity` 
 * `String rdtName`: the `String` used to reference the RDT design in `config.json`
@@ -46,11 +51,11 @@
 
 ## CaptureResult
 **Signature:** `CaptureResult(boolean allChecksPassed, Mat resultMat, boolean fiducial, ExposureResult exposureResult, SizeResult sizeResult, boolean isCentered, boolean isRightOrientation, double angle, boolean isSharp, boolean isShadow, MatOfPoint2f boundary, boolean flashEnabled)`  
-**Purpose:** Holds all of the parameters that describe whether a candidate video framed passed all of the quality checks  
+**Purpose:** Object for holding all of the parameters that describe whether a candidate video framed passed all of the quality checks  
 **Parameters:**
 * `boolean allChecksPassed`: xxx
 * `Mat resultMat`: xxx
-* `boolean fiducial`: xxx
+* `boolean fiducial`: whether the fiducial was detected (if one was specified)
 * `ExposureResult exposureResult`: xxx
 * `SizeResult sizeResult`: xxx
 * `boolean isCentered`: xxx
@@ -58,14 +63,14 @@
 * `double angle`: xxx
 * `boolean isSharp`: xxx
 * `boolean isShadow`: xxx
-* `MatOfPoint2f boundary`: xxx
+* `MatOfPoint2f boundary`: the corners of the bounding box around the detected RDT
 * `boolean flashEnabled`: xxx
 
 ## InterpretationResult
 **Signature:** `InterpretationResult(Mat resultMat, boolean topLine, boolean middleLine, boolean bottomLine)`  
-**Purpose:** xxx  
+**Purpose:** Object for holding all of the parameters that describe the test result that is detected on the completed RDT  
 **Parameters:**
-* `Mat resultMat`: a cropped version of the image known to have a clear RDT in the video frame so that only the result window is showing
+* `Mat resultMat`: the RDT image tightly cropped around the result window
 * `boolean topLine`: whether the top line was detected in the result window
 * `boolean middleLine`: whether the middle line was detected in the result window
 * `boolean bottomLine`: whether the bottom line was detected in the result window
@@ -117,14 +122,61 @@
 **Returns:**
 * `boolean isSharp`: whether `input` satisfies the sharpness threshold specified in the configuration file
 
-## checkSizePositionOrientation()
-**Signature:** `xxx`  
+## measureCentering()
+**Signature:** `Point center = measureCentering(MatOfPoint2f boundary)`  
 **Purpose:** xxx  
 **Parameters:**
-* `xxx`: xxx
+* `MatOfPoint2f boundary`: xxx
 
 **Returns:**
-* `xxx`: xxx
+* `Point center`: xxx
+
+## checkIfCentered()
+**Signature:** `boolean isCentered = checkIfCentered(MatOfPoint2f boundary, Size size)`  
+**Purpose:** xxx  
+**Parameters:**
+* `MatOfPoint2f boundary`: xxx
+* `Size size`: xxx
+
+**Returns:**
+* `boolean isCentered`: xxx
+
+## measureSize()
+**Signature:** `double height = measureSize(MatOfPoint2f boundary)`  
+**Purpose:** xxx  
+**Parameters:**
+* `MatOfPoint2f boundary`: xxx
+
+**Returns:**
+* `double height`: xxx
+
+## checkSize()
+**Signature:** `SizeResult sizeResult = checkSize(MatOfPoint2f boundary, Size size)`  
+**Purpose:** xxx  
+**Parameters:**
+* `MatOfPoint2f boundary`: xxx
+* `Size size`: xxx
+
+**Returns:**
+* `SizeResult sizeResult`: xxx
+
+## measureOrientation()
+**Signature:** `double angle = measureOrientation(MatOfPoint2f boundary)`  
+**Purpose:** xxx  
+**Parameters:**
+* `MatOfPoint2f boundary`: xxx
+
+**Returns:**
+* `double angle`: xxx
+
+## checkOrientation()
+**Signature:** `double isOriented = checkOrientation(MatOfPoint2f boundary)`  
+**Purpose:** xxx  
+**Parameters:**
+* `MatOfPoint2f boundary`: xxx
+
+**Returns:**
+* `boolean isOriented`: xxx
 
 ## checkFiducial()
 **Signature:** `xxx`  
