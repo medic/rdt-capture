@@ -1,0 +1,72 @@
+{
+  "variant": {
+    "module": {
+      "rootBuildGradleFolder": "D:\\workspace\\rdt-scan",
+      "sdkFolder": "C:\\Users\\hungn\\AppData\\Local\\Android\\Sdk",
+      "isNativeCompilerSettingsCacheEnabled": false,
+      "isBuildOnlyTargetAbiEnabled": true,
+      "splitsAbiFilterSet": [],
+      "intermediatesFolder": "D:\\workspace\\rdt-scan\\app\\build\\intermediates",
+      "gradleModulePathName": ":app",
+      "moduleRootFolder": "D:\\workspace\\rdt-scan\\app",
+      "makeFile": "D:\\workspace\\rdt-scan\\app\\CMakeLists.txt",
+      "buildSystem": "CMAKE",
+      "compilerSettingsCacheFolder": "D:\\workspace\\rdt-scan\\.cxx",
+      "cxxFolder": "D:\\workspace\\rdt-scan\\app\\.cxx",
+      "ndkFolder": "C:\\Users\\hungn\\AppData\\Local\\Android\\Sdk\\ndk\\21.0.6113669",
+      "ndkVersion": "21.0.6113669",
+      "ndkSupportedAbiList": [
+        "ARMEABI_V7A",
+        "ARM64_V8A",
+        "X86",
+        "X86_64"
+      ],
+      "ndkDefaultAbiList": [
+        "ARMEABI_V7A",
+        "ARM64_V8A",
+        "X86",
+        "X86_64"
+      ],
+      "cmakeToolchainFile": "."
+    },
+    "buildSystemArgumentList": [],
+    "cFlagList": [],
+    "cppFlagsList": [
+      ""
+    ],
+    "variantName": "debug",
+    "soFolder": "D:\\workspace\\rdt-scan\\app\\build\\intermediates\\cmake\\debug\\lib",
+    "objFolder": "D:\\workspace\\rdt-scan\\app\\build\\intermediates\\cmake\\debug\\obj",
+    "jsonFolder": "D:\\workspace\\rdt-scan\\app\\.cxx\\cmake\\debug",
+    "gradleBuildOutputFolder": "D:\\workspace\\rdt-scan\\app\\.cxx\\cxx\\debug",
+    "isDebuggableEnabled": true,
+    "validAbiList": [
+      "ARMEABI_V7A",
+      "ARM64_V8A",
+      "X86",
+      "X86_64"
+    ],
+    "buildTargetSet": []
+  },
+  "abi": "X86",
+  "abiPlatformVersion": 21,
+  "cxxBuildFolder": "D:\\workspace\\rdt-scan\\app\\.cxx\\cmake\\debug\\x86",
+  "jsonFile": "D:\\workspace\\rdt-scan\\app\\.cxx\\cmake\\debug\\x86\\android_gradle_build.json",
+  "gradleBuildOutputFolder": "D:\\workspace\\rdt-scan\\app\\.cxx\\cxx\\debug\\x86",
+  "objFolder": "D:\\workspace\\rdt-scan\\app\\build\\intermediates\\cmake\\debug\\obj\\x86",
+  "buildCommandFile": "D:\\workspace\\rdt-scan\\app\\.cxx\\cmake\\debug\\x86\\build_command.txt",
+  "buildOutputFile": "D:\\workspace\\rdt-scan\\app\\.cxx\\cmake\\debug\\x86\\build_output.txt",
+  "modelOutputFile": "D:\\workspace\\rdt-scan\\app\\.cxx\\cmake\\debug\\x86\\build_model.json",
+  "cmake": {
+    "cmakeListsWrapperFile": "D:\\workspace\\rdt-scan\\app\\.cxx\\cxx\\debug\\x86\\CMakeLists.txt",
+    "toolchainWrapperFile": "D:\\workspace\\rdt-scan\\app\\.cxx\\cxx\\debug\\x86\\android_gradle_build.toolchain.cmake",
+    "buildGenerationStateFile": "D:\\workspace\\rdt-scan\\app\\.cxx\\cxx\\debug\\x86\\build_generation_state.json",
+    "cacheKeyFile": "D:\\workspace\\rdt-scan\\app\\.cxx\\cxx\\debug\\x86\\compiler_cache_key.json",
+    "compilerCacheUseFile": "D:\\workspace\\rdt-scan\\app\\.cxx\\cxx\\debug\\x86\\compiler_cache_use.json",
+    "compilerCacheWriteFile": "D:\\workspace\\rdt-scan\\app\\.cxx\\cxx\\debug\\x86\\compiler_cache_write.json",
+    "toolchainSettingsFromCacheFile": "D:\\workspace\\rdt-scan\\app\\.cxx\\cxx\\debug\\x86\\compiler_settings_cache.cmake",
+    "cmakeWrappingBaseFolder": "."
+  },
+  "jsonGenerationLoggingRecordFile": "D:\\workspace\\rdt-scan\\app\\.cxx\\cmake\\debug\\x86\\json_generation_record.json",
+  "compileCommandsJsonFile": "D:\\workspace\\rdt-scan\\app\\.cxx\\cmake\\debug\\x86\\compile_commands.json"
+}

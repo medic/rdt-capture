@@ -49,6 +49,9 @@ import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 
+import edu.washington.cs.ubicomplab.rdt_reader.ImageResult.CaptureResult;
+import edu.washington.cs.ubicomplab.rdt_reader.ImageResult.InterpretationResult;
+
 import static edu.washington.cs.ubicomplab.rdt_reader.Constants.*;
 import static java.lang.Math.pow;
 import static java.lang.StrictMath.abs;
@@ -58,7 +61,6 @@ import static org.opencv.core.Core.kmeans;
 import static org.opencv.core.Core.max;
 import static org.opencv.core.Core.meanStdDev;
 import static org.opencv.core.Core.perspectiveTransform;
-import static org.opencv.core.Core.split;
 import static org.opencv.core.CvType.CV_32F;
 import static org.opencv.core.CvType.CV_8U;
 import static org.opencv.core.CvType.CV_8UC3;
@@ -93,75 +95,41 @@ public class ImageProcessor {
 
     }
 
-    public class CaptureResult {
-        public boolean allChecksPassed;
-        public Mat resultMat;
-        public MatOfPoint2f boundary;
-        public ExposureResult exposureResult;
-        public SizeResult sizeResult;
-        public boolean isCentered;
-        public boolean isRightOrientation;
-        public boolean isSharp;
-        public boolean isShadow;
-        public boolean fiducial;
-        public double angle;
-        public boolean flashEnabled;
-        public boolean isGlared;
-
-        public CaptureResult(boolean allChecksPassed, Mat resultMat, boolean fiducial,
-                             ExposureResult exposureResult, SizeResult sizeResult,  boolean isCentered,
-                             boolean isRightOrientation, double angle, boolean isSharp, boolean isShadow, boolean isGlared, MatOfPoint2f boundary, boolean flashEnabled){
-            this.allChecksPassed = allChecksPassed;
-            this.resultMat = resultMat;
-            this.fiducial = fiducial;
-            this.exposureResult = exposureResult;
-            this.sizeResult = sizeResult;
-            this.isCentered = isCentered;
-            this.isRightOrientation = isRightOrientation;
-            this.isSharp = isSharp;
-            this.isShadow = isShadow;
-            this.angle = angle;
-            this.boundary = boundary;
-            this.flashEnabled = flashEnabled;
-            this.isGlared = isGlared;
-        }
-    }
-
-    public static class InterpretationResult {
-        public boolean topLine;
-        public boolean middleLine;
-        public boolean bottomLine;
-        public String topLineName;
-        public String middleLineName;
-        public String bottomLineName;
-        public Mat resultMat;
-        public Bitmap resultBitmap;
-
-        public InterpretationResult() {
-            topLine = false;
-            middleLine = false;
-            bottomLine = false;
-            topLineName = "Top Line";
-            middleLineName = "Middle Line";
-            bottomLineName = "Bottom Line";
-            resultMat = new Mat();
-            resultBitmap = null;
-        }
-
-        public InterpretationResult(Mat resultMat, boolean topLine, boolean middleLine, boolean bottomLine) {
-            this.resultMat = resultMat;
-            this.topLine = topLine;
-            this.middleLine = middleLine;
-            this.bottomLine = bottomLine;
-            this.topLineName = mRDT.topLineName;
-            this.middleLineName = mRDT.middleLineName;
-            this.bottomLineName = mRDT.bottomLineName;
-            if (resultMat.cols() > 0 && resultMat.rows() > 0) {
-                this.resultBitmap = Bitmap.createBitmap(resultMat.cols(), resultMat.rows(), Bitmap.Config.ARGB_8888);
-                Utils.matToBitmap(resultMat, resultBitmap);
-            }
-        }
-    }
+//    public static class InterpretationResult {
+//        public boolean topLine;
+//        public boolean middleLine;
+//        public boolean bottomLine;
+//        public String topLineName;
+//        public String middleLineName;
+//        public String bottomLineName;
+//        public Mat resultMat;
+//        public Bitmap resultBitmap;
+//
+//        public InterpretationResult() {
+//            topLine = false;
+//            middleLine = false;
+//            bottomLine = false;
+//            topLineName = "Top Line";
+//            middleLineName = "Middle Line";
+//            bottomLineName = "Bottom Line";
+//            resultMat = new Mat();
+//            resultBitmap = null;
+//        }
+//
+//        public InterpretationResult(Mat resultMat, boolean topLine, boolean middleLine, boolean bottomLine) {
+//            this.resultMat = resultMat;
+//            this.topLine = topLine;
+//            this.middleLine = middleLine;
+//            this.bottomLine = bottomLine;
+//            this.topLineName = mRDT.topLineName;
+//            this.middleLineName = mRDT.middleLineName;
+//            this.bottomLineName = mRDT.bottomLineName;
+//            if (resultMat.cols() > 0 && resultMat.rows() > 0) {
+//                this.resultBitmap = Bitmap.createBitmap(resultMat.cols(), resultMat.rows(), Bitmap.Config.ARGB_8888);
+//                Utils.matToBitmap(resultMat, resultBitmap);
+//            }
+//        }
+//    }
 
 
     public ImageProcessor (Activity activity, String rdtName) {
@@ -607,7 +575,8 @@ public class ImageProcessor {
         boolean topLine, middleLine, bottomLine;
 
         if (resultMat.width() == 0 && resultMat.height() == 0) {
-            return new InterpretationResult(resultMat, false, false, false);
+            return new InterpretationResult(resultMat, false, false, false, mRDT.topLineName, mRDT.middleLineName,
+                        mRDT.bottomLineName);
         }
 
         Mat grayMat = new Mat();
@@ -640,7 +609,7 @@ public class ImageProcessor {
         middleLine = results[1];
         bottomLine = results[2];
 
-        return new InterpretationResult(resultMat, topLine, middleLine, bottomLine);
+        return new InterpretationResult(resultMat, topLine, middleLine, bottomLine, mRDT.topLineName, mRDT.middleLineName, mRDT.topLineName);
     }
 
     public InterpretationResult interpretResult(Mat inputMat) {
