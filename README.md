@@ -7,23 +7,220 @@ RDTScan uses image processing to check the quality of images intercepted from th
 **2. Robust Result Interpretation**  
 Assuming a satisfactory image has been captured, RDTScan can post-process the image to emphasize any faint lines that may appear on the immunoassay. The end-user can view that image for themselves to make an informed decision about their test results. Alternatively, RDTScan provides an algorithm that interprets the test results on the end-user's behalf.
 
-RDTScan is designed to work with a variety of RDT designs, only requiring a single example image and some metadata about test itself. There are only a few cases where RDTScan is less likely to work:
-* Blank RDT cassettes with little or no lettering
-* RDTs with inconsistent patterns due to a QR code, bar code, etc.
+RDTScan uses a SIFT feature-based template-matching approach for RDT recognition. This means that unlike model-driven approaches that require a dataset of example images for model training, RDTScan only requires a single example image and some metadata about the test itself (e.g., relative position and meaning of each line). Although RDTScan is designed to be as generalizable as possible, its template-matching approach is less amenable to the following RDT characteristics:
+* Blank cassettes with little or no lettering
+* Inconsistent patterns (e.g., QR code, bar code)
+* More than three result lines
 
-![Examples of bad RDTs](image.png)
+<center><img src="readme_assets/rdt_examples.png" alt="Examples photographs of RDTs that work well and do not work well with RDTScan" width="300"/></center>
 
-**Disclaimer:** Please note that although RDTScan has been tested through multiple in-lab studies and real-world deployments, the library has not been FDA-approved.
+**Disclaimer:** Although RDTScan has been tested through multiple in-lab studies and real-world deployments, this library has not been FDA-approved.
 
-## Installation
+# Installation
+RDTScan utilizes [OpenCV for Android](https://opencv.org/android/) for many of the image processing steps, which in turn relies on [Android's Native Development Kit (NDK)](https://developer.android.com/ndk/). Setting up these resources can be difficult for some developers, so there are two options for getting started with RDTScan:
+* **No existing project:** If you are making a smartphone app from scratch, you can simply clone the repository directly and build your app on top of what has already been provided. This repository has all of the dependencies properly configured along with a fully-functioning app that developers can use to get started.
+* **Existing project:** If you have a smartphone app that has already been made and you are looking to add RDTScan to it, you will still need to add OpenCV for Android to your project. The [official tutorial](https://docs.opencv.org/2.4/doc/tutorials/introduction/android_binary_package/O4A_SDK.html) for doing this is fairly outdated, but there are plenty of other tutorials out there depending on your environment. Once you have done that, copy `RDT.java`, `ImageProcessor.java`, and `RDTCameraView.java` over to your project.
 
-| **Data Field**          | **Data Type**     | **Description**    |
-| :---------------------- | :---------------- | :----------------- |
-| Template image          | More Stuff        | And Again    |
-| Result window corners   | Put Pipes In      | Like this    |
-| Control line position   | Put Pipes In      | Like this    |
+## Troubleshooting:
+* **Unable to locate NDK installation** If you have not already installed NDK, follow the instructions at this [link](https://developer.android.com/studio/projects/install-ndk) to do so. Once that is done, NDK should be installed at a path that either looks like `C:/Users/username/AppData/Local/Android/ndk/xx.x.xxxxxxx` (Windows) or `/Users/username/Library/Android/sdk/ndk/xx.x.xxxxxxx` (OSX). Refering to this filepath as `NDK_HOME` There are two ways to point your project to this filepath: 
+  1. Go to **File > Project Structure > SDK Location** and then set the path variable in **Android NDK Location** to `NDK_HOME`.
+  2. Open the `local.properties` file and add the following line: `ndk.dir=NDK_HOME`
 
-## API
+# Configuration
+The information
+
+TODO: how to take clean photo of an RDT
+[`imread()`](https://docs.opencv.org/3.4/d4/da8/group__imgcodecs.html#ga288b8b3da0892bd651fce07b3bbd3a56) method (e.g., `.jpg`, `.png`)
+
+| **Data Field**                      | **Required?**       | **Data Types**  | **Description**    |
+| :---------------------------------- | :-----------------: | :-------------- | :----------------- |
+| `REF_IMG`                           | :heavy_check_mark:  | `String`        | The filename of the template image for the RDT |
+| `VIEW_FINDER_SCALE_H`               | :heavy_check_mark:  | `double`        | TODO |
+| `VIEW_FINDER_SCALE_W`               | :heavy_check_mark:  | `double`        | TODO |
+| `INTENSITY_THRESHOLD`               | :heavy_minus_sign:  | `int`           | TODO |
+| `CONTROL_INTENSITY_PEAK_THRESHOLD`  | :heavy_check_mark:  | `double`        | TODO |
+| `TEST_INTENSITY_PEAK_THRESHOLD`     | :heavy_check_mark:  | `double`        | TODO |
+| `LINE_SEARCH_WIDTH`                 | :heavy_minus_sign:  | `double`        | TODO |
+| Result window corners     | :heavy_check_mark:  | `(int, int)`   | The (x, y) pixel coordinates denoting the top-left and bottom-right corners of the general region where the results will appear |
+| Control line position     | :heavy_check_mark:  | `int`          | The pixel position of the control line along the result window's wider axis |
+| Test line position(s)     | :heavy_check_mark:  | `int`          | The pixel position of the test line(s) along the result window's wider axis |
+| Meanings of test lines(s) | :heavy_check_mark:  | `String`       | The diagnostic decision that would be made if the corresponding line is visible and the test is performed correctly (e.g., `"control"`, `"malaria Pf"`) |
+| Desired RDT scale         | :heavy_check_mark:  | `float`        | The ideal scale of the RDT relative to the width of the camera's standard image width |
+| Line intensity            | :heavy_minus_sign:  | `int`          | TODO | 
+| Fiducial locations        | :heavy_minus_sign:  | `(int, int)`   | The (x, y) pixel coordinates denoting the top-left and bottom-right corners of variable dark-colored markings that have a fixed location (e.g., QR code, bar code) |
+| Line hues                 | :heavy_minus_sign: | `int`           | The expected hues of the control and test lines (range: 0-179) |
+
+# API
+## Classes/Enums
+* [`RDT`](#RDT)
+* [`ExposureResult`](#exposureResult)
+* [`SizeResult`](#sizeResult)
+* [`CaptureResult`](#captureResult)
+* [`InterpretationResult`](#interpretationResult)
+
+## Methods
+* [`configureCamera()`](#configureCamera)
+* [`calculateBrightness()`](#calculateBrightness)
+* [`checkBrightness()`](#checkBrightness)
+* [`calculateSharpness()`](#calculateSharpness)
+* [`checkSharpness()`](#checkSharpness)
+* [`checkSizePositionOrientation()`](#checkSizePositionOrientation)
+* [`checkFiducial()`](#checkFiducial)
+* [`detectRDT()`](#detectRDT)
+* [`captureRDT()`](#captureRDT)
+* [`enhanceResultWindow()`](#enhanceResultWindow)
+* [`interpretRDT()`](#interpretRDT)
+
+### RDT
+**Signature:** `RDT(Context context, String rdtName)`  
+**Purpose:** Holds all of the parameters that are loaded from the configuration file for the RDT  
+**Parameters:**
+* `Context context`: the `Context` object for the app's `Activity` 
+* `String rdtName`: the `String` used to reference the RDT design in `config.json`
+
+### ExposureResult
+**Signature:** `enum ExposureResult`  
+**Purpose:** TODO  
+**Possible Values:**
+* `UNDER_EXPOSED`: 
+* `NORMAL`:
+* `OVER_EXPOSED`:
+
+### SizeResult
+**Signature:** `enum SizeResult`  
+**Purpose:** TODO  
+**Possible Values:**
+* `RIGHT_SIZE`: 
+* `LARGE`:
+* `SMALL`:
+* `INVALID`:
+
+
+### CaptureResult
+**Signature:** `CaptureResult(boolean allChecksPassed, Mat resultMat, boolean fiducial, ExposureResult exposureResult, SizeResult sizeResult, boolean isCentered, boolean isRightOrientation, double angle, boolean isSharp, boolean isShadow, MatOfPoint2f boundary, boolean flashEnabled)`  
+**Purpose:** Holds all of the parameters that describe whether a candidate video framed passed all of the quality checks  
+**Parameters:**
+* `boolean allChecksPassed`: xxx
+* `Mat resultMat`: xxx
+* `boolean fiducial`: xxx
+* `ExposureResult exposureResult`: xxx
+* `SizeResult sizeResult`: xxx
+* `boolean isCentered`: xxx
+* `boolean isRightOrientation`: xxx
+* `double angle`: xxx
+* `boolean isSharp`: xxx
+* `boolean isShadow`: xxx
+* `MatOfPoint2f boundary`: xxx
+* `boolean flashEnabled`: xxx
+
+### InterpretationResult
+**Signature:** `InterpretationResult(Mat resultMat, boolean topLine, boolean middleLine, boolean bottomLine)`  
+**Purpose:** xxx  
+**Parameters:**
+* `Mat resultMat`: a cropped version of the image known to have a clear RDT in the video frame so that only the result window is showing
+* `boolean topLine`: whether the top line was detected in the result window
+* `boolean middleLine`: whether the middle line was detected in the result window
+* `boolean bottomLine`: whether the bottom line was detected in the result window
+
+### configureCamera()
+**Signature:** `xxx`  
+**Purpose:** xxx  
+**Parameters:**
+* `xxx`: xxx
+
+**Returns:**
+* `xxx`: xxx
+
+### calculateBrightness()
+**Signature:** `float[] mBuff = calculateBrightness(Mat input)`  
+**Purpose:** Calculates the brightness histogram of the candidate video frame  
+**Parameters:**
+* `Mat input`: the candidate video frame
+
+**Returns:**
+* `float[] mBuff`: a 256-element histogram that quantifies the number of pixels at each brightness level for the greyscale version of `input`
+
+### checkBrightness()
+**Signature:** `ExposureResult exposureResult = checkBrightness(Mat input)`  
+**Purpose:** Determines whether the candidate video frame has sufficient lighting without being too bright  
+**Parameters:**
+* `Mat input`: the candidate video frame
+
+**Returns:**
+* `ExposureResult exposureResult`: whether `input` satisfies the brightness thresholds in the configuration file.
+
+### calculateSharpness()
+**Signature:** `double sharpness = calculateSharpness(Mat input)`  
+**Purpose:** Calculates the Laplacian variance of the candidate video frame  
+**Parameters:**
+* `Mat input`: the candidate video frame
+
+**Returns:**
+* `double sharpness`: the Laplacian variance of `input`
+
+### checkSharpness()
+**Signature:** `boolean isSharp = checkSharpness(Mat input)`  
+**Purpose:** Determines whether the candidate video frame is focused  
+**Parameters:**
+* `Mat input`: the candidate video frame
+
+**Returns:**
+* `boolean isSharp`: whether `input` satisfies the sharpness threshold specified in the configuration file
+
+### checkSizePositionOrientation()
+**Signature:** `xxx`  
+**Purpose:** xxx  
+**Parameters:**
+* `xxx`: xxx
+
+**Returns:**
+* `xxx`: xxx
+
+### checkFiducial()
+**Signature:** `xxx`  
+**Purpose:** xxx  
+**Parameters:**
+* `xxx`: xxx
+
+**Returns:**
+* `xxx`: xxx
+
+### detectRDT()
+**Signature:** `xxx`  
+**Purpose:** xxx  
+**Parameters:**
+* `xxx`: xxx
+
+**Returns:**
+* `xxx`: xxx
+
+### captureRDT()
+**Signature:** `xxx`  
+**Purpose:** xxx  
+**Parameters:**
+* `xxx`: xxx
+
+**Returns:**
+* `xxx`: xxx
+
+### enhanceResultWindow()
+**Signature:** `xxx`  
+**Purpose:** xxx  
+**Parameters:**
+* `xxx`: xxx
+
+**Returns:**
+* `xxx`: xxx
+
+### interpretResult()
+**Signature:** `InterpretationResult interpResult = interpretResult(Mat inputMat, MatOfPoint2f boundary)`
+**Purpose:** 
+**Parameters:**
+* `Mat inputMat`: the image known to have a clear RDT in the video frame
+* `MatOfPoint2f boundary`: the corners of the bounding box around the detected RDT
+
+**Returns:**
+* `InterpretationResult interpResult`: 
 
 ## Attribution
 Developers are allowed to use RDTScan as they please provided that they abide by the project's licence: [BSD-3-Clause](LICENSE). However, we would greatly appreciate attribution where possible. For example, any conference or journal publications that result from a tool built with our library should cite the following paper (note that it is in submission):
@@ -52,7 +249,7 @@ Chunjong Park, Alex Mariakakis, Shwetak Patel, Jane Yang, Diego Lassala, Ari Joh
 ```
 
 ## Acknowledgement
-This work is financial supported by the [Bill and Melinda Gates Foundation](https://www.gatesfoundation.org/). 
+RDTScan is built for [Android](https://www.android.com/) devices and therefore inherently tied to the platform. To perform image processing on-device, RDTScan utilizes [OpenCV for Android](https://opencv.org/android/). This work is financial supported by the [Bill and Melinda Gates Foundation](https://www.gatesfoundation.org/). 
 
 ## Licensing
 The software is provided under [BSD-3-Clause](LICENSE). Contributions to this project are accepted under the same license.
