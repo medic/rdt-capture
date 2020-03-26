@@ -10,7 +10,7 @@ Extending RDTScan to accommodate a new RDT is a matter of adding a clean photo o
 * Inconsistent patterns (e.g., QR code, bar code)
 * More than three result lines
 
-<center><img src="readme_assets/rdt_examples.png" alt="Examples photographs of RDTs that work well and do not work well with RDTScan" width="300"/></center>
+<center><img src="rdt_examples.png" alt="Examples photographs of RDTs that work well and do not work well with RDTScan" width="300"/></center>
 
 ### Getting a suitable template
 1. The easiest way to get a suitable template image of the RDT is to use an app like [OfficeLens] (https://play.google.com/store/apps/details?id=com.microsoft.office.officelens&hl=en). As long as the RDT is on a distinct background, the app will perform perspective correction and crop the image tightly around the RDT, which is what we need. Alternatively, you can take the photo yourself and crop it in PhotoShop or MSPaint. If you go that route, you should make the image as non-skew as possible (i.e., the phone should be very parallel to the table).
