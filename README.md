@@ -27,10 +27,20 @@ RDTScan utilizes [OpenCV for Android](https://opencv.org/android/) for many of t
   2. Open the `local.properties` file and add the following line: `ndk.dir=NDK_HOME`
 
 # Configuration
-The information 
-| **Data Field**            | **Required?**       | **Data Types** | **Description**    |
-| :------------------------ | :-----------------: | :------------- | :----------------- |
-| Template image            | :heavy_check_mark:  | Any image format accepted by OpenCV's [`imread()`](https://docs.opencv.org/3.4/d4/da8/group__imgcodecs.html#ga288b8b3da0892bd651fce07b3bbd3a56) method (e.g., `.jpg`, `.png`) | A non-skewed, tightly cropped photo of the RDT |
+The information
+
+TODO: how to take clean photo of an RDT
+[`imread()`](https://docs.opencv.org/3.4/d4/da8/group__imgcodecs.html#ga288b8b3da0892bd651fce07b3bbd3a56) method (e.g., `.jpg`, `.png`)
+
+| **Data Field**                      | **Required?**       | **Data Types**  | **Description**    |
+| :---------------------------------- | :-----------------: | :-------------- | :----------------- |
+| `REF_IMG`                           | :heavy_check_mark:  | `String`        | The filename of the template image for the RDT |
+| `VIEW_FINDER_SCALE_H`               | :heavy_check_mark:  | `double`        | TODO |
+| `VIEW_FINDER_SCALE_W`               | :heavy_check_mark:  | `double`        | TODO |
+| `INTENSITY_THRESHOLD`               | :heavy_minus_sign:  | `int`           | TODO |
+| `CONTROL_INTENSITY_PEAK_THRESHOLD`  | :heavy_check_mark:  | `double`        | TODO |
+| `TEST_INTENSITY_PEAK_THRESHOLD`     | :heavy_check_mark:  | `double`        | TODO |
+| `LINE_SEARCH_WIDTH`                 | :heavy_minus_sign:  | `double`        | TODO |
 | Result window corners     | :heavy_check_mark:  | `(int, int)`   | The (x, y) pixel coordinates denoting the top-left and bottom-right corners of the general region where the results will appear |
 | Control line position     | :heavy_check_mark:  | `int`          | The pixel position of the control line along the result window's wider axis |
 | Test line position(s)     | :heavy_check_mark:  | `int`          | The pixel position of the test line(s) along the result window's wider axis |
