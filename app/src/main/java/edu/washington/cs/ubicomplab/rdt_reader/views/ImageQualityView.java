@@ -6,7 +6,7 @@
  * of a BSD-style license that can be found in the LICENSE file.
  */
 
-package edu.washington.cs.ubicomplab.rdt_reader;
+package edu.washington.cs.ubicomplab.rdt_reader.views;
 
 import android.Manifest;
 import android.app.Activity;
@@ -32,7 +32,6 @@ import android.hardware.camera2.params.StreamConfigurationMap;
 import android.media.Image;
 import android.media.ImageReader;
 import android.os.AsyncTask;
-import android.os.Build;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.support.annotation.NonNull;
@@ -64,7 +63,14 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 
-import static edu.washington.cs.ubicomplab.rdt_reader.Constants.*;
+import edu.washington.cs.ubicomplab.rdt_reader.R;
+import edu.washington.cs.ubicomplab.rdt_reader.core.ImageProcessor;
+import edu.washington.cs.ubicomplab.rdt_reader.interfaces.ImageQualityViewListener;
+import edu.washington.cs.ubicomplab.rdt_reader.models.RDTCaptureResult;
+import edu.washington.cs.ubicomplab.rdt_reader.models.RDTInterpretationResult;
+import edu.washington.cs.ubicomplab.rdt_reader.utils.ImageUtil;
+
+import static edu.washington.cs.ubicomplab.rdt_reader.utils.Constants.*;
 
 
 public class ImageQualityView extends LinearLayout implements View.OnClickListener, ActivityCompat.OnRequestPermissionsResultCallback {
@@ -102,16 +108,8 @@ public class ImageQualityView extends LinearLayout implements View.OnClickListen
         INACTIVE, FOCUSING, FOCUSED, UNFOCUSED
     }
 
-    public enum RDTDectedResult {
+    public enum RDTDetectedResult {
         STOP, CONTINUE
-    }
-    public interface ImageQualityViewListener {
-        void onRDTCameraReady();
-        RDTDectedResult onRDTDetected(
-                ImageProcessor.CaptureResult captureResult,
-                ImageProcessor.InterpretationResult interpretationResult,
-                long timeTaken
-        );
     }
 
     public ImageQualityView(Context context, AttributeSet attrs) {
@@ -337,19 +335,19 @@ public class ImageQualityView extends LinearLayout implements View.OnClickListen
         protected Void doInBackground(Image... images) {
             Image image = images[0];
             final Mat rgbaMat = ImageUtil.imageToRGBMat(image);
-            final ImageProcessor.CaptureResult captureResult = processor.captureRDT(rgbaMat, flashEnabled);
+            final RDTCaptureResult captureResult = processor.captureRDT(rgbaMat, flashEnabled);
             //ImageProcessor.SizeResult sizeResult, boolean isCentered, boolean isRightOrientation, boolean isSharp, ImageProcessor.ExposureResult exposureResult
             mActivity.runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
-                    displayQualityResult(captureResult.sizeResult, captureResult.isCentered, captureResult.isRightOrientation, captureResult.isSharp, captureResult.exposureResult);
+                    displayQualityResult(captureResult.sizeResult, captureResult.isCentered, captureResult.isRightOrientation, captureResult.isSharp, captureResult.isGlared, captureResult.exposureResult);
                 }
             });
 
             Log.d(TAG, String.format("Capture time: %d", System.currentTimeMillis() - timeTaken));
             Log.d(TAG, String.format("Captured result: %b", captureResult.allChecksPassed));
 
-            ImageProcessor.InterpretationResult interpretationResult = null;
+            RDTInterpretationResult interpretationResult = null;
             if (captureResult.allChecksPassed) {
                 Log.d(TAG, String.format("Captured MAT size: %s", captureResult.resultMat.size()));
 
@@ -362,7 +360,7 @@ public class ImageQualityView extends LinearLayout implements View.OnClickListen
             }
             rgbaMat.release();
 
-            RDTDectedResult result = RDTDectedResult.CONTINUE;
+            RDTDetectedResult result = RDTDetectedResult.CONTINUE;
             if (mImageQualityViewListener != null) {
                 result = mImageQualityViewListener.onRDTDetected(
                         captureResult,
@@ -377,7 +375,7 @@ public class ImageQualityView extends LinearLayout implements View.OnClickListen
                     interpretationResult.resultMat != null) {
                 interpretationResult.resultMat.release();
             }
-            if (result == RDTDectedResult.STOP) {
+            if (result == RDTDetectedResult.STOP) {
                 mOnImageAvailableThread.interrupt();
             }
 
@@ -430,7 +428,7 @@ public class ImageQualityView extends LinearLayout implements View.OnClickListen
                         //Log.d(TAG, "FOCUS STATE: focusing");
                         mFocusState = FocusState.FOCUSING;
                     } else {
-                        //Log.d(TAG, "FOCUS STATE: unknown state " + result.get(CaptureResult.CONTROL_AF_STATE).toString());
+                        //Log.d(TAG, "FOCUS STATE: unknown state " + result.get(RDTCaptureResult.CONTROL_AF_STATE).toString());
                     }
 
                     if (showFeedback && previousFocusState != mFocusState) {
@@ -932,7 +930,7 @@ public class ImageQualityView extends LinearLayout implements View.OnClickListen
 
     }
 
-    private void displayQualityResult(ImageProcessor.SizeResult sizeResult, boolean isCentered, boolean isRightOrientation, boolean isSharp, ImageProcessor.ExposureResult exposureResult) {
+    private void displayQualityResult(ImageProcessor.SizeResult sizeResult, boolean isCentered, boolean isRightOrientation, boolean isSharp, boolean isGlared, ImageProcessor.ExposureResult exposureResult) {
         if (!showFeedback) {
             return;
         }
@@ -944,10 +942,10 @@ public class ImageQualityView extends LinearLayout implements View.OnClickListen
         }
 
         if (currFocusState == FocusState.FOCUSED) {
-            String[] qChecks = processor.getQualityCheckText(sizeResult, isCentered, isRightOrientation, isSharp, exposureResult);
+            String[] qChecks = processor.getQualityCheckText(sizeResult, isCentered, isRightOrientation, isSharp, isGlared, exposureResult);
             String message = String.format(getResources().getString(R.string.quality_msg_format_text), qChecks[0], qChecks[1], qChecks[2], qChecks[3]);
 
-            mInstructionText.setText(getResources().getText(processor.getInstructionText(sizeResult, isCentered, isRightOrientation)));
+            mInstructionText.setText(getResources().getText(processor.getInstructionText(sizeResult, isCentered, isGlared, isRightOrientation)));
 
             mImageQualityFeedbackView.setText(Html.fromHtml(message));
         } else if (currFocusState == FocusState.INACTIVE) {

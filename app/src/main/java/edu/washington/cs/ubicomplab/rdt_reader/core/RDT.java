@@ -1,4 +1,4 @@
-package edu.washington.cs.ubicomplab.rdt_reader;
+package edu.washington.cs.ubicomplab.rdt_reader.core;
 
 import android.content.Context;
 import android.graphics.Bitmap;
@@ -15,15 +15,18 @@ import org.opencv.xfeatures2d.SIFT;
 
 import java.io.InputStream;
 
+import edu.washington.cs.ubicomplab.rdt_reader.utils.Constants;
+
+import static edu.washington.cs.ubicomplab.rdt_reader.utils.ImageUtil.GAUSSIAN_BLUR_WINDOW;
 import static org.opencv.imgproc.Imgproc.cvtColor;
 
 /**
  * Created by cjpark on 7/13/19.
  */
 
-class RDT {
+public class RDT {
     int refImageID;
-    double viewFinderScaleH, viewFinderScaleW;
+    public double viewFinderScaleH, viewFinderScaleW;
     int intensityThreshold;
     int controlIntensityPeakThreshold;
     int testIntensityPeakThreshold;
@@ -77,9 +80,9 @@ class RDT {
             resultWindowRectWPadding = obj.getInt("RESULT_WINDOW_RECT_WIDTH_PADDING");
             fiducialDistance = obj.getInt("FIDUCIAL_DISTANCE");
             fiducialCount = obj.getInt("FIDUCIAL_COUNT");
-            topLineName = obj.getString("TOP_LINE_NAME");
-            middleLineName = obj.getString("MIDDLE_LINE_NAME");
-            bottomLineName = obj.getString("BOTTOM_LINE_NAME");
+            topLineName = obj.getString("DEFAULT_TOP_LINE_NAME");
+            middleLineName = obj.getString("DEFAULT_MIDDLE_LINE_NAME");
+            bottomLineName = obj.getString("DEFAULT_BOTTOM_LINE_NAME");
 
             // Load ref img
             refImg = new Mat();
@@ -88,7 +91,7 @@ class RDT {
             cvtColor(refImg, refImg, Imgproc.COLOR_RGB2GRAY);
 
             // Store the reference's sharpness
-            Imgproc.GaussianBlur(refImg, refImg, new Size(5, 5), 0, 0);
+            Imgproc.GaussianBlur(refImg, refImg, new Size(GAUSSIAN_BLUR_WINDOW, GAUSSIAN_BLUR_WINDOW), 0, 0);
 
             // Load the reference image's features
             refDescriptor = new Mat();

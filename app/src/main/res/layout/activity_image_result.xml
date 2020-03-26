@@ -12,7 +12,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context="edu.washington.cs.ubicomplab.rdt_reader.ImageResultActivity">
+    tools:context="edu.washington.cs.ubicomplab.rdt_reader.activities.ImageResultActivity">
 
     <ImageView
         android:id="@+id/RDTImageView"

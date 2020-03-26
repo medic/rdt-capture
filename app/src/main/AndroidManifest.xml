@@ -38,7 +38,7 @@
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
         <activity
-            android:name=".MainActivity"
+            android:name=".activities.MainActivity"
             android:configChanges="keyboardHidden|orientation"
             android:noHistory="true"
             android:screenOrientation="portrait">
@@ -49,10 +49,10 @@
             </intent-filter>
         </activity>
         <activity
-            android:name=".ExpirationDateActivity"
+            android:name=".activities.ExpirationDateActivity"
             android:noHistory="true" />
         <activity
-            android:name=".ImageQualityActivity"
+            android:name=".activities.ImageQualityActivity"
             android:theme="@style/Theme.AppCompat.NoActionBar"
             android:configChanges="keyboardHidden|orientation"
             android:exported="true"
@@ -64,7 +64,7 @@
             </intent-filter>
         </activity>
         <activity
-            android:name=".ImageResultActivity"
+            android:name=".activities.ImageResultActivity"
             android:configChanges="keyboardHidden|orientation"
             android:noHistory="true"
             android:screenOrientation="portrait" />

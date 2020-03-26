@@ -2,8 +2,8 @@
 * [`RDT`](#RDT)
 * [`ExposureResult`](#exposureResult)
 * [`SizeResult`](#sizeResult)
-* [`CaptureResult`](#captureResult)
-* [`InterpretationResult`](#interpretationResult)
+* [`CaptureResult`](#rdtCaptureResult)
+* [`InterpretationResult`](#rdtInterpretationResult)
 
 # Methods for RDT Detection
 * [`configureCamera()`](#configureCamera)

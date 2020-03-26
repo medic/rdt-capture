@@ -6,7 +6,7 @@
  * of a BSD-style license that can be found in the LICENSE file.
  */
 
-package edu.washington.cs.ubicomplab.rdt_reader;
+package edu.washington.cs.ubicomplab.rdt_reader.core;
 
 import android.app.Activity;
 import android.content.Context;
@@ -48,14 +48,21 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
-import java.util.stream.IntStream;
 
-import static edu.washington.cs.ubicomplab.rdt_reader.Constants.*;
+import edu.washington.cs.ubicomplab.rdt_reader.R;
+import edu.washington.cs.ubicomplab.rdt_reader.models.RDTCaptureResult;
+import edu.washington.cs.ubicomplab.rdt_reader.models.RDTInterpretationResult;
+import edu.washington.cs.ubicomplab.rdt_reader.utils.Constants;
+import edu.washington.cs.ubicomplab.rdt_reader.utils.ImageUtil;
+
+import static edu.washington.cs.ubicomplab.rdt_reader.utils.Constants.*;
+import static edu.washington.cs.ubicomplab.rdt_reader.utils.ImageUtil.calculateRedColorPercentage;
 import static java.lang.Math.pow;
 import static java.lang.StrictMath.abs;
 import static org.opencv.core.Core.KMEANS_PP_CENTERS;
 import static org.opencv.core.Core.LUT;
 import static org.opencv.core.Core.kmeans;
+import static org.opencv.core.Core.max;
 import static org.opencv.core.Core.meanStdDev;
 import static org.opencv.core.Core.perspectiveTransform;
 import static org.opencv.core.CvType.CV_32F;
@@ -78,7 +85,7 @@ import static org.opencv.imgproc.Imgproc.warpPerspective;
 public class ImageProcessor {
     private static String TAG = "ImageProcessor";
     private static ImageProcessor instance = null;
-    static RDT mRDT;
+    public static RDT mRDT;
 
     private int mMoveCloserCount = 0;
 
@@ -91,75 +98,6 @@ public class ImageProcessor {
         RIGHT_SIZE, LARGE, SMALL, INVALID
 
     }
-
-    public class CaptureResult {
-        public boolean allChecksPassed;
-        public Mat resultMat;
-        public MatOfPoint2f boundary;
-        public ExposureResult exposureResult;
-        public SizeResult sizeResult;
-        public boolean isCentered;
-        public boolean isRightOrientation;
-        public boolean isSharp;
-        public boolean isShadow;
-        public boolean fiducial;
-        public double angle;
-        public boolean flashEnabled;
-
-        public CaptureResult(boolean allChecksPassed, Mat resultMat, boolean fiducial,
-                             ExposureResult exposureResult, SizeResult sizeResult,  boolean isCentered,
-                             boolean isRightOrientation, double angle, boolean isSharp, boolean isShadow, MatOfPoint2f boundary, boolean flashEnabled){
-            this.allChecksPassed = allChecksPassed;
-            this.resultMat = resultMat;
-            this.fiducial = fiducial;
-            this.exposureResult = exposureResult;
-            this.sizeResult = sizeResult;
-            this.isCentered = isCentered;
-            this.isRightOrientation = isRightOrientation;
-            this.isSharp = isSharp;
-            this.isShadow = isShadow;
-            this.angle = angle;
-            this.boundary = boundary;
-            this.flashEnabled = flashEnabled;
-        }
-    }
-
-    public static class InterpretationResult {
-        public boolean topLine;
-        public boolean middleLine;
-        public boolean bottomLine;
-        public String topLineName;
-        public String middleLineName;
-        public String bottomLineName;
-        public Mat resultMat;
-        public Bitmap resultBitmap;
-
-        public InterpretationResult() {
-            topLine = false;
-            middleLine = false;
-            bottomLine = false;
-            topLineName = "Top Line";
-            middleLineName = "Middle Line";
-            bottomLineName = "Bottom Line";
-            resultMat = new Mat();
-            resultBitmap = null;
-        }
-
-        public InterpretationResult(Mat resultMat, boolean topLine, boolean middleLine, boolean bottomLine) {
-            this.resultMat = resultMat;
-            this.topLine = topLine;
-            this.middleLine = middleLine;
-            this.bottomLine = bottomLine;
-            this.topLineName = mRDT.topLineName;
-            this.middleLineName = mRDT.middleLineName;
-            this.bottomLineName = mRDT.bottomLineName;
-            if (resultMat.cols() > 0 && resultMat.rows() > 0) {
-                this.resultBitmap = Bitmap.createBitmap(resultMat.cols(), resultMat.rows(), Bitmap.Config.ARGB_8888);
-                Utils.matToBitmap(resultMat, resultBitmap);
-            }
-        }
-    }
-
 
     public ImageProcessor (Activity activity, String rdtName) {
         long startTime = System.currentTimeMillis();
@@ -200,7 +138,7 @@ public class ImageProcessor {
     }
 
 
-    public CaptureResult captureRDT(Mat inputMat, boolean flashEnabled) {
+    public RDTCaptureResult captureRDT(Mat inputMat, boolean flashEnabled) {
         Mat greyMat = new Mat();
         cvtColor(inputMat, greyMat, Imgproc.COLOR_RGBA2GRAY);
         double matchDistance = -1.0;
@@ -211,6 +149,8 @@ public class ImageProcessor {
 
         //check sharpness (refactored)
         boolean isSharp = checkSharpness(greyMat.submat(getViewfinderRect(greyMat)));
+
+        passed = exposureResult == ExposureResult.NORMAL && isSharp;
 
         //preform detectRDT only if those two quality checks are passed
         if (exposureResult == ExposureResult.NORMAL && isSharp) {
@@ -232,7 +172,7 @@ public class ImageProcessor {
                 angle = measureOrientation(boundary);
             }
 
-            passed = sizeResult == SizeResult.RIGHT_SIZE && isCentered && isRightOrientation;
+            passed = passed && sizeResult == SizeResult.RIGHT_SIZE && isCentered && isRightOrientation;
 
             boolean fiducial = false;
             if (passed) {
@@ -250,14 +190,51 @@ public class ImageProcessor {
             // Apply crops if necessary
             Mat croppedMat = cropRDTMat(inputMat);
             MatOfPoint2f croppedBoundary = cropRDTBoundary(inputMat, boundary);
+            
+            //check for glare
+            boolean isGlared = false;
+            if (passed)
+                isGlared = checkIfGlared(croppedMat, croppedBoundary);
+                passed = passed && !isGlared;
 
-            return new CaptureResult(passed, croppedMat, fiducial, exposureResult, sizeResult, isCentered, isRightOrientation, angle, isSharp, false, croppedBoundary, flashEnabled);
+            return new RDTCaptureResult(passed, croppedMat, fiducial, exposureResult, sizeResult, isCentered, isRightOrientation, angle, isSharp, false, isGlared, croppedBoundary, flashEnabled);
         }
         else {
             greyMat.release();
-            return new CaptureResult(passed, null, false, exposureResult, SizeResult.INVALID, false, false, 0.0, isSharp, false, new MatOfPoint2f(), flashEnabled);
+            return new RDTCaptureResult(passed, null, false, exposureResult, SizeResult.INVALID, false, false, 0.0, isSharp, false, false, new MatOfPoint2f(), flashEnabled);
         }
 
+    }
+
+    private boolean checkIfGlared(Mat inputMat, MatOfPoint2f boundary) {
+        Mat resultWindow = cropResultWindow(inputMat, boundary);
+        //resultWindow = enhanceResultWindow(resultWindow, new Size(5, resultWindow.cols()));
+
+        Mat hsl = new Mat();
+        cvtColor(resultWindow, hsl, COLOR_BGR2HLS);
+        ArrayList<Mat> channels = new ArrayList<>();
+        Core.split(hsl, channels);
+
+        // Brightness Calculation
+        float[] histograms = calculateBrightness(channels.get(1)); //get L channel for brightness calculation
+
+        int maxWhite = 0;
+        float clippingCount = 0;
+
+        for (int i = 0; i < histograms.length; i++) {
+            if (histograms[i] > 0) {
+                maxWhite = i;
+            }
+            if (i == histograms.length - 1) {
+                clippingCount = histograms[i];
+            }
+        }
+
+        Log.d(TAG, String.format("maxWhite: %d, clippingCount: %.5f", maxWhite, clippingCount));
+
+        boolean isGlared = maxWhite == 255 && clippingCount > GLARE_WHITE_COUNT;
+
+        return isGlared;
     }
 
     private boolean checkSharpness(Mat inputMat) {
@@ -328,6 +305,7 @@ public class ImageProcessor {
         MatOfInt mHistSize = new MatOfInt(mHistSizeNum);
         Mat hist = new Mat();
         final float []mBuff = new float[mHistSizeNum];
+        final float []mBuff2 = new float[mHistSizeNum];
         MatOfFloat histogramRanges = new MatOfFloat(0f, 256f);
         MatOfInt mChannels[] = new MatOfInt[] { new MatOfInt(0)};
         org.opencv.core.Size sizeRgba = input.size();
@@ -336,7 +314,9 @@ public class ImageProcessor {
         for(int c=0; c<1; c++) {
             Imgproc.calcHist(Arrays.asList(input), mChannels[c], new Mat(), hist,
                     mHistSize, histogramRanges);
-            Core.normalize(hist, hist, sizeRgba.height/2, 0, Core.NORM_INF);
+            hist.get(0, 0, mBuff2);
+            //Core.normalize(hist, hist, sizeRgba.area(), 0, Core.NORM_INF);
+            Core.divide(hist, new Scalar(sizeRgba.area()), hist);
             hist.get(0, 0, mBuff);
             mChannels[c].release();
         }
@@ -470,10 +450,12 @@ public class ImageProcessor {
         return new MatOfPoint2f(boundaryPts);
     }
 
-    public int getInstructionText(SizeResult sizeResult, boolean isCentered, boolean isRightOrientation) {
+    public int getInstructionText(SizeResult sizeResult, boolean isCentered, boolean isGlared, boolean isRightOrientation) {
         int instructions = R.string.instruction_pos;
 
-        if (sizeResult == SizeResult.RIGHT_SIZE && isCentered && isRightOrientation){
+        if (isGlared) {
+            instructions = R.string.instruction_glare;
+        } else if (sizeResult == SizeResult.RIGHT_SIZE && isCentered && isRightOrientation){
             instructions = R.string.instruction_detected;
         } else if (mMoveCloserCount > MOVE_CLOSER_COUNT) {
             if (sizeResult != SizeResult.INVALID && sizeResult == SizeResult.SMALL) {
@@ -490,9 +472,9 @@ public class ImageProcessor {
 
     }
 
-    public String[] getQualityCheckText(SizeResult sizeResult, boolean isCentered, boolean isRightOrientation, boolean isSharp, ExposureResult exposureResult) {
+    public String[] getQualityCheckText(SizeResult sizeResult, boolean isCentered, boolean isRightOrientation, boolean isSharp, boolean isGlared, ExposureResult exposureResult) {
 
-        String[] texts = new String[4];
+        String[] texts = new String[5];
 
         texts[0] = isSharp ? "&#x2713; Sharpness: passed": "Sharpness: failed";
         if (exposureResult == ExposureResult.NORMAL) {
@@ -504,7 +486,8 @@ public class ImageProcessor {
         }
 
         texts[2] = sizeResult == SizeResult.RIGHT_SIZE && isCentered && isRightOrientation ? "&#x2713; Position/Size: passed": "Position/Size: failed";
-        texts[3] = "&#x2713; Shadow: passed";
+        texts[3] = isGlared ? "&#x2713; No glare: passed" : "No glare: failed";
+        texts[4] = "&#x2713; Shadow: passed";
 
         return texts;
 
@@ -548,18 +531,19 @@ public class ImageProcessor {
         return result;
     }
 
-    public InterpretationResult interpretResult(Bitmap img) {
+    public RDTInterpretationResult interpretResult(Bitmap img) {
         Mat resultMat = new Mat();
         Utils.bitmapToMat(img, resultMat);
         return interpretResult(resultMat);
     }
 
-    public InterpretationResult interpretResult(Mat inputMat, MatOfPoint2f boundary) {
+    public RDTInterpretationResult interpretResult(Mat inputMat, MatOfPoint2f boundary) {
         Mat resultMat = cropResultWindow(inputMat, boundary);
         boolean topLine, middleLine, bottomLine;
 
         if (resultMat.width() == 0 && resultMat.height() == 0) {
-            return new InterpretationResult(resultMat, false, false, false);
+            return new RDTInterpretationResult(resultMat, false, false, false, mRDT.topLineName, mRDT.middleLineName,
+                        mRDT.bottomLineName);
         }
 
         Mat grayMat = new Mat();
@@ -592,10 +576,15 @@ public class ImageProcessor {
         middleLine = results[1];
         bottomLine = results[2];
 
-        return new InterpretationResult(resultMat, topLine, middleLine, bottomLine);
+        return new RDTInterpretationResult(resultMat, topLine, middleLine, bottomLine, mRDT.topLineName, mRDT.middleLineName, mRDT.topLineName);
     }
 
-    public InterpretationResult interpretResult(Mat inputMat) {
+    public boolean detectBlood(Mat mat, double bloodThreshold) {
+        double bloodPercentage = calculateRedColorPercentage(mat);
+        return bloodPercentage > BLOOD_PERCENTAGE_THRESHOLD;
+    }
+
+    public RDTInterpretationResult interpretResult(Mat inputMat) {
         MatOfPoint2f boundary = new MatOfPoint2f();
         Mat grayMat = new Mat();
         cvtColor(inputMat, grayMat, Imgproc.COLOR_RGBA2GRAY);
@@ -616,12 +605,12 @@ public class ImageProcessor {
         } while(!(isSizeable==SizeResult.RIGHT_SIZE && isCentered && isUpright) && cnt < 8);
 
         if (boundary.size().width <= 0 && boundary.size().height <= 0)
-            return new InterpretationResult();
+            return new RDTInterpretationResult();
 
         return interpretResult(inputMat, boundary);
     }
 
-    private Rect checkFiducialKMenas(Mat inputMat) {
+    private Rect checkFiducialKMeans(Mat inputMat) {
         if (mRDT.fiducialCount == 0) {
             Point tl = new Point(mRDT.fiducialToResultWindowOffset - mRDT.resultWindowRectH / 2.0, mRDT.resultWindowRectWPadding);
             Point br = new Point(mRDT.fiducialToResultWindowOffset + mRDT.resultWindowRectH / 2.0, inputMat.size().height - mRDT.resultWindowRectWPadding);
@@ -808,7 +797,7 @@ public class ImageProcessor {
         warpPerspective(inputMat, correctedMat, M, new Size(mRDT.refImg.cols(), mRDT.refImg.rows()));
 
         //Rect resultWindowRect = checkFiducialAndReturnResultWindowRect(correctedMat);
-        Rect resultWindowRect = checkFiducialKMenas(correctedMat);
+        Rect resultWindowRect = checkFiducialKMeans(correctedMat);
         //Rect resultWindowRect = returnResultWindowRect(correctedMat);
 
         correctedMat = new Mat(correctedMat, resultWindowRect);

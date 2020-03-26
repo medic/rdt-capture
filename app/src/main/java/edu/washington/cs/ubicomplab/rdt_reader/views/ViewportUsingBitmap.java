@@ -6,7 +6,7 @@
  * of a BSD-style license that can be found in the LICENSE file.
  */
 
-package edu.washington.cs.ubicomplab.rdt_reader;
+package edu.washington.cs.ubicomplab.rdt_reader.views;
 
 import android.content.Context;
 import android.content.res.TypedArray;
@@ -21,6 +21,8 @@ import android.graphics.RectF;
 import android.support.annotation.ColorRes;
 import android.util.AttributeSet;
 import android.view.ViewGroup;
+
+import edu.washington.cs.ubicomplab.rdt_reader.R;
 
 public class ViewportUsingBitmap extends ViewGroup {
     float hScale;
