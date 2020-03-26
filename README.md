@@ -27,7 +27,13 @@ RDTScan utilizes [OpenCV for Android](https://opencv.org/android/) for many of t
   2. Open the `local.properties` file and add the following line: `ndk.dir=NDK_HOME`
 
 # Configuration
-The information
+This repository already includes the files needed to use RDTScan with a few RDTs that we have encountered during our research:
+1. TODO
+2. TODO
+
+1. The easiest way to get a suitable template image of the RDT is to use an app like OfficeLens (https://play.google.com/store/apps/details?id=com.microsoft.office.officelens&hl=en). As long as the cartridge is on a distinct background, the app will perform perspective correction and crop the image tightly around the RDT, which is what we need. Alternatively, you can take the photo yourself and crop it in PhotoShop or MSPaint. If you go that route, you should make the image as non-skew as possible (i.e., the phone should be very parallel to the table).
+2. Add the image to the following folder in the Android code: app/src/main/res/drawable/nodpi/ (you should see things like quickvue_ref.jpg)
+3. Add the new RDT into app/src/main/assets/config.json. Key is the name of the RDT, and add the parameters specified in config.json
 
 TODO: how to take clean photo of an RDT
 [`imread()`](https://docs.opencv.org/3.4/d4/da8/group__imgcodecs.html#ga288b8b3da0892bd651fce07b3bbd3a56) method (e.g., `.jpg`, `.png`)
