@@ -32,7 +32,9 @@ RDTScan utilizes [OpenCV for Android](https://opencv.org/android/) for many of t
 [Link to API](readme_assets/api.md)
 
 # Attribution
-Developers are allowed to use RDTScan as they please provided that they abide by the project's licence: [BSD-3-Clause](LICENSE). However, we would greatly appreciate attribution where possible. For example, any conference or journal publications that result from a tool built with our library should cite the following paper (note that it is pending publication):
+Developers are allowed to use RDTScan as they please provided that they abide by the project's licence: [BSD-3-Clause](LICENSE). However, we would greatly appreciate attribution where possible. For example, any conference or journal publications that result from a tool built with our library should cite the following paper:
+
+**Note:** This publication has been accepted to the [ICTD 2020 conference](https://ictd2020.org/), but is pending publication. A pre-print version of the paper will be made available shortly.
 
 ### BibTex
 ```
