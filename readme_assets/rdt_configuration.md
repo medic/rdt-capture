@@ -21,7 +21,7 @@ RDTScan requires a clear, upright, and tightly cropped image of an unused RDT. B
 TODO: example images that are good and bad
 
 There are two ways to get such an image:
-1. Use a document scanning app like [OfficeLens] (https://play.google.com/store/apps/details?id=com.microsoft.office.officelens&hl=en). As long as the RDT is on a clean and distinct background, the app will perform perspective correction and crop the image tightly around the RDT. 
+1. Use a document scanning app like [OfficeLens](https://play.google.com/store/apps/details?id=com.microsoft.office.officelens&hl=en). As long as the RDT is on a clean and distinct background, the app will perform perspective correction and crop the image tightly around the RDT. 
 2. Take a photo yourself using a camera. The camera should be as parallel to the RDT as possible (i.e., each corner of the RDT should be 90&deg;). Open up the photo in an image-editing program (e.g., PhotoShop, GIMP) and crop the image as close to the RDT's edges as possible.
 
 Once you have the template image, add it to the following folder in your Android code: `app/src/main/res/drawable/nodpi/`.
