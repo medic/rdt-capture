@@ -40,8 +40,8 @@ If you are working directly on our repository, open the file `app/src/main/asset
 | `REF_IMG`                           | :heavy_check_mark:  | `String`        | The filename of the template image for the RDT |
 | `VIEW_FINDER_SCALE_H`               | :heavy_check_mark:  | `double`        | TODO |
 | `VIEW_FINDER_SCALE_W`               | :heavy_check_mark:  | `double`        | TODO |
-| `RESULT_WINDOW_RECT_HEIGHT`         | :heavy_minus_sign:  | `double`        | TODO |
-| `RESULT_WINDOW_RECT_WIDTH_PADDING`  | :heavy_minus_sign:  | `double`        | TODO |
+| `RESULT_WINDOW_RECT_HEIGHT`         | :heavy_check_mark:  | `double`        | TODO |
+| `RESULT_WINDOW_RECT_WIDTH_PADDING`  | :heavy_check_mark:  | `double`        | TODO |
 | `TOP_LINE_POSITION`                 | :heavy_check_mark:  | `double`        | TODO |
 | `MIDDLE_LINE_POSITION`              | :heavy_check_mark:  | `double`        | TODO |
 | `BOTTOM_LINE_POSITION`              | :heavy_check_mark:  | `double`        | TODO |
