@@ -1,12 +1,14 @@
-package edu.washington.cs.ubicomplab.rdt_reader;
+package edu.washington.cs.ubicomplab.rdt_reader.activities;
 
 import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
 
-import edu.washington.cs.ubicomplab.rdt_reader.RdtImageResult.RdtCaptureResult;
-import edu.washington.cs.ubicomplab.rdt_reader.RdtImageResult.RdtInterpretationResult;
+import edu.washington.cs.ubicomplab.rdt_reader.views.ImageQualityView;
+import edu.washington.cs.ubicomplab.rdt_reader.R;
+import edu.washington.cs.ubicomplab.rdt_reader.models.RdtCaptureResult;
+import edu.washington.cs.ubicomplab.rdt_reader.models.RdtInterpretationResult;
 import edu.washington.cs.ubicomplab.rdt_reader.utils.ImageUtil;
 
 import static edu.washington.cs.ubicomplab.rdt_reader.utils.Constants.DEFAULT_RDT_NAME;

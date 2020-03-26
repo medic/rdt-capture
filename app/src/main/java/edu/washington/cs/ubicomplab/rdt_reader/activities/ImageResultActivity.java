@@ -6,7 +6,7 @@
  * of a BSD-style license that can be found in the LICENSE file.
  */
 
-package edu.washington.cs.ubicomplab.rdt_reader;
+package edu.washington.cs.ubicomplab.rdt_reader.activities;
 
 import android.content.Intent;
 import android.content.res.Resources;
@@ -29,11 +29,13 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
 
+import edu.washington.cs.ubicomplab.rdt_reader.R;
+import edu.washington.cs.ubicomplab.rdt_reader.fragments.SettingDialogFragment;
 import edu.washington.cs.ubicomplab.rdt_reader.utils.Constants;
 
 import static java.text.DateFormat.getDateTimeInstance;
 
-public class ImageResultActivity extends AppCompatActivity implements View.OnClickListener, SettingDialogFragment.SettingDialogListener{
+public class ImageResultActivity extends AppCompatActivity implements View.OnClickListener, SettingDialogFragment.SettingDialogListener {
 
     Bitmap mBitmapToSave;
     byte[] capturedByteArray, windowByteArray;

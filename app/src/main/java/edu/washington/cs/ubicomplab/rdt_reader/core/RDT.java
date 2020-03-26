@@ -1,4 +1,4 @@
-package edu.washington.cs.ubicomplab.rdt_reader;
+package edu.washington.cs.ubicomplab.rdt_reader.core;
 
 import android.content.Context;
 import android.graphics.Bitmap;
@@ -23,9 +23,9 @@ import static org.opencv.imgproc.Imgproc.cvtColor;
  * Created by cjpark on 7/13/19.
  */
 
-class RDT {
+public class RDT {
     int refImageID;
-    double viewFinderScaleH, viewFinderScaleW;
+    public double viewFinderScaleH, viewFinderScaleW;
     int intensityThreshold;
     int controlIntensityPeakThreshold;
     int testIntensityPeakThreshold;

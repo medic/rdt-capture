@@ -1,4 +1,4 @@
-package edu.washington.cs.ubicomplab.rdt_reader.RdtImageResult;
+package edu.washington.cs.ubicomplab.rdt_reader.models;
 
 import android.graphics.Bitmap;
 

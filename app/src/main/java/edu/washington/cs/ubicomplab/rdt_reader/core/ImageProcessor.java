@@ -6,7 +6,7 @@
  * of a BSD-style license that can be found in the LICENSE file.
  */
 
-package edu.washington.cs.ubicomplab.rdt_reader;
+package edu.washington.cs.ubicomplab.rdt_reader.core;
 
 import android.app.Activity;
 import android.content.Context;
@@ -49,8 +49,9 @@ import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 
-import edu.washington.cs.ubicomplab.rdt_reader.RdtImageResult.RdtCaptureResult;
-import edu.washington.cs.ubicomplab.rdt_reader.RdtImageResult.RdtInterpretationResult;
+import edu.washington.cs.ubicomplab.rdt_reader.R;
+import edu.washington.cs.ubicomplab.rdt_reader.models.RdtCaptureResult;
+import edu.washington.cs.ubicomplab.rdt_reader.models.RdtInterpretationResult;
 import edu.washington.cs.ubicomplab.rdt_reader.utils.Constants;
 import edu.washington.cs.ubicomplab.rdt_reader.utils.ImageUtil;
 
@@ -83,7 +84,7 @@ import static org.opencv.imgproc.Imgproc.warpPerspective;
 public class ImageProcessor {
     private static String TAG = "ImageProcessor";
     private static ImageProcessor instance = null;
-    static RDT mRDT;
+    public static RDT mRDT;
 
     private int mMoveCloserCount = 0;
 
@@ -96,43 +97,6 @@ public class ImageProcessor {
         RIGHT_SIZE, LARGE, SMALL, INVALID
 
     }
-
-//    public static class RdtInterpretationResult {
-//        public boolean topLine;
-//        public boolean middleLine;
-//        public boolean bottomLine;
-//        public String topLineName;
-//        public String middleLineName;
-//        public String bottomLineName;
-//        public Mat resultMat;
-//        public Bitmap resultBitmap;
-//
-//        public RdtInterpretationResult() {
-//            topLine = false;
-//            middleLine = false;
-//            bottomLine = false;
-//            topLineName = "Top Line";
-//            middleLineName = "Middle Line";
-//            bottomLineName = "Bottom Line";
-//            resultMat = new Mat();
-//            resultBitmap = null;
-//        }
-//
-//        public RdtInterpretationResult(Mat resultMat, boolean topLine, boolean middleLine, boolean bottomLine) {
-//            this.resultMat = resultMat;
-//            this.topLine = topLine;
-//            this.middleLine = middleLine;
-//            this.bottomLine = bottomLine;
-//            this.topLineName = mRDT.topLineName;
-//            this.middleLineName = mRDT.middleLineName;
-//            this.bottomLineName = mRDT.bottomLineName;
-//            if (resultMat.cols() > 0 && resultMat.rows() > 0) {
-//                this.resultBitmap = Bitmap.createBitmap(resultMat.cols(), resultMat.rows(), Bitmap.Config.ARGB_8888);
-//                Utils.matToBitmap(resultMat, resultBitmap);
-//            }
-//        }
-//    }
-
 
     public ImageProcessor (Activity activity, String rdtName) {
         long startTime = System.currentTimeMillis();

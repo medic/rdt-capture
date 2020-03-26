@@ -6,7 +6,7 @@
  * of a BSD-style license that can be found in the LICENSE file.
  */
 
-package edu.washington.cs.ubicomplab.rdt_reader;
+package edu.washington.cs.ubicomplab.rdt_reader.views;
 
 import android.Manifest;
 import android.app.Activity;
@@ -63,8 +63,10 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 
-import edu.washington.cs.ubicomplab.rdt_reader.RdtImageResult.RdtCaptureResult;
-import edu.washington.cs.ubicomplab.rdt_reader.RdtImageResult.RdtInterpretationResult;
+import edu.washington.cs.ubicomplab.rdt_reader.R;
+import edu.washington.cs.ubicomplab.rdt_reader.core.ImageProcessor;
+import edu.washington.cs.ubicomplab.rdt_reader.models.RdtCaptureResult;
+import edu.washington.cs.ubicomplab.rdt_reader.models.RdtInterpretationResult;
 import edu.washington.cs.ubicomplab.rdt_reader.utils.ImageUtil;
 
 import static edu.washington.cs.ubicomplab.rdt_reader.utils.Constants.*;

@@ -1,9 +1,9 @@
-package edu.washington.cs.ubicomplab.rdt_reader.RdtImageResult;
+package edu.washington.cs.ubicomplab.rdt_reader.models;
 
 import org.opencv.core.Mat;
 import org.opencv.core.MatOfPoint2f;
 
-import edu.washington.cs.ubicomplab.rdt_reader.ImageProcessor;
+import edu.washington.cs.ubicomplab.rdt_reader.core.ImageProcessor;
 
 /**
  * RdtCaptureResult represents the initial result of the image before inputting to image processing
