@@ -148,19 +148,19 @@
 
 ## measureCentering()
 **Signature:** `Point center = measureCentering(MatOfPoint2f boundary)`  
-**Purpose:** xxx  
+**Purpose:** Identifies the center of the detectedRDT  
 **Parameters:**
-* `MatOfPoint2f boundary`: xxx
+* `MatOfPoint2f boundary`: the corners of the bounding box around the detected RDT
 
 **Returns:**
-* `Point center`: xxx
+* `Point center`: the (x, y) coordinate indicating the center of the RDT
 
 ## checkIfCentered()
 **Signature:** `boolean isCentered = checkIfCentered(MatOfPoint2f boundary, Size size)`  
-**Purpose:** xxx  
+**Purpose:** Determines whether the RDT is close enough towards the center of the candidate video frame  
 **Parameters:**
-* `MatOfPoint2f boundary`: xxx
-* `Size size`: xxx
+* `MatOfPoint2f boundary`: the corners of the bounding box around the detected RDT
+* `Size size`: the size of the candidate video frame
 
 **Returns:**
 * `boolean isCentered`: xxx
@@ -169,7 +169,7 @@
 **Signature:** `double height = measureSize(MatOfPoint2f boundary)`  
 **Purpose:** xxx  
 **Parameters:**
-* `MatOfPoint2f boundary`: xxx
+* `MatOfPoint2f boundary`: the corners of the bounding box around the detected RDT
 
 **Returns:**
 * `double height`: xxx
@@ -178,8 +178,8 @@
 **Signature:** `SizeResult sizeResult = checkSize(MatOfPoint2f boundary, Size size)`  
 **Purpose:** xxx  
 **Parameters:**
-* `MatOfPoint2f boundary`: xxx
-* `Size size`: xxx
+* `MatOfPoint2f boundary`: the corners of the bounding box around the detected RDT
+* `Size size`: the size of the candidate video frame
 
 **Returns:**
 * `SizeResult sizeResult`: xxx
@@ -188,7 +188,7 @@
 **Signature:** `double angle = measureOrientation(MatOfPoint2f boundary)`  
 **Purpose:** xxx  
 **Parameters:**
-* `MatOfPoint2f boundary`: xxx
+* `MatOfPoint2f boundary`: the corners of the bounding box around the detected RDT
 
 **Returns:**
 * `double angle`: xxx
@@ -197,7 +197,7 @@
 **Signature:** `double isOriented = checkOrientation(MatOfPoint2f boundary)`  
 **Purpose:** xxx  
 **Parameters:**
-* `MatOfPoint2f boundary`: xxx
+* `MatOfPoint2f boundary`: the corners of the bounding box around the detected RDT
 
 **Returns:**
 * `boolean isOriented`: xxx
