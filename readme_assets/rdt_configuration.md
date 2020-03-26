@@ -4,14 +4,16 @@ This repository already includes the files needed to use RDTScan with a few RDT 
 * [CareStart Malaria P.f/P.v](http://www.accessbio.net/eng/products/products01_02.asp)
 * [Quidel's QuickVue Influenza A+B Test](https://www.quidel.com/immunoassays/rapid-influenza-tests/quickvue-influenza-test)
 
-Extending RDTScan to accommodate a new RDT is a matter of adding a clean photo of the RDT, identifying some regions-of-interest using an image editing program (e.g., Photoshop, GIMP), and then providing that information and other metadata in a configuration file. This process is outlined below:
+Extending RDTScan to accommodate a new RDT is a matter of adding a clean photo of the RDT, identifying some regions-of-interest using an image editing program (e.g., Photoshop, GIMP), and then adding that information and other metadata to a configuration file. This process is outlined below:
 
-**Note:** Although RDTScan is designed to be as generalizable as possible, its template-matching approach is less amenable to the following RDT characteristics:
+**Note:** Although RDTScan is designed to be as generalizable as possible, its feature-matching approach is less amenable to the following RDT characteristics:
 * Blank cassettes with little or no lettering
 * Inconsistent patterns (e.g., QR code, bar code)
 * More than three result lines
 
 <center><img src="rdt_examples.png" alt="Examples photographs of RDTs that work well and do not work well with RDTScan" width="300"/></center>
+
+For a relatively easy-to-understand explanation of how feature-matching works, read this [tutorial](https://opencv-python-tutroals.readthedocs.io/en/latest/py_tutorials/py_feature2d/py_features_meaning/py_features_meaning.html) by OpenCV.
 
 ### 1. Getting a suitable template
 The easiest way to get a suitable template image of the RDT is to use an app like [OfficeLens] (https://play.google.com/store/apps/details?id=com.microsoft.office.officelens&hl=en). As long as the RDT is on a distinct background, the app will perform perspective correction and crop the image tightly around the RDT, which is what we need. Alternatively, you can take the photo yourself and crop it in PhotoShop or MSPaint. If you go that route, you should make the image as non-skew as possible (i.e., the phone should be very parallel to the table).
