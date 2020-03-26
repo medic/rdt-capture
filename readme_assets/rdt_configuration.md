@@ -12,9 +12,16 @@ Extending RDTScan to accommodate a new RDT is a matter of adding a clean photo o
 
 <center><img src="rdt_examples.png" alt="Examples photographs of RDTs that work well and do not work well with RDTScan" width="300"/></center>
 
-### Getting a suitable template
-1. The easiest way to get a suitable template image of the RDT is to use an app like [OfficeLens] (https://play.google.com/store/apps/details?id=com.microsoft.office.officelens&hl=en). As long as the RDT is on a distinct background, the app will perform perspective correction and crop the image tightly around the RDT, which is what we need. Alternatively, you can take the photo yourself and crop it in PhotoShop or MSPaint. If you go that route, you should make the image as non-skew as possible (i.e., the phone should be very parallel to the table).
-2. Add the image to the following folder in the Android code: `app/src/main/res/drawable/nodpi/` (you should see things like quickvue_ref.jpg)
+### 1. Getting a suitable template
+The easiest way to get a suitable template image of the RDT is to use an app like [OfficeLens] (https://play.google.com/store/apps/details?id=com.microsoft.office.officelens&hl=en). As long as the RDT is on a distinct background, the app will perform perspective correction and crop the image tightly around the RDT, which is what we need. Alternatively, you can take the photo yourself and crop it in PhotoShop or MSPaint. If you go that route, you should make the image as non-skew as possible (i.e., the phone should be very parallel to the table).
+
+Once you have the image, add it to the following folder in your Android code: `app/src/main/res/drawable/nodpi/`.
+
+### 2. Identifying Regions of Interest
+TODO: open in image editor, include screenshots
+
+### 3. Configuration File
+If you are working directly on our repository, open the file `app/src/main/assets/config.json`. If not, copy that file over to oyr file 
 3. Add the new RDT into `app/src/main/assets/config.json`. Key is the name of the RDT, and add the parameters specified in config.json
 
 | **Data Field**                      | **Required?**       | **Data Types**  | **Description**    |
