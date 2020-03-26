@@ -7,7 +7,7 @@ RDTScan uses image processing to check the quality of images intercepted from th
 **2. Robust Result Interpretation**  
 Assuming a satisfactory image has been captured, RDTScan can post-process the image to emphasize any faint lines that may appear on the immunoassay. The end-user can view that image for themselves to make an informed decision about their test results. Alternatively, RDTScan provides an algorithm that interprets the test results on the end-user's behalf.
 
-RDTScan uses a SIFT feature-based template-matching approach for RDT recognition. This means that unlike model-driven approaches that require a dataset of example images for model training, RDTScan only requires a single example image and some metadata about the test itself (e.g., relative position and meaning of each line).
+RDTScan uses a feature-matching approach for RDT recognition. This means that unlike model-driven approaches that require a dataset of example images for model training, RDTScan only requires a single example image to identify unique visual keypoints on the RDT design that it attempts to locate in the camera. RDTScan also requires developers to provide some metadata about the test itself so the results can be properly reported (e.g., relative position and meaning of each line).
 
 **Disclaimer:** Although RDTScan has been tested through multiple in-lab studies and real-world deployments, this library has not been FDA-approved.
 
