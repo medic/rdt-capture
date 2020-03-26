@@ -39,10 +39,10 @@
 **Signature:** `enum SizeResult`  
 **Purpose:** An `Enumeration` object for specifying whether the RDT has a reasonable scale in the image  
 **Possible Values:**
-* `SMALL`: the RDT is too small
-* `RIGHT_SIZE`: the RDT has just the right size
-* `LARGE`: the RDT is too large
-* `INVALID`: the RDT could not be found
+* `SMALL`: the RDT is too small in the image
+* `RIGHT_SIZE`: the RDT has just the right size in the image
+* `LARGE`: the RDT is too large in the image
+* `INVALID`: the RDT could not be found in the image
 
 ## CaptureResult
 **Signature:** `CaptureResult(boolean allChecksPassed, Mat resultMat, boolean fiducial, ExposureResult exposureResult, SizeResult sizeResult, boolean isCentered, boolean isRightOrientation, double angle, boolean isSharp, boolean isShadow, MatOfPoint2f boundary, boolean flashEnabled)`  
