@@ -25,11 +25,11 @@ RDTScan utilizes [OpenCV for Android](https://opencv.org/android/) for many of t
   1. Go to **File > Project Structure > SDK Location** and then set the path variable in **Android NDK Location** to `NDK_HOME`.
   2. Open the `local.properties` file and add the following line: `ndk.dir=NDK_HOME`
 
-# Configuration for New RDTs
-[Link to New RDT Configuration](readme_assets/rdt_configuration.md)
+# New RDT Configuration
+[Link](readme_assets/rdt_configuration.md)
 
 # API
-[Link to API](readme_assets/api.md)
+[Link](readme_assets/api.md)
 
 # Attribution
 Developers are allowed to use RDTScan as they please provided that they abide by the project's licence: [BSD-3-Clause](LICENSE). However, we would greatly appreciate attribution where possible. For example, any conference or journal publications that result from a tool built with our library should cite the following paper:
