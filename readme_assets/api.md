@@ -2,8 +2,8 @@
 * [`RDT`](#RDT)
 * [`ExposureResult`](#exposureResult)
 * [`SizeResult`](#sizeResult)
-* [`CaptureResult`](#rdtCaptureResult)
-* [`InterpretationResult`](#rdtInterpretationResult)
+* [`RDTCaptureResult`](#rdtCaptureResult)
+* [`RDTInterpretationResult`](#rdtInterpretationResult)
 
 # Methods for RDT Detection
 * [`configureCamera()`](#configureCamera)
@@ -54,25 +54,25 @@
 * `LARGE`: the RDT is too large in the image
 * `INVALID`: the RDT could not be found in the image
 
-## CaptureResult
-**Signature:** `CaptureResult(boolean allChecksPassed, Mat resultMat, boolean fiducial, ExposureResult exposureResult, SizeResult sizeResult, boolean isCentered, boolean isRightOrientation, double angle, boolean isSharp, boolean isShadow, MatOfPoint2f boundary, boolean flashEnabled)`  
+## RDTCaptureResult
+**Signature:** `RDTCaptureResult(boolean allChecksPassed, Mat resultMat, boolean fiducial, ExposureResult exposureResult, SizeResult sizeResult, boolean isCentered, boolean isRightOrientation, double angle, boolean isSharp, boolean isShadow, MatOfPoint2f boundary, boolean flashEnabled)`  
 **Purpose:** Object for holding all of the parameters that describe whether a candidate video framed passed all of the quality checks  
 **Parameters:**
-* `boolean allChecksPassed`: xxx
-* `Mat resultMat`: xxx
+* `boolean allChecksPassed`: whether this candidate video frame is clear enough for interpretation
+* `Mat resultMat`: the RDT image tightly cropped around the result window
 * `boolean fiducial`: whether the fiducial was detected (if one was specified)
-* `ExposureResult exposureResult`: xxx
-* `SizeResult sizeResult`: xxx
-* `boolean isCentered`: xxx
-* `boolean isRightOrientation`: xxx
-* `double angle`: xxx
-* `boolean isSharp`: xxx
+* `ExposureResult exposureResult`: whether the candidate video frame `input` has a reasonable brightness
+* `SizeResult sizeResult`: whether the `boundary` of the detected RDT has a reasonable size for consistent interpretation
+* `boolean isCentered`: whether the `boundary` of the detected RDT is sufficiently in the middle of the screen for consistent interpretation
+* `boolean isRightOrientation`: whether the `boundary` of the detected RDT has a reasonable orientation for consistent interpretation
+* `double angle`: the orientation of the RDT's vertical axis relative to the vertical axis of the video frame (0&deg; = upright, 90&deg; = right-to-left, 180&deg; = upside-down, 270&deg; = left-to-right)
+* `boolean isSharp`: whether the candidate video frame `input` has a reasonable sharpness
 * `boolean isShadow`: xxx
 * `MatOfPoint2f boundary`: the corners of the bounding box around the detected RDT
-* `boolean flashEnabled`: xxx
+* `boolean flashEnabled`: whether the flash was active during the image capture process for this frame
 
-## InterpretationResult
-**Signature:** `InterpretationResult(Mat resultMat, boolean topLine, boolean middleLine, boolean bottomLine)`  
+## RDTInterpretationResult
+**Signature:** `RDTInterpretationResult(Mat resultMat, boolean topLine, boolean middleLine, boolean bottomLine)`  
 **Purpose:** Object for holding all of the parameters that describe the test result that is detected on the completed RDT  
 **Parameters:**
 * `Mat resultMat`: the RDT image tightly cropped around the result window
@@ -127,7 +127,7 @@
 * `Mat input`: the candidate video frame
 
 **Returns:**
-* `ExposureResult exposureResult`: whether `input` satisfies the brightness thresholds in the configuration file.
+* `ExposureResult exposureResult`: whether the candidate video frame `input` has a reasonable brightness
 
 ### calculateSharpness()
 **Signature:** `double sharpness = calculateSharpness(Mat input)`  
@@ -145,7 +145,7 @@
 * `Mat input`: the candidate video frame
 
 **Returns:**
-* `boolean isSharp`: whether `input` satisfies the sharpness threshold specified in the configuration file
+* `boolean isSharp`: whether the candidate video frame `input` has a reasonable sharpness
 
 ## measureCentering()
 **Signature:** `Point center = measureCentering(MatOfPoint2f boundary)`  
@@ -164,7 +164,7 @@
 * `Size size`: the size of the candidate video frame
 
 **Returns:**
-* `boolean isCentered`: xxx
+* `boolean isCentered`: whether the `boundary` of the detected RDT is sufficiently in the middle of the screen for consistent interpretation
 
 ## measureSize()
 **Signature:** `double height = measureSize(MatOfPoint2f boundary)`  
@@ -183,7 +183,7 @@
 * `Size size`: the size of the candidate video frame
 
 **Returns:**
-* `SizeResult sizeResult`: xxx
+* `SizeResult sizeResult`: whether the `boundary` of the detected RDT has a reasonable size for consistent interpretation
 
 ## measureOrientation()
 **Signature:** `double angle = measureOrientation(MatOfPoint2f boundary)`  
@@ -192,7 +192,7 @@
 * `MatOfPoint2f boundary`: the corners of the bounding box around the detected RDT
 
 **Returns:**
-* `double angle`: xxx
+* `double angle`: the orientation of the RDT's vertical axis relative to the vertical axis of the video frame (0&deg; = upright, 90&deg; = right-to-left, 180&deg; = upside-down, 270&deg; = left-to-right) 
 
 ## checkOrientation()
 **Signature:** `double isOriented = checkOrientation(MatOfPoint2f boundary)`  
@@ -201,7 +201,7 @@
 * `MatOfPoint2f boundary`: the corners of the bounding box around the detected RDT
 
 **Returns:**
-* `boolean isOriented`: xxx
+* `boolean isOriented`: whether the `boundary` of the detected RDT has a reasonable orientation for consistent interpretation
 
 ## checkFiducial()
 **Signature:** `xxx`  
