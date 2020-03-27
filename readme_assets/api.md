@@ -21,6 +21,7 @@
 * [`checkSize()`](#checkSize)
 * [`measureOrientation()`](#measureOrientation)
 * [`checkOrientation()`](#checkOrientation)
+* [`checkIfGlared()`](#checkIfGlared)
 * [`checkFiducial()`](#checkFiducial)
 
 # Methods for RDT Interpretation
@@ -65,9 +66,9 @@
 * `SizeResult sizeResult`: whether the `boundary` of the detected RDT has a reasonable size for consistent interpretation
 * `boolean isCentered`: whether the `boundary` of the detected RDT is sufficiently in the middle of the screen for consistent interpretation
 * `boolean isRightOrientation`: whether the `boundary` of the detected RDT has a reasonable orientation for consistent interpretation
-* `double angle`: the orientation of the RDT's vertical axis relative to the vertical axis of the video frame (0&deg; = upright, 90&deg; = right-to-left, 180&deg; = upside-down, 270&deg; = left-to-right)
+* `double angle`: the orientation of the RDT's vertical axis relative to the vertical axis of the video frame (e.g., 0&deg; = upright, 90&deg; = right-to-left, 180&deg; = upside-down, 270&deg; = left-to-right)
 * `boolean isSharp`: whether the candidate video frame `input` has a reasonable sharpness
-* `boolean isShadow`: xxx
+* `boolean isShadow`: TODO
 * `MatOfPoint2f boundary`: the corners of the bounding box around the detected RDT
 * `boolean flashEnabled`: whether the flash was active during the image capture process for this frame
 
@@ -154,7 +155,7 @@
 * `MatOfPoint2f boundary`: the corners of the bounding box around the detected RDT
 
 **Returns:**
-* `Point center`: the (x, y) coordinate indicating the center of the RDT
+* `Point center`: the (x, y) coordinate corresponding to the center of the RDT
 
 ## checkIfCentered()
 **Signature:** `boolean isCentered = checkIfCentered(MatOfPoint2f boundary, Size size)`  
@@ -202,6 +203,15 @@
 
 **Returns:**
 * `boolean isOriented`: whether the `boundary` of the detected RDT has a reasonable orientation for consistent interpretation
+
+## checkIfGlared()
+**Signature:** `boolean isGlared = checkIfGlared(Mat inputMat, MatOfPoint2f boundary)`  
+**Purpose:** xxx  
+**Parameters:**
+* `xxx`: xxx
+
+**Returns:**
+* `xxx`: xxx
 
 ## checkFiducial()
 **Signature:** `xxx`  
