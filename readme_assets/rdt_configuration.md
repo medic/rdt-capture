@@ -27,6 +27,9 @@ There are two ways to get such an image:
 Once you have the template image, add it to the following folder in your Android code: `app/src/main/res/drawable/nodpi/`.
 
 ### 2. Identifying regions of interest
+When trained clinicians look at an RDT design, they can usually quickly infer where test results should appear on the RDT and what they should mean. Currently, RDTScan needs developers to provide that information to bootstrap the algorithm. This information includes:
+
+* TODO
 *TODO: open in image editor*
 *TODO: image showing different regions of interest*
 *TODO: image showing how to find pixel locations for one of those regions of interest*
