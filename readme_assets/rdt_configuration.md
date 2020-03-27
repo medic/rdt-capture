@@ -60,10 +60,3 @@ If you are working directly on our repository, open the file `app/src/main/asset
 | `FIDUCIAL_TO_RESULT_WINDOW_OFFSET`  | :heavy_minus_sign:  | `double`        | TODO |
 | `FIDUCIAL_DISTANCE`                 | :heavy_minus_sign:  | `double`        | TODO |
 | `FIDUCIAL_COUNT`                    | :heavy_minus_sign:  | `double`        | TODO |
-| Result window corners     | :heavy_check_mark:  | `(int, int)`   | The (x, y) pixel coordinates denoting the top-left and bottom-right corners of the general region where the results will appear |
-| Control line position     | :heavy_check_mark:  | `int`          | The pixel position of the control line along the result window's wider axis |
-| Test line position(s)     | :heavy_check_mark:  | `int`          | The pixel position of the test line(s) along the result window's wider axis |
-| Desired RDT scale         | :heavy_check_mark:  | `float`        | The ideal scale of the RDT relative to the width of the camera's standard image width |
-| Line intensity            | :heavy_minus_sign:  | `int`          | TODO | 
-| Fiducial locations        | :heavy_minus_sign:  | `(int, int)`   | The (x, y) pixel coordinates denoting the top-left and bottom-right corners of variable dark-colored markings that have a fixed location (e.g., QR code, bar code) |
-| Line hues                 | :heavy_minus_sign: | `int`           | The expected hues of the control and test lines (range: 0-179) |
