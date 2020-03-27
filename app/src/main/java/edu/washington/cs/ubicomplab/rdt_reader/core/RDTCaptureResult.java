@@ -1,4 +1,4 @@
-package edu.washington.cs.ubicomplab.rdt_reader.models;
+package edu.washington.cs.ubicomplab.rdt_reader.core;
 
 import org.opencv.core.Mat;
 import org.opencv.core.MatOfPoint2f;

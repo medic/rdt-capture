@@ -6,13 +6,13 @@ import android.os.Bundle;
 import android.util.Log;
 
 import edu.washington.cs.ubicomplab.rdt_reader.interfaces.ImageQualityViewListener;
-import edu.washington.cs.ubicomplab.rdt_reader.models.RDTCaptureResult;
+import edu.washington.cs.ubicomplab.rdt_reader.core.RDTCaptureResult;
 import edu.washington.cs.ubicomplab.rdt_reader.views.ImageQualityView;
 import edu.washington.cs.ubicomplab.rdt_reader.R;
-import edu.washington.cs.ubicomplab.rdt_reader.models.RDTInterpretationResult;
+import edu.washington.cs.ubicomplab.rdt_reader.core.RDTInterpretationResult;
 import edu.washington.cs.ubicomplab.rdt_reader.utils.ImageUtil;
 
-import static edu.washington.cs.ubicomplab.rdt_reader.utils.Constants.DEFAULT_RDT_NAME;
+import static edu.washington.cs.ubicomplab.rdt_reader.core.Constants.DEFAULT_RDT_NAME;
 
 public class ImageQualityActivity extends Activity implements ImageQualityViewListener {
     ImageQualityView mImageQualityView;

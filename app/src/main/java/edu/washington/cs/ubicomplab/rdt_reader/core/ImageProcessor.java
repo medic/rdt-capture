@@ -50,12 +50,9 @@ import java.util.Date;
 import java.util.List;
 
 import edu.washington.cs.ubicomplab.rdt_reader.R;
-import edu.washington.cs.ubicomplab.rdt_reader.models.RDTCaptureResult;
-import edu.washington.cs.ubicomplab.rdt_reader.models.RDTInterpretationResult;
-import edu.washington.cs.ubicomplab.rdt_reader.utils.Constants;
 import edu.washington.cs.ubicomplab.rdt_reader.utils.ImageUtil;
 
-import static edu.washington.cs.ubicomplab.rdt_reader.utils.Constants.*;
+import static edu.washington.cs.ubicomplab.rdt_reader.core.Constants.*;
 import static edu.washington.cs.ubicomplab.rdt_reader.utils.ImageUtil.calculateRedColorPercentage;
 import static java.lang.Math.pow;
 import static java.lang.StrictMath.abs;
@@ -611,107 +608,98 @@ public class ImageProcessor {
     }
 
     private Rect checkFiducialKMeans(Mat inputMat) {
-        if (mRDT.fiducialCount == 0) {
-            Point tl = new Point(mRDT.fiducialToResultWindowOffset - mRDT.resultWindowRectH / 2.0, mRDT.resultWindowRectWPadding);
-            Point br = new Point(mRDT.fiducialToResultWindowOffset + mRDT.resultWindowRectH / 2.0, inputMat.size().height - mRDT.resultWindowRectWPadding);
+        int k = 5;
+        TermCriteria criteria = new TermCriteria(TermCriteria.EPS+TermCriteria.MAX_ITER, 100, 1.0);
+        Mat data = new Mat();
+        inputMat.convertTo(data, CV_32F);
+        cvtColor(data, data, COLOR_RGBA2RGB);
+        data = data.reshape(1, (int)data.total());
+        Mat centers = new Mat();
+        Mat labels = new Mat();
 
-            Rect fiducialRect = new Rect(tl, br);
+        kmeans(data, k, labels, criteria, 10, KMEANS_PP_CENTERS, centers);
 
-            return fiducialRect;
-        } else {
-            int k = 5;
-            TermCriteria criteria = new TermCriteria(TermCriteria.EPS+TermCriteria.MAX_ITER, 100, 1.0);
-            Mat data = new Mat();
-            inputMat.convertTo(data, CV_32F);
-            cvtColor(data, data, COLOR_RGBA2RGB);
-            data = data.reshape(1, (int)data.total());
-            Mat centers = new Mat();
-            Mat labels = new Mat();
+        centers = centers.reshape(3, centers.rows());
+        data = data.reshape(3, data.rows());
 
-            kmeans(data, k, labels, criteria, 10, KMEANS_PP_CENTERS, centers);
-
-            centers = centers.reshape(3, centers.rows());
-            data = data.reshape(3, data.rows());
-
-            for (int i = 0; i < data.rows(); i++) {
-                int centerId = (int)labels.get(i,0)[0];
-                data.put(i, 0, centers.get(centerId,0));
-            }
-
-            data = data.reshape(3, inputMat.rows());
-            data.convertTo(data, CV_8UC3);
-
-            double[] minCenter = new double[3];
-            double minCenterVal = Double.MAX_VALUE;
-
-            for (int i = 0; i < centers.rows(); i++) {
-                double val = centers.get(i,0)[0] + centers.get(i,0)[1] + centers.get(i,0)[2];
-                if (val < minCenterVal) {
-                    minCenter = centers.get(i,0);
-                    minCenterVal = val;
-                }
-            }
-
-            double thres = 0.299 * minCenter[0] + 0.587 * minCenter[1] + 0.114 * minCenter[2] + 20.0;
-
-            cvtColor(data, data, COLOR_RGB2GRAY);
-            Mat threshold = new Mat();
-            Imgproc.threshold(data, threshold, thres, 255, THRESH_BINARY_INV);
-
-            Mat element_erode = Imgproc.getStructuringElement(Imgproc.MORPH_ELLIPSE, new Size(5, 5));
-            Mat element_dilate = Imgproc.getStructuringElement(Imgproc.MORPH_ELLIPSE, new Size(20, 20));
-            Imgproc.erode(threshold, threshold, element_erode);
-            Imgproc.dilate(threshold, threshold, element_dilate);
-            Imgproc.GaussianBlur(threshold, threshold, new Size(5, 5), 2, 2);
-
-            List<MatOfPoint> contours = new ArrayList<>();
-            Mat hierarchy = new Mat();
-
-            Imgproc.findContours(threshold, contours, hierarchy, Imgproc.RETR_EXTERNAL, Imgproc.CHAIN_APPROX_SIMPLE, new Point(0, 0));
-
-            List<Rect> fiducialRects = new ArrayList<>();
-            Rect fiducialRect = new Rect(0, 0, 0, 0);
-
-            for (int i = 0; i < contours.size(); i++) {
-                Rect rect = Imgproc.boundingRect(contours.get(i));
-                double rectPos = rect.x + rect.width;
-                if (mRDT.fiducialPositionMin< rectPos && rectPos < mRDT.fiducialPositionMax && mRDT.fiducialMinH < rect.height && mRDT.fiducialMinW < rect.width && rect.width < mRDT.fiducialMaxW) {
-                    fiducialRects.add(rect);
-                    Log.d(TAG, String.format("Control line rect size: %s %s %s", rect.tl(), rect.br(), rect.size()));
-                }
-            }
-
-            if (fiducialRects.size() == mRDT.fiducialCount) { //should
-                double center0 = fiducialRects.get(0).x + fiducialRects.get(0).width;
-                double center1 = fiducialRects.get(0).x + fiducialRects.get(0).width;
-
-                if (fiducialRects.size() > 1) {
-                    center1 = fiducialRects.get(1).x + fiducialRects.get(1).width;
-                }
-
-                int midpoint = (int) ((center0 + center1) / 2);
-                double diff = abs(center0 - center1);
-
-                //double scale = mRDT.fiducialDistance == 0 ? 1 : diff / mRDT.fiducialDistance;
-                double scale = 1;
-                double offset = scale * mRDT.fiducialToResultWindowOffset;
-
-                Point tl = new Point(midpoint + offset - mRDT.resultWindowRectH * scale / 2.0, mRDT.resultWindowRectWPadding);
-                Point br = new Point(midpoint + offset + mRDT.resultWindowRectH * scale / 2.0, inputMat.size().height - mRDT.resultWindowRectWPadding);
-
-                fiducialRect = new Rect(tl, br);
-            }
-
-
-            labels.release();
-            centers.release();
-            data.release();
-            threshold.release();
-            element_erode.release();
-            element_dilate.release();
-
-            return fiducialRect;
+        for (int i = 0; i < data.rows(); i++) {
+            int centerId = (int)labels.get(i,0)[0];
+            data.put(i, 0, centers.get(centerId,0));
         }
+
+        data = data.reshape(3, inputMat.rows());
+        data.convertTo(data, CV_8UC3);
+
+        double[] minCenter = new double[3];
+        double minCenterVal = Double.MAX_VALUE;
+
+        for (int i = 0; i < centers.rows(); i++) {
+            double val = centers.get(i,0)[0] + centers.get(i,0)[1] + centers.get(i,0)[2];
+            if (val < minCenterVal) {
+                minCenter = centers.get(i,0);
+                minCenterVal = val;
+            }
+        }
+
+        double thres = 0.299 * minCenter[0] + 0.587 * minCenter[1] + 0.114 * minCenter[2] + 20.0;
+
+        cvtColor(data, data, COLOR_RGB2GRAY);
+        Mat threshold = new Mat();
+        Imgproc.threshold(data, threshold, thres, 255, THRESH_BINARY_INV);
+
+        Mat element_erode = Imgproc.getStructuringElement(Imgproc.MORPH_ELLIPSE, new Size(5, 5));
+        Mat element_dilate = Imgproc.getStructuringElement(Imgproc.MORPH_ELLIPSE, new Size(20, 20));
+        Imgproc.erode(threshold, threshold, element_erode);
+        Imgproc.dilate(threshold, threshold, element_dilate);
+        Imgproc.GaussianBlur(threshold, threshold, new Size(5, 5), 2, 2);
+
+        List<MatOfPoint> contours = new ArrayList<>();
+        Mat hierarchy = new Mat();
+
+        Imgproc.findContours(threshold, contours, hierarchy, Imgproc.RETR_EXTERNAL, Imgproc.CHAIN_APPROX_SIMPLE, new Point(0, 0));
+
+        List<Rect> fiducialRects = new ArrayList<>();
+        Rect fiducialRect = new Rect(0, 0, 0, 0);
+
+        for (int i = 0; i < contours.size(); i++) {
+            Rect rect = Imgproc.boundingRect(contours.get(i));
+            double rectPos = rect.x + rect.width;
+            if (mRDT.fiducialPositionMin< rectPos && rectPos < mRDT.fiducialPositionMax && mRDT.fiducialMinH < rect.height && mRDT.fiducialMinW < rect.width && rect.width < mRDT.fiducialMaxW) {
+                fiducialRects.add(rect);
+                Log.d(TAG, String.format("Control line rect size: %s %s %s", rect.tl(), rect.br(), rect.size()));
+            }
+        }
+
+        if (fiducialRects.size() == mRDT.fiducialCount) { //should
+            double center0 = fiducialRects.get(0).x + fiducialRects.get(0).width;
+            double center1 = fiducialRects.get(0).x + fiducialRects.get(0).width;
+
+            if (fiducialRects.size() > 1) {
+                center1 = fiducialRects.get(1).x + fiducialRects.get(1).width;
+            }
+
+            int midpoint = (int) ((center0 + center1) / 2);
+            double diff = abs(center0 - center1);
+
+            //double scale = mRDT.fiducialDistance == 0 ? 1 : diff / mRDT.fiducialDistance;
+            double scale = 1;
+            double offset = scale * mRDT.fiducialToResultWindowOffset;
+
+            Point tl = new Point(midpoint + offset - mRDT.resultWindowRect.height * scale / 2.0, mRDT.resultWindowRect.y);
+            Point br = new Point(midpoint + offset + mRDT.resultWindowRect.height * scale / 2.0, mRDT.resultWindowRect.y+mRDT.resultWindowRect.height);
+
+            fiducialRect = new Rect(tl, br);
+        }
+
+
+        labels.release();
+        centers.release();
+        data.release();
+        threshold.release();
+        element_erode.release();
+        element_dilate.release();
+
+        return fiducialRect;
     }
 
     private boolean readLine(Mat inputMat, Point position, boolean isControlLine) {
@@ -797,12 +785,13 @@ public class ImageProcessor {
         warpPerspective(inputMat, correctedMat, M, new Size(mRDT.refImg.cols(), mRDT.refImg.rows()));
 
         //Rect resultWindowRect = checkFiducialAndReturnResultWindowRect(correctedMat);
-        Rect resultWindowRect = checkFiducialKMeans(correctedMat);
+        //Rect resultWindowRect = checkFiducialKMeans(correctedMat);
+        Rect resultWindowRect = mRDT.fiducialCount == 0 ? mRDT.resultWindowRect : checkFiducialKMeans(correctedMat);
         //Rect resultWindowRect = returnResultWindowRect(correctedMat);
 
         correctedMat = new Mat(correctedMat, resultWindowRect);
         if (correctedMat.width() > 0 && correctedMat.height() > 0) {
-            resize(correctedMat, correctedMat, new Size(mRDT.resultWindowRectH, mRDT.refImg.rows() - 2 * mRDT.resultWindowRectWPadding));
+            resize(correctedMat, correctedMat, new Size(mRDT.resultWindowRect.height, mRDT.resultWindowRect.width));
         }
 
         return correctedMat;

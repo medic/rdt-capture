@@ -9,7 +9,7 @@
 package edu.washington.cs.ubicomplab.rdt_reader.activities;
 
 import static com.google.android.gms.vision.Frame.ROTATION_90;
-import static edu.washington.cs.ubicomplab.rdt_reader.utils.Constants.*;
+import static edu.washington.cs.ubicomplab.rdt_reader.core.Constants.*;
 
 import android.content.Intent;
 import android.content.res.Resources;
@@ -47,9 +47,8 @@ import java.util.Date;
 import java.util.Locale;
 
 import edu.washington.cs.ubicomplab.rdt_reader.R;
-import edu.washington.cs.ubicomplab.rdt_reader.fragments.SettingDialogFragment;
 import edu.washington.cs.ubicomplab.rdt_reader.interfaces.SettingDialogListener;
-import edu.washington.cs.ubicomplab.rdt_reader.utils.Constants;
+import edu.washington.cs.ubicomplab.rdt_reader.core.Constants;
 import edu.washington.cs.ubicomplab.rdt_reader.views.RDTCameraView;
 
 public class ExpirationDateActivity extends AppCompatActivity implements CvCameraViewListener2, SettingDialogListener {

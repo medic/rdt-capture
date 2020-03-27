@@ -4,18 +4,19 @@ import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 
+import org.json.JSONArray;
 import org.json.JSONObject;
 import org.opencv.android.Utils;
 import org.opencv.core.Mat;
 import org.opencv.core.MatOfKeyPoint;
+import org.opencv.core.Point;
+import org.opencv.core.Rect;
 import org.opencv.core.Size;
 import org.opencv.features2d.BFMatcher;
 import org.opencv.imgproc.Imgproc;
 import org.opencv.xfeatures2d.SIFT;
 
 import java.io.InputStream;
-
-import edu.washington.cs.ubicomplab.rdt_reader.utils.Constants;
 
 import static edu.washington.cs.ubicomplab.rdt_reader.utils.ImageUtil.GAUSSIAN_BLUR_WINDOW;
 import static org.opencv.imgproc.Imgproc.cvtColor;
@@ -33,10 +34,9 @@ public class RDT {
     int lineSearchWidth;
     int topLinePosition, middleLinePosition, bottomLinePosition;
     int fiducialPositionMin, fiducialPositionMax;
-    int fiducialMinH, fiducialMinW, fiducialMaxH, fiducialMaxW;
+    int fiducialMinH, fiducialMinW, fiducialMaxW;
     int fiducialToResultWindowOffset;
-    int resultWindowRectH;
-    int resultWindowRectWPadding;
+    Rect resultWindowRect;
     int fiducialDistance;
     int fiducialCount;
     String topLineName, middleLineName, bottomLineName;
@@ -70,19 +70,23 @@ public class RDT {
             topLinePosition = obj.getInt("TOP_LINE_POSITION");
             middleLinePosition = obj.getInt("MIDDLE_LINE_POSITION");
             bottomLinePosition = obj.getInt("BOTTOM_LINE_POSITION");
+
+            JSONArray rectTL = obj.getJSONArray("RESULT_WINDOW_TOP_LEFT");
+            JSONArray rectBR = obj.getJSONArray("RESULT_WINDOW_BOTTOM_RIGHT");
+            resultWindowRect = new Rect(new Point(rectTL.getDouble(0), rectTL.getDouble(1)), new Point(rectBR.getDouble(0), rectBR.getDouble(0)));
+
+            topLineName = obj.getString("DEFAULT_TOP_LINE_NAME");
+            middleLineName = obj.getString("DEFAULT_MIDDLE_LINE_NAME");
+            bottomLineName = obj.getString("DEFAULT_BOTTOM_LINE_NAME");
+
+            fiducialCount = obj.has("FIDUCIAL_COUNT") ? obj.getInt("FIDUCIAL_COUNT") : 0;
+            fiducialDistance = obj.getInt("FIDUCIAL_DISTANCE");
+            fiducialToResultWindowOffset = obj.getInt("FIDUCIAL_TO_RESULT_WINDOW_OFFSET");
             fiducialPositionMin = obj.getInt("FIDUCIAL_POSITION_MIN");
             fiducialPositionMax = obj.getInt("FIDUCIAL_POSITION_MAX");
             fiducialMinH = obj.getInt("FIDUCIAL_MIN_HEIGHT");
             fiducialMinW = obj.getInt("FIDUCIAL_MIN_WIDTH");
             fiducialMaxW = obj.getInt("FIDUCIAL_MAX_WIDTH");
-            fiducialToResultWindowOffset = obj.getInt("FIDUCIAL_TO_RESULT_WINDOW_OFFSET");
-            resultWindowRectH = obj.getInt("RESULT_WINDOW_RECT_HEIGHT");
-            resultWindowRectWPadding = obj.getInt("RESULT_WINDOW_RECT_WIDTH_PADDING");
-            fiducialDistance = obj.getInt("FIDUCIAL_DISTANCE");
-            fiducialCount = obj.getInt("FIDUCIAL_COUNT");
-            topLineName = obj.getString("DEFAULT_TOP_LINE_NAME");
-            middleLineName = obj.getString("DEFAULT_MIDDLE_LINE_NAME");
-            bottomLineName = obj.getString("DEFAULT_BOTTOM_LINE_NAME");
 
             // Load ref img
             refImg = new Mat();

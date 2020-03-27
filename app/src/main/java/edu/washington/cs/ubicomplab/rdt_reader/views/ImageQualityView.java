@@ -66,11 +66,11 @@ import java.util.concurrent.TimeUnit;
 import edu.washington.cs.ubicomplab.rdt_reader.R;
 import edu.washington.cs.ubicomplab.rdt_reader.core.ImageProcessor;
 import edu.washington.cs.ubicomplab.rdt_reader.interfaces.ImageQualityViewListener;
-import edu.washington.cs.ubicomplab.rdt_reader.models.RDTCaptureResult;
-import edu.washington.cs.ubicomplab.rdt_reader.models.RDTInterpretationResult;
+import edu.washington.cs.ubicomplab.rdt_reader.core.RDTCaptureResult;
+import edu.washington.cs.ubicomplab.rdt_reader.core.RDTInterpretationResult;
 import edu.washington.cs.ubicomplab.rdt_reader.utils.ImageUtil;
 
-import static edu.washington.cs.ubicomplab.rdt_reader.utils.Constants.*;
+import static edu.washington.cs.ubicomplab.rdt_reader.core.Constants.*;
 
 
 public class ImageQualityView extends LinearLayout implements View.OnClickListener, ActivityCompat.OnRequestPermissionsResultCallback {
