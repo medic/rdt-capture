@@ -7,13 +7,13 @@
 
 # Methods for RDT Detection
 * [`configureCamera()`](#configureCamera)
+* [`assessImage()`](#assessImage)
 * [`detectRDT()`](#detectRDT)
-* [`captureRDT()`](#captureRDT)
 
 # Methods for Quality Checking
-* [`calculateBrightness()`](#calculateBrightness)
-* [`checkBrightness()`](#checkBrightness)
-* [`calculateSharpness()`](#calculateSharpness)
+* [`measureExposure()`](#measureExposure)
+* [`checkExposure()`](#checkExposure)
+* [`measureSharpness()`](#measureSharpness)
 * [`checkSharpness()`](#checkSharpness)
 * [`measureCentering()`](#measureCentering)
 * [`checkIfCentered()`](#checkIfCentered)
@@ -92,7 +92,7 @@
 **Returns:**
 * `xxx`: xxx
 
-## detectRDT()
+## assessImage()
 **Signature:** `xxx`  
 **Purpose:** xxx  
 **Parameters:**
@@ -101,7 +101,7 @@
 **Returns:**
 * `xxx`: xxx
 
-## captureRDT()
+## detectRDT()
 **Signature:** `xxx`  
 **Purpose:** xxx  
 **Parameters:**
@@ -112,41 +112,41 @@
 
 - - -
 
-## calculateBrightness()
-**Signature:** `float[] mBuff = calculateBrightness(Mat input)`  
+## measureExposure()
+**Signature:** `float[] mBuff = measureExposure(Mat inputMat)`  
 **Purpose:** Calculates the brightness histogram of the candidate video frame  
 **Parameters:**
-* `Mat input`: the candidate video frame
+* `Mat inputMat`: the candidate video frame (in grayscale)
 
 **Returns:**
-* `float[] mBuff`: a 256-element histogram that quantifies the number of pixels at each brightness level for the greyscale version of `input`
+* `float[] mBuff`: a 256-element histogram that quantifies the number of pixels at each brightness level for the greyscale version of `inputMat`
 
-## checkBrightness()
-**Signature:** `ExposureResult exposureResult = checkBrightness(Mat input)`  
+## checkExposure()
+**Signature:** `ExposureResult exposureResult = checkExposure(Mat inputMat)`  
 **Purpose:** Determines whether the candidate video frame has sufficient lighting without being too bright  
 **Parameters:**
-* `Mat input`: the candidate video frame
+* `Mat inputMat`: the candidate video frame (in grayscale)
 
 **Returns:**
-* `ExposureResult exposureResult`: whether the candidate video frame `input` has a reasonable brightness
+* `ExposureResult exposureResult`: whether the candidate video frame `inputMat` has a reasonable brightness
 
-### calculateSharpness()
-**Signature:** `double sharpness = calculateSharpness(Mat input)`  
+### measureSharpness()
+**Signature:** `double sharpness = measureSharpness(Mat inputMat)`  
 **Purpose:** Calculates the Laplacian variance of the candidate video frame  
 **Parameters:**
-* `Mat input`: the candidate video frame
+* `Mat inputMat`: the candidate video frame (in grayscale)
 
 **Returns:**
-* `double sharpness`: the Laplacian variance of `input`
+* `double sharpness`: the Laplacian variance of `inputMat`
 
 ## checkSharpness()
-**Signature:** `boolean isSharp = checkSharpness(Mat input)`  
+**Signature:** `boolean isSharp = checkSharpness(Mat inputMat)`  
 **Purpose:** Determines whether the candidate video frame is focused  
 **Parameters:**
-* `Mat input`: the candidate video frame
+* `Mat inputMat`: the candidate video frame (in grayscale)
 
 **Returns:**
-* `boolean isSharp`: whether the candidate video frame `input` has a reasonable sharpness
+* `boolean isSharp`: whether the candidate video frame `inputMat` has a reasonable sharpness
 
 ## measureCentering()
 **Signature:** `Point center = measureCentering(MatOfPoint2f boundary)`  
