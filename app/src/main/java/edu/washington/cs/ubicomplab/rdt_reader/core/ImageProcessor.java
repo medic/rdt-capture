@@ -665,11 +665,12 @@ public class ImageProcessor {
         kmeans(data, FIDUCIAL_SEARCH_NUM_CLUSTERS, labels, criteria,
                 10, KMEANS_PP_CENTERS, centers);
 
+        // Extract output of k-means clustering
         centers = centers.reshape(3, centers.rows());
         data = data.reshape(3, data.rows());
 
-        for (int i = 0; i < data.rows(); i++) {
-            int centerId = (int)labels.get(i,0)[0];
+        for (int i=0; i<data.rows(); i++) {
+            int centerId = (int) labels.get(i,0)[0];
             data.put(i, 0, centers.get(centerId,0));
         }
 
