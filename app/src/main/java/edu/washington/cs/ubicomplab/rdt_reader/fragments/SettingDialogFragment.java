@@ -74,10 +74,10 @@ public class SettingDialogFragment extends DialogFragment implements RadioGroup.
         mSharpnessBar.setProgress((int)(Constants.SHARPNESS_THRESHOLD*100));
 
         mOverExpBar.setMax(300);
-        mOverExpBar.setProgress(mOverExpBar.getMax() - (int)(Constants.OVER_EXP_WHITE_COUNT));
+        mOverExpBar.setProgress(mOverExpBar.getMax() - (int)(Constants.OVER_EXPOSURE_WHITE_COUNT));
 
         mUnderExpBar.setMax(255);
-        mUnderExpBar.setProgress((int)(Constants.UNDER_EXP_THRESHOLD));
+        mUnderExpBar.setProgress((int)(Constants.UNDER_EXPOSURE_THRESHOLD));
 
         mSizeBar.setMax(20);
         mSizeBar.setProgress((int)(1/Constants.SIZE_THRESHOLD));
@@ -117,8 +117,8 @@ public class SettingDialogFragment extends DialogFragment implements RadioGroup.
 
     private void UpdateConstants() {
         Constants.SHARPNESS_THRESHOLD = (double)mSharpnessBar.getProgress()/100.0;
-        Constants.OVER_EXP_WHITE_COUNT =  mOverExpBar.getMax() - mOverExpBar.getProgress();
-        Constants.UNDER_EXP_THRESHOLD = mUnderExpBar.getProgress();
+        Constants.OVER_EXPOSURE_WHITE_COUNT =  mOverExpBar.getMax() - mOverExpBar.getProgress();
+        Constants.UNDER_EXPOSURE_THRESHOLD = mUnderExpBar.getProgress();
         //Constants.SHADOW mShadowBar.getProgress();
         Constants.SIZE_THRESHOLD = 1.0/(double)mSizeBar.getProgress();
         Constants.POSITION_THRESHOLD = 1.0/(double)mPositionBar.getProgress();
@@ -129,8 +129,8 @@ public class SettingDialogFragment extends DialogFragment implements RadioGroup.
 
         SharedPreferences.Editor editor = sharedPref.edit();
         editor.putString(getString(R.string.preference_language), Constants.LANGUAGE);
-        editor.putFloat(getString(R.string.preference_over_exposure), (float)Constants.OVER_EXP_WHITE_COUNT);
-        editor.putFloat(getString(R.string.preference_under_exposure), (float)Constants.UNDER_EXP_THRESHOLD);
+        editor.putFloat(getString(R.string.preference_over_exposure), (float)Constants.OVER_EXPOSURE_WHITE_COUNT);
+        editor.putFloat(getString(R.string.preference_under_exposure), (float)Constants.UNDER_EXPOSURE_THRESHOLD);
         editor.putFloat(getString(R.string.preference_sharpness), (float)Constants.SHARPNESS_THRESHOLD);
         editor.putFloat(getString(R.string.preference_position), (float)Constants.POSITION_THRESHOLD);
         editor.putFloat(getString(R.string.preference_size), (float)Constants.SIZE_THRESHOLD);
