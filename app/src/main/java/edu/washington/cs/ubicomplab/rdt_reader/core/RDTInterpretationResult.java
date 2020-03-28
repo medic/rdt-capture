@@ -1,13 +1,13 @@
-package edu.washington.cs.ubicomplab.rdt_reader.models;
+package edu.washington.cs.ubicomplab.rdt_reader.core;
 
 import android.graphics.Bitmap;
 
 import org.opencv.android.Utils;
 import org.opencv.core.Mat;
 
-import static edu.washington.cs.ubicomplab.rdt_reader.utils.Constants.DEFAULT_BOTTOM_LINE_NAME;
-import static edu.washington.cs.ubicomplab.rdt_reader.utils.Constants.DEFAULT_MIDDLE_LINE_NAME;
-import static edu.washington.cs.ubicomplab.rdt_reader.utils.Constants.DEFAULT_TOP_LINE_NAME;
+import static edu.washington.cs.ubicomplab.rdt_reader.core.Constants.DEFAULT_BOTTOM_LINE_NAME;
+import static edu.washington.cs.ubicomplab.rdt_reader.core.Constants.DEFAULT_MIDDLE_LINE_NAME;
+import static edu.washington.cs.ubicomplab.rdt_reader.core.Constants.DEFAULT_TOP_LINE_NAME;
 
 /**
  * Interpretation result represents the image result of RDT image after processing which describes if
