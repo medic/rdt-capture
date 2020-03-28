@@ -49,6 +49,7 @@ public final class Constants {
     public static double BLOOD_PERCENTAGE_THRESHOLD = 0.25;
 
     // SIFT feature template matching parameters
+    public static double SIFT_RESIZE_FACTOR = 0.5;
     public static int GOOD_MATCH_COUNT = 7;
     public static int RANSAC = 5;
 

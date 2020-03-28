@@ -227,128 +227,130 @@ public class ImageProcessor {
 
     /**
      * Locates the RDT within the image (if one is presents) produces a bounding box around it
-     * @param input: the candidate video frame (in grayscale)
+     * @param inputMat: the candidate video frame (in grayscale)
      * @return the corners of the bounding box around the detected RDT if it is present,
      * otherwise a blank MatOfPoint2f
      */
-    private MatOfPoint2f detectRDT(Mat input) {
-        double scale = 0.5;
-        Mat scaledMat = new Mat();
-        Imgproc.resize(input, scaledMat, new Size(), scale, scale, Imgproc.INTER_LINEAR);
+    private MatOfPoint2f detectRDT(Mat inputMat) {
         double currentTime = System.currentTimeMillis();
-        Mat inDescriptor = new Mat();
-        MatOfKeyPoint inKeypoints = new MatOfKeyPoint();
-        MatOfPoint2f boundary = new MatOfPoint2f();
 
+        // Resize inputMat for quicker computation
+        double scale = SIFT_RESIZE_FACTOR;
+        Mat scaledMat = new Mat();
+        Imgproc.resize(inputMat, scaledMat, new Size(), scale, scale, Imgproc.INTER_LINEAR);
+
+        // Create mask for region of interest
         Mat mask = new Mat(scaledMat.cols(), scaledMat.rows(), CV_8U, new Scalar(0));
-
         Point p1 = new Point(0, scaledMat.size().height*(1-mRDT.viewFinderScaleW/CROP_RATIO)/2);
         Point p2 = new Point(scaledMat.size().width-p1.x, scaledMat.size().height-p1.y);
         Imgproc.rectangle(mask, p1, p2, new Scalar(255), -1);
 
+        // Identify SIFT features
+        Mat inDescriptor = new Mat();
+        MatOfKeyPoint inKeypoints = new MatOfKeyPoint();
+        MatOfPoint2f boundary = new MatOfPoint2f();
         mRDT.detector.detectAndCompute(scaledMat, mask, inKeypoints, inDescriptor);
 
-        if (inDescriptor.size().equals(new Size(0,0))) { // No features found!
+        // Skip if no features are found
+        if (mRDT.refDescriptor.size().equals(new Size(0,0))) {
+            Log.d(TAG, "No features found in reference");
+            return boundary;
+        }
+        if (inDescriptor.size().equals(new Size(0,0))) {
+            Log.d(TAG, "No features found in scene");
             return boundary;
         }
 
-        if (mRDT.refDescriptor.size().equals(new Size(0,0))) { // No features found!
-            Log.d(TAG, "Empty sift ref descriptor!!!");
-            return boundary;
-        }
-
-        // Matching
+        // Match feature descriptors using KNN
         List<MatOfDMatch> matches = new ArrayList<>();
-        mRDT.matcher.knnMatch(mRDT.refDescriptor, inDescriptor, matches, 2, new Mat(), false);
+        mRDT.matcher.knnMatch(mRDT.refDescriptor, inDescriptor, matches,
+                2, new Mat(), false);
 
-        double maxDist = Double.MIN_VALUE;
-        double minDist = Double.MAX_VALUE;
-
-        double sum = 0;
-        int count = 0;
-
+        // Identify good matches based on nearest neighbor distance ratio test
         ArrayList<DMatch> goodMatches = new ArrayList<>();
         for (int i = 0; i < matches.size(); i++) {
             DMatch[] dMatches = matches.get(i).toArray();
             if (dMatches.length >= 2) {
                 DMatch m = dMatches[0];
                 DMatch n = dMatches[1];
-                if (m.distance <= 0.80 * n.distance) {
+                if (m.distance <= 0.80 * n.distance)
                     goodMatches.add(m);
-                    sum += m.distance;
-                    count++;
-                }
             }
         }
-
         MatOfDMatch goodMatchesMat = new MatOfDMatch();
         goodMatchesMat.fromList(goodMatches);
 
-        //put keypoints mats into lists
-        List<KeyPoint> keypointsList1 = mRDT.refKeypoints.toList();
-        List<KeyPoint> keypointsList2 = inKeypoints.toList();
-
-        List<Point> objList = new ArrayList<>();
-        List<Point> sceneList = new ArrayList<>();
-
-        for(int i=0;i<goodMatches.size();i++)
-        {
-            objList.add(keypointsList1.get(goodMatches.get(i).queryIdx).pt);
-            sceneList.add(keypointsList2.get(goodMatches.get(i).trainIdx).pt);
-        }
-
-        MatOfPoint2f objMat = new MatOfPoint2f();
-        MatOfPoint2f sceneMat = new MatOfPoint2f();
-        objMat.fromList(objList);
-        sceneMat.fromList(sceneList);
-
-        // HOMOGRAPHY!
+        // If enough matches are found, calculate homography
         if (goodMatches.size() > GOOD_MATCH_COUNT) {
+            // Extract features from reference and scene and put them into proper structure
+            List<KeyPoint> keypointsList1 = mRDT.refKeypoints.toList();
+            List<KeyPoint> keypointsList2 = inKeypoints.toList();
+            List<Point> objList = new ArrayList<>();
+            List<Point> sceneList = new ArrayList<>();
+            for (int i=0; i<goodMatches.size(); i++) {
+                objList.add(keypointsList1.get(goodMatches.get(i).queryIdx).pt);
+                sceneList.add(keypointsList2.get(goodMatches.get(i).trainIdx).pt);
+            }
+            MatOfPoint2f objMat = new MatOfPoint2f();
+            MatOfPoint2f sceneMat = new MatOfPoint2f();
+            objMat.fromList(objList);
+            sceneMat.fromList(sceneList);
+
+            // Calculate homography matrix
             Mat H = Calib3d.findHomography(objMat, sceneMat, Calib3d.RANSAC, RANSAC);
 
+            // Use homography matrix to find bounding box in scene if it is valid
             if (H.cols() >= 3 && H.rows() >= 3) {
+                // Define corners of the reference image
                 Mat objCorners = new Mat(4, 1, CvType.CV_32FC2);
-                Mat sceneCorners = new Mat(4, 1, CvType.CV_32FC2);
-
                 double[] a = new double[]{0, 0};
-                double[] b = new double[]{mRDT.refImg.cols() - 1, 0};
-                double[] c = new double[]{mRDT.refImg.cols() - 1, mRDT.refImg.rows() - 1};
-                double[] d = new double[]{0, mRDT.refImg.rows() - 1};
-
-                //get corners from object
+                double[] b = new double[]{mRDT.refImg.cols()-1, 0};
+                double[] c = new double[]{mRDT.refImg.cols()-1, mRDT.refImg.rows()-1};
+                double[] d = new double[]{0, mRDT.refImg.rows()-1};
                 objCorners.put(0, 0, a);
                 objCorners.put(1, 0, b);
                 objCorners.put(2, 0, c);
                 objCorners.put(3, 0, d);
 
+                // Get the corresponding corners in the scene
+                Mat sceneCorners = new Mat(4, 1, CvType.CV_32FC2);
                 perspectiveTransform(objCorners, sceneCorners, H);
 
-                Log.d(TAG, String.format("transformed -- SIFT: (%.2f, %.2f) (%.2f, %.2f) (%.2f, %.2f) (%.2f, %.2f), width: %d, height: %d",
-                        sceneCorners.get(0, 0)[0], sceneCorners.get(0, 0)[1],
-                        sceneCorners.get(1, 0)[0], sceneCorners.get(1, 0)[1],
-                        sceneCorners.get(2, 0)[0], sceneCorners.get(2, 0)[1],
-                        sceneCorners.get(3, 0)[0], sceneCorners.get(3, 0)[1], sceneCorners.width(), sceneCorners.height()));
-
+                // Extract corners for bounding box and put them in a MatOfPoint2f
+                Point tlBoundary = new Point(sceneCorners.get(0, 0)[0]/scale,
+                        sceneCorners.get(0, 0)[1]/scale);
+                Point trBoundary = new Point(sceneCorners.get(1, 0)[0]/scale,
+                        sceneCorners.get(1, 0)[1]/scale);
+                Point brBoundary = new Point(sceneCorners.get(2, 0)[0]/scale,
+                        sceneCorners.get(2, 0)[1]/scale);
+                Point blBoundary = new Point(sceneCorners.get(3, 0)[0]/scale,
+                        sceneCorners.get(3, 0)[1]/scale);
+                Log.d(TAG, String.format("transformed -- " +
+                                "(%.2f, %.2f) (%.2f, %.2f) (%.2f, %.2f) (%.2f, %.2f), " +
+                                "width: %d, height: %d",
+                        tlBoundary.x, tlBoundary.y, trBoundary.x, trBoundary.y,
+                        brBoundary.x, brBoundary.y, blBoundary.x, blBoundary.y,
+                        sceneCorners.width(), sceneCorners.height()));
                 ArrayList<Point> listOfBoundary = new ArrayList<>();
-                listOfBoundary.add(new Point(sceneCorners.get(0, 0)[0]/scale, sceneCorners.get(0, 0)[1]/scale));
-                listOfBoundary.add(new Point(sceneCorners.get(1, 0)[0]/scale, sceneCorners.get(1, 0)[1]/scale));
-                listOfBoundary.add(new Point(sceneCorners.get(2, 0)[0]/scale, sceneCorners.get(2, 0)[1]/scale));
-                listOfBoundary.add(new Point(sceneCorners.get(3, 0)[0]/scale, sceneCorners.get(3, 0)[1]/scale));
-
+                listOfBoundary.add(tlBoundary);
+                listOfBoundary.add(trBoundary);
+                listOfBoundary.add(brBoundary);
+                listOfBoundary.add(blBoundary);
                 boundary.fromList(listOfBoundary);
             }
+            // Garbage collection
             H.release();
+            objMat.release();
+            sceneMat.release();
         }
 
         // Garbage collection
         scaledMat.release();
         goodMatchesMat.release();
-        objMat.release();
-        sceneMat.release();
         mask.release();
         inDescriptor.release();
         inKeypoints.release();
-        Log.d(TAG, "Detect RDT TIME: " + (System.currentTimeMillis()-currentTime));
+        Log.d(TAG, "Detect RDT time: " + (System.currentTimeMillis()-currentTime));
         return boundary;
     }
 
@@ -393,7 +395,8 @@ public class ImageProcessor {
         // Calculate the brightness histogram
         float[] histograms = measureExposure(inputMat);
 
-        // TODO
+        // Identify the highest brightness level in the histogram
+        // and the amount at the highest brightness
         int maxWhite = 0;
         float whiteCount = 0;
         for (int i = 0; i < histograms.length; i++) {
@@ -403,7 +406,7 @@ public class ImageProcessor {
                 whiteCount = histograms[i];
         }
 
-        // Decide whether TODO
+        // Assess the brightness relative to thresholds
         if (maxWhite >= OVER_EXPOSURE_THRESHOLD && whiteCount > OVER_EXPOSURE_WHITE_COUNT) {
             return ExposureResult.OVER_EXPOSED;
         } else if (maxWhite < UNDER_EXPOSURE_THRESHOLD) {
@@ -419,13 +422,17 @@ public class ImageProcessor {
      * @return the Laplacian variance of the candidate video frame
      */
     private double measureSharpness(Mat inputMat) {
+        // Calculate the Laplacian
         Mat des = new Mat();
         Laplacian(inputMat, des, CvType.CV_64F);
 
-        MatOfDouble median = new MatOfDouble();
+        // Calculate the mean and std
+        MatOfDouble mean = new MatOfDouble();
         MatOfDouble std = new MatOfDouble();
-        meanStdDev(des, median, std);
-        double sharpness = pow(std.get(0,0)[0],2);
+        meanStdDev(des, mean, std);
+
+        // Calculate variance
+        double sharpness = pow(std.get(0,0)[0], 2);
 
         // Garbage collection
         des.release();
@@ -438,14 +445,15 @@ public class ImageProcessor {
      * @return boolean for whether the candidate video frame has a reasonable sharpness
      */
     private boolean checkSharpness(Mat inputMat) {
+        // Resize the image to the scale of the reference
         Mat resized = new Mat();
-        resize(inputMat, resized, new Size(inputMat.size().width*mRDT.refImg.size().width/inputMat.size().width, inputMat.size().height*mRDT.refImg.size().width/inputMat.size().width));
+        double scale = mRDT.refImg.size().width/inputMat.size().width;
+        resize(inputMat, resized,
+                new Size(inputMat.size().width*scale,inputMat.size().height*scale));
 
+        // Calculate sharpness and assess relative to thresholds
         double sharpness = measureSharpness(resized);
-        Log.d(TAG, String.format("inputMat sharpness: %.2f", measureSharpness(resized)));
-
         boolean isSharp = sharpness > (mRDT.refImgSharpness * (1-SHARPNESS_THRESHOLD));
-        Log.d(TAG, "Sharpness: "+sharpness);
 
         // Garbage collection
         inputMat.release();
