@@ -41,12 +41,19 @@ public final class Constants {
     public static double OVER_EXPOSURE_THRESHOLD = 255;
     public static double OVER_EXPOSURE_WHITE_COUNT = 0.2;
 
-    // RDT-specific image quality thresholds
+    // RDT image quality thresholds
     public static double POSITION_THRESHOLD = 0.15;
     public static double SIZE_THRESHOLD = 0.15;
     public static int ANGLE_THRESHOLD = 10;
+
+    // Result window image quality thresholds
     public static double GLARE_WHITE_COUNT = 0.001;
+    public static Scalar BLOOD_COLOR_LOW_HUE_LOWER = new Scalar(0, 100, 100);
+    public static Scalar BLOOD_COLOR_LOW_HUE_UPPER = new Scalar(10, 255, 255);
+    public static Scalar BLOOD_COLOR_HIGH_HUE_LOWER = new Scalar(160, 100, 100);
+    public static Scalar BLOOD_COLOR_HIGH_HUE_UPPER = new Scalar(179, 255, 255);
     public static double BLOOD_PERCENTAGE_THRESHOLD = 0.25;
+    public static int FIDUCIAL_SEARCH_NUM_CLUSTERS = 5;
 
     // SIFT feature template matching parameters
     public static double SIFT_RESIZE_FACTOR = 0.5;

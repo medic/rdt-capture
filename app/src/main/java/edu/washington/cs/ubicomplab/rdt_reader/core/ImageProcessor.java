@@ -49,6 +49,9 @@ import static edu.washington.cs.ubicomplab.rdt_reader.utils.ImageUtil.calculateR
 import static java.lang.Math.pow;
 import static java.lang.StrictMath.abs;
 import static org.opencv.core.Core.KMEANS_PP_CENTERS;
+import static org.opencv.core.Core.addWeighted;
+import static org.opencv.core.Core.countNonZero;
+import static org.opencv.core.Core.inRange;
 import static org.opencv.core.Core.kmeans;
 import static org.opencv.core.Core.meanStdDev;
 import static org.opencv.core.Core.perspectiveTransform;
@@ -462,7 +465,7 @@ public class ImageProcessor {
     }
 
     /**
-     * Identifies the center of the detectedRDT
+     * Identifies the center of the detected RDT
      * @param boundary: the corners of the bounding box around the detected RDT
      * @return the (x, y) coordinate corresponding to the center of the RDT
      */
@@ -472,10 +475,11 @@ public class ImageProcessor {
     }
 
     /**
-     * Determines whether the RDT is close enough towards the center of the candidate video frame
+     * Determines whether the detected RDT is close enough to the
+     * center of the candidate video frame
      * @param boundary: the corners of the bounding box around the detected RDT
      * @param size: the size of the candidate video frame
-     * @return whether the boundary of the detected RDT is sufficiently in the middle of the
+     * @return whether the boundary of the detected RDT is close enough to the center of the
      * screen for consistent interpretation
      */
     private boolean checkCentering(MatOfPoint2f boundary, Size size) {
@@ -485,84 +489,122 @@ public class ImageProcessor {
         // Calculate the center of the screen
         Point trueCenter = new Point(size.width/2, size.height/2);
 
-        // Determine if the center of the RDT is close enough to the center of the screen
-        double lowerXThreshold = trueCenter.x-(size.width*POSITION_THRESHOLD);
+        // Assess centering relative to thresholds
+        double lowerXThreshold = trueCenter.x - (size.width*POSITION_THRESHOLD);
         double upperXThreshold = trueCenter.x + (size.width*POSITION_THRESHOLD);
-        double lowerYThreshold = trueCenter.y-(size.height*POSITION_THRESHOLD);
-        double upperYThreshold = trueCenter.y+(size.height*POSITION_THRESHOLD);
+        double lowerYThreshold = trueCenter.y - (size.height*POSITION_THRESHOLD);
+        double upperYThreshold = trueCenter.y + (size.height*POSITION_THRESHOLD);
         return center.x > lowerXThreshold && center.x < upperXThreshold &&
                 center.y > lowerYThreshold && center.y < upperYThreshold;
     }
 
-    private double measureSize(MatOfPoint2f boundary) {
+    /**
+     * Measures the desired dimension of the bounding box around the detected RDT
+     * @param boundary: the corners of the bounding box around the detected RDT
+     * @param isHeight: whether the output should be the height (true) or width (false)
+     * @return the desired dimension in pixels
+     */
+    private double measureSize(MatOfPoint2f boundary, boolean isHeight) {
+        // Calculate a non-skew rectangle around the boundary
         RotatedRect rotatedRect = minAreaRect(boundary);
 
+        // Pick the height and width relative to camera perspective according to angle
         boolean isUpright = rotatedRect.size.height > rotatedRect.size.width;
-        double angle ;
-        double height = 0;
-
+        double height, width;
         if (isUpright) {
-            angle = 90 - abs(rotatedRect.angle);
             height = rotatedRect.size.height;
+            width = rotatedRect.size.width;
         } else {
-            angle = abs(rotatedRect.angle);
             height = rotatedRect.size.width;
+            width = rotatedRect.size.height;
         }
 
-        return height;
+        // Return the desired dimension
+        return isHeight ? height : width;
     }
 
+    /**
+     * Determines whether the detected RDT is a reasonable size within the camera frame
+     * @param boundary: the corners of the bounding box around the detected RDT
+     * @param size: the size of the candidate video frame
+     * @return whether the boundary of the detected RDT is has a reasonable size
+     * for consistent interpretation
+     */
     private SizeResult checkSize(MatOfPoint2f boundary, Size size) {
-        double height = measureSize(boundary);
-        // TODO: extract height from here...
-        boolean isRightSize = height < size.width*mRDT.viewFinderScaleH+size.width*SIZE_THRESHOLD && height > size.width*mRDT.viewFinderScaleH-size.width*SIZE_THRESHOLD;
+        // Get the height of the bounding box
+        double height = measureSize(boundary, true);
 
-        if (isRightSize) {
+        // Calculate quality bounds relative to the viewfinder
+        double lowerBound = size.width * (mRDT.viewFinderScaleH - SIZE_THRESHOLD);
+        double upperBound = size.width * (mRDT.viewFinderScaleH + SIZE_THRESHOLD);
+
+        // Assess size relative to thresholds
+        if (height < lowerBound)
+            return SizeResult.SMALL;
+        else if (height > upperBound)
+            return SizeResult.LARGE;
+        else if (height > lowerBound && height < upperBound)
             return SizeResult.RIGHT_SIZE;
-        } else {
-            if (height > size.width*mRDT.viewFinderScaleH+size.width*SIZE_THRESHOLD) {
-                return SizeResult.LARGE;
-            } else if (height < size.width*mRDT.viewFinderScaleH-size.width*SIZE_THRESHOLD) {
-                return SizeResult.SMALL;
-            } else {
-                return SizeResult.INVALID;
-            }
-        }
+        else
+            return SizeResult.INVALID;
     }
 
+    /**
+     * Measures the orientation of the RDT relative to the camera's perspective
+     * (assumes vertical RDT where height > width)
+     * @param boundary: the corners of the bounding box around the detected RDT
+     * @return the orientation of the RDT's vertical axis relative to the vertical axis of
+     * the video frame (0° = upright, 90° = right-to-left, 180° = upside-down, 270° = left-to-right)
+     */
     private double measureOrientation(MatOfPoint2f boundary) {
+        // Calculate a non-skew rectangle around the boundary
         RotatedRect rotatedRect = minAreaRect(boundary);
 
+        // Correct orientation so that it is relative to camera perspective
         boolean isUpright = rotatedRect.size.height > rotatedRect.size.width;
         if (isUpright) {
-            if (rotatedRect.angle < 0) {
+            if (rotatedRect.angle < 0)
                 return 90 + rotatedRect.angle;
-            } else {
+            else
                 return rotatedRect.angle - 90;
-            }
         } else {
             return rotatedRect.angle;
         }
     }
 
+    /**
+     * Determines whether the detected RDT is a reasonable orientation within the camera frame
+     * @param boundary: the corners of the bounding box around the detected RDT
+     * @return whether the `boundary` of the detected RDT has a reasonable orientation for
+     * consistent interpretation
+     */
     private boolean checkOrientation(MatOfPoint2f boundary) {
         double angle = measureOrientation(boundary);
         return abs(angle) < ANGLE_THRESHOLD;
     }
 
+    /**
+     * Determines if there is glare within the detected RDT's result window (often due to
+     * protective covering of the immunoassay)
+     * @param inputMat: the candidate video frame (in grayscale)
+     * @param boundary: the corners of the bounding box around the detected RDT
+     * @return whether there is glare within the detected RDT's result window
+     */
     private boolean checkGlare(Mat inputMat, MatOfPoint2f boundary) {
         // Crop the image around the RDT's result window
         Mat resultWindowMat = cropResultWindow(inputMat, boundary);
 
         // Convert the image to HLS
-        Mat hsl = new Mat();
-        cvtColor(resultWindowMat, hsl, COLOR_BGR2HLS);
+        Mat hls = new Mat();
+        cvtColor(resultWindowMat, hls, COLOR_BGR2HLS);
 
         // Calculate brightness histogram across L channel
         ArrayList<Mat> channels = new ArrayList<>();
-        Core.split(hsl, channels);
+        Core.split(hls, channels);
         float[] histograms = measureExposure(channels.get(1));
 
+        // Identify the highest brightness level in the histogram
+        // and the amount at the highest brightness
         int maxWhite = 0;
         float clippingCount = 0;
         for (int i = 0; i < histograms.length; i++) {
@@ -573,7 +615,36 @@ public class ImageProcessor {
         }
         Log.d(TAG, String.format("maxWhite: %d, clippingCount: %.5f", maxWhite, clippingCount));
 
+        // Assess glare relative to thresholds
         return maxWhite == 255 && clippingCount > GLARE_WHITE_COUNT;
+    }
+
+    /**
+     * Determines if there is blood within the detected RDT's result window
+     * @param inputMat: the candidate video frame (in grayscale)
+     * @param boundary: the corners of the bounding box around the detected RDT
+     * @return whether there is blood within the detected RDT's result window
+     */
+    public boolean checkBloody(Mat inputMat, MatOfPoint2f boundary) {
+        // Crop the image around the RDT's result window
+        Mat resultWindowMat = cropResultWindow(inputMat, boundary);
+
+        // Convert the image to HSV
+        Mat hsv = new Mat();
+        cvtColor(resultWindowMat, hsv, Imgproc.COLOR_RGB2HSV);
+
+        // Filter image according to two definitions of red
+        // (note: H in HSV is circular, so red can have low and high H values)
+        Mat lowerRedThresh = new Mat();
+        Mat upperRedThresh = new Mat();
+        Mat redThresh = new Mat();
+        inRange(hsv, BLOOD_COLOR_LOW_HUE_LOWER, BLOOD_COLOR_HIGH_HUE_UPPER, lowerRedThresh);
+        inRange(hsv, BLOOD_COLOR_HIGH_HUE_LOWER, BLOOD_COLOR_HIGH_HUE_UPPER, upperRedThresh);
+        addWeighted(lowerRedThresh, 1.0, upperRedThresh, 1.0, 0.0,  redThresh);
+
+        // Determine if there is too much blood for analysis
+        double bloodPercentage = countNonZero(redThresh) / redThresh.size().area();
+        return bloodPercentage > BLOOD_PERCENTAGE_THRESHOLD;
     }
 
     /**
@@ -583,7 +654,6 @@ public class ImageProcessor {
      * @return a Rectangle around the detected fiducial TODO
      */
     private Rect checkFiducialKMeans(Mat inputMat) {
-        int k = 5;
         TermCriteria criteria = new TermCriteria(TermCriteria.EPS+TermCriteria.MAX_ITER, 100, 1.0);
         Mat data = new Mat();
         inputMat.convertTo(data, CV_32F);
@@ -592,7 +662,8 @@ public class ImageProcessor {
         Mat centers = new Mat();
         Mat labels = new Mat();
 
-        kmeans(data, k, labels, criteria, 10, KMEANS_PP_CENTERS, centers);
+        kmeans(data, FIDUCIAL_SEARCH_NUM_CLUSTERS, labels, criteria,
+                10, KMEANS_PP_CENTERS, centers);
 
         centers = centers.reshape(3, centers.rows());
         data = data.reshape(3, data.rows());
@@ -820,11 +891,6 @@ public class ImageProcessor {
         return new RDTInterpretationResult(resultWindowMat,
                 topLine, middleLine, bottomLine,
                 mRDT.topLineName, mRDT.middleLineName, mRDT.topLineName);
-    }
-
-    public boolean detectBlood(Mat mat, double bloodThreshold) {
-        double bloodPercentage = calculateRedColorPercentage(mat);
-        return bloodPercentage > BLOOD_PERCENTAGE_THRESHOLD;
     }
 
     /**
