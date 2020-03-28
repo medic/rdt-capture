@@ -23,6 +23,7 @@
 * [`checkOrientation()`](#checkOrientation)
 * [`checkIfGlared()`](#checkIfGlared)
 * [`checkFiducial()`](#checkFiducial)
+* [`getQualityCheckText()`](#getQualityCheckText)
 
 # Methods for RDT Interpretation
 * [`cropResultWindow()`](#cropResultWindow)
@@ -128,11 +129,11 @@
 * `Mat inputMat`: the candidate video frame (in grayscale)
 
 **Returns:**
-* `ExposureResult exposureResult`: whether the candidate video frame `inputMat` has a reasonable brightness
+* `ExposureResult exposureResult`: whether `inputMat` has a reasonable brightness
 
 ### measureSharpness()
 **Signature:** `double sharpness = measureSharpness(Mat inputMat)`  
-**Purpose:** Calculates the Laplacian variance of the candidate video frame  
+**Purpose:** Calculates the Laplacian variance of the candidate video frame as a metric for sharpness  
 **Parameters:**
 * `Mat inputMat`: the candidate video frame (in grayscale)
 
@@ -146,7 +147,7 @@
 * `Mat inputMat`: the candidate video frame (in grayscale)
 
 **Returns:**
-* `boolean isSharp`: whether the candidate video frame `inputMat` has a reasonable sharpness
+* `boolean isSharp`: whether `inputMat` has a reasonable sharpness
 
 ## measureCentering()
 **Signature:** `Point center = measureCentering(MatOfPoint2f boundary)`  
@@ -222,6 +223,15 @@
 **Returns:**
 * `xxx`: xxx
 
+## getQualityCheckText()
+**Signature:** `xxx`  
+**Purpose:** Generate text that can be shown on the screen to summarize all quality checks  
+**Parameters:**
+* `xxx`: xxx
+
+**Returns:**
+* `xxx`: xxx
+
 - - -
 
 ## cropResultWindow()
@@ -234,15 +244,14 @@
 **Returns:**
 * `Mat resultWindow`: the RDT image tightly cropped around the result window
 
-
 ## enhanceResultWindow()
-**Signature:** `xxx`  
-**Purpose:** xxx  
+**Signature:** `Mat enhancedMat = Mat enhanceResultWindow(Mat resultWindowMat)`  
+**Purpose:** Applies [CLAHE](https://en.wikipedia.org/wiki/Adaptive_histogram_equalization) to enhance faint marks on the RDT's result window  
 **Parameters:**
-* `xxx`: xxx
+* `Mat resultWindowMat`: the RDT's result window (in RGBA)
 
 **Returns:**
-* `xxx`: xxx
+* `Mat enhancedMat`: a contrast-enhanced version of the RDT's result window
 
 ## interpretResult()
 **Signature:** `InterpretationResult interpResult = interpretResult(Mat inputMat, MatOfPoint2f boundary)`
