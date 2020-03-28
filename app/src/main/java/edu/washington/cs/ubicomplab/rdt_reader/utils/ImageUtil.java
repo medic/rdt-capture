@@ -15,16 +15,30 @@ import android.graphics.Rect;
 import android.graphics.YuvImage;
 import android.media.Image;
 import android.util.Base64;
+import android.util.Log;
 
 import org.opencv.android.Utils;
 import org.opencv.core.CvType;
 import org.opencv.core.Mat;
+import org.opencv.core.MatOfDMatch;
+import org.opencv.core.MatOfKeyPoint;
+import org.opencv.core.MatOfPoint;
 import org.opencv.core.Scalar;
+import org.opencv.features2d.Features2d;
 import org.opencv.imgproc.Imgproc;
 
 import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileOutputStream;
 import java.nio.ByteBuffer;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Date;
 
+import edu.washington.cs.ubicomplab.rdt_reader.core.Constants;
+import edu.washington.cs.ubicomplab.rdt_reader.core.RDT;
+
+import static org.opencv.core.Core.LUT;
 import static org.opencv.core.Core.addWeighted;
 import static org.opencv.core.Core.countNonZero;
 import static org.opencv.core.Core.inRange;
@@ -34,6 +48,8 @@ public final class ImageUtil {
     /**
      * Image constants
      */
+    private static String TAG = "ImageUtil";
+
     public static final int GAUSSIAN_BLUR_WINDOW = 5;
 
     public static final Scalar RED_COLOR_LOW_HUE_LOWER = new Scalar(0, 100, 100);
@@ -196,5 +212,77 @@ public final class ImageUtil {
         resultBitmap.compress(Bitmap.CompressFormat.JPEG, 100, bs);
 
         return bs.toByteArray();
+    }
+
+    //methods for debugging
+    private void saveImage (Mat inputMat) {
+        File sdIconStorageDir = new File(Constants.RDT_IMAGE_DIR);
+
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH-mm-ss-SSS");
+
+        try {
+            String filePath = sdIconStorageDir.toString() + String.format("/%s-%08dms.jpg", sdf.format(new Date()), 0);
+            FileOutputStream fileOutputStream = new FileOutputStream(filePath);
+
+            fileOutputStream.write(ImageUtil.matToRotatedByteArray(inputMat));
+
+            fileOutputStream.flush();
+            fileOutputStream.close();
+
+            //sendBroadcast(new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE, Uri.parse("file://" + filePath)));
+
+            //Toast.makeText(this,"Image is successfully saved!", Toast.LENGTH_SHORT).show();
+        } catch (Exception e) {
+            Log.w("TAG", "Error saving image file: " + e.getMessage());
+        }
+    }
+
+    private void drawKeypointsAndMatches(Mat inputMat, MatOfPoint boundary, MatOfKeyPoint inKeypoints, MatOfDMatch goodMatchesMat, RDT rdt) {
+        Mat resultMat = new Mat();
+        MatOfPoint boundaryMat = new MatOfPoint();
+        boundaryMat.fromList(boundary.toList());
+        ArrayList<MatOfPoint> list = new ArrayList<>();
+        list.add(boundaryMat);
+
+        Mat tempInputMat = inputMat.clone();
+        Imgproc.polylines(tempInputMat, list, true, Scalar.all(0),10);
+        Features2d.drawKeypoints(tempInputMat, inKeypoints, tempInputMat);
+        Features2d.drawMatches(rdt.refImg, rdt.refKeypoints, tempInputMat, inKeypoints, goodMatchesMat, resultMat);
+        Bitmap bitmap = Bitmap.createBitmap(inputMat.cols(), inputMat.rows(), Bitmap.Config.ARGB_8888);
+        Utils.matToBitmap(resultMat, bitmap);
+    }
+
+    private void calcuateAverageMat(Mat inputMat){
+        float[] avgIntensities = new float[inputMat.cols()];
+        float[] avgHues = new float[inputMat.cols()];
+        float[] avgSats = new float[inputMat.cols()];
+
+        for (int i = 0; i < inputMat.cols(); i++) {
+            float sumIntensity=0;
+            float sumHue=0;
+            float sumSat=0;
+            for (int j = 0; j < inputMat.rows(); j++) {
+                sumHue+=inputMat.get(j, i)[0];
+                sumIntensity+=inputMat.get(j, i)[1];
+                sumSat+=inputMat.get(j, i)[2];
+            }
+            avgIntensities[i] = sumIntensity/inputMat.rows();
+            avgHues[i] = sumHue/inputMat.rows();
+            avgSats[i] = sumSat/inputMat.rows();
+
+            Log.d(TAG, String.format("HLS at %d (%.2f, %.2f, %.2f) type %d", i,  avgHues[i]*2, avgIntensities[i]/255*100, avgSats[i]/255*100, inputMat.type()));
+        }
+    }
+
+    private Mat correctGamma(Mat enhancedImg, double gamma) {
+        Mat lutMat = new Mat(1, 256, CvType.CV_8UC1);
+        for (int i = 0; i < 256; i ++) {
+            double g = Math.pow((double)i/255.0, gamma)*255.0;
+            g = g > 255.0 ? 255.0 : g < 0 ? 0 : g;
+            lutMat.put(0, i, g);
+        }
+        Mat result = new Mat();
+        LUT(enhancedImg, lutMat, result);
+        return result;
     }
 }
