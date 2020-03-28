@@ -16,7 +16,7 @@
 * [`measureSharpness()`](#measureSharpness)
 * [`checkSharpness()`](#checkSharpness)
 * [`measureCentering()`](#measureCentering)
-* [`checkIfCentered()`](#checkIfCentered)
+* [`checkCentering()`](#checkCentering)
 * [`measureSize()`](#measureSize)
 * [`checkSize()`](#checkSize)
 * [`measureOrientation()`](#measureOrientation)
@@ -157,8 +157,8 @@
 **Returns:**
 * `Point center`: the (x, y) coordinate corresponding to the center of the RDT
 
-## checkIfCentered()
-**Signature:** `boolean isCentered = checkIfCentered(MatOfPoint2f boundary, Size size)`  
+## checkCentering()
+**Signature:** `boolean isCentered = checkCentering(MatOfPoint2f boundary, Size size)`  
 **Purpose:** Determines whether the RDT is close enough towards the center of the candidate video frame  
 **Parameters:**
 * `MatOfPoint2f boundary`: the corners of the bounding box around the detected RDT
