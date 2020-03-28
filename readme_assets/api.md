@@ -21,7 +21,7 @@
 * [`checkSize()`](#checkSize)
 * [`measureOrientation()`](#measureOrientation)
 * [`checkOrientation()`](#checkOrientation)
-* [`checkIfGlared()`](#checkIfGlared)
+* [`checkGlare()`](#checkGlare)
 * [`checkFiducial()`](#checkFiducial)
 * [`getQualityCheckText()`](#getQualityCheckText)
 
@@ -151,7 +151,7 @@
 
 ## measureCentering()
 **Signature:** `Point center = measureCentering(MatOfPoint2f boundary)`  
-**Purpose:** Identifies the center of the detectedRDT  
+**Purpose:** Identifies the center of the detected RDT  
 **Parameters:**
 * `MatOfPoint2f boundary`: the corners of the bounding box around the detected RDT
 
@@ -160,7 +160,7 @@
 
 ## checkCentering()
 **Signature:** `boolean isCentered = checkCentering(MatOfPoint2f boundary, Size size)`  
-**Purpose:** Determines whether the RDT is close enough towards the center of the candidate video frame  
+**Purpose:** Determines whether the detected RDT is close enough towards the center of the candidate video frame  
 **Parameters:**
 * `MatOfPoint2f boundary`: the corners of the bounding box around the detected RDT
 * `Size size`: the size of the candidate video frame
@@ -169,17 +169,18 @@
 * `boolean isCentered`: whether the `boundary` of the detected RDT is sufficiently in the middle of the screen for consistent interpretation
 
 ## measureSize()
-**Signature:** `double height = measureSize(MatOfPoint2f boundary)`  
-**Purpose:** xxx  
+**Signature:** `double dimension = measureSize(MatOfPoint2f boundary, boolean isHeight)`  
+**Purpose:** Measures the desired dimension of the bounding box around the detected RDT  
 **Parameters:**
 * `MatOfPoint2f boundary`: the corners of the bounding box around the detected RDT
+* `boolean isHeight`: whether the output should be the height (true) or width (false)
 
 **Returns:**
-* `double height`: xxx
+* `double dimension`: the desired dimension in pixels
 
 ## checkSize()
 **Signature:** `SizeResult sizeResult = checkSize(MatOfPoint2f boundary, Size size)`  
-**Purpose:** xxx  
+**Purpose:** Determines whether the detected RDT is a reasonable size within the camera frame  
 **Parameters:**
 * `MatOfPoint2f boundary`: the corners of the bounding box around the detected RDT
 * `Size size`: the size of the candidate video frame
@@ -189,7 +190,7 @@
 
 ## measureOrientation()
 **Signature:** `double angle = measureOrientation(MatOfPoint2f boundary)`  
-**Purpose:** xxx  
+**Purpose:** Measures the orientation of the RDT relative to the camera's perspective (assumes vertical RDT where height > width)  
 **Parameters:**
 * `MatOfPoint2f boundary`: the corners of the bounding box around the detected RDT
 
@@ -198,21 +199,32 @@
 
 ## checkOrientation()
 **Signature:** `double isOriented = checkOrientation(MatOfPoint2f boundary)`  
-**Purpose:** xxx  
+**Purpose:** Determines whether the detected RDT is a reasonable orientation within the camera frame  
 **Parameters:**
 * `MatOfPoint2f boundary`: the corners of the bounding box around the detected RDT
 
 **Returns:**
 * `boolean isOriented`: whether the `boundary` of the detected RDT has a reasonable orientation for consistent interpretation
 
-## checkIfGlared()
+## checkGlare()
 **Signature:** `boolean isGlared = checkIfGlared(Mat inputMat, MatOfPoint2f boundary)`  
-**Purpose:** xxx  
+**Purpose:** Determines if there is glare within the detected RDT's result window (often due to protective covering of the immunoassay)  
 **Parameters:**
-* `xxx`: xxx
+* `Mat inputMat`: the candidate video frame (in grayscale)
+* `MatOfPoint2f boundary`: the corners of the bounding box around the detected RDT
 
 **Returns:**
-* `xxx`: xxx
+* `boolean isGlared`: whether there is glare within the detected RDT's result window
+
+## checkBlood()
+**Signature:** `boolean isBloody = checkBloody(Mat inputMat, MatOfPoint2f boundary)`  
+**Purpose:** Determines if there is blood within the detected RDT's result window  
+**Parameters:**
+* `Mat inputMat`: the candidate video frame (in grayscale)
+* `MatOfPoint2f boundary`: the corners of the bounding box around the detected RDT
+
+**Returns:**
+* `boolean isBloody`: whether there is blood within the detected RDT's result window
 
 ## checkFiducial()
 **Signature:** `xxx`  
