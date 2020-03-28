@@ -10,13 +10,11 @@ package edu.washington.cs.ubicomplab.rdt_reader.core;
 
 import android.app.Activity;
 import android.content.Context;
-import android.graphics.Bitmap;
 import android.util.Log;
 
 import org.opencv.android.BaseLoaderCallback;
 import org.opencv.android.LoaderCallbackInterface;
 import org.opencv.android.OpenCVLoader;
-import org.opencv.android.Utils;
 import org.opencv.calib3d.Calib3d;
 import org.opencv.core.Core;
 import org.opencv.core.CvType;
@@ -35,29 +33,22 @@ import org.opencv.core.Rect;
 import org.opencv.core.RotatedRect;
 import org.opencv.core.Size;
 import org.opencv.core.TermCriteria;
-import org.opencv.features2d.Features2d;
 import org.opencv.imgproc.CLAHE;
 import org.opencv.imgproc.Imgproc;
 import org.opencv.core.Scalar;
 
 
-import java.io.File;
-import java.io.FileOutputStream;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Date;
 import java.util.List;
 
 import edu.washington.cs.ubicomplab.rdt_reader.R;
-import edu.washington.cs.ubicomplab.rdt_reader.utils.ImageUtil;
 
 import static edu.washington.cs.ubicomplab.rdt_reader.core.Constants.*;
 import static edu.washington.cs.ubicomplab.rdt_reader.utils.ImageUtil.calculateRedColorPercentage;
 import static java.lang.Math.pow;
 import static java.lang.StrictMath.abs;
 import static org.opencv.core.Core.KMEANS_PP_CENTERS;
-import static org.opencv.core.Core.LUT;
 import static org.opencv.core.Core.kmeans;
 import static org.opencv.core.Core.max;
 import static org.opencv.core.Core.meanStdDev;
@@ -153,8 +144,7 @@ public class ImageProcessor {
         if (exposureResult == ExposureResult.NORMAL && isSharp) {
 
             MatOfPoint2f boundary = new MatOfPoint2f();
-            boundary = detectRDTWithSIFT(greyMat, 5);
-            //boundary = detectRDT(greyMat);
+            boundary = detectRDT(greyMat, 5);
             boolean isCentered = false;
             SizeResult sizeResult = SizeResult.INVALID;
             boolean isRightOrientation = false;
@@ -490,50 +480,6 @@ public class ImageProcessor {
 
     }
 
-    private Mat correctGamma(Mat enhancedImg, double gamma) {
-        Mat lutMat = new Mat(1, 256, CvType.CV_8UC1);
-        for (int i = 0; i < 256; i ++) {
-            double g = Math.pow((double)i/255.0, gamma)*255.0;
-            g = g > 255.0 ? 255.0 : g < 0 ? 0 : g;
-            lutMat.put(0, i, g);
-        }
-        Mat result = new Mat();
-        LUT(enhancedImg, lutMat, result);
-        return result;
-    }
-
-    private Mat enhanceImage(Mat resultImg, org.opencv.core.Size tile) {
-        Mat result = new Mat();
-        cvtColor(resultImg, result, Imgproc.COLOR_RGBA2RGB);
-        cvtColor(result, result, Imgproc.COLOR_RGB2HLS);
-
-        CLAHE clahe = createCLAHE(10, tile);
-
-        ArrayList<Mat> channels = new ArrayList<>();
-        Core.split(result, channels);
-
-        Mat newChannel = new Mat();
-
-        Core.normalize(channels.get(1), channels.get(1), 0, 255, Core.NORM_MINMAX);
-
-        clahe.apply(channels.get(1), newChannel);
-
-        channels.set(1, newChannel);
-
-        Core.merge(channels, result);
-
-        cvtColor(result, result, Imgproc.COLOR_HLS2RGB);
-        cvtColor(result, result, Imgproc.COLOR_RGB2RGBA);
-
-        return result;
-    }
-
-    public RDTInterpretationResult interpretResult(Bitmap img) {
-        Mat resultMat = new Mat();
-        Utils.bitmapToMat(img, resultMat);
-        return interpretResult(resultMat);
-    }
-
     public RDTInterpretationResult interpretResult(Mat inputMat, MatOfPoint2f boundary) {
         Mat resultMat = cropResultWindow(inputMat, boundary);
         boolean topLine, middleLine, bottomLine;
@@ -556,7 +502,7 @@ public class ImageProcessor {
                 minMaxLocResult.maxVal, minMaxLocResult.maxLoc));
 
         if (sigma.get(0,0)[0] > ENHANCING_THRESHOLD)
-            resultMat = enhanceResultWindow(resultMat, new Size(5, resultMat.cols()));
+            resultMat = enhanceContrast(resultMat, new Size(5, resultMat.cols()));
 
         //resultMat = enhanceResultWindow(resultMat, new Size(10, 10));
         //resultMat = correctGamma(resultMat, 0.75);
@@ -579,32 +525,6 @@ public class ImageProcessor {
     public boolean detectBlood(Mat mat, double bloodThreshold) {
         double bloodPercentage = calculateRedColorPercentage(mat);
         return bloodPercentage > BLOOD_PERCENTAGE_THRESHOLD;
-    }
-
-    public RDTInterpretationResult interpretResult(Mat inputMat) {
-        MatOfPoint2f boundary = new MatOfPoint2f();
-        Mat grayMat = new Mat();
-        cvtColor(inputMat, grayMat, Imgproc.COLOR_RGBA2GRAY);
-
-        int cnt = 3;
-        SizeResult isSizeable = SizeResult.INVALID;
-        boolean isCentered = false;
-        boolean isUpright = false;
-
-        do {
-            cnt++;
-            boundary = detectRDTWithSIFT(grayMat, cnt);
-            Log.d(TAG, "SIFT boundary size: " + boundary.size());
-            isSizeable = checkSize(boundary, new Size(inputMat.size().width/CROP_RATIO, inputMat.size().height/CROP_RATIO));
-            isCentered = checkIfCentered(boundary, inputMat.size());
-            isUpright = checkOrientation(boundary);
-            Log.d(TAG, String.format("SIFT-right size %s, center %s, orientation %s, (%.2f, %.2f), cnt %d", isSizeable, isCentered, isUpright, inputMat.size().width, inputMat.size().height, cnt));
-        } while(!(isSizeable==SizeResult.RIGHT_SIZE && isCentered && isUpright) && cnt < 8);
-
-        if (boundary.size().width <= 0 && boundary.size().height <= 0)
-            return new RDTInterpretationResult();
-
-        return interpretResult(inputMat, boundary);
     }
 
     private Rect checkFiducialKMeans(Mat inputMat) {
@@ -702,67 +622,30 @@ public class ImageProcessor {
         return fiducialRect;
     }
 
-    private boolean readLine(Mat inputMat, Point position, boolean isControlLine) {
-        Mat hls = new Mat();
-        cvtColor(inputMat, hls, Imgproc.COLOR_RGBA2RGB);
-        cvtColor(hls, hls, Imgproc.COLOR_RGB2HLS);
+    private Mat enhanceContrast(Mat inputMat, Size tile) {
+        Mat resultMat = new Mat();
+        cvtColor(inputMat, resultMat, Imgproc.COLOR_RGBA2RGB);
+        cvtColor(resultMat, resultMat, Imgproc.COLOR_RGB2HLS);
 
-        List<Mat> channels = new ArrayList<>();
-        Core.split(hls, channels);
+        CLAHE clahe = createCLAHE(10, tile);
 
-        int lower_bound = (int)(position.x-mRDT.lineSearchWidth < 0 ? 0 : position.x-mRDT.lineSearchWidth);
-        int upper_bound = (int)(position.x+mRDT.lineSearchWidth);
-        upper_bound = upper_bound > channels.get(1).cols() ? channels.get(1).cols() : upper_bound;
+        ArrayList<Mat> channels = new ArrayList<>();
+        Core.split(resultMat, channels);
 
-        float[] avgIntensities = new float[upper_bound-lower_bound];
-        float[] avgHues = new float[upper_bound-lower_bound];
-        float[] avgSats = new float[upper_bound-lower_bound];
+        Mat newChannel = new Mat();
 
-        float min = Float.MAX_VALUE, max = Float.MIN_VALUE;
-        int minIndex, maxIndex;
+        Core.normalize(channels.get(1), channels.get(1), 0, 255, Core.NORM_MINMAX);
 
-        for (int i = lower_bound; i < upper_bound; i++) {
-            float sumIntensity=0;
-            float sumHue=0;
-            float sumSat=0;
-            for (int j = 0; j < channels.get(1).rows(); j++) {
-                sumIntensity+=channels.get(1).get(j, i)[0];
-                sumHue+=channels.get(0).get(j, i)[0];
-                sumSat+=channels.get(2).get(j, i)[0];
-            }
-            avgIntensities[i-lower_bound] = sumIntensity/channels.get(1).rows();
-            avgHues[i-lower_bound] = sumHue/channels.get(0).rows();
-            avgSats[i-lower_bound] = sumSat/channels.get(2).rows();
+        clahe.apply(channels.get(1), newChannel);
 
-            if (avgIntensities[i-lower_bound] < min) {
-                min = avgIntensities[i-lower_bound];
-                minIndex = i-lower_bound;
-            }
+        channels.set(1, newChannel);
 
-            if (avgIntensities[i-lower_bound] > max) {
-                max = avgIntensities[i-lower_bound];
-                maxIndex = i-lower_bound;
-            }
-        }
+        Core.merge(channels, resultMat);
 
-        if (isControlLine) {
-            return min < mRDT.intensityThreshold && abs(min-max) > mRDT.controlIntensityPeakThreshold;
-        } else {
-            return min < mRDT.intensityThreshold && abs(min-max) > mRDT.testIntensityPeakThreshold;
-        }
-    }
+        cvtColor(resultMat, resultMat, Imgproc.COLOR_HLS2RGB);
+        cvtColor(resultMat, resultMat, Imgproc.COLOR_RGB2RGBA);
 
-    private boolean readControlLine(Mat inputMat, Point position) {
-            return readLine(inputMat, position, true);
-    }
-
-    private boolean readTestLine(Mat inputMat, Point position) {
-            return readLine(inputMat, position, false);
-    }
-
-
-    private Mat enhanceResultWindow(Mat inputMat, Size tile) {
-        return enhanceImage(inputMat, tile);
+        return resultMat;
     }
 
     private Mat cropResultWindow(Mat inputMat, MatOfPoint2f boundary) {
@@ -797,7 +680,7 @@ public class ImageProcessor {
         return correctedMat;
     }
 
-    private MatOfPoint2f detectRDTWithSIFT(Mat inputMat, int ransac){
+    private MatOfPoint2f detectRDT(Mat inputMat, int ransac){
         double scale = 0.5;
         Mat scaledMat = new Mat();
         Imgproc.resize(inputMat, scaledMat, new Size(), scale, scale, Imgproc.INTER_LINEAR);
@@ -958,7 +841,7 @@ public class ImageProcessor {
             avgIntensities[i] = sumLightness/channels.get(1).rows();
         }
 
-        ArrayList<double[]> peaks = peakdet(avgIntensities, mRDT.controlIntensityPeakThreshold, false);
+        ArrayList<double[]> peaks = peakdet(avgIntensities, mRDT.lineIntensity, false);
 
         for (double[] p : peaks) {
             Log.d(TAG, String.format("%.2f, %.2f, %.2f", p[0], p[1], p[2]));
@@ -1076,65 +959,5 @@ public class ImageProcessor {
         }
 
         return results;
-    }
-
-    //methods for debugging
-    private void saveImage (Mat inputMat) {
-        File sdIconStorageDir = new File(Constants.RDT_IMAGE_DIR);
-
-        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH-mm-ss-SSS");
-
-        try {
-            String filePath = sdIconStorageDir.toString() + String.format("/%s-%08dms.jpg", sdf.format(new Date()), 0);
-            FileOutputStream fileOutputStream = new FileOutputStream(filePath);
-
-            fileOutputStream.write(ImageUtil.matToRotatedByteArray(inputMat));
-
-            fileOutputStream.flush();
-            fileOutputStream.close();
-
-            //sendBroadcast(new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE, Uri.parse("file://" + filePath)));
-
-            //Toast.makeText(this,"Image is successfully saved!", Toast.LENGTH_SHORT).show();
-        } catch (Exception e) {
-            Log.w("TAG", "Error saving image file: " + e.getMessage());
-        }
-    }
-
-    private void drawKeypointsAndMatches(Mat inputMat, MatOfPoint boundary, MatOfKeyPoint inKeypoints, MatOfDMatch goodMatchesMat) {
-        Mat resultMat = new Mat();
-        MatOfPoint boundaryMat = new MatOfPoint();
-        boundaryMat.fromList(boundary.toList());
-        ArrayList<MatOfPoint> list = new ArrayList<>();
-        list.add(boundaryMat);
-
-        Mat tempInputMat = inputMat.clone();
-        Imgproc.polylines(tempInputMat, list, true, Scalar.all(0),10);
-        Features2d.drawKeypoints(tempInputMat, inKeypoints, tempInputMat);
-        Features2d.drawMatches(mRDT.refImg, mRDT.refKeypoints, tempInputMat, inKeypoints, goodMatchesMat, resultMat);
-        Bitmap bitmap = Bitmap.createBitmap(inputMat.cols(), inputMat.rows(), Bitmap.Config.ARGB_8888);
-        Utils.matToBitmap(resultMat, bitmap);
-    }
-
-    private void calcuateAverageMat(Mat inputMat){
-        float[] avgIntensities = new float[inputMat.cols()];
-        float[] avgHues = new float[inputMat.cols()];
-        float[] avgSats = new float[inputMat.cols()];
-
-        for (int i = 0; i < inputMat.cols(); i++) {
-            float sumIntensity=0;
-            float sumHue=0;
-            float sumSat=0;
-            for (int j = 0; j < inputMat.rows(); j++) {
-                sumHue+=inputMat.get(j, i)[0];
-                sumIntensity+=inputMat.get(j, i)[1];
-                sumSat+=inputMat.get(j, i)[2];
-            }
-            avgIntensities[i] = sumIntensity/inputMat.rows();
-            avgHues[i] = sumHue/inputMat.rows();
-            avgSats[i] = sumSat/inputMat.rows();
-
-            Log.d(TAG, String.format("HLS at %d (%.2f, %.2f, %.2f) type %d", i,  avgHues[i]*2, avgIntensities[i]/255*100, avgSats[i]/255*100, inputMat.type()));
-        }
     }
 }

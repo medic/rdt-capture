@@ -28,9 +28,7 @@ import static org.opencv.imgproc.Imgproc.cvtColor;
 public class RDT {
     int refImageID;
     public double viewFinderScaleH, viewFinderScaleW;
-    int intensityThreshold;
-    int controlIntensityPeakThreshold;
-    int testIntensityPeakThreshold;
+    int lineIntensity;
     int lineSearchWidth;
     int topLinePosition, middleLinePosition, bottomLinePosition;
     int fiducialPositionMin, fiducialPositionMax;
@@ -41,10 +39,10 @@ public class RDT {
     int fiducialCount;
     String topLineName, middleLineName, bottomLineName;
 
-    Mat refImg;
+    public Mat refImg;
     double refImgSharpness;
     Mat refDescriptor;
-    MatOfKeyPoint refKeypoints;
+    public MatOfKeyPoint refKeypoints;
     SIFT detector;
     BFMatcher matcher;
     String rdtName;
@@ -63,9 +61,7 @@ public class RDT {
             refImageID = context.getResources().getIdentifier(obj.getString("REF_IMG"), "drawable", context.getPackageName());
             viewFinderScaleH = obj.getDouble("VIEW_FINDER_SCALE_H");
             viewFinderScaleW = obj.getDouble("VIEW_FINDER_SCALE_W");
-            intensityThreshold = obj.getInt("INTENSITY_THRESHOLD");
-            controlIntensityPeakThreshold = obj.getInt("CONTROL_INTENSITY_PEAK_THRESHOLD");
-            testIntensityPeakThreshold = obj.getInt("TEST_INTENSITY_PEAK_THRESHOLD");
+            lineIntensity = obj.getInt("LINE_INTENSITY");
             lineSearchWidth = obj.getInt("LINE_SEARCH_WIDTH");
             topLinePosition = obj.getInt("TOP_LINE_POSITION");
             middleLinePosition = obj.getInt("MIDDLE_LINE_POSITION");
