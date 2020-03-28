@@ -45,7 +45,7 @@ public final class Constants {
 
     public static double CROP_RATIO = 0.75;
 
-    public static double ENHANCING_THRESHOLD = 10.0;
+    public static double ENHANCING_THRESHOLD = 7.5;
 
     public static double BLOOD_PERCENTAGE_THRESHOLD = 0.25;
 

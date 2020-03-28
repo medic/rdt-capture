@@ -69,20 +69,20 @@ public class RDT {
 
             JSONArray rectTL = obj.getJSONArray("RESULT_WINDOW_TOP_LEFT");
             JSONArray rectBR = obj.getJSONArray("RESULT_WINDOW_BOTTOM_RIGHT");
-            resultWindowRect = new Rect(new Point(rectTL.getDouble(0), rectTL.getDouble(1)), new Point(rectBR.getDouble(0), rectBR.getDouble(0)));
+            resultWindowRect = new Rect(new Point(rectTL.getDouble(0), rectTL.getDouble(1)), new Point(rectBR.getDouble(0), rectBR.getDouble(1)));
 
-            topLineName = obj.getString("DEFAULT_TOP_LINE_NAME");
-            middleLineName = obj.getString("DEFAULT_MIDDLE_LINE_NAME");
-            bottomLineName = obj.getString("DEFAULT_BOTTOM_LINE_NAME");
+            topLineName = obj.getString("TOP_LINE_NAME");
+            middleLineName = obj.getString("MIDDLE_LINE_NAME");
+            bottomLineName = obj.getString("BOTTOM_LINE_NAME");
 
             fiducialCount = obj.has("FIDUCIAL_COUNT") ? obj.getInt("FIDUCIAL_COUNT") : 0;
-            fiducialDistance = obj.getInt("FIDUCIAL_DISTANCE");
-            fiducialToResultWindowOffset = obj.getInt("FIDUCIAL_TO_RESULT_WINDOW_OFFSET");
-            fiducialPositionMin = obj.getInt("FIDUCIAL_POSITION_MIN");
-            fiducialPositionMax = obj.getInt("FIDUCIAL_POSITION_MAX");
-            fiducialMinH = obj.getInt("FIDUCIAL_MIN_HEIGHT");
-            fiducialMinW = obj.getInt("FIDUCIAL_MIN_WIDTH");
-            fiducialMaxW = obj.getInt("FIDUCIAL_MAX_WIDTH");
+            fiducialDistance = fiducialCount > 0 ? obj.getInt("FIDUCIAL_DISTANCE") : 0;
+            fiducialToResultWindowOffset = fiducialCount > 0 ? obj.getInt("FIDUCIAL_TO_RESULT_WINDOW_OFFSET") : 0;
+            fiducialPositionMin = fiducialCount > 0 ? obj.getInt("FIDUCIAL_POSITION_MIN") : 0;
+            fiducialPositionMax = fiducialCount > 0 ? obj.getInt("FIDUCIAL_POSITION_MAX") : 0;
+            fiducialMinH = fiducialCount > 0 ? obj.getInt("FIDUCIAL_MIN_HEIGHT") : 0;
+            fiducialMinW = fiducialCount > 0 ? obj.getInt("FIDUCIAL_MIN_WIDTH") : 0;
+            fiducialMaxW = fiducialCount > 0 ? obj.getInt("FIDUCIAL_MAX_WIDTH") : 0;
 
             // Load ref img
             refImg = new Mat();

@@ -605,8 +605,8 @@ public class ImageProcessor {
             double scale = 1;
             double offset = scale * mRDT.fiducialToResultWindowOffset;
 
-            Point tl = new Point(midpoint + offset - mRDT.resultWindowRect.height * scale / 2.0, mRDT.resultWindowRect.y);
-            Point br = new Point(midpoint + offset + mRDT.resultWindowRect.height * scale / 2.0, mRDT.resultWindowRect.y+mRDT.resultWindowRect.height);
+            Point tl = new Point(midpoint + offset - mRDT.resultWindowRect.width * scale / 2.0, mRDT.resultWindowRect.y);
+            Point br = new Point(midpoint + offset + mRDT.resultWindowRect.width * scale / 2.0, mRDT.resultWindowRect.y+mRDT.resultWindowRect.height);
 
             fiducialRect = new Rect(tl, br);
         }
@@ -674,7 +674,7 @@ public class ImageProcessor {
 
         correctedMat = new Mat(correctedMat, resultWindowRect);
         if (correctedMat.width() > 0 && correctedMat.height() > 0) {
-            resize(correctedMat, correctedMat, new Size(mRDT.resultWindowRect.height, mRDT.resultWindowRect.width));
+            resize(correctedMat, correctedMat, new Size(mRDT.resultWindowRect.width, mRDT.resultWindowRect.height));
         }
 
         return correctedMat;
