@@ -7,8 +7,8 @@
 
 # Methods for RDT Detection
 * [`configureCamera()`](#configureCamera)
+* [`assessImage()`](#assessImage)
 * [`detectRDT()`](#detectRDT)
-* [`captureRDT()`](#captureRDT)
 
 # Methods for Quality Checking
 * [`measureExposure()`](#measureExposure)
@@ -92,7 +92,7 @@
 **Returns:**
 * `xxx`: xxx
 
-## detectRDT()
+## assessImage()
 **Signature:** `xxx`  
 **Purpose:** xxx  
 **Parameters:**
@@ -101,7 +101,7 @@
 **Returns:**
 * `xxx`: xxx
 
-## captureRDT()
+## detectRDT()
 **Signature:** `xxx`  
 **Purpose:** xxx  
 **Parameters:**
