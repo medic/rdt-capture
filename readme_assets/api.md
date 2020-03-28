@@ -7,22 +7,23 @@
 
 # Methods for RDT Detection
 * [`configureCamera()`](#configureCamera)
+* [`assessImage()`](#assessImage)
 * [`detectRDT()`](#detectRDT)
-* [`captureRDT()`](#captureRDT)
 
 # Methods for Quality Checking
-* [`calculateBrightness()`](#calculateBrightness)
-* [`checkBrightness()`](#checkBrightness)
-* [`calculateSharpness()`](#calculateSharpness)
+* [`measureExposure()`](#measureExposure)
+* [`checkExposure()`](#checkExposure)
+* [`measureSharpness()`](#measureSharpness)
 * [`checkSharpness()`](#checkSharpness)
 * [`measureCentering()`](#measureCentering)
-* [`checkIfCentered()`](#checkIfCentered)
+* [`checkCentering()`](#checkCentering)
 * [`measureSize()`](#measureSize)
 * [`checkSize()`](#checkSize)
 * [`measureOrientation()`](#measureOrientation)
 * [`checkOrientation()`](#checkOrientation)
 * [`checkIfGlared()`](#checkIfGlared)
 * [`checkFiducial()`](#checkFiducial)
+* [`getQualityCheckText()`](#getQualityCheckText)
 
 # Methods for RDT Interpretation
 * [`cropResultWindow()`](#cropResultWindow)
@@ -92,7 +93,7 @@
 **Returns:**
 * `xxx`: xxx
 
-## detectRDT()
+## assessImage()
 **Signature:** `xxx`  
 **Purpose:** xxx  
 **Parameters:**
@@ -101,7 +102,7 @@
 **Returns:**
 * `xxx`: xxx
 
-## captureRDT()
+## detectRDT()
 **Signature:** `xxx`  
 **Purpose:** xxx  
 **Parameters:**
@@ -112,41 +113,41 @@
 
 - - -
 
-## calculateBrightness()
-**Signature:** `float[] mBuff = calculateBrightness(Mat input)`  
+## measureExposure()
+**Signature:** `float[] mBuff = measureExposure(Mat inputMat)`  
 **Purpose:** Calculates the brightness histogram of the candidate video frame  
 **Parameters:**
-* `Mat input`: the candidate video frame
+* `Mat inputMat`: the candidate video frame (in grayscale)
 
 **Returns:**
-* `float[] mBuff`: a 256-element histogram that quantifies the number of pixels at each brightness level for the greyscale version of `input`
+* `float[] mBuff`: a 256-element histogram that quantifies the number of pixels at each brightness level for the greyscale version of `inputMat`
 
-## checkBrightness()
-**Signature:** `ExposureResult exposureResult = checkBrightness(Mat input)`  
+## checkExposure()
+**Signature:** `ExposureResult exposureResult = checkExposure(Mat inputMat)`  
 **Purpose:** Determines whether the candidate video frame has sufficient lighting without being too bright  
 **Parameters:**
-* `Mat input`: the candidate video frame
+* `Mat inputMat`: the candidate video frame (in grayscale)
 
 **Returns:**
-* `ExposureResult exposureResult`: whether the candidate video frame `input` has a reasonable brightness
+* `ExposureResult exposureResult`: whether `inputMat` has a reasonable brightness
 
-### calculateSharpness()
-**Signature:** `double sharpness = calculateSharpness(Mat input)`  
-**Purpose:** Calculates the Laplacian variance of the candidate video frame  
+### measureSharpness()
+**Signature:** `double sharpness = measureSharpness(Mat inputMat)`  
+**Purpose:** Calculates the Laplacian variance of the candidate video frame as a metric for sharpness  
 **Parameters:**
-* `Mat input`: the candidate video frame
+* `Mat inputMat`: the candidate video frame (in grayscale)
 
 **Returns:**
-* `double sharpness`: the Laplacian variance of `input`
+* `double sharpness`: the Laplacian variance of `inputMat`
 
 ## checkSharpness()
-**Signature:** `boolean isSharp = checkSharpness(Mat input)`  
+**Signature:** `boolean isSharp = checkSharpness(Mat inputMat)`  
 **Purpose:** Determines whether the candidate video frame is focused  
 **Parameters:**
-* `Mat input`: the candidate video frame
+* `Mat inputMat`: the candidate video frame (in grayscale)
 
 **Returns:**
-* `boolean isSharp`: whether the candidate video frame `input` has a reasonable sharpness
+* `boolean isSharp`: whether `inputMat` has a reasonable sharpness
 
 ## measureCentering()
 **Signature:** `Point center = measureCentering(MatOfPoint2f boundary)`  
@@ -157,8 +158,8 @@
 **Returns:**
 * `Point center`: the (x, y) coordinate corresponding to the center of the RDT
 
-## checkIfCentered()
-**Signature:** `boolean isCentered = checkIfCentered(MatOfPoint2f boundary, Size size)`  
+## checkCentering()
+**Signature:** `boolean isCentered = checkCentering(MatOfPoint2f boundary, Size size)`  
 **Purpose:** Determines whether the RDT is close enough towards the center of the candidate video frame  
 **Parameters:**
 * `MatOfPoint2f boundary`: the corners of the bounding box around the detected RDT
@@ -222,6 +223,15 @@
 **Returns:**
 * `xxx`: xxx
 
+## getQualityCheckText()
+**Signature:** `xxx`  
+**Purpose:** Generate text that can be shown on the screen to summarize all quality checks  
+**Parameters:**
+* `xxx`: xxx
+
+**Returns:**
+* `xxx`: xxx
+
 - - -
 
 ## cropResultWindow()
@@ -234,15 +244,14 @@
 **Returns:**
 * `Mat resultWindow`: the RDT image tightly cropped around the result window
 
-
 ## enhanceResultWindow()
-**Signature:** `xxx`  
-**Purpose:** xxx  
+**Signature:** `Mat enhancedMat = Mat enhanceResultWindow(Mat resultWindowMat)`  
+**Purpose:** Applies [CLAHE](https://en.wikipedia.org/wiki/Adaptive_histogram_equalization) to enhance faint marks on the RDT's result window  
 **Parameters:**
-* `xxx`: xxx
+* `Mat resultWindowMat`: the RDT's result window (in RGBA)
 
 **Returns:**
-* `xxx`: xxx
+* `Mat enhancedMat`: a contrast-enhanced version of the RDT's result window
 
 ## interpretResult()
 **Signature:** `InterpretationResult interpResult = interpretResult(Mat inputMat, MatOfPoint2f boundary)`
