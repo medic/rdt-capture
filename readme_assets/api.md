@@ -22,11 +22,13 @@
 * [`measureOrientation()`](#measureOrientation)
 * [`checkOrientation()`](#checkOrientation)
 * [`checkGlare()`](#checkGlare)
-* [`checkFiducial()`](#checkFiducial)
-* [`getQualityCheckText()`](#getQualityCheckText)
+* [`checkBlood()`](#checkBlood)
+* [`getInstructionText()`](#getInstructionText)
+* [`getSummaryText()`](#getSummaryText)
 
 # Methods for RDT Interpretation
 * [`cropResultWindow()`](#cropResultWindow)
+* [`cropResultWindowWithFiducial()`](#checkFiducial)
 * [`enhanceResultWindow()`](#enhanceResultWindow)
 * [`interpretRDT()`](#interpretRDT)
 
@@ -226,16 +228,19 @@
 **Returns:**
 * `boolean isBloody`: whether there is blood within the detected RDT's result window
 
-## checkFiducial()
-**Signature:** `xxx`  
-**Purpose:** xxx  
+## getInstructionText()
+**Signature:** `int instruction = getInstructionText(SizeResult sizeResult, boolean isCentered, boolean isGlared, boolean isOriented)`  
+**Purpose:** Generate the most logical instruction to help the user fix a single quality check  
 **Parameters:**
-* `xxx`: xxx
+* `SizeResult sizeResult`: xxx
+* `boolean isCentered`: xxx
+* `boolean isGlared`: xxx
+* `boolean isOriented`: xxx
 
 **Returns:**
-* `xxx`: xxx
+* `int instruction`: the ID of the instruction text to be found in `res/values/strings.xml`
 
-## getQualityCheckText()
+## getSummaryText()
 **Signature:** `xxx`  
 **Purpose:** Generate text that can be shown on the screen to summarize all quality checks  
 **Parameters:**
@@ -245,6 +250,15 @@
 * `xxx`: xxx
 
 - - -
+
+## checkFiducial()
+**Signature:** `xxx`  
+**Purpose:** xxx  
+**Parameters:**
+* `xxx`: xxx
+
+**Returns:**
+* `xxx`: xxx
 
 ## cropResultWindow()
 **Signature:** `Mat resultWindow = cropResultWindow(Mat inputMat, MatOfPoint2f boundary)`  
