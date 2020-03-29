@@ -23,6 +23,8 @@ import org.opencv.core.Mat;
 import org.opencv.core.MatOfDMatch;
 import org.opencv.core.MatOfKeyPoint;
 import org.opencv.core.MatOfPoint;
+import org.opencv.core.MatOfPoint2f;
+import org.opencv.core.Point;
 import org.opencv.core.Scalar;
 import org.opencv.features2d.Features2d;
 import org.opencv.imgproc.Imgproc;
@@ -45,18 +47,147 @@ import static org.opencv.core.Core.inRange;
 import static org.opencv.imgproc.Imgproc.cvtColor;
 
 public final class ImageUtil {
-    /**
-     * Image constants
-     */
     private static String TAG = "ImageUtil";
 
     public static final int GAUSSIAN_BLUR_WINDOW = 5;
 
     /**
-     *
-     * @param image
-     * @return
+     * Crops the input image around the edges to reduce data size (for computation and upload)
+     * @param inputMat: the candidate video frame
+     * @return the cropped image
      */
+    public static Mat cropInputMat(Mat inputMat, double cropRatio) {
+        int x = (int) (inputMat.cols() * (1.0-cropRatio)/2);
+        int y = (int) (inputMat.rows() * (1.0-cropRatio)/2);
+        int width = (int) (inputMat.cols() * cropRatio);
+        int height = (int) (inputMat.rows() * cropRatio);
+        org.opencv.core.Rect roi = new org.opencv.core.Rect(x, y, width, height);
+
+        return new Mat(inputMat, roi);
+    }
+
+    /**
+     * Adjusts the boundary so the coordinates align with image cropping
+     * @param inputMat: the candidate video frame
+     * @param boundary: the corners of the bounding box around the detected RDT
+     * @return the adjusted boundary coordinates
+     */
+    public static MatOfPoint2f adjustBoundary(Mat inputMat, MatOfPoint2f boundary, double cropRatio) {
+        // Compute the offset
+        int x = (int) (inputMat.cols() * (1.0-cropRatio)/2);
+        int y = (int) (inputMat.rows() * (1.0-cropRatio)/2);
+
+        // Apply the offset
+        Point[] boundaryPts = boundary.toArray();
+        for (Point p: boundaryPts) {
+            p.x -= x;
+            p.y -= y;
+        }
+
+        // Return the new boundary
+        return new MatOfPoint2f(boundaryPts);
+    }
+
+    public static ArrayList<double[]> detectPeaks(double[] v, double delta, boolean max) {
+        double mn = v[0];
+        double mx = v[0];
+        int mnpos = Integer.MIN_VALUE;
+        int mxpos = Integer.MIN_VALUE;
+
+        int maxWidth = 0;
+        int minWidth = 0;
+
+        boolean lookingForMax = true;
+
+        ArrayList<double[]> maxTab = new ArrayList<>();
+        ArrayList<double[]> minTab = new ArrayList<>();
+
+        int[] x = new int[v.length];
+
+        for (int i = 0; i < v.length; i++) {
+            x[i] = i;
+        }
+
+        for (int i = 0; i < v.length; i++) {
+            double curr = v[i];
+            if (curr > mx) {
+                mx = curr;
+                mxpos = x[i];
+                maxWidth += 1;
+            }
+            if (curr < mn) {
+                mn = curr;
+                mnpos = x[i];
+                minWidth += 1;
+            }
+
+            if (lookingForMax) {
+                if (curr < mx-delta) {
+                    if (mxpos != Integer.MIN_VALUE) {
+                        maxTab.add(new double[]{mxpos, mx, measurePeakWidth(v, mxpos, true)});
+                    }
+                    mn = curr;
+                    maxWidth = 0;
+                    mnpos = x[i];
+                    lookingForMax = false;
+                }
+            } else {
+                if (curr > mn+delta) {
+                    if (mnpos != Integer.MIN_VALUE) {
+                        minTab.add(new double[]{mnpos, mn, measurePeakWidth(v, mnpos, false)});
+                    }
+                    mx = curr;
+                    minWidth = 0;
+                    mxpos = x[i];
+                    lookingForMax = true;
+                }
+            }
+        }
+
+        return (max ? maxTab : minTab);
+    }
+
+    /**
+     * Measures the width of a detected peak/valley at the given location
+     * @param arr: the average intensity per column
+     * @param idx: the index of the detected peak/valley
+     * @param max: whether a peak (max) or valley (min) is being tracked
+     * @return the width of the peak in pixels
+     */
+    public static double measurePeakWidth(double[] arr, int idx, boolean max) {
+        double width = 0;
+        int i;
+        if (max) {
+            // Measure the peak to the left side of the array
+            i = idx-1;
+            while (i > 0 && arr[i] > arr[i-1]) {
+                width += 1;
+                i -= 1;
+            }
+
+            // Measure the peak to the right side of the array
+            i = idx;
+            while (i < arr.length-1 && arr[i] > arr[i+1]) {
+                width += 1;
+                i += 1;
+            }
+        } else {
+            // Measure the valley to the left side of the array
+            i = idx-1;
+            while (i > 0 && arr[i] < arr[i-1]) {
+                width += 1;
+                i -= 1;
+            }
+
+            // Measure the valley to the right side of the array
+            i = idx;
+            while (i < arr.length-1 && arr[i] < arr[i+1]) {
+                width += 1;
+                i += 1;
+            }
+        }
+        return width;
+    }
 
     public static byte[] imageToByteArray(Image image) {
         byte[] data = null;

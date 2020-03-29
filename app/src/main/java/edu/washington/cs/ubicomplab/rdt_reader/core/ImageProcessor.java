@@ -43,9 +43,9 @@ import java.util.Arrays;
 import java.util.List;
 
 import edu.washington.cs.ubicomplab.rdt_reader.R;
+import edu.washington.cs.ubicomplab.rdt_reader.utils.ImageUtil;
 
 import static edu.washington.cs.ubicomplab.rdt_reader.core.Constants.*;
-import static edu.washington.cs.ubicomplab.rdt_reader.utils.ImageUtil.rgbToY;
 import static java.lang.Math.pow;
 import static java.lang.StrictMath.abs;
 import static org.opencv.core.Core.KMEANS_PP_CENTERS;
@@ -163,11 +163,24 @@ public class ImageProcessor {
     }
 
     /**
+     * Returns the rectangle corresponding to the viewfinder that the user sees
+     * (i.e., region-of-interest) for image quality
+     * @param inputMat: the candidate video frame
+     * @return the rectangle corresponding to the viewfinder
+     */
+    private Rect getViewfinderRect(Mat inputMat) {
+        Point p1 = new Point(inputMat.size().width*(1-mRDT.viewFinderScaleH)/2,
+                inputMat.size().height*(1-mRDT.viewFinderScaleW)/2);
+        Point p2 = new Point(inputMat.size().width-p1.x, inputMat.size().height-p1.y);
+        return new Rect(p1, p2);
+    }
+
+    /**
      * Processes the candidate video frame to see if it passes all of the quality checks
      * needed to ensure high likelihood of correct automatic analysis
      * @param inputMat: the candidate video frame
      * @param flashEnabled: whether the camera's flash is currently enabled
-     * @return an Object that describes which quality checks were passed or failed
+     * @return an RDTCaptureResult indicating which quality checks were passed
      */
     public RDTCaptureResult assessImage(Mat inputMat, boolean flashEnabled) {
         // Convert the image to grayscale
@@ -201,9 +214,9 @@ public class ImageProcessor {
             }
             passed = isCentered && sizeResult == SizeResult.RIGHT_SIZE && isOriented;
 
-            // TODO: need to make this clearer
-            Mat croppedMat = cropRDTMat(inputMat);
-            MatOfPoint2f croppedBoundary = cropRDTBoundary(inputMat, boundary);
+            // Crop around the edges to reduce data size and speedup computation
+            Mat croppedMat = ImageUtil.cropInputMat(inputMat, CROP_RATIO);
+            MatOfPoint2f croppedBoundary = ImageUtil.adjustBoundary(inputMat, boundary, CROP_RATIO);
             
             // Check for glare
             boolean isGlared = false;
@@ -723,10 +736,49 @@ public class ImageProcessor {
     }
 
     /**
-     * Uses color clustering to identify explicit 'fiducials' (densely colored markers) to
-     * TODO
-     * @param inputMat: the candidate video frame (in RGBA)
-     * @return a Rectangle around the detected fiducial TODO
+     * Crops out the detected RDT's result window as a rectangle
+     * @param inputMat: the candidate video frame (in grayscale)
+     * @param boundary: the corners of the bounding box around the detected RDT
+     * @return the RDT image tightly cropped and de-skewed around the result window
+     */
+    private Mat cropResultWindow(Mat inputMat, MatOfPoint2f boundary) {
+        // Get the corners of the reference RDT image
+        Mat refBoundary = new Mat(4, 1, CvType.CV_32FC2);
+        double[] a = new double[]{0, 0};
+        double[] b = new double[]{mRDT.refImg.cols() - 1, 0};
+        double[] c = new double[]{mRDT.refImg.cols() - 1, mRDT.refImg.rows() - 1};
+        double[] d = new double[]{0, mRDT.refImg.rows() - 1};
+        refBoundary.put(0, 0, a);
+        refBoundary.put(1, 0, b);
+        refBoundary.put(2, 0, c);
+        refBoundary.put(3, 0, d);
+
+        // Calculate the perspective transformation matrix that maps the corners of the
+        // detected RDT to the corners of the reference image
+        Mat M = getPerspectiveTransform(boundary, refBoundary);
+
+        // Apply perspective correction to the RDT in the video frame
+        Mat correctedMat = new Mat(mRDT.refImg.rows(), mRDT.refImg.cols(), mRDT.refImg.type());
+        warpPerspective(inputMat, correctedMat, M, new Size(mRDT.refImg.cols(), mRDT.refImg.rows()));
+
+        // If fiducials are specified, use them to improve the estimate of the
+        // result window's location, otherwise use the default rectangle specified by the user
+        Rect resultWindowRect = mRDT.fiducialCount == 0 ?
+                mRDT.resultWindowRect : cropResultWindowWithFidicual(correctedMat);
+
+        // Resize the window so it's the same size as in the template
+        correctedMat = new Mat(correctedMat, resultWindowRect);
+        if (correctedMat.width() > 0 && correctedMat.height() > 0)
+            resize(correctedMat, correctedMat,
+                    new Size(mRDT.resultWindowRect.width, mRDT.resultWindowRect.height));
+        return correctedMat;
+    }
+
+    /**
+     * Uses color clustering to identify explicit 'fiducials' (densely colored markers) on the
+     * detected RDT that can be used as reference points for locating the result window
+     * @param inputMat: the candidate video frame (in RGBA and de-skewed)
+     * @return the RDT image tightly cropped and de-skewed around the result window
      */
     private Rect cropResultWindowWithFidicual(Mat inputMat) {
         // Flatten the input data
@@ -757,7 +809,7 @@ public class ImageProcessor {
         double minCenterBrightness = Double.MAX_VALUE;
         for (int i=0; i < centers.rows(); i++) {
             double[] center = centers.get(i, 0);
-            double yval = rgbToY(center);
+            double yval = ImageUtil.rgbToY(center);
             if (yval < minCenterBrightness)
                 minCenterBrightness = yval;
         }
@@ -782,7 +834,6 @@ public class ImageProcessor {
 
         // Find contours that correspond to fiducials specified by the user
         List<Rect> fiducialRects = new ArrayList<>();
-        Rect fiducialRect = new Rect(0, 0, 0, 0);
         for (int i = 0; i < contours.size(); i++) {
             Rect rect = Imgproc.boundingRect(contours.get(i));
             double rectPos = rect.x + rect.width;
@@ -793,22 +844,25 @@ public class ImageProcessor {
             }
         }
 
-        // If the correct number of fiducials was found, TODO
+        // If the correct number of fiducials was found,
+        // find the position of the result window relative to them
+        Rect resultWindowMat = new Rect(0, 0, 0, 0);
         if (fiducialRects.size() == mRDT.fiducialCount) {
+            // Find the average fiducial position
             double center0 = fiducialRects.get(0).x + fiducialRects.get(0).width;
             double center1 = fiducialRects.get(0).x + fiducialRects.get(0).width;
             if (fiducialRects.size() > 1)
                 center1 = fiducialRects.get(1).x + fiducialRects.get(1).width;
 
             int midpoint = (int) ((center0 + center1) / 2);
-            double offset = mRDT.fiducialToResultWindowOffset;
 
+            // Locate the result window relative the fiducials
+            double offset = mRDT.fiducialToResultWindowOffset;
             Point tl = new Point(midpoint + offset - mRDT.resultWindowRect.width / 2.0,
                     mRDT.resultWindowRect.y);
             Point br = new Point(midpoint + offset + mRDT.resultWindowRect.width / 2.0,
                     mRDT.resultWindowRect.y+mRDT.resultWindowRect.height);
-
-            fiducialRect = new Rect(tl, br);
+            resultWindowMat = new Rect(tl, br);
         }
 
         // Garbage collection
@@ -818,127 +872,7 @@ public class ImageProcessor {
         threshold.release();
         element_erode.release();
         element_dilate.release();
-        return fiducialRect;
-    }
-
-    /**
-     * Crops the input image
-     * @param inputMat: the candidate video frame
-     * @return the adjusted image
-     */
-    private Mat cropRDTMat(Mat inputMat) {
-        int x = (int) (inputMat.cols() * (1.0-CROP_RATIO)/2);
-        int y = (int) (inputMat.rows() * (1.0-CROP_RATIO)/2);
-        int width = (int) (inputMat.cols() * CROP_RATIO);
-        int height = (int) (inputMat.rows() * CROP_RATIO);
-        Rect roi = new Rect(x, y, width, height);
-
-        return new Mat(inputMat, roi);
-    }
-
-    /**
-     * TODO
-     * @param inputMat: the candidate video frame
-     * @param boundary TODO
-     * @return TODO
-     */
-    private MatOfPoint2f cropRDTBoundary(Mat inputMat, MatOfPoint2f boundary) {
-        // Compute the offset
-        int x = (int) (inputMat.cols() * (1.0-CROP_RATIO)/2);
-        int y = (int) (inputMat.rows() * (1.0-CROP_RATIO)/2);
-
-        // Apply the offset
-        Point[] boundaryPts = boundary.toArray();
-        for (Point p: boundaryPts) {
-            p.x -= x;
-            p.y -= y;
-        }
-
-        // Return the new boundary
-        return new MatOfPoint2f(boundaryPts);
-    }
-
-    /**
-     * TODO
-     * @param inputMat: the candidate video frame
-     * @param boundary: the corners of the bounding box around the detected RDT
-     * @return TODO
-     */
-    public RDTInterpretationResult interpretResult(Mat inputMat, MatOfPoint2f boundary) {
-        Mat resultWindowMat = cropResultWindow(inputMat, boundary);
-        boolean topLine, middleLine, bottomLine;
-
-        // Skip if there is no window to interpret
-        if (resultWindowMat.width() == 0 && resultWindowMat.height() == 0)
-            return new RDTInterpretationResult(resultWindowMat,
-                    false, false, false,
-                    mRDT.topLineName, mRDT.middleLineName, mRDT.bottomLineName);
-
-        // Convert the result window to grayscale
-        Mat grayMat = new Mat();
-        cvtColor(resultWindowMat, grayMat, COLOR_RGB2GRAY);
-
-        // Compute variance within the window
-        MatOfDouble mu = new MatOfDouble();
-        MatOfDouble sigma = new MatOfDouble();
-        Core.meanStdDev(grayMat, mu, sigma);
-        Core.MinMaxLocResult minMaxLocResult = Core.minMaxLoc(grayMat);
-        Log.d(TAG, String.format("stdev %.2f, minval %.2f at %s, maxval %.2f at %s",
-                sigma.get(0,0)[0],
-                minMaxLocResult.minVal, minMaxLocResult.minLoc,
-                minMaxLocResult.maxVal, minMaxLocResult.maxLoc));
-
-        // Enhance the result window if there is something worth enhancing in the first place
-        if (sigma.get(0,0)[0] > RESULT_WINDOW_ENHANCE_THRESHOLD)
-            resultWindowMat = enhanceResultWindow(resultWindowMat);
-
-        // Detect the lines in the result window
-        boolean[] results = findResultWindowLines(resultWindowMat);
-        topLine = results[0];
-        middleLine = results[1];
-        bottomLine = results[2];
-
-        return new RDTInterpretationResult(resultWindowMat,
-                topLine, middleLine, bottomLine,
-                mRDT.topLineName, mRDT.middleLineName, mRDT.topLineName);
-    }
-
-    /**
-     * TODO
-     * @param inputMat
-     * @param boundary
-     * @return
-     */
-    private Mat cropResultWindow(Mat inputMat, MatOfPoint2f boundary) {
-        // Get the corners of the reference image
-        Mat refBoundary = new Mat(4, 1, CvType.CV_32FC2);
-        double[] a = new double[]{0, 0};
-        double[] b = new double[]{mRDT.refImg.cols() - 1, 0};
-        double[] c = new double[]{mRDT.refImg.cols() - 1, mRDT.refImg.rows() - 1};
-        double[] d = new double[]{0, mRDT.refImg.rows() - 1};
-        refBoundary.put(0, 0, a);
-        refBoundary.put(1, 0, b);
-        refBoundary.put(2, 0, c);
-        refBoundary.put(3, 0, d);
-
-        // Calculate the perspective transformation matrix that maps the corners of the detected RDT
-        // to the corners of the reference image
-        Mat M = getPerspectiveTransform(boundary, refBoundary);
-
-        // Apply perspective correction to the RDT in the video frame
-        Mat correctedMat = new Mat(mRDT.refImg.rows(), mRDT.refImg.cols(), mRDT.refImg.type());
-        warpPerspective(inputMat, correctedMat, M, new Size(mRDT.refImg.cols(), mRDT.refImg.rows()));
-
-        // TODO: what does this do?
-        Rect resultWindowRect = mRDT.fiducialCount == 0 ?
-                mRDT.resultWindowRect : cropResultWindowWithFidicual(correctedMat);
-
-        correctedMat = new Mat(correctedMat, resultWindowRect);
-        if (correctedMat.width() > 0 && correctedMat.height() > 0)
-            resize(correctedMat, correctedMat,
-                    new Size(mRDT.resultWindowRect.width, mRDT.resultWindowRect.height));
-
-        return correctedMat;
+        return resultWindowMat;
     }
 
     /**
@@ -975,14 +909,42 @@ public class ImageProcessor {
     }
 
     /**
-     * Detects lines within the RDT's result window
-     * @param resultWindowMat: the RDT's result window (in BGR)
-     * @return a boolean array indicating the presence of a (top, middle, and bottom) line
+     * Interprets any lines that appear within the detected RDT's result window
+     * @param inputMat: the candidate video frame
+     * @param boundary: the corners of the bounding box around the detected RDT
+     * @return an RDTInterpretationResult indicating the test results
      */
-    private boolean[] findResultWindowLines(Mat resultWindowMat) {
-        Mat hls = new Mat();
+    public RDTInterpretationResult interpretRDT(Mat inputMat, MatOfPoint2f boundary) {
+        // Crop the result window
+        Mat resultWindowMat = cropResultWindow(inputMat, boundary);
 
+        // Skip if there is no window to interpret
+        if (resultWindowMat.width() == 0 && resultWindowMat.height() == 0)
+            return new RDTInterpretationResult(resultWindowMat,
+                    false, false, false,
+                    mRDT.topLineName, mRDT.middleLineName, mRDT.bottomLineName);
+
+        // Convert the result window to grayscale
+        Mat grayMat = new Mat();
+        cvtColor(resultWindowMat, grayMat, COLOR_RGB2GRAY);
+
+        // Compute variance within the window
+        MatOfDouble mu = new MatOfDouble();
+        MatOfDouble sigma = new MatOfDouble();
+        Core.meanStdDev(grayMat, mu, sigma);
+        Core.MinMaxLocResult minMaxLocResult = Core.minMaxLoc(grayMat);
+        Log.d(TAG, String.format("stdev %.2f, minval %.2f at %s, maxval %.2f at %s",
+                sigma.get(0,0)[0],
+                minMaxLocResult.minVal, minMaxLocResult.minLoc,
+                minMaxLocResult.maxVal, minMaxLocResult.maxLoc));
+
+        // Enhance the result window if there is something worth enhancing in the first place
+        if (sigma.get(0,0)[0] > RESULT_WINDOW_ENHANCE_THRESHOLD)
+            resultWindowMat = enhanceResultWindow(resultWindowMat);
+
+        // Detect the lines in the result window
         // Convert the image to HLS
+        Mat hls = new Mat();
         cvtColor(resultWindowMat, hls, COLOR_BGR2HLS);
 
         // Split the channels
@@ -1000,135 +962,26 @@ public class ImageProcessor {
         }
 
         // Detect the peaks
-        ArrayList<double[]> peaks = detectPeaks(avgIntensities, mRDT.lineIntensity, false);
+        ArrayList<double[]> peaks = ImageUtil.detectPeaks(avgIntensities, mRDT.lineIntensity, false);
         for (double[] p : peaks)
             Log.d(TAG, String.format("%.2f, %.2f, %.2f", p[0], p[1], p[2]));
 
         // Determine which peaks correspond to which lines
-        boolean[] results = new boolean[]{false, false, false};
+        boolean topLine = false;
+        boolean middleLine = false;
+        boolean bottomLine = false;
         for (double[] p : peaks) {
             if (Math.abs(p[0] - mRDT.topLinePosition) < mRDT.lineSearchWidth) {
-                results[0] = true;
+                topLine = true;
             } else if (Math.abs(p[0] - mRDT.middleLinePosition) < mRDT.lineSearchWidth) {
-                results[1] = true;
+                middleLine = true;
             } else if (Math.abs(p[0] - mRDT.bottomLinePosition) < mRDT.lineSearchWidth) {
-                results[2] = true;
-            }
-        }
-        return results;
-    }
-
-    private ArrayList<double[]> detectPeaks(double[] v, double delta, boolean max) {
-        double mn = v[0];
-        double mx = v[0];
-        int mnpos = Integer.MIN_VALUE;
-        int mxpos = Integer.MIN_VALUE;
-
-        int maxWidth = 0;
-        int minWidth = 0;
-
-        boolean lookingForMax = true;
-
-        ArrayList<double[]> maxTab = new ArrayList<>();
-        ArrayList<double[]> minTab = new ArrayList<>();
-
-        int[] x = new int[v.length];
-
-        for (int i = 0; i < v.length; i++) {
-            x[i] = i;
-        }
-
-        for (int i = 0; i < v.length; i++) {
-            double curr = v[i];
-            if (curr > mx) {
-                mx = curr;
-                mxpos = x[i];
-                maxWidth += 1;
-            }
-            if (curr < mn) {
-                mn = curr;
-                mnpos = x[i];
-                minWidth += 1;
-            }
-
-            if (lookingForMax) {
-                if (curr < mx-delta) {
-                    if (mxpos != Integer.MIN_VALUE) {
-                        maxTab.add(new double[]{mxpos, mx, measurePeakWidth(v, mxpos, true)});
-                    }
-                    mn = curr;
-                    maxWidth = 0;
-                    mnpos = x[i];
-                    lookingForMax = false;
-                }
-            } else {
-                if (curr > mn+delta) {
-                    if (mnpos != Integer.MIN_VALUE) {
-                        minTab.add(new double[]{mnpos, mn, measurePeakWidth(v, mnpos, false)});
-                    }
-                    mx = curr;
-                    minWidth = 0;
-                    mxpos = x[i];
-                    lookingForMax = true;
-                }
+                bottomLine = true;
             }
         }
 
-        return (max ? maxTab : minTab);
-    }
-
-    /**
-     * Measures the width of a detected peak/valley at the given location
-     * @param arr: the average intensity per column
-     * @param idx: the index of the detected peak/valley
-     * @param max: whether a peak (max) or valley (min) is being tracked
-     * @return the width of the peak in pixels
-     */
-    private double measurePeakWidth(double[] arr, int idx, boolean max) {
-        double width = 0;
-        int i;
-        if (max) {
-            // Measure the peak to the left side of the array
-            i = idx-1;
-            while (i > 0 && arr[i] > arr[i-1]) {
-                width += 1;
-                i -= 1;
-            }
-
-            // Measure the peak to the right side of the array
-            i = idx;
-            while (i < arr.length-1 && arr[i] > arr[i+1]) {
-                width += 1;
-                i += 1;
-            }
-        } else {
-            // Measure the valley to the left side of the array
-            i = idx-1; // TODO: changed from idx to idx-1, is that correct?
-            while (i > 0 && arr[i] < arr[i-1]) {
-                width += 1;
-                i -= 1;
-            }
-
-            // Measure the valley to the right side of the array
-            i = idx;
-            while (i < arr.length-1 && arr[i] < arr[i+1]) {
-                width += 1;
-                i += 1;
-            }
-        }
-        return width;
-    }
-
-    /**
-     * Returns the rectangle corresponding to the viewfinder that the user sees
-     * (i.e., region-of-interest) for image quality
-     * @param inputMat: the candidate video frame
-     * @return the rectangle corresponding to the viewfinder
-     */
-    private Rect getViewfinderRect(Mat inputMat) {
-        Point p1 = new Point(inputMat.size().width*(1-mRDT.viewFinderScaleH)/2,
-                inputMat.size().height*(1-mRDT.viewFinderScaleW)/2);
-        Point p2 = new Point(inputMat.size().width-p1.x, inputMat.size().height-p1.y);
-        return new Rect(p1, p2);
+        return new RDTInterpretationResult(resultWindowMat,
+                topLine, middleLine, bottomLine,
+                mRDT.topLineName, mRDT.middleLineName, mRDT.topLineName);
     }
 }

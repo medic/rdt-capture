@@ -349,7 +349,7 @@ public class ImageQualityView extends LinearLayout implements View.OnClickListen
             // If all the quality check were passed, interpret the test result
             RDTInterpretationResult interpretationResult = null;
             if (captureResult.allChecksPassed) {
-                interpretationResult = processor.interpretResult(captureResult.resultMat,
+                interpretationResult = processor.interpretRDT(captureResult.resultMat,
                         captureResult.boundary);
                 image.close();
             } else {
