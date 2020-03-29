@@ -22,11 +22,13 @@
 * [`measureOrientation()`](#measureOrientation)
 * [`checkOrientation()`](#checkOrientation)
 * [`checkGlare()`](#checkGlare)
-* [`checkFiducial()`](#checkFiducial)
-* [`getQualityCheckText()`](#getQualityCheckText)
+* [`checkBlood()`](#checkBlood)
+* [`getInstructionText()`](#getInstructionText)
+* [`getSummaryText()`](#getSummaryText)
 
 # Methods for RDT Interpretation
 * [`cropResultWindow()`](#cropResultWindow)
+* [`cropResultWindowWithFiducial()`](#checkFiducial)
 * [`enhanceResultWindow()`](#enhanceResultWindow)
 * [`interpretRDT()`](#interpretRDT)
 
@@ -57,21 +59,21 @@
 * `INVALID`: the RDT could not be found in the image
 
 ## RDTCaptureResult
-**Signature:** `RDTCaptureResult(boolean allChecksPassed, Mat resultMat, boolean fiducial, ExposureResult exposureResult, SizeResult sizeResult, boolean isCentered, boolean isRightOrientation, double angle, boolean isSharp, boolean isShadow, MatOfPoint2f boundary, boolean flashEnabled)`  
+**Signature:** `RDTCaptureResult(boolean allChecksPassed, Mat resultMat, MatOfPoint2f boundary, boolean flashEnabled, ExposureResult exposureResult, boolean isSharp,  boolean isCentered, SizeResult sizeResult, boolean isOriented, double angle, boolean isGlared, boolean fiducial)`  
 **Purpose:** Object for holding all of the parameters that describe whether a candidate video framed passed all of the quality checks  
 **Parameters:**
 * `boolean allChecksPassed`: whether this candidate video frame is clear enough for interpretation
 * `Mat resultMat`: the RDT image tightly cropped around the result window
-* `boolean fiducial`: whether the fiducial was detected (if one was specified)
-* `ExposureResult exposureResult`: whether the candidate video frame `input` has a reasonable brightness
-* `SizeResult sizeResult`: whether the `boundary` of the detected RDT has a reasonable size for consistent interpretation
-* `boolean isCentered`: whether the `boundary` of the detected RDT is sufficiently in the middle of the screen for consistent interpretation
-* `boolean isRightOrientation`: whether the `boundary` of the detected RDT has a reasonable orientation for consistent interpretation
-* `double angle`: the orientation of the RDT's vertical axis relative to the vertical axis of the video frame (e.g., 0&deg; = upright, 90&deg; = right-to-left, 180&deg; = upside-down, 270&deg; = left-to-right)
-* `boolean isSharp`: whether the candidate video frame `input` has a reasonable sharpness
-* `boolean isShadow`: TODO
 * `MatOfPoint2f boundary`: the corners of the bounding box around the detected RDT
 * `boolean flashEnabled`: whether the flash was active during the image capture process for this frame
+* `ExposureResult exposureResult`: whether the candidate video frame `input` has a reasonable brightness
+* `boolean isSharp`: whether the candidate video frame `input` has a reasonable sharpness
+* `boolean isCentered`: whether the `boundary` of the detected RDT is sufficiently in the middle of the screen for consistent interpretation
+* `SizeResult sizeResult`: whether the `boundary` of the detected RDT has a reasonable size for consistent interpretation
+* `boolean isOriented`: whether the `boundary` of the detected RDT has a reasonable orientation for consistent interpretation
+* `double angle`: the orientation of the RDT's vertical axis relative to the vertical axis of the video frame (e.g., 0&deg; = upright, 90&deg; = right-to-left, 180&deg; = upside-down, 270&deg; = left-to-right)
+* `boolean isGlared`: whether there is glare within the detected RDT's result window
+* `boolean fiducial`: whether the fiducial was detected (if one was specified)
 
 ## RDTInterpretationResult
 **Signature:** `RDTInterpretationResult(Mat resultMat, boolean topLine, boolean middleLine, boolean bottomLine)`  
@@ -103,13 +105,13 @@
 * `xxx`: xxx
 
 ## detectRDT()
-**Signature:** `xxx`  
-**Purpose:** xxx  
+**Signature:** `MatOfPoint2f boundary = detectRDT(Mat inputMat)`  
+**Purpose:** Locates the RDT within the image (if one is presents) produces a bounding box around it  
 **Parameters:**
-* `xxx`: xxx
+* `Mat inputMat`: the candidate video frame (in grayscale)
 
 **Returns:**
-* `xxx`: xxx
+* `MatOfPoint2f boundary`: the corners of the bounding box around the detected RDT if one is present, otherwise a blank MatOfPoint2f
 
 - - -
 
@@ -226,6 +228,34 @@
 **Returns:**
 * `boolean isBloody`: whether there is blood within the detected RDT's result window
 
+## getInstructionText()
+**Signature:** `int instruction = getInstructionText(boolean isCentered, SizeResult sizeResult, boolean isOriented, boolean isGlared)`  
+**Purpose:** Generate the most logical instruction to help the user fix a single quality check  
+**Parameters:**
+* `boolean isCentered`: whether the `boundary` of the detected RDT is sufficiently in the middle of the screen for consistent interpretation
+* `SizeResult sizeResult`: whether the `boundary` of the detected RDT has a reasonable size for consistent interpretation
+* `boolean isOriented`: whether the `boundary` of the detected RDT has a reasonable orientation for consistent interpretation
+* `boolean isGlared`: whether there is glare within the detected RDT's result window
+
+**Returns:**
+* `int instruction`: the ID of the instruction text to be found in `res/values/strings.xml`
+
+## getSummaryText()
+**Signature:** `String[] summaryText = String[] getSummaryText(ExposureResult exposureResult, boolean isSharp, boolean isCentered, SizeResult sizeResult, boolean isOriented, boolean isGlared)`  
+**Purpose:** Generate text that can be shown on the screen to summarize all quality checks  
+**Parameters:**
+* `ExposureResult exposureResult`: whether the candidate video frame has a reasonable brightness
+* `boolean isSharp`: whether the candidate video frame has a reasonable sharpness
+* `boolean isCentered`: whether the `boundary` of the detected RDT is sufficiently in the middle of the screen for consistent interpretation
+* `SizeResult sizeResult`: whether the `boundary` of the detected RDT has a reasonable size for consistent interpretation
+* `boolean isOriented`: whether the `boundary` of the detected RDT has a reasonable orientation for consistent interpretation
+* `boolean isGlared`: whether there is glare within the detected RDT's result window
+
+**Returns:**
+* `String[] summaryText`: summary for each quality checking component
+
+- - -
+
 ## checkFiducial()
 **Signature:** `xxx`  
 **Purpose:** xxx  
@@ -234,17 +264,6 @@
 
 **Returns:**
 * `xxx`: xxx
-
-## getQualityCheckText()
-**Signature:** `xxx`  
-**Purpose:** Generate text that can be shown on the screen to summarize all quality checks  
-**Parameters:**
-* `xxx`: xxx
-
-**Returns:**
-* `xxx`: xxx
-
-- - -
 
 ## cropResultWindow()
 **Signature:** `Mat resultWindow = cropResultWindow(Mat inputMat, MatOfPoint2f boundary)`  

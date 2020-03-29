@@ -45,7 +45,7 @@ import java.util.List;
 import edu.washington.cs.ubicomplab.rdt_reader.R;
 
 import static edu.washington.cs.ubicomplab.rdt_reader.core.Constants.*;
-import static edu.washington.cs.ubicomplab.rdt_reader.utils.ImageUtil.calculateRedColorPercentage;
+import static edu.washington.cs.ubicomplab.rdt_reader.utils.ImageUtil.rgbToY;
 import static java.lang.Math.pow;
 import static java.lang.StrictMath.abs;
 import static org.opencv.core.Core.KMEANS_PP_CENTERS;
@@ -72,9 +72,16 @@ import static org.opencv.imgproc.Imgproc.warpPerspective;
 
 
 public class ImageProcessor {
+    // Debugging tag
     private static String TAG = "ImageProcessor";
+
+    // Variable for singleton design pattern
     private static ImageProcessor instance = null;
+
+    // Variable to hold metadata for target RDT
     public static RDT mRDT;
+
+    // Variable to track
     private int mMoveCloserCount = 0;
 
     /**
@@ -164,66 +171,56 @@ public class ImageProcessor {
      */
     public RDTCaptureResult assessImage(Mat inputMat, boolean flashEnabled) {
         // Convert the image to grayscale
-        Mat greyMat = new Mat();
-        cvtColor(inputMat, greyMat, Imgproc.COLOR_RGBA2GRAY);
+        Mat grayMat = new Mat();
+        cvtColor(inputMat, grayMat, Imgproc.COLOR_RGBA2GRAY);
+        Size inputSize = grayMat.size();
 
         // Check the brightness and the sharpness of the overall camera frame
-        Rect viewFinderRect = getViewfinderRect(greyMat);
-        ExposureResult exposureResult = checkExposure(greyMat);
-        boolean isSharp = checkSharpness(greyMat.submat(viewFinderRect));
+        Rect viewFinderRect = getViewfinderRect(grayMat);
+        ExposureResult exposureResult = checkExposure(grayMat);
+        boolean isSharp = checkSharpness(grayMat.submat(viewFinderRect));
         boolean passed = exposureResult == ExposureResult.NORMAL && isSharp;
 
         // If the frame passes those two checks, continue to try to detect the RDT
         if (passed) {
             // Locate the RDT design within the camera frame
-            MatOfPoint2f boundary = detectRDT(greyMat);
+            MatOfPoint2f boundary = detectRDT(grayMat);
+            grayMat.release();
 
             // Check the placement, size, and orientation of the RDT,
             // if it is there in the first place
             boolean isCentered = false;
             SizeResult sizeResult = SizeResult.INVALID;
-            boolean isRightOrientation = false;
+            boolean isOriented = false;
             double angle = 0.0;
             if (boundary.size().width > 0 && boundary.size().height > 0) {
-                isCentered = checkCentering(boundary, greyMat.size());
-                sizeResult = checkSize(boundary, greyMat.size());
-                isRightOrientation = checkOrientation(boundary);
+                isCentered = checkCentering(boundary, inputSize);
+                sizeResult = checkSize(boundary, inputSize);
+                isOriented = checkOrientation(boundary);
                 angle = measureOrientation(boundary);
             }
-            passed = sizeResult == SizeResult.RIGHT_SIZE && isCentered && isRightOrientation;
+            passed = isCentered && sizeResult == SizeResult.RIGHT_SIZE && isOriented;
 
-            boolean fiducial = false;
-            if (passed) {
-                Mat resultMat = cropResultWindow(inputMat, boundary);
-                if (resultMat.width() > 0 && resultMat.height() > 0) {
-                    fiducial = true;
-                }
-                resultMat.release();
-                passed = passed & fiducial;
-                Log.d(TAG, String.format("fiducial: %b", fiducial));
-            }
-
-            greyMat.release();
-
-            // Apply crops if necessary
+            // TODO: need to make this clearer
             Mat croppedMat = cropRDTMat(inputMat);
             MatOfPoint2f croppedBoundary = cropRDTBoundary(inputMat, boundary);
             
-            //check for glare
+            // Check for glare
             boolean isGlared = false;
             if (passed)
                 isGlared = checkGlare(croppedMat, croppedBoundary);
-                passed = passed && !isGlared;
+            passed = passed && !isGlared;
 
-            return new RDTCaptureResult(passed, croppedMat, fiducial, exposureResult, sizeResult,
-                    isCentered, isRightOrientation, angle, isSharp, false, isGlared,
-                    croppedBoundary, flashEnabled);
+            // TODO: add blood checking here once verified
+            return new RDTCaptureResult(passed, croppedMat, croppedBoundary, flashEnabled,
+                    exposureResult, isSharp, isCentered, sizeResult,
+                    isOriented, angle, isGlared, true);
         }
         else {
-            greyMat.release();
-            return new RDTCaptureResult(passed, null, false, exposureResult,
-                    SizeResult.INVALID, false, false, 0.0, isSharp, false, false,
-                    new MatOfPoint2f(), flashEnabled);
+            grayMat.release();
+            return new RDTCaptureResult(false, null, new MatOfPoint2f(), flashEnabled,
+                    exposureResult, isSharp, false, SizeResult.INVALID,
+                    false, 0.0, false, false);
         }
 
     }
@@ -445,7 +442,7 @@ public class ImageProcessor {
     /**
      * Determines whether the candidate video frame is focused
      * @param inputMat: the candidate video frame (in grayscale)
-     * @return boolean for whether the candidate video frame has a reasonable sharpness
+     * @return whether the candidate video frame has a reasonable sharpness
      */
     private boolean checkSharpness(Mat inputMat) {
         // Resize the image to the scale of the reference
@@ -625,7 +622,7 @@ public class ImageProcessor {
      * @param boundary: the corners of the bounding box around the detected RDT
      * @return whether there is blood within the detected RDT's result window
      */
-    public boolean checkBloody(Mat inputMat, MatOfPoint2f boundary) {
+    public boolean checkBlood(Mat inputMat, MatOfPoint2f boundary) {
         // Crop the image around the RDT's result window
         Mat resultWindowMat = cropResultWindow(inputMat, boundary);
 
@@ -648,88 +645,162 @@ public class ImageProcessor {
     }
 
     /**
+     * Generate the most logical instruction to help the user fix a single quality check
+     * @param isCentered: whether the boundary of the detected RDT is sufficiently in the
+     *                  middle of the screen for consistent interpretation
+     * @param sizeResult: whether the boundary of the detected RDT has a reasonable size
+     *                  for consistent interpretation
+     * @param isOriented: whether the boundary of the detected RDT has a reasonable orientation
+     *                  for consistent interpretation
+     * @param isGlared: whether there is glare within the detected RDT's result window
+     * @return the ID of the instruction text to be found in res/values/strings.xml
+     */
+    public int getInstructionText(boolean isCentered, SizeResult sizeResult,
+                                  boolean isOriented, boolean isGlared) {
+        int instructions = R.string.instruction_pos;
+
+        if (isGlared) {
+            instructions = R.string.instruction_glare;
+        } else if (sizeResult == SizeResult.RIGHT_SIZE && isCentered && isOriented) {
+            instructions = R.string.instruction_detected;
+        } else if (sizeResult == SizeResult.SMALL) {
+            if (mMoveCloserCount <= MOVE_CLOSER_COUNT) {
+                mMoveCloserCount++;
+                instructions = R.string.instruction_too_small;
+            }
+            else {
+                mMoveCloserCount = 0;
+                instructions = R.string.instruction_pos;
+            }
+        } else if (sizeResult == SizeResult.LARGE) {
+            instructions = R.string.instruction_too_large;
+        }
+
+        return instructions;
+    }
+
+    /**
+     * Generate text that can be shown on the screen to summarize all quality checks
+     * @param exposureResult: whether the candidate video frame has a reasonable brightness
+     * @param isSharp: whether the candidate video frame has a reasonable sharpness
+     * @param isCentered: whether the boundary of the detected RDT is sufficiently in the
+     *                  middle of the screen for consistent interpretation
+     * @param sizeResult: whether the boundary of the detected RDT has a reasonable size
+     *                  for consistent interpretation
+     * @param isOriented: whether the boundary of the detected RDT has a reasonable orientation
+     *                  for consistent interpretation
+     * @param isGlared: whether there is glare within the detected RDT's result window
+     * @return a String[] that summarizes each quality checking component
+     */
+    public String[] getSummaryText(ExposureResult exposureResult, boolean isSharp, boolean isCentered,
+                                   SizeResult sizeResult, boolean isOriented, boolean isGlared) {
+        String[] texts = new String[5];
+        String checkSymbol = "&#x2713; ";
+
+        // Exposure text
+        if (exposureResult == ExposureResult.NORMAL) {
+            texts[0] = checkSymbol + "Exposure: passed";
+        } else if (exposureResult == ExposureResult.OVER_EXPOSED) {
+            texts[0] = "Exposure: too bright";
+        } else if (exposureResult == ExposureResult.UNDER_EXPOSED) {
+            texts[0] = "Exposure: too dark";
+        }
+
+        // Sharpness text
+        texts[1] = isSharp ? checkSymbol + "Sharpness: passed": "Sharpness: failed";
+
+        // Size/position/orientation text
+        boolean rdtFramingCheck = sizeResult == SizeResult.RIGHT_SIZE &&
+                isCentered && isOriented;
+        texts[2] = rdtFramingCheck ? checkSymbol + "Position/Size: passed": "Position/Size: failed";
+
+        // Glare text
+        texts[3] = isGlared ? checkSymbol + "No glare: passed" : "No glare: failed";
+
+        // Shadow text
+        texts[4] = checkSymbol + "Shadow: passed";
+        return texts;
+    }
+
+    /**
      * Uses color clustering to identify explicit 'fiducials' (densely colored markers) to
      * TODO
      * @param inputMat: the candidate video frame (in RGBA)
      * @return a Rectangle around the detected fiducial TODO
      */
-    private Rect checkFiducialKMeans(Mat inputMat) {
-        TermCriteria criteria = new TermCriteria(TermCriteria.EPS+TermCriteria.MAX_ITER, 100, 1.0);
+    private Rect cropResultWindowWithFidicual(Mat inputMat) {
+        // Flatten the input data
         Mat data = new Mat();
         inputMat.convertTo(data, CV_32F);
         cvtColor(data, data, COLOR_RGBA2RGB);
         data = data.reshape(1, (int) data.total());
+
+        // Run k-means clustering
         Mat centers = new Mat();
         Mat labels = new Mat();
-
+        TermCriteria criteria = new TermCriteria(TermCriteria.EPS+TermCriteria.MAX_ITER,
+                100, 1.0);
         kmeans(data, FIDUCIAL_SEARCH_NUM_CLUSTERS, labels, criteria,
                 10, KMEANS_PP_CENTERS, centers);
 
         // Extract output of k-means clustering
         centers = centers.reshape(3, centers.rows());
         data = data.reshape(3, data.rows());
-
         for (int i=0; i<data.rows(); i++) {
             int centerId = (int) labels.get(i,0)[0];
             data.put(i, 0, centers.get(centerId,0));
         }
-
         data = data.reshape(3, inputMat.rows());
         data.convertTo(data, CV_8UC3);
 
-        double[] minCenter = new double[3];
-        double minCenterVal = Double.MAX_VALUE;
-
-        for (int i = 0; i < centers.rows(); i++) {
-            double val = centers.get(i,0)[0] + centers.get(i,0)[1] + centers.get(i,0)[2];
-            if (val < minCenterVal) {
-                minCenter = centers.get(i,0);
-                minCenterVal = val;
-            }
+        // Identify the darkest cluster
+        double minCenterBrightness = Double.MAX_VALUE;
+        for (int i=0; i < centers.rows(); i++) {
+            double[] center = centers.get(i, 0);
+            double yval = rgbToY(center);
+            if (yval < minCenterBrightness)
+                minCenterBrightness = yval;
         }
 
-        double thres = 0.299 * minCenter[0] + 0.587 * minCenter[1] + 0.114 * minCenter[2] + 20.0;
-
+        // Threshold the image based on the darkest cluster's brightness
         cvtColor(data, data, COLOR_RGB2GRAY);
         Mat threshold = new Mat();
-        Imgproc.threshold(data, threshold, thres, 255, THRESH_BINARY_INV);
+        Imgproc.threshold(data, threshold, minCenterBrightness, 255, THRESH_BINARY_INV);
 
+        // Smooth the binary mask
         Mat element_erode = Imgproc.getStructuringElement(Imgproc.MORPH_ELLIPSE, new Size(5, 5));
         Mat element_dilate = Imgproc.getStructuringElement(Imgproc.MORPH_ELLIPSE, new Size(20, 20));
         Imgproc.erode(threshold, threshold, element_erode);
         Imgproc.dilate(threshold, threshold, element_dilate);
         Imgproc.GaussianBlur(threshold, threshold, new Size(5, 5), 2, 2);
 
+        // Identify contours
         List<MatOfPoint> contours = new ArrayList<>();
         Mat hierarchy = new Mat();
+        Imgproc.findContours(threshold, contours, hierarchy, Imgproc.RETR_EXTERNAL,
+                Imgproc.CHAIN_APPROX_SIMPLE, new Point(0, 0));
 
-        Imgproc.findContours(threshold, contours, hierarchy, Imgproc.RETR_EXTERNAL, Imgproc.CHAIN_APPROX_SIMPLE, new Point(0, 0));
-
+        // Find contours that correspond to fiducials specified by the user
         List<Rect> fiducialRects = new ArrayList<>();
         Rect fiducialRect = new Rect(0, 0, 0, 0);
-
         for (int i = 0; i < contours.size(); i++) {
             Rect rect = Imgproc.boundingRect(contours.get(i));
             double rectPos = rect.x + rect.width;
-            if (mRDT.fiducialPositionMin< rectPos &&
-                    rectPos < mRDT.fiducialPositionMax &&
-                    mRDT.fiducialMinH < rect.height &&
-                    mRDT.fiducialMinW < rect.width &&
+            if (mRDT.fiducialPositionMin < rectPos && rectPos < mRDT.fiducialPositionMax &&
+                    mRDT.fiducialMinH < rect.height && mRDT.fiducialMinW < rect.width &&
                     rect.width < mRDT.fiducialMaxW) {
                 fiducialRects.add(rect);
-                Log.d(TAG, String.format("Control line rect size: %s %s %s", rect.tl(), rect.br(), rect.size()));
             }
         }
 
-        if (fiducialRects.size() == mRDT.fiducialCount) { //should
+        // If the correct number of fiducials was found, TODO
+        if (fiducialRects.size() == mRDT.fiducialCount) {
             double center0 = fiducialRects.get(0).x + fiducialRects.get(0).width;
             double center1 = fiducialRects.get(0).x + fiducialRects.get(0).width;
-
             if (fiducialRects.size() > 1)
                 center1 = fiducialRects.get(1).x + fiducialRects.get(1).width;
 
             int midpoint = (int) ((center0 + center1) / 2);
-
             double offset = mRDT.fiducialToResultWindowOffset;
 
             Point tl = new Point(midpoint + offset - mRDT.resultWindowRect.width / 2.0,
@@ -756,14 +827,12 @@ public class ImageProcessor {
      * @return the adjusted image
      */
     private Mat cropRDTMat(Mat inputMat) {
-        // Compute the crop ROI
-        int width = (int)(inputMat.cols() * CROP_RATIO);
-        int height = (int)(inputMat.rows() * CROP_RATIO);
-        int x = (int)(inputMat.cols() * (1.0-CROP_RATIO)/2);
-        int y = (int)(inputMat.rows() * (1.0-CROP_RATIO)/2);
+        int x = (int) (inputMat.cols() * (1.0-CROP_RATIO)/2);
+        int y = (int) (inputMat.rows() * (1.0-CROP_RATIO)/2);
+        int width = (int) (inputMat.cols() * CROP_RATIO);
+        int height = (int) (inputMat.rows() * CROP_RATIO);
         Rect roi = new Rect(x, y, width, height);
 
-        // Crop the image
         return new Mat(inputMat, roi);
     }
 
@@ -787,66 +856,6 @@ public class ImageProcessor {
 
         // Return the new boundary
         return new MatOfPoint2f(boundaryPts);
-    }
-
-    public int getInstructionText(SizeResult sizeResult, boolean isCentered, boolean isGlared, boolean isRightOrientation) {
-        int instructions = R.string.instruction_pos;
-
-        if (isGlared) {
-            instructions = R.string.instruction_glare;
-        } else if (sizeResult == SizeResult.RIGHT_SIZE && isCentered && isRightOrientation){
-            instructions = R.string.instruction_detected;
-        } else if (mMoveCloserCount > MOVE_CLOSER_COUNT) {
-            if (sizeResult == SizeResult.SMALL) {
-                 instructions = R.string.instruction_too_small;
-                 mMoveCloserCount = 0;
-            }
-        } else {
-            instructions = R.string.instruction_too_small;
-            mMoveCloserCount++;
-        }
-
-        return instructions;
-    }
-
-    /**
-     * Generate text that can be shown on the screen to summarize all quality checks
-     * @param sizeResult
-     * @param isCentered
-     * @param isRightOrientation
-     * @param isSharp
-     * @param isGlared
-     * @param exposureResult
-     * @return
-     */
-    public String[] getQualityCheckText(SizeResult sizeResult, boolean isCentered,
-                                        boolean isRightOrientation, boolean isSharp, boolean isGlared,
-                                        ExposureResult exposureResult) {
-        String[] texts = new String[5];
-
-        // Exposure text
-        if (exposureResult == ExposureResult.NORMAL) {
-            texts[0] = "&#x2713; Exposure: passed";
-        } else if (exposureResult == ExposureResult.OVER_EXPOSED) {
-            texts[0] = "Exposure: too bright";
-        } else if (exposureResult == ExposureResult.UNDER_EXPOSED) {
-            texts[0] = "Exposure: too dark";
-        }
-
-        // Sharpness text
-        texts[1] = isSharp ? "&#x2713; Sharpness: passed": "Sharpness: failed";
-
-        // Size/position/orientation text
-        boolean rdtFramingCheck = sizeResult == SizeResult.RIGHT_SIZE &&
-                isCentered && isRightOrientation;
-        texts[2] = rdtFramingCheck ? "&#x2713; Position/Size: passed": "Position/Size: failed";
-
-        // Glare text
-        texts[3] = isGlared ? "&#x2713; No glare: passed" : "No glare: failed";
-
-        // Shadow text
-        texts[4] = "&#x2713; Shadow: passed";
-        return texts;
     }
 
     /**
@@ -922,7 +931,7 @@ public class ImageProcessor {
 
         // TODO: what does this do?
         Rect resultWindowRect = mRDT.fiducialCount == 0 ?
-                mRDT.resultWindowRect : checkFiducialKMeans(correctedMat);
+                mRDT.resultWindowRect : cropResultWindowWithFidicual(correctedMat);
 
         correctedMat = new Mat(correctedMat, resultWindowRect);
         if (correctedMat.width() > 0 && correctedMat.height() > 0)
@@ -968,7 +977,7 @@ public class ImageProcessor {
     /**
      * Detects lines within the RDT's result window
      * @param resultWindowMat: the RDT's result window (in BGR)
-     * @return a boolean array indicating the presence of a(top, middle, and bottom line
+     * @return a boolean array indicating the presence of a (top, middle, and bottom) line
      */
     private boolean[] findResultWindowLines(Mat resultWindowMat) {
         Mat hls = new Mat();
