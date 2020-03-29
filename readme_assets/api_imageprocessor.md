@@ -9,6 +9,7 @@
 * [`getViewfinderRect()`](#getViewfinderRect)
 * [`assessImage()`](#assessImage)
 * [`detectRDT()`](#detectRDT)
+* [`drawKeypointsAndMatches()`](#drawKeypointsAndMatches)
 
 # Methods for Quality Checking
 * [`measureExposure()`](#measureExposure)
@@ -113,6 +114,18 @@
 
 **Returns:**
 * `MatOfPoint2f boundary`: the corners of the bounding box around the detected RDT if one is present, otherwise a blank MatOfPoint2f
+
+## drawKeypointsAndMatches()
+**Signature:** `Mat debugMat = drawKeypointsAndMatches(Mat inputMat, MatOfPoint boundary, MatOfKeyPoint keypoints, MatOfDMatch matchesMat)`  
+**Purpose:** Draws an image for debugging the feature-based template matching approach for RDT detection  
+**Parameters:**
+* `Mat inputMat`: the candidate video frame (in grayscale)
+* `MatOfPoint2f boundary`: the corners of the bounding box around the detected RDT
+* `MatOfKeyPoint keypoints`: the SIFT keypoints within the video frame
+* `MatOfDMatch matchesMat`: the correspondence between the different keypoints
+
+**Returns:**
+* `Mat debugMat`: an image with keypoint matches drawn between the reference image and the candidate video frame
 
 - - -
 
