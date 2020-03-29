@@ -201,7 +201,7 @@ public class ImageProcessor {
             }
             passed = isCentered && sizeResult == SizeResult.RIGHT_SIZE && isOriented;
 
-            // Apply crops
+            // TODO: need to make this clearer
             Mat croppedMat = cropRDTMat(inputMat);
             MatOfPoint2f croppedBoundary = cropRDTBoundary(inputMat, boundary);
             
@@ -212,16 +212,15 @@ public class ImageProcessor {
             passed = passed && !isGlared;
 
             // TODO: add blood checking here once verified
-
-            return new RDTCaptureResult(passed, croppedMat, true, exposureResult, sizeResult,
-                    isCentered, isOriented, angle, isSharp, false, isGlared,
-                    croppedBoundary, flashEnabled);
+            return new RDTCaptureResult(passed, croppedMat, croppedBoundary, flashEnabled,
+                    exposureResult, isSharp, isCentered, sizeResult,
+                    isOriented, angle, isGlared, true);
         }
         else {
             grayMat.release();
-            return new RDTCaptureResult(false, null, false, exposureResult,
-                    SizeResult.INVALID, false, false, 0.0, isSharp, false, false,
-                    new MatOfPoint2f(), flashEnabled);
+            return new RDTCaptureResult(false, null, new MatOfPoint2f(), flashEnabled,
+                    exposureResult, isSharp, false, SizeResult.INVALID,
+                    false, 0.0, false, false);
         }
 
     }
