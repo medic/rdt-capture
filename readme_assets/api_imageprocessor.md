@@ -6,7 +6,6 @@
 * [`RDTInterpretationResult`](#rdtInterpretationResult)
 
 # Methods for RDT Detection
-* [`configureCamera()`](#configureCamera)
 * [`getViewfinderRect()`](#getViewfinderRect)
 * [`assessImage()`](#assessImage)
 * [`detectRDT()`](#detectRDT)
@@ -87,15 +86,6 @@
 
 - - -
 
-## configureCamera()
-**Signature:** `xxx`  
-**Purpose:** xxx  
-**Parameters:**
-* `xxx`: xxx
-
-**Returns:**
-* `xxx`: xxx
-
 ## getViewfinderRect()
 **Signature:** `Rect viewfinderRect = getViewfinderRect(Mat inputMat)`  
 **Purpose:** Returns the rectangle corresponding to the viewfinder that the user sees (i.e., region-of-interest) for image quality  
@@ -106,13 +96,14 @@
 * `Rect viewfinderRect`: the viewfinder rectangle
 
 ## assessImage()
-**Signature:** `xxx`  
-**Purpose:** xxx  
+**Signature:** `RDTCaptureResult captureResult = assessImage(Mat inputMat, boolean flashEnabled)`  
+**Purpose:** Processes the candidate video frame to see if it passes all of the quality checks needed to ensure high likelihood of correct automatic analysis  
 **Parameters:**
-* `xxx`: xxx
+* `Mat inputMat`: the candidate video frame (in RGBA)
+* `boolean flashEnabled`: whether the flash was active during the image capture process for this frame
 
 **Returns:**
-* `xxx`: xxx
+* `RDTCaptureResult captureResult`: the capture results
 
 ## detectRDT()
 **Signature:** `MatOfPoint2f boundary = detectRDT(Mat inputMat)`  
