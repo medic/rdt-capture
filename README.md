@@ -29,7 +29,7 @@ RDTScan utilizes [OpenCV for Android](https://opencv.org/android/) for many of t
 [Link](readme_assets/rdt_configuration.md)
 
 # API
-[Link](readme_assets/api.md)
+[Link](readme_assets/api_imageprocessor.md) for `ImageProcessor.java`
 
 # Attribution
 Developers are allowed to use RDTScan as they please provided that they abide by the project's license: [BSD-3-Clause](LICENSE). However, we would greatly appreciate attribution where possible. For example, any conference or journal publications that result from a tool built with our library should cite the following paper:
