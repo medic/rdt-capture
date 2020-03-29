@@ -22,11 +22,13 @@
 * [`measureOrientation()`](#measureOrientation)
 * [`checkOrientation()`](#checkOrientation)
 * [`checkGlare()`](#checkGlare)
-* [`checkFiducial()`](#checkFiducial)
-* [`getQualityCheckText()`](#getQualityCheckText)
+* [`checkBlood()`](#checkBlood)
+* [`getInstructionText()`](#getInstructionText)
+* [`getSummaryText()`](#getSummaryText)
 
 # Methods for RDT Interpretation
 * [`cropResultWindow()`](#cropResultWindow)
+* [`cropResultWindowWithFiducial()`](#checkFiducial)
 * [`enhanceResultWindow()`](#enhanceResultWindow)
 * [`interpretRDT()`](#interpretRDT)
 
@@ -226,6 +228,34 @@
 **Returns:**
 * `boolean isBloody`: whether there is blood within the detected RDT's result window
 
+## getInstructionText()
+**Signature:** `int instruction = getInstructionText(boolean isCentered, SizeResult sizeResult, boolean isOriented, boolean isGlared)`  
+**Purpose:** Generate the most logical instruction to help the user fix a single quality check  
+**Parameters:**
+* `boolean isCentered`: whether the `boundary` of the detected RDT is sufficiently in the middle of the screen for consistent interpretation
+* `SizeResult sizeResult`: whether the `boundary` of the detected RDT has a reasonable size for consistent interpretation
+* `boolean isOriented`: whether the `boundary` of the detected RDT has a reasonable orientation for consistent interpretation
+* `boolean isGlared`: whether there is glare within the detected RDT's result window
+
+**Returns:**
+* `int instruction`: the ID of the instruction text to be found in `res/values/strings.xml`
+
+## getSummaryText()
+**Signature:** `String[] summaryText = String[] getSummaryText(ExposureResult exposureResult, boolean isSharp, boolean isCentered, SizeResult sizeResult, boolean isOriented, boolean isGlared)`  
+**Purpose:** Generate text that can be shown on the screen to summarize all quality checks  
+**Parameters:**
+* `ExposureResult exposureResult`: whether the candidate video frame has a reasonable brightness
+* `boolean isSharp`: whether the candidate video frame has a reasonable sharpness
+* `boolean isCentered`: whether the `boundary` of the detected RDT is sufficiently in the middle of the screen for consistent interpretation
+* `SizeResult sizeResult`: whether the `boundary` of the detected RDT has a reasonable size for consistent interpretation
+* `boolean isOriented`: whether the `boundary` of the detected RDT has a reasonable orientation for consistent interpretation
+* `boolean isGlared`: whether there is glare within the detected RDT's result window
+
+**Returns:**
+* `String[] summaryText`: summary for each quality checking component
+
+- - -
+
 ## checkFiducial()
 **Signature:** `xxx`  
 **Purpose:** xxx  
@@ -234,17 +264,6 @@
 
 **Returns:**
 * `xxx`: xxx
-
-## getQualityCheckText()
-**Signature:** `xxx`  
-**Purpose:** Generate text that can be shown on the screen to summarize all quality checks  
-**Parameters:**
-* `xxx`: xxx
-
-**Returns:**
-* `xxx`: xxx
-
-- - -
 
 ## cropResultWindow()
 **Signature:** `Mat resultWindow = cropResultWindow(Mat inputMat, MatOfPoint2f boundary)`  
