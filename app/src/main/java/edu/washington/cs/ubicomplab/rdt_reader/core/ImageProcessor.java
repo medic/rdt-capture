@@ -10,11 +10,13 @@ package edu.washington.cs.ubicomplab.rdt_reader.core;
 
 import android.app.Activity;
 import android.content.Context;
+import android.graphics.Bitmap;
 import android.util.Log;
 
 import org.opencv.android.BaseLoaderCallback;
 import org.opencv.android.LoaderCallbackInterface;
 import org.opencv.android.OpenCVLoader;
+import org.opencv.android.Utils;
 import org.opencv.calib3d.Calib3d;
 import org.opencv.core.Core;
 import org.opencv.core.CvType;
@@ -33,6 +35,7 @@ import org.opencv.core.Rect;
 import org.opencv.core.RotatedRect;
 import org.opencv.core.Size;
 import org.opencv.core.TermCriteria;
+import org.opencv.features2d.Features2d;
 import org.opencv.imgproc.CLAHE;
 import org.opencv.imgproc.Imgproc;
 import org.opencv.core.Scalar;
@@ -235,7 +238,6 @@ public class ImageProcessor {
                     exposureResult, isSharp, false, SizeResult.INVALID,
                     false, 0.0, false, false);
         }
-
     }
 
     /**
@@ -365,6 +367,34 @@ public class ImageProcessor {
         inKeypoints.release();
         Log.d(TAG, "Detect RDT time: " + (System.currentTimeMillis()-currentTime));
         return boundary;
+    }
+
+    /**
+     * Draws an image for debugging the feature-based template matching approach for RDT detection
+     * @param inputMat: the candidate video frame (in grayscale)
+     * @param boundary: the corners of the bounding box around the detected RDT
+     * @param keypoints: the SIFT keypoints within the video frame
+     * @param matchesMat: the correspondence between the different keypoints
+     * @return an image with keypoint matches drawn between the reference image
+     * and the candidate video frame
+     */
+    private Mat drawKeypointsAndMatches(Mat inputMat, MatOfPoint boundary,
+                                         MatOfKeyPoint keypoints, MatOfDMatch matchesMat) {
+        Mat debugMat = new Mat();
+        MatOfPoint boundaryMat = new MatOfPoint();
+        boundaryMat.fromList(boundary.toList());
+        ArrayList<MatOfPoint> list = new ArrayList<>();
+        list.add(boundaryMat);
+
+        Mat tempInputMat = inputMat.clone();
+        Imgproc.polylines(tempInputMat, list, true, Scalar.all(0),10);
+        Features2d.drawKeypoints(tempInputMat, keypoints, tempInputMat);
+        Features2d.drawMatches(mRDT.refImg, mRDT.refKeypoints, tempInputMat, keypoints,
+                matchesMat, debugMat);
+        Bitmap bitmap = Bitmap.createBitmap(inputMat.cols(), inputMat.rows(),
+                Bitmap.Config.ARGB_8888);
+        Utils.matToBitmap(debugMat, bitmap);
+        return debugMat;
     }
 
     /**
