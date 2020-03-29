@@ -105,13 +105,13 @@
 * `xxx`: xxx
 
 ## detectRDT()
-**Signature:** `xxx`  
-**Purpose:** xxx  
+**Signature:** `MatOfPoint2f boundary = detectRDT(Mat inputMat)`  
+**Purpose:** Locates the RDT within the image (if one is presents) produces a bounding box around it  
 **Parameters:**
-* `xxx`: xxx
+* `Mat inputMat`: the candidate video frame (in grayscale)
 
 **Returns:**
-* `xxx`: xxx
+* `MatOfPoint2f boundary`: the corners of the bounding box around the detected RDT if one is present, otherwise a blank MatOfPoint2f
 
 - - -
 
