@@ -7,6 +7,7 @@
 
 # Methods for RDT Detection
 * [`configureCamera()`](#configureCamera)
+* [`getViewfinderRect()`](#getViewfinderRect)
 * [`assessImage()`](#assessImage)
 * [`detectRDT()`](#detectRDT)
 
@@ -94,6 +95,15 @@
 
 **Returns:**
 * `xxx`: xxx
+
+## getViewfinderRect()
+**Signature:** `Rect viewfinderRect = getViewfinderRect(Mat inputMat)`  
+**Purpose:** Returns the rectangle corresponding to the viewfinder that the user sees (i.e., region-of-interest) for image quality  
+**Parameters:**
+* `Mat inputMat`: the candidate video frame
+
+**Returns:**
+* `Rect viewfinderRect`: the viewfinder rectangle
 
 ## assessImage()
 **Signature:** `xxx`  
@@ -256,24 +266,24 @@
 
 - - -
 
-## checkFiducial()
-**Signature:** `xxx`  
-**Purpose:** xxx  
-**Parameters:**
-* `xxx`: xxx
-
-**Returns:**
-* `xxx`: xxx
-
 ## cropResultWindow()
 **Signature:** `Mat resultWindow = cropResultWindow(Mat inputMat, MatOfPoint2f boundary)`  
-**Purpose:** xxx  
+**Purpose:** Crops out the detected RDT's result window as a rectangle  
 **Parameters:**
 * `Mat inputMat`: the candidate video frame
 * `MatOfPoint2f boundary`: the corners of the bounding box around the detected RDT
 
 **Returns:**
-* `Mat resultWindow`: the RDT image tightly cropped around the result window
+* `Mat resultWindow`: the RDT image tightly cropped and de-skewed around the result window
+
+## cropResultWindowWithFidicual()
+**Signature:** `Mat resultWindow = cropResultWindowWithFidicual(Mat inputMat)`  
+**Purpose:** Uses color clustering to identify explicit 'fiducials' (densely colored markers) on the detected RDT that can be used as reference points for locating the result window  
+**Parameters:**
+* `Mat inputMat`: the candidate video frame (in RGBA and de-skewed)
+
+**Returns:**
+* `Mat resultWindow`: the RDT image tightly cropped and de-skewed around the result window
 
 ## enhanceResultWindow()
 **Signature:** `Mat enhancedMat = Mat enhanceResultWindow(Mat resultWindowMat)`  
@@ -286,10 +296,10 @@
 
 ## interpretResult()
 **Signature:** `InterpretationResult interpResult = interpretResult(Mat inputMat, MatOfPoint2f boundary)`
-**Purpose:**  
+**Purpose:** Interprets any lines that appear within the detected RDT's result window  
 **Parameters:**
 * `Mat inputMat`: the image known to have a clear RDT in the video frame
 * `MatOfPoint2f boundary`: the corners of the bounding box around the detected RDT
 
 **Returns:**
-* `InterpretationResult interpResult`: 
+* `InterpretationResult interpResult`: the test results
