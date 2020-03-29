@@ -333,26 +333,24 @@ public class ImageQualityView extends LinearLayout implements View.OnClickListen
 
         @Override
         protected Void doInBackground(Image... images) {
+            // Assess the quality of this image
             Image image = images[0];
             final Mat rgbaMat = ImageUtil.imageToRGBMat(image);
             final RDTCaptureResult captureResult = processor.assessImage(rgbaMat, flashEnabled);
-            //ImageProcessor.SizeResult sizeResult, boolean isCentered, boolean isRightOrientation, boolean isSharp, ImageProcessor.ExposureResult exposureResult
             mActivity.runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
-                    displayQualityResult(captureResult.sizeResult, captureResult.isCentered, captureResult.isRightOrientation, captureResult.isSharp, captureResult.isGlared, captureResult.exposureResult);
+                    displayQualityResult(captureResult);
                 }
             });
-
             Log.d(TAG, String.format("Capture time: %d", System.currentTimeMillis() - timeTaken));
             Log.d(TAG, String.format("Captured result: %b", captureResult.allChecksPassed));
 
+            // If all the quality check were passed, interpret the test result
             RDTInterpretationResult interpretationResult = null;
             if (captureResult.allChecksPassed) {
-                Log.d(TAG, String.format("Captured MAT size: %s", captureResult.resultMat.size()));
-
-                //interpretation
-                interpretationResult = processor.interpretResult(captureResult.resultMat, captureResult.boundary);
+                interpretationResult = processor.interpretResult(captureResult.resultMat,
+                        captureResult.boundary);
                 image.close();
             } else {
                 imageQueue.remove();
@@ -360,24 +358,24 @@ public class ImageQualityView extends LinearLayout implements View.OnClickListen
             }
             rgbaMat.release();
 
+            // TODO?
             RDTDetectedResult result = RDTDetectedResult.CONTINUE;
             if (mImageQualityViewListener != null) {
                 result = mImageQualityViewListener.onRDTDetected(
-                        captureResult,
-                        interpretationResult,
+                        captureResult, interpretationResult,
                         System.currentTimeMillis() - timeTaken
                 );
             }
-            if (captureResult.resultMat != null) {
+
+            // Garbage collection
+            if (captureResult.resultMat != null)
                 captureResult.resultMat.release();
-            }
-            if (interpretationResult != null &&
-                    interpretationResult.resultMat != null) {
+            if (interpretationResult != null && interpretationResult.resultMat != null)
                 interpretationResult.resultMat.release();
-            }
-            if (result == RDTDetectedResult.STOP) {
+
+            // Interrupt the thread if a result was found
+            if (result == RDTDetectedResult.STOP)
                 mOnImageAvailableThread.interrupt();
-            }
 
             return null;
         }
@@ -930,10 +928,17 @@ public class ImageQualityView extends LinearLayout implements View.OnClickListen
 
     }
 
-    private void displayQualityResult(ImageProcessor.SizeResult sizeResult, boolean isCentered, boolean isOriented, boolean isSharp, boolean isGlared, ImageProcessor.ExposureResult exposureResult) {
+    private void displayQualityResult(RDTCaptureResult captureResult) {
         if (!showFeedback) {
             return;
         }
+
+        ImageProcessor.ExposureResult exposureResult = captureResult.exposureResult;
+        boolean isSharp = captureResult.isSharp;
+        boolean isCentered = captureResult.isCentered;
+        ImageProcessor.SizeResult sizeResult = captureResult.sizeResult;
+        boolean isOriented = captureResult.isOriented;
+        boolean isGlared = captureResult.isGlared;
 
         FocusState currFocusState;
 

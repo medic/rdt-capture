@@ -171,64 +171,55 @@ public class ImageProcessor {
      */
     public RDTCaptureResult assessImage(Mat inputMat, boolean flashEnabled) {
         // Convert the image to grayscale
-        Mat greyMat = new Mat();
-        cvtColor(inputMat, greyMat, Imgproc.COLOR_RGBA2GRAY);
+        Mat grayMat = new Mat();
+        cvtColor(inputMat, grayMat, Imgproc.COLOR_RGBA2GRAY);
+        Size inputSize = grayMat.size();
 
         // Check the brightness and the sharpness of the overall camera frame
-        Rect viewFinderRect = getViewfinderRect(greyMat);
-        ExposureResult exposureResult = checkExposure(greyMat);
-        boolean isSharp = checkSharpness(greyMat.submat(viewFinderRect));
+        Rect viewFinderRect = getViewfinderRect(grayMat);
+        ExposureResult exposureResult = checkExposure(grayMat);
+        boolean isSharp = checkSharpness(grayMat.submat(viewFinderRect));
         boolean passed = exposureResult == ExposureResult.NORMAL && isSharp;
 
         // If the frame passes those two checks, continue to try to detect the RDT
         if (passed) {
             // Locate the RDT design within the camera frame
-            MatOfPoint2f boundary = detectRDT(greyMat);
+            MatOfPoint2f boundary = detectRDT(grayMat);
+            grayMat.release();
 
             // Check the placement, size, and orientation of the RDT,
             // if it is there in the first place
             boolean isCentered = false;
             SizeResult sizeResult = SizeResult.INVALID;
-            boolean isRightOrientation = false;
+            boolean isOriented = false;
             double angle = 0.0;
             if (boundary.size().width > 0 && boundary.size().height > 0) {
-                isCentered = checkCentering(boundary, greyMat.size());
-                sizeResult = checkSize(boundary, greyMat.size());
-                isRightOrientation = checkOrientation(boundary);
+                isCentered = checkCentering(boundary, inputSize);
+                sizeResult = checkSize(boundary, inputSize);
+                isOriented = checkOrientation(boundary);
                 angle = measureOrientation(boundary);
             }
-            passed = sizeResult == SizeResult.RIGHT_SIZE && isCentered && isRightOrientation;
+            passed = isCentered && sizeResult == SizeResult.RIGHT_SIZE && isOriented;
 
-//            boolean fiducial = false;
-//            if (passed) {
-//                Mat resultMat = cropResultWindow(inputMat, boundary);
-//                if (resultMat.width() > 0 && resultMat.height() > 0) {
-//                    fiducial = true;
-//                }
-//                resultMat.release();
-//                passed = passed & fiducial;
-//                Log.d(TAG, String.format("fiducial: %b", fiducial));
-//            }
-
-            greyMat.release();
-
-            // Apply crops if necessary
+            // Apply crops
             Mat croppedMat = cropRDTMat(inputMat);
             MatOfPoint2f croppedBoundary = cropRDTBoundary(inputMat, boundary);
             
-            //check for glare
+            // Check for glare
             boolean isGlared = false;
             if (passed)
                 isGlared = checkGlare(croppedMat, croppedBoundary);
-                passed = passed && !isGlared;
+            passed = passed && !isGlared;
+
+            // TODO: add blood checking here once verified
 
             return new RDTCaptureResult(passed, croppedMat, true, exposureResult, sizeResult,
-                    isCentered, isRightOrientation, angle, isSharp, false, isGlared,
+                    isCentered, isOriented, angle, isSharp, false, isGlared,
                     croppedBoundary, flashEnabled);
         }
         else {
-            greyMat.release();
-            return new RDTCaptureResult(passed, null, false, exposureResult,
+            grayMat.release();
+            return new RDTCaptureResult(false, null, false, exposureResult,
                     SizeResult.INVALID, false, false, 0.0, isSharp, false, false,
                     new MatOfPoint2f(), flashEnabled);
         }
