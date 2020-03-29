@@ -52,29 +52,6 @@ public final class ImageUtil {
 
     public static final int GAUSSIAN_BLUR_WINDOW = 5;
 
-    public static final Scalar RED_COLOR_LOW_HUE_LOWER = new Scalar(0, 100, 100);
-    public static final Scalar RED_COLOR_LOW_HUE_UPPER = new Scalar(10, 255, 255);
-    public static final Scalar RED_COLOR_HIGH_HUE_LOWER = new Scalar(160, 100, 100);
-    public static final Scalar RED_COLOR_HIGH_HUE_UPPER = new Scalar(179, 255, 255);
-
-
-    public static double calculateRedColorPercentage(Mat image) {
-        Mat hsv = new Mat();
-        cvtColor(image, hsv, Imgproc.COLOR_RGB2HSV);
-
-        Mat lowerRedThresh = new Mat();
-        inRange(hsv, RED_COLOR_LOW_HUE_LOWER, RED_COLOR_HIGH_HUE_UPPER, lowerRedThresh);
-        Mat upperRedThresh = new Mat();
-        inRange(hsv, RED_COLOR_HIGH_HUE_LOWER, RED_COLOR_HIGH_HUE_UPPER, upperRedThresh);
-
-        Mat redThresh = new Mat();
-        addWeighted(lowerRedThresh, 1.0, upperRedThresh, 1.0, 0.0,  redThresh);
-
-        return countNonZero(redThresh) / redThresh.size().area();
-    }
-
-
-
     /**
      *
      * @param image
@@ -214,29 +191,6 @@ public final class ImageUtil {
         return bs.toByteArray();
     }
 
-    //methods for debugging
-    private void saveImage (Mat inputMat) {
-        File sdIconStorageDir = new File(Constants.RDT_IMAGE_DIR);
-
-        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH-mm-ss-SSS");
-
-        try {
-            String filePath = sdIconStorageDir.toString() + String.format("/%s-%08dms.jpg", sdf.format(new Date()), 0);
-            FileOutputStream fileOutputStream = new FileOutputStream(filePath);
-
-            fileOutputStream.write(ImageUtil.matToRotatedByteArray(inputMat));
-
-            fileOutputStream.flush();
-            fileOutputStream.close();
-
-            //sendBroadcast(new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE, Uri.parse("file://" + filePath)));
-
-            //Toast.makeText(this,"Image is successfully saved!", Toast.LENGTH_SHORT).show();
-        } catch (Exception e) {
-            Log.w("TAG", "Error saving image file: " + e.getMessage());
-        }
-    }
-
     private void drawKeypointsAndMatches(Mat inputMat, MatOfPoint boundary, MatOfKeyPoint inKeypoints, MatOfDMatch goodMatchesMat, RDT rdt) {
         Mat resultMat = new Mat();
         MatOfPoint boundaryMat = new MatOfPoint();
@@ -284,5 +238,9 @@ public final class ImageUtil {
         Mat result = new Mat();
         LUT(enhancedImg, lutMat, result);
         return result;
+    }
+
+    public static double rgbToY(double[] rgb) {
+        return 0.299 * rgb[0] + 0.587 * rgb[1] + 0.114 * rgb[2] + 20.0;
     }
 }

@@ -930,7 +930,7 @@ public class ImageQualityView extends LinearLayout implements View.OnClickListen
 
     }
 
-    private void displayQualityResult(ImageProcessor.SizeResult sizeResult, boolean isCentered, boolean isRightOrientation, boolean isSharp, boolean isGlared, ImageProcessor.ExposureResult exposureResult) {
+    private void displayQualityResult(ImageProcessor.SizeResult sizeResult, boolean isCentered, boolean isOriented, boolean isSharp, boolean isGlared, ImageProcessor.ExposureResult exposureResult) {
         if (!showFeedback) {
             return;
         }
@@ -942,11 +942,13 @@ public class ImageQualityView extends LinearLayout implements View.OnClickListen
         }
 
         if (currFocusState == FocusState.FOCUSED) {
-            String[] qChecks = processor.getQualityCheckText(sizeResult, isCentered, isRightOrientation, isSharp, isGlared, exposureResult);
+            // Get the best instruction to help the user
+            int instruction = processor.getInstructionText(isCentered, sizeResult, isOriented, isGlared);
+            mInstructionText.setText(getResources().getText(instruction));
+
+            // Get the summary of the quality checks
+            String[] qChecks = processor.getSummaryText(exposureResult, isSharp, isCentered, sizeResult, isOriented, isGlared);
             String message = String.format(getResources().getString(R.string.quality_msg_format_text), qChecks[0], qChecks[1], qChecks[2], qChecks[3]);
-
-            mInstructionText.setText(getResources().getText(processor.getInstructionText(sizeResult, isCentered, isGlared, isRightOrientation)));
-
             mImageQualityFeedbackView.setText(Html.fromHtml(message));
         } else if (currFocusState == FocusState.INACTIVE) {
             mInstructionText.setText(getResources().getString(R.string.instruction_pos));
