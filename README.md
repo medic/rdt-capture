@@ -9,7 +9,9 @@ Assuming a suitable image has been captured, RDTScan can post-process the image 
 
 RDTScan uses a feature-matching approach for RDT recognition, allowing RDTScan to be quickly adapted to new RDT designs. Unlike model-driven approaches that require a dataset of example images for model training, RDTScan only requires a single example image and some additional metadata (e.g., relative position and meaning of each line) to detect and interpret RDTs. RDTScan is intentially designed so that all of the algorithms can run on the smartphone, which means that there is no need to upload confidential photos to a server to use this library.
 
-**Disclaimer:** Although RDTScan has been tested through multiple in-lab studies and real-world deployments, this library has not been FDA-approved.
+**Disclaimers:** 
+* Although RDTScan has been tested through multiple in-lab studies and real-world deployments, this library has not been FDA-approved.
+* This library requires that target smartphone's support Android's [Camera2 API](https://developer.android.com/reference/android/hardware/camera2/package-summary), which supports control over the camera's hardware.
 
 # Installation
 RDTScan utilizes [OpenCV for Android](https://opencv.org/android/) for many of the image processing steps, which in turn relies on [Android's Native Development Kit (NDK)](https://developer.android.com/ndk/). Setting up these resources can be difficult for some developers, so there are two options for getting started with RDTScan:
