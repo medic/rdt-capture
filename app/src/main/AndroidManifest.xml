@@ -49,9 +49,6 @@
             </intent-filter>
         </activity>
         <activity
-            android:name=".activities.ExpirationDateActivity"
-            android:noHistory="true" />
-        <activity
             android:name=".activities.ImageQualityActivity"
             android:theme="@style/Theme.AppCompat.NoActionBar"
             android:configChanges="keyboardHidden|orientation"

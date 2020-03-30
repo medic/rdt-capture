@@ -15,32 +15,17 @@
     tools:context="edu.washington.cs.ubicomplab.rdt_reader.activities.MainActivity">
 
     <Button
-        android:id="@+id/expdateButton"
-        android:layout_width="266dp"
-        android:layout_height="wrap_content"
-        android:layout_marginEnd="8dp"
-        android:layout_marginStart="8dp"
-        android:layout_marginTop="16dp"
-        android:text="@string/exp_date_check"
-        android:theme="@style/PrimaryButton"
-        android:background="@drawable/rounded_button"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
-
-    <Button
         android:id="@+id/imagequalButton"
         android:layout_width="266dp"
         android:layout_height="wrap_content"
-        android:layout_marginEnd="8dp"
         android:layout_marginStart="8dp"
-        android:layout_marginTop="8dp"
-        android:text="@string/image_quality"
+        android:layout_marginEnd="8dp"
         android:background="@drawable/rounded_button"
+        android:text="@string/image_quality"
         android:theme="@style/PrimaryButton"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/expdateButton" />
+        tools:layout_editor_absoluteY="72dp" />
 
     <Button
         android:id="@+id/settingsButton"

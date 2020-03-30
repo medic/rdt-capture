@@ -37,71 +37,148 @@ import edu.washington.cs.ubicomplab.rdt_reader.fragments.SettingDialogFragment;
 import edu.washington.cs.ubicomplab.rdt_reader.interfaces.SettingDialogListener;
 import edu.washington.cs.ubicomplab.rdt_reader.core.Constants;
 
-public class MainActivity extends AppCompatActivity implements View.OnClickListener, SettingDialogListener {
-
-    private Button mExpDateButton;
-    private Button mImageQualityButton;
-    private Button mTestCamera2Button;
-    private Button mSettingsyButton;
-
+/**
+ * The main activity from which other activities are launched
+ */
+public class MainActivity extends AppCompatActivity implements
+        View.OnClickListener, SettingDialogListener {
+    /**
+     * {@link android.app.Activity} onCreate()
+     * @param savedInstanceState: the bundle object in case this is launched from an intent
+     */
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        loadPref();
-
         setTitle("RDT Image Capture");
 
-        //create storage directories, if they don't exist
+        // Create folders for saving the images on the device's SD card
         new File(Constants.RDT_IMAGE_DIR).mkdirs();
-        sendBroadcast(new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE, Uri.parse("file://" + Constants.RDT_IMAGE_DIR)));
+        sendBroadcast(new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE,
+                Uri.parse("file://" + Constants.RDT_IMAGE_DIR)));
 
+        // Initialize UI elements
         initViews();
+
+        // Loads constants
+        loadPrefs();
     }
 
+    /**
+     * Initializes UI elements and checks permissions
+     */
     private void initViews() {
-        mExpDateButton = findViewById(R.id.expdateButton);
-        mImageQualityButton = findViewById(R.id.imagequalButton);
-        mTestCamera2Button = findViewById(R.id.camera2TestButton);
-        mSettingsyButton = findViewById(R.id.settingsButton);
-
-        mExpDateButton.setOnClickListener(this);
+        // Initialize buttons
+        Button mImageQualityButton = findViewById(R.id.imagequalButton);
+        Button mSettingsyButton = findViewById(R.id.settingsButton);
         mImageQualityButton.setOnClickListener(this);
-        mTestCamera2Button.setOnClickListener(this);
         mSettingsyButton.setOnClickListener(this);
 
-        ArrayList<String> permissions = new ArrayList<>();
+        // Make a list of required permissions
+        ArrayList<String> requiredPermissions = new ArrayList<>();
+        requiredPermissions.add(Manifest.permission.CAMERA);
+        requiredPermissions.add(Manifest.permission.WRITE_EXTERNAL_STORAGE);
 
-        if (ContextCompat.checkSelfPermission(this,
-                Manifest.permission.CAMERA)
-                != PackageManager.PERMISSION_GRANTED) {
-            permissions.add(Manifest.permission.CAMERA);
+        // Find out which permissions are missing
+        ArrayList<String> missingPermissions = new ArrayList<>();
+        for (String s: requiredPermissions) {
+            if (ContextCompat.checkSelfPermission(this, s)
+                    != PackageManager.PERMISSION_GRANTED)
+                missingPermissions.add(s);
         }
 
-        if (ContextCompat.checkSelfPermission(this,
-                Manifest.permission.WRITE_EXTERNAL_STORAGE)
-                != PackageManager.PERMISSION_GRANTED) {
-            permissions.add(Manifest.permission.WRITE_EXTERNAL_STORAGE);
-        }
-
-        if (permissions.size() > 0) {
+        // Request missing permissions
+        if (missingPermissions.size() > 0)
             ActivityCompat.requestPermissions(this,
-                    permissions.toArray(new String[permissions.size()]),
+                    missingPermissions.toArray(new String[missingPermissions.size()]),
                     MY_PERMISSION_REQUEST_CODE);
-        }
     }
 
+    /**
+     * Loads the user's preferences
+     */
+    private void loadPrefs() {
+        // Get the user's preferences
+        Context context = getApplicationContext();
+        SharedPreferences sharedPref = context.getSharedPreferences(
+                getString(R.string.preference_file_key), Context.MODE_PRIVATE);
+
+        // Extract user's preferences and update the app's settings
+        SharedPreferences.Editor editor = sharedPref.edit();
+        String languagePref = getString(R.string.preference_language);
+        if (sharedPref.contains(languagePref))
+            Constants.LANGUAGE = sharedPref.getString(languagePref,
+                    Constants.LANGUAGE);
+        else
+            editor.putString(languagePref,
+                    Constants.LANGUAGE);
+
+        String underExposurePref = getString(R.string.preference_under_exposure);
+        if (sharedPref.contains(underExposurePref))
+            Constants.UNDER_EXPOSURE_THRESHOLD = sharedPref.getFloat(underExposurePref,
+                    (float) Constants.UNDER_EXPOSURE_THRESHOLD);
+        else
+            editor.putFloat(underExposurePref, (float) Constants.UNDER_EXPOSURE_THRESHOLD);
+
+        String overExposurePref = getString(R.string.preference_over_exposure);
+        if (sharedPref.contains(overExposurePref))
+            Constants.OVER_EXPOSURE_WHITE_COUNT = sharedPref.getFloat(overExposurePref,
+                    (float) Constants.OVER_EXPOSURE_WHITE_COUNT);
+        else
+            editor.putFloat(getString(R.string.preference_over_exposure),
+                    (float) Constants.OVER_EXPOSURE_WHITE_COUNT);
+
+        String sharpnessPref = getString(R.string.preference_sharpness);
+        if (sharedPref.contains(sharpnessPref))
+            Constants.SHARPNESS_THRESHOLD = sharedPref.getFloat(sharpnessPref,
+                    (float) Constants.SHARPNESS_THRESHOLD);
+        else
+            editor.putFloat(sharpnessPref,
+                    (float) Constants.SHARPNESS_THRESHOLD);
+
+        String positionPref = getString(R.string.preference_position);
+        if (sharedPref.contains(positionPref))
+            Constants.POSITION_THRESHOLD = sharedPref.getFloat(positionPref,
+                    (float) Constants.POSITION_THRESHOLD);
+        else
+            editor.putFloat(positionPref,
+                    (float) Constants.POSITION_THRESHOLD);
+
+        String sizePref = getString(R.string.preference_size);
+        if (sharedPref.contains(sizePref))
+            Constants.SIZE_THRESHOLD = sharedPref.getFloat(sizePref,
+                    (float) Constants.SIZE_THRESHOLD);
+        else
+            editor.putFloat(sizePref, (float)Constants.SIZE_THRESHOLD);
+        editor.apply();
+
+        // Change the language locale
+        Resources res = getResources();
+        DisplayMetrics dm = res.getDisplayMetrics();
+        android.content.res.Configuration conf = res.getConfiguration();
+        conf.setLocale(new Locale(Constants.LANGUAGE));
+        res.updateConfiguration(conf, dm);
+        setContentView(R.layout.activity_main);
+    }
+
+    /**
+     * {@link android.app.Activity} onCreateOptionsMenu()
+     * @param menu: the Activity's menu
+     */
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
-        // Inflate the menu; this adds items to the action bar if it is present.
         getMenuInflater().inflate(R.menu.menu, menu);
         return true;
     }
 
+    /**
+     * {@link android.app.Activity} onOptionsItemSelected()
+     * @param item: the item that was selected from the Activity's menu
+     */
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        // Handle item selection
         switch (item.getItemId()) {
             case R.id.action_settings:
+                // Go to the settings page
                 SettingDialogFragment dialog = new SettingDialogFragment();
                 dialog.show(getFragmentManager(), "Setting Dialog");
                 return true;
@@ -110,99 +187,47 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         }
     }
 
-    @Override
-    public void onClick(View view) {
-
-        if (view.getId() == R.id.expdateButton) {
-            Intent intent = new Intent(this, ExpirationDateActivity.class);
-            startActivity(intent);
-        } else if (view.getId() == R.id.imagequalButton) {
-            Spinner rdtName = (Spinner) findViewById(R.id.rdtname);
-            Intent intent = new Intent(this, ImageQualityActivity.class);
-            intent.putExtra("rdt_name", rdtName.getSelectedItem().toString());
-            Log.d(TAG, "RDT Name: " +  rdtName.getSelectedItem().toString());
-            startActivity(intent);
-        } else if (view.getId() == R.id.camera2TestButton) {
-//            Intent intent = new Intent(this, ImageQualityOpencvActivity.class);
-//            startActivity(intent);
-        } else if (view.getId() == R.id.settingsButton) {
-            SettingDialogFragment dialog = new SettingDialogFragment();
-            dialog.show(getFragmentManager(), "Setting Dialog");
-        }
-    }
-
-    @Override
-    public void onClickPositiveButton() {
-        Resources res = getResources();
-        // Change locale settings in the app.
-        DisplayMetrics dm = res.getDisplayMetrics();
-        android.content.res.Configuration conf = res.getConfiguration();
-        conf.setLocale(new Locale(Constants.LANGUAGE)); // API 17+ only.
-        // Use conf.locale = new Locale(...) if targeting lower versions
-        res.updateConfiguration(conf, dm);
-
-        setContentView(R.layout.activity_main);
-        initViews();
-    }
-
+    /**
+     * {@link android.app.Activity} onBackPressed()
+     */
     @Override
     public void onBackPressed() {
         super.onBackPressed();
         finish();
     }
 
-    private void loadPref() {
-        Context context = getApplicationContext();
-        SharedPreferences sharedPref = context.getSharedPreferences(
-                getString(R.string.preference_file_key), Context.MODE_PRIVATE);
-
-        SharedPreferences.Editor editor = sharedPref.edit();
-
-        if (sharedPref.contains(getString(R.string.preference_language))) {
-            Constants.LANGUAGE = sharedPref.getString(getString(R.string.preference_language),Constants.LANGUAGE);
-        } else {
-            editor.putString(getString(R.string.preference_language), Constants.LANGUAGE);
+    /**
+     * The listener for all of the Activity's buttons
+     * @param view the button that was selected
+     */
+    @Override
+    public void onClick(View view) {
+        if (view.getId() == R.id.imagequalButton) {
+            Spinner rdtName = (Spinner) findViewById(R.id.rdtname);
+            Intent intent = new Intent(this, ImageQualityActivity.class);
+            intent.putExtra("rdt_name", rdtName.getSelectedItem().toString());
+            Log.d(TAG, "RDT Name: " +  rdtName.getSelectedItem().toString());
+            startActivity(intent);
+        } else if (view.getId() == R.id.settingsButton) {
+            SettingDialogFragment dialog = new SettingDialogFragment();
+            dialog.show(getFragmentManager(), "Setting Dialog");
         }
+    }
 
-        if (sharedPref.contains(getString(R.string.preference_over_exposure))) {
-            Constants.OVER_EXPOSURE_WHITE_COUNT = sharedPref.getFloat(getString(R.string.preference_over_exposure),(float)Constants.OVER_EXPOSURE_WHITE_COUNT);
-        } else {
-            editor.putFloat(getString(R.string.preference_over_exposure), (float)Constants.OVER_EXPOSURE_WHITE_COUNT);
-        }
-
-        if (sharedPref.contains(getString(R.string.preference_under_exposure))) {
-            Constants.UNDER_EXPOSURE_THRESHOLD = sharedPref.getFloat(getString(R.string.preference_under_exposure),(float)Constants.UNDER_EXPOSURE_THRESHOLD);
-        } else {
-            editor.putFloat(getString(R.string.preference_under_exposure), (float)Constants.UNDER_EXPOSURE_THRESHOLD);
-        }
-
-        if (sharedPref.contains(getString(R.string.preference_sharpness))) {
-            Constants.SHARPNESS_THRESHOLD = sharedPref.getFloat(getString(R.string.preference_sharpness),(float)Constants.SHARPNESS_THRESHOLD);
-        } else {
-            editor.putFloat(getString(R.string.preference_sharpness), (float)Constants.SHARPNESS_THRESHOLD);
-        }
-
-        if (sharedPref.contains(getString(R.string.preference_position))) {
-            Constants.POSITION_THRESHOLD = sharedPref.getFloat(getString(R.string.preference_position),(float)Constants.POSITION_THRESHOLD);
-        } else {
-            editor.putFloat(getString(R.string.preference_position), (float)Constants.POSITION_THRESHOLD);
-        }
-
-        if (sharedPref.contains(getString(R.string.preference_size))) {
-            Constants.SIZE_THRESHOLD = sharedPref.getFloat(getString(R.string.preference_size),(float)Constants.SIZE_THRESHOLD);
-        } else {
-            editor.putFloat(getString(R.string.preference_size), (float)Constants.SIZE_THRESHOLD);
-        }
-
-        editor.apply();
-
+    /**
+     * {@link SettingDialogFragment} onClickPositiveButton()
+     */
+    @Override
+    public void onClickPositiveButton() {
         Resources res = getResources();
-        // Change locale settings in the app.
+
+        // Change locale settings in the app
         DisplayMetrics dm = res.getDisplayMetrics();
         android.content.res.Configuration conf = res.getConfiguration();
-        conf.setLocale(new Locale(Constants.LANGUAGE)); // API 17+ only.
-        // Use conf.locale = new Locale(...) if targeting lower versions
+        conf.setLocale(new Locale(Constants.LANGUAGE));
         res.updateConfiguration(conf, dm);
+
         setContentView(R.layout.activity_main);
+        initViews();
     }
 }

@@ -18,7 +18,7 @@ import android.util.AttributeSet;
 import android.view.TextureView;
 
 public class AutoFitTextureView extends TextureView {
-
+    // The view's dimensions
     private int mRatioWidth = 0;
     private int mRatioHeight = 0;
 
@@ -39,8 +39,8 @@ public class AutoFitTextureView extends TextureView {
      * calculated from the parameters. Note that the actual sizes of parameters don't matter, that
      * is, calling setAspectRatio(2, 3) and setAspectRatio(4, 6) make the same result.
      *
-     * @param width  Relative horizontal size
-     * @param height Relative vertical size
+     * @param width: relative horizontal size
+     * @param height: relative vertical size
      */
     public void setAspectRatio(int width, int height) {
         if (width < 0 || height < 0) {
@@ -51,6 +51,11 @@ public class AutoFitTextureView extends TextureView {
         requestLayout();
     }
 
+    /**
+     * {@link android.view.View} onMeasure()
+     * @param widthMeasureSpec: horizontal space requirements imposed by the parent
+     * @param heightMeasureSpec: vertical space requirements imposed by the parent
+     */
     @Override
     protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
         super.onMeasure(widthMeasureSpec, heightMeasureSpec);
@@ -67,12 +72,17 @@ public class AutoFitTextureView extends TextureView {
         }
     }
 
+    /**
+     * {@link android.view.View} onDrawForeground()
+     * @param canvas: the canvas that should be drawn on
+     */
     @Override
     public void onDrawForeground(Canvas canvas) {
         super.onDrawForeground(canvas);
 
-        //Draw Overlay
-        Paint paint = new Paint(Paint.ANTI_ALIAS_FLAG);      paint.setColor(getResources().getColor(android.R.color.black));
+        // Start with a black screen
+        Paint paint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        paint.setColor(getResources().getColor(android.R.color.black));
         paint.setStyle(Paint.Style.FILL);
         canvas.drawPaint(paint);
     }

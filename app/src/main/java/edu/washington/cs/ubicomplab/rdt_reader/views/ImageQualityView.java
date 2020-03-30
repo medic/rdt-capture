@@ -131,7 +131,40 @@ public class ImageQualityView extends LinearLayout implements View.OnClickListen
         timeTaken = System.currentTimeMillis();
 
         initViews();
+    }
 
+
+    private void initViews() {
+        mActivity.setTitle("Image Quality Checker");
+
+        mActivity.getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+        mActivity.getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN);
+
+        mViewport = findViewById(R.id.img_quality_check_viewport);
+        if (showViewport) {
+            mViewport.setOnClickListener(this);
+        } else {
+            mViewport.setVisibility(GONE);
+        }
+        mImageQualityFeedbackView = findViewById(R.id.img_quality_feedback_view);
+        mProgress = findViewById(R.id.progressCircularBar);
+        mProgressBackgroundView = findViewById(R.id.progressBackground);
+        mProgressText = findViewById(R.id.progressText);
+        mCaptureProgressBar = findViewById(R.id.captureProgressBar);
+        mCaptureProgressBar.setMax(CAPTURE_COUNT);
+        mCaptureProgressBar.setProgress(0);
+        mInstructionText = findViewById(R.id.textInstruction);
+
+        if (showFeedback) {
+            setProgressUI(mCurrentState);
+        } else {
+            mImageQualityFeedbackView.setVisibility(GONE);
+            mProgressBackgroundView.setVisibility(GONE);
+            mProgress.setVisibility(GONE);
+            mProgressText.setVisibility(GONE);
+            mInstructionText.setVisibility(GONE);
+            mCaptureProgressBar.setVisibility(GONE);
+        }
     }
 
     public boolean isExternalIntent() {
@@ -215,8 +248,6 @@ public class ImageQualityView extends LinearLayout implements View.OnClickListen
         }
 
     };
-
-
 
     /**
      * An {@link AutoFitTextureView} for camera preview.
@@ -686,13 +717,13 @@ public class ImageQualityView extends LinearLayout implements View.OnClickListen
         @Override
         public void onConfigured(@NonNull CameraCaptureSession cameraCaptureSession) {
             // The camera is already closed
-            if (null == mCameraDevice) {
+            if (null == mCameraDevice)
                 return;
-            }
+
+            // TODO
             mCaptureSession = cameraCaptureSession;
-            if (mImageQualityViewListener != null) {
+            if (mImageQualityViewListener != null)
                 mImageQualityViewListener.onRDTCameraReady();
-            }
 
             updateRepeatingRequest();
         }
@@ -833,8 +864,6 @@ public class ImageQualityView extends LinearLayout implements View.OnClickListen
     /**
      * Imported from ImageQualityOpencvActivity
      **/
-
-
     private BaseLoaderCallback mLoaderCallback = new BaseLoaderCallback(mActivity) {
         @Override
         public void onManagerConnected(int status) {
@@ -843,8 +872,8 @@ public class ImageQualityView extends LinearLayout implements View.OnClickListen
                     Log.i(TAG, "OpenCV loaded successfully");
                     processor = ImageProcessor.getInstance(mActivity, rdtName);
                     ViewportUsingBitmap viewport = findViewById(R.id.img_quality_check_viewport);
-                    viewport.hScale = (float)processor.mRDT.viewFinderScaleH;
-                    viewport.wScale = (float)processor.mRDT.viewFinderScaleW;
+                    viewport.hScale = (float) processor.mRDT.viewFinderScaleH;
+                    viewport.wScale = (float) processor.mRDT.viewFinderScaleW;
                 }
                 break;
                 default: {
@@ -854,41 +883,6 @@ public class ImageQualityView extends LinearLayout implements View.OnClickListen
             }
         }
     };
-
-    private void initViews() {
-        mActivity.setTitle("Image Quality Checker");
-
-        mActivity.getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
-        mActivity.getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN);
-
-        // Instructions are set here
-
-        mViewport = findViewById(R.id.img_quality_check_viewport);
-        if (showViewport) {
-            mViewport.setOnClickListener(this);
-        } else {
-            mViewport.setVisibility(GONE);
-        }
-        mImageQualityFeedbackView = findViewById(R.id.img_quality_feedback_view);
-        mProgress = findViewById(R.id.progressCircularBar);
-        mProgressBackgroundView = findViewById(R.id.progressBackground);
-        mProgressText = findViewById(R.id.progressText);
-        mCaptureProgressBar = findViewById(R.id.captureProgressBar);
-        mCaptureProgressBar.setMax(CAPTURE_COUNT);
-        mCaptureProgressBar.setProgress(0);
-        mInstructionText = findViewById(R.id.textInstruction);
-
-        if (showFeedback) {
-            setProgressUI(mCurrentState);
-        } else {
-            mImageQualityFeedbackView.setVisibility(GONE);
-            mProgressBackgroundView.setVisibility(GONE);
-            mProgress.setVisibility(GONE);
-            mProgressText.setVisibility(GONE);
-            mInstructionText.setVisibility(GONE);
-            mCaptureProgressBar.setVisibility(GONE);
-        }
-    }
 
     public void setShowViewfinder(boolean showViewport) {
         this.showViewport = showViewport;
