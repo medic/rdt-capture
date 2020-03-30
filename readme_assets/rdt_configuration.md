@@ -18,6 +18,13 @@ Once you have the template image, add it to the following folder in your Android
 ### 2. Identifying regions of interest
 When trained clinicians look at an RDT design, they can usually quickly infer where test results should appear on the RDT and what they should mean. Currently, RDTScan needs developers to provide that information to bootstrap the algorithm. This information includes:
 
+| Result Window                       | Control/Test Lines          |
+| :---------------------------------- | :-------------------------: |
+| ![](covid19_result_window.jpg)      | ![](covid19_lines.jpg)      |
+| ![](covid19_rw_tl.jpg)              | ![](covid19_top_line.jpg)   |
+| ![](covid19_rw_br.jpg)              | ![](covid19_middle_line.jpg)|
+|                                     | ![](covid19_bottom_line.jpg)|
+
 * TODO
 *TODO: open in image editor*
 *TODO: image showing different regions of interest*
