@@ -1,12 +1,12 @@
 # Configuration for New RDTs
 Please follow the instruction to add new RDTs to the app.
 
-### 1. Getting a suitable template
+## 1. Getting a suitable template
 RDTScan requires a clear, upright, and tightly cropped image of an unused RDT. Below are some examples of good and bad images:
 
 Good Exmaple               |  Bad Example 1            |  Bad Example 2            |  Bad Example 3            |  Bad Example 4
 :-------------------------:|:-------------------------:|:-------------------------:|:-------------------------:|:-------------------------:
-| <p align="center"><img src="covid19_good.jpg" alt="An example of a good RDT photo that is tightly cropped and perspective-corrected" height="200"/></p> | <p align="center"><img src="covid19_bad_1.jpg" alt="An example of a bad RDT photo because it is taken from too far away and includes the background" height="200"/></p> | <p align="center"><img src="covid19_bad_2.jpg" alt="An example of a bad RDT photo because only part of the RDT is shown" height="200"/></p>  | <p align="center"><img src="covid19_bad_3.jpg" alt="An example of a bad RDT photo because only part of the RDT is shown" height="200"/></p> | <p align="center"><img src="covid19_bad_4.jpg" alt="An example of a bad RDT photo because the RDT is skewed" height="200"/></p> |
+| <img src="covid19_good.jpg" alt="An example of a good RDT photo that is tightly cropped and perspective-corrected" height="200"/> | <img src="covid19_bad_1.jpg" alt="An example of a bad RDT photo because it is taken from too far away and includes the background" height="200"/> | <img src="covid19_bad_2.jpg" alt="An example of a bad RDT photo because only part of the RDT is shown" height="200"/>  | <img src="covid19_bad_3.jpg" alt="An example of a bad RDT photo because only part of the RDT is shown" height="200"/> | <img src="covid19_bad_4.jpg" alt="An example of a bad RDT photo because the RDT is skewed" height="200"/> |
 | Cropped and perspective-corrected. | Too far away. Background included. | Only a part of RDT is shown. | Only a part of RDT is shown. | RDT is skewed. |
 
 There are two ways to get such an image:
@@ -15,17 +15,24 @@ There are two ways to get such an image:
 
 Once you have the template image, add it to the following folder in your Android code: `app/src/main/res/drawable/nodpi/`.
 
-### 2. Identifying regions of interest
-When trained clinicians look at an RDT design, they can usually quickly infer where test results should appear on the RDT and what they should mean. Currently, RDTScan needs developers to provide that information to bootstrap the algorithm. This information includes:
+## 2. Identifying regions of interest
+When trained clinicians look at an RDT design, they can usually quickly infer where test results should appear on the RDT and what they should mean. Currently, RDTScan needs developers to provide that information to bootstrap the algorithm.
 
-| Result Window                       | Control/Test Lines          |
-| :---------------------------------- | :-------------------------: |
-| <p align="center"><img src="covid19_result_window.jpg" alt="TODO" height="200"/></p> | <p align="center"><img src="covid19_lines.jpg" alt="TODO" height="200"/></p> |
-| <p align="center"><img src="covid19_rw_tl.png" alt="TODO" height="200"/></p> | <p align="center"><img src="covid19_top_line.png" alt="TODO" height="200"/></p> |
-| <p align="center"><img src="covid19_rw_br.png" alt="TODO" height="200"/></p> | <p align="center"><img src="covid19_middle_line.png" alt="TODO" height="200"/></p>| 
-|                                     | <p align="center"><img src="covid19_bottom_line.png" alt="TODO" height="200"/></p> |
+### Location of result window
+<img src="covid19_result_window.jpg" alt="TODO" height="200"/>
 
-### 3. Modifying the configuration file
+| Top-Left Corner (x, y) | Bottom-Right Corner (x, y) |
+| :--------------------: | :------------------------: |
+| <img src="covid19_rw_tl.png" alt="TODO" height="200"/> | <img src="covid19_rw_br.png" alt="TODO" height="200"/> |
+
+### Location of control/test lines
+<img src="covid19_lines.jpg" alt="TODO" height="200"/>
+
+| Top line (y-position only)  | Middle line (y-position only)  | Bottom line (y-position only)  |
+| :-------------------------: | :----------------------------: | :----------------------------: | 
+| <img src="covid19_top_line.png" alt="TODO" height="200"/> | <img src="covid19_middle_line.png" alt="TODO" height="200"/> | <img src="covid19_bottom_line.png" alt="TODO" height="200"/> |
+
+## 3. Modifying the configuration file
 If you are working directly on our repository, open the file `app/src/main/assets/config.json`. If not, copy that file over to oyr file 
 3. Key is the name of the RDT, and add the parameters specified in config.json
 
