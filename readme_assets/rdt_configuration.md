@@ -34,7 +34,7 @@ If you are working directly on our repository, open the file `app/src/main/asset
 | **Data Field**                      | **Required?**       | **Data Types**       | **Range**    | **Description**    |
 | :---------------------------------- | :-----------------: | :------------------- | :----------- |:----------------- |
 | `REF_IMG`                           | :heavy_check_mark:  | `String`             |              | Filename of the template image for the RDT |
-| `VIEW_FINDER_SCALE_H`               | :heavy_check_mark:  | `double`             | (0.0, 1.0)   | Relative height of the view finder compared to screen height |
+| `VIEW_FINDER_SCALE_H`               | :heavy_check_mark:  | `double`             | min = 0.0, max = 1.0   | Relative height of the view finder compared to screen height |
 | `VIEW_FINDER_SCALE_W`               | :heavy_check_mark:  | `double`             |              | Relative width of the view finder compared to screen height |
 | `RESULT_WINDOW_RECT_TOP_LEFT`       | :heavy_check_mark:  | [`double`, `double`] |              | (x, y) coordinates of top-left corner of result window |
 | `RESULT_WINDOW_RECT_BOTTOM_RIGHT`   | :heavy_check_mark:  | [`double`, `double`] |              | (x, y) coordinates of bottom-right corner of result window |
@@ -45,7 +45,7 @@ If you are working directly on our repository, open the file `app/src/main/asset
 | `TOP_LINE_NAME`                     | :heavy_check_mark:  | `String`             |              | Meaning of the top line (e.g., "Control", "Influenza A") |
 | `MIDDLE_LINE_NAME`                  | :heavy_check_mark:  | `String`             |              | Meaning of the middle line (e.g., "Control", "Influenza A") |
 | `BOTTOM_LINE_NAME`                  | :heavy_check_mark:  | `String`             |              | Meaning of the bottom line (e.g., "Control", "Malaria P.f") |
-| `LINE_INTENSITY`                    | :heavy_minus_sign:  | `int`                | (0, 255)     | Minimum intensity of the line (default = 80) |
+| `LINE_INTENSITY`                    | :heavy_minus_sign:  | `int`                | min = 0, max= 255     | Minimum intensity of the line (default = 80) |
 | `FIDUCIAL_COUNT`                    | :heavy_minus_sign:  | `double`             |              | TODO |
 | `FIDUCIAL_DISTANCE`                 | :heavy_minus_sign:  | `double`             |              | TODO |
 | `FIDUCIAL_POSITION_MIN`             | :heavy_minus_sign:  | `double`             |              | TODO |
