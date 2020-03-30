@@ -48,7 +48,7 @@ If you are working directly on our repository, open the file `app/src/main/asset
 | `TOP_LINE_POSITION`                 | :heavy_check_mark:  | [`double`, `double`] |              | (x, y) coordinates of the center of the top line |
 | `MIDDLE_LINE_POSITION`              | :heavy_check_mark:  | [`double`, `double`] |              | (x, y) coordinates of the center of the middle line |
 | `BOTTOM_LINE_POSITION`              | :heavy_check_mark:  | [`double`, `double`] |              | (x, y) coordinates of the center of the bottom line |
-| `LINE_SEARCH_WIDTH`                 | :heavy_minus_sign:  | `double`             |              | Gap between two consecutive lines |
+| `LINE_SEARCH_WIDTH`                 | :heavy_check_mark:  | `double`             |              | Gap between two consecutive lines |
 | `TOP_LINE_NAME`                     | :heavy_check_mark:  | `String`             |              | The meaning of the top line (e.g., "Control", "Influenza A") |
 | `MIDDLE_LINE_NAME`                  | :heavy_check_mark:  | `String`             |              | The meaning of the middle line (e.g., "Control", "Influenza A") |
 | `BOTTOM_LINE_NAME`                  | :heavy_check_mark:  | `String`             |              | The meaning of the bottom line (e.g., "Control", "Malaria P.f") |
