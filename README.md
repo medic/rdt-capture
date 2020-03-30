@@ -38,7 +38,7 @@ Extending RDTScan to accommodate a new RDT is a matter of three steps:
 2. Identifying some regions-of-interest using an image-editing program (e.g., Photoshop, GIMP)
 3. Adding that information and other metadata to a configuration file.
 
-For detailed instructions on how to extend RDT for a new RDT, visit this [link](readme_assets/rdt_configuration.md).
+For detailed instructions on how to extend RDTScan for a new RDT, visit this [link](readme_assets/rdt_configuration.md).
 
 **Note:** Although RDTScan is designed to be as generalizable as possible, its feature-matching approach is less amenable to the following RDT characteristics:
 * Blank cassettes with little or no lettering
