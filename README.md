@@ -24,7 +24,7 @@ RDTScan utilizes [OpenCV for Android](https://opencv.org/android/) for many of t
   1. Go to **File > Project Structure > SDK Location** and then set the path variable in **Android NDK Location** to `NDK_HOME`.
   2. Open the `local.properties` file and add the following line: `ndk.dir=NDK_HOME`
 
-# New RDT Configuration
+# Configuration for New RDTs
 This repository already includes the files needed to use RDTScan with a few RDT designs that we have encountered during our research:
 * [SD Bioline Malaria Ag P.f](https://www.alere.com/en/home/product-details/sd-bioline-malaria-ag-pf-hrp-2.html)
 * [CareStart Malaria P.f/P.v](http://www.accessbio.net/eng/products/products01_02.asp)
