@@ -21,9 +21,9 @@ When trained clinicians look at an RDT design, they can usually quickly infer wh
 | Result Window                       | Control/Test Lines          |
 | :---------------------------------- | :-------------------------: |
 | <p align="center"><img src="covid19_result_window.jpg" alt="TODO" height="200"/></p> | <p align="center"><img src="covid19_lines.jpg" alt="TODO" height="200"/></p> |
-| ![](covid19_rw_tl.png)              | ![](covid19_top_line.png)   |
-| ![](covid19_rw_br.png)              | ![](covid19_middle_line.png)|
-|                                     | ![](covid19_bottom_line.png)|
+| <p align="center"><img src="covid19_rw_tl.png" alt="TODO" height="200"/></p> | <p align="center"><img src="covid19_top_line.png" alt="TODO" height="200"/></p> |
+| <p align="center"><img src="covid19_rw_br.png" alt="TODO" height="200"/></p> | <p align="center"><img src="covid19_middle_line.png" alt="TODO" height="200"/></p>| 
+|                                     | <p align="center"><img src="covid19_bottom_line.png" alt="TODO" height="200"/></p> |
 
 ### 3. Modifying the configuration file
 If you are working directly on our repository, open the file `app/src/main/assets/config.json`. If not, copy that file over to oyr file 
