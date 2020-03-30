@@ -678,7 +678,7 @@ public class ImageProcessor {
         Mat lowerRedThresh = new Mat();
         Mat upperRedThresh = new Mat();
         Mat redThresh = new Mat();
-        inRange(hsv, BLOOD_COLOR_LOW_HUE_LOWER, BLOOD_COLOR_HIGH_HUE_UPPER, lowerRedThresh);
+        inRange(hsv, BLOOD_COLOR_LOW_HUE_LOWER, BLOOD_COLOR_LOW_HUE_UPPER, lowerRedThresh);
         inRange(hsv, BLOOD_COLOR_HIGH_HUE_LOWER, BLOOD_COLOR_HIGH_HUE_UPPER, upperRedThresh);
         addWeighted(lowerRedThresh, 1.0, upperRedThresh, 1.0, 0.0,  redThresh);
 
