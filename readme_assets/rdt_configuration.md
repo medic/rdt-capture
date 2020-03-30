@@ -4,11 +4,9 @@ Please follow the instruction to add new RDTs to the app.
 ### 1. Getting a suitable template
 RDTScan requires a clear, upright, and tightly cropped image of an unused RDT. Below are some examples of good and bad images:
 
-<center><img src="covid19_good.jpg" alt="A good example of template image" width="300"/></center>
-<center><img src="covid19_bad_1.jpg" alt="Bad examples of template image" width="300"/></center>
-<center><img src="covid19_bad_2.jpg" alt="A good example of template image" width="300"/></center>
-<center><img src="covid19_bad_3.jpg" alt="A good example of template image" width="300"/></center>
-<center><img src="covid19_bad_4.jpg" alt="A good example of template image" width="300"/></center>
+Good Exmaple               |  Bad Example 1            |  Bad Example 2            |  Bad Example 3            |  Bad Example 4
+:-------------------------:|:-------------------------:|:-------------------------:|:-------------------------:|:-------------------------:
+![](covid19_good.jpg)   |  ![](covid19_bad_1.jpg)| ![](covid19_bad_2.jpg)  | ![](covid19_bad_3.jpg)  | ![](covid19_bad_4.jpg)  
 
 There are two ways to get such an image:
 1. Use a document scanning app like [OfficeLens](https://play.google.com/store/apps/details?id=com.microsoft.office.officelens&hl=en). As long as the RDT is on a clean and distinct background, the app will perform perspective correction and crop the image tightly around the RDT. 
