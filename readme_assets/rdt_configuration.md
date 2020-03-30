@@ -45,9 +45,9 @@ If you are working directly on our repository, open the file `app/src/main/asset
 | `VIEW_FINDER_SCALE_W`               | :heavy_check_mark:  | `double`             |              | Width of the view finder compared to screen height in ratio |
 | `RESULT_WINDOW_RECT_TOP_LEFT`       | :heavy_check_mark:  | [`double`, `double`] |              | (x, y) coordinates of top-left corner of result window |
 | `RESULT_WINDOW_RECT_BOTTOM_RIGHT`   | :heavy_check_mark:  | [`double`, `double`] |              | (x, y) coordinates of bottom-right corner of result window |
-| `TOP_LINE_POSITION`                 | :heavy_check_mark:  | [`double`, `double`] |              | (x, y) coordinates of the center of the top line |
-| `MIDDLE_LINE_POSITION`              | :heavy_check_mark:  | [`double`, `double`] |              | (x, y) coordinates of the center of the middle line |
-| `BOTTOM_LINE_POSITION`              | :heavy_check_mark:  | [`double`, `double`] |              | (x, y) coordinates of the center of the bottom line |
+| `TOP_LINE_POSITION`                 | :heavy_check_mark:  | `double`, `double`] |              | (x, y) coordinates of the center of the top line |
+| `MIDDLE_LINE_POSITION`              | :heavy_check_mark:  | `double`, `double`] |              | (x, y) coordinates of the center of the middle line |
+| `BOTTOM_LINE_POSITION`              | :heavy_check_mark:  | `double`, `double`] |              | (x, y) coordinates of the center of the bottom line |
 | `LINE_SEARCH_WIDTH`                 | :heavy_check_mark:  | `double`             |              | Gap between two consecutive lines |
 | `TOP_LINE_NAME`                     | :heavy_check_mark:  | `String`             |              | The meaning of the top line (e.g., "Control", "Influenza A") |
 | `MIDDLE_LINE_NAME`                  | :heavy_check_mark:  | `String`             |              | The meaning of the middle line (e.g., "Control", "Influenza A") |
