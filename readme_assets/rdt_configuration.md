@@ -1,25 +1,10 @@
 # Configuration for New RDTs
-This repository already includes the files needed to use RDTScan with a few RDT designs that we have encountered during our research:
-* [SD Bioline Malaria Ag P.f](https://www.alere.com/en/home/product-details/sd-bioline-malaria-ag-pf-hrp-2.html)
-* [CareStart Malaria P.f/P.v](http://www.accessbio.net/eng/products/products01_02.asp)
-* [Quidel's QuickVue Influenza A+B Test](https://www.quidel.com/immunoassays/rapid-influenza-tests/quickvue-influenza-test)
-* [JAL Medical COVID-19](https://www.jalmedical.com/products/covid-19-test-kits/)
-
-Extending RDTScan to accommodate a new RDT is a matter of three steps: (1) adding a clean photo of the RDT, (2) identifying some regions-of-interest using an image-editing program (e.g., Photoshop, GIMP), and then (3) adding that information and other metadata to a configuration file. This process is outlined below:
-
-**Note:** Although RDTScan is designed to be as generalizable as possible, its feature-matching approach is less amenable to the following RDT characteristics:
-* Blank cassettes with little or no lettering
-* Inconsistent patterns (e.g., QR code, bar code)
-* More than three result lines
-
-<center><img src="rdt_examples.png" alt="Examples photographs of RDTs that work well and do not work well with RDTScan" width="300"/></center>
-
-For a relatively easy-to-understand explanation of how feature-matching works and why some designs are more amenable than others, please refer to this [tutorial](https://opencv-python-tutroals.readthedocs.io/en/latest/py_tutorials/py_feature2d/py_features_meaning/py_features_meaning.html) by OpenCV.
+Please follow the instruction to add new RDTs to the app.
 
 ### 1. Getting a suitable template
 RDTScan requires a clear, upright, and tightly cropped image of an unused RDT. Below are some examples of good and bad images:
 
-*TODO: example images that are good and bad*
+<center><img src="readme_assets/covid19_good.jpg" alt="A good example of template image" width="300"/></center>
 
 There are two ways to get such an image:
 1. Use a document scanning app like [OfficeLens](https://play.google.com/store/apps/details?id=com.microsoft.office.officelens&hl=en). As long as the RDT is on a clean and distinct background, the app will perform perspective correction and crop the image tightly around the RDT. 
