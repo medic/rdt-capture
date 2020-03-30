@@ -27,7 +27,24 @@ RDTScan utilizes [OpenCV for Android](https://opencv.org/android/) for many of t
   2. Open the `local.properties` file and add the following line: `ndk.dir=NDK_HOME`
 
 # New RDT Configuration
-[Link](readme_assets/rdt_configuration.md)
+This repository already includes the files needed to use RDTScan with a few RDT designs that we have encountered during our research:
+* [SD Bioline Malaria Ag P.f](https://www.alere.com/en/home/product-details/sd-bioline-malaria-ag-pf-hrp-2.html)
+* [CareStart Malaria P.f/P.v](http://www.accessbio.net/eng/products/products01_02.asp)
+* [Quidel's QuickVue Influenza A+B Test](https://www.quidel.com/immunoassays/rapid-influenza-tests/quickvue-influenza-test)
+* [JAL Medical COVID-19](https://www.jalmedical.com/products/covid-19-test-kits/)
+
+Extending RDTScan to accommodate a new RDT is a matter of three steps: (1) adding a clean photo of the RDT, (2) identifying some regions-of-interest using an image-editing program (e.g., Photoshop, GIMP), and then (3) adding that information and other metadata to a configuration file. This process is outlined below:
+
+**Note:** Although RDTScan is designed to be as generalizable as possible, its feature-matching approach is less amenable to the following RDT characteristics:
+* Blank cassettes with little or no lettering
+* Inconsistent patterns (e.g., QR code, bar code)
+* More than three result lines
+
+<center><img src="rdt_examples.png" alt="Examples photographs of RDTs that work well and do not work well with RDTScan" width="300"/></center>
+
+For a relatively easy-to-understand explanation of how feature-matching works and why some designs are more amenable than others, please refer to this [tutorial](https://opencv-python-tutroals.readthedocs.io/en/latest/py_tutorials/py_feature2d/py_features_meaning/py_features_meaning.html) by OpenCV.
+
+This [Link](readme_assets/rdt_configuration.md) has detailed instruction for adding new RDT.
 
 # API
 [Link](readme_assets/api_imageprocessor.md) for `ImageProcessor.java`
