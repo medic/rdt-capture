@@ -49,8 +49,6 @@ import static org.opencv.imgproc.Imgproc.cvtColor;
 public final class ImageUtil {
     private static String TAG = "ImageUtil";
 
-    public static final int GAUSSIAN_BLUR_WINDOW = 5;
-
     /**
      * Convert Android's Image class to an OpenCV Mat
      * @param image: the input Image

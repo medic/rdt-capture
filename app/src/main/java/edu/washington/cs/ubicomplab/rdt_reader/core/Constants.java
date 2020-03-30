@@ -36,6 +36,7 @@ public final class Constants {
     public static Size CAMERA2_IMAGE_SIZE = new Size(1280, 720);
 
     // Overall image quality thresholds
+    public static final int SHARPNESS_GAUSSIAN_BLUR_WINDOW = 5;
     public static double SHARPNESS_THRESHOLD = 0.8;
     public static double UNDER_EXPOSURE_THRESHOLD = 120;
     public static double OVER_EXPOSURE_THRESHOLD = 255;
