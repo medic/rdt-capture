@@ -38,28 +38,27 @@ When trained clinicians look at an RDT design, they can usually quickly infer wh
 If you are working directly on our repository, open the file `app/src/main/assets/config.json`. If not, copy that file over to oyr file 
 3. Key is the name of the RDT, and add the parameters specified in config.json
 
-| **Data Field**                      | **Required?**       | **Data Types**  | **Description**    |
-| :---------------------------------- | :-----------------: | :-------------- | :----------------- |
-| `REF_IMG`                           | :heavy_check_mark:  | `String`        | The filename of the template image for the RDT |
-| `VIEW_FINDER_SCALE_H`               | :heavy_check_mark:  | `double`        | TODO |
-| `VIEW_FINDER_SCALE_W`               | :heavy_check_mark:  | `double`        | TODO |
-| `RESULT_WINDOW_RECT_HEIGHT`         | :heavy_check_mark:  | `double`        | TODO |
-| `RESULT_WINDOW_RECT_WIDTH_PADDING`  | :heavy_check_mark:  | `double`        | TODO |
-| `TOP_LINE_POSITION`                 | :heavy_check_mark:  | `double`        | TODO |
-| `MIDDLE_LINE_POSITION`              | :heavy_check_mark:  | `double`        | TODO |
-| `BOTTOM_LINE_POSITION`              | :heavy_check_mark:  | `double`        | TODO |
-| `TOP_LINE_NAME`                     | :heavy_check_mark:  | `String`        | The meaning of the top line (e.g., "Control", "Influenza A") |
-| `MIDDLE_LINE_NAME`                  | :heavy_check_mark:  | `String`        | The meaning of the middle line (e.g., "Control", "Influenza A") |
-| `BOTTOM_LINE_NAME`                  | :heavy_check_mark:  | `String`        | The meaning of the bottom line (e.g., "Control", "Malaria P.f") |
-| `INTENSITY_THRESHOLD`               | :heavy_minus_sign:  | `int`           | TODO |
-| `CONTROL_INTENSITY_PEAK_THRESHOLD`  | :heavy_check_mark:  | `double`        | TODO |
-| `TEST_INTENSITY_PEAK_THRESHOLD`     | :heavy_check_mark:  | `double`        | TODO |
-| `LINE_SEARCH_WIDTH`                 | :heavy_minus_sign:  | `double`        | TODO |
-| `FIDUCIAL_POSITION_MIN`             | :heavy_minus_sign:  | `double`        | TODO |
-| `FIDUCIAL_POSITION_MAX`             | :heavy_minus_sign:  | `double`        | TODO |
-| `FIDUCIAL_MIN_HEIGHT`               | :heavy_minus_sign:  | `double`        | TODO |
-| `FIDUCIAL_MIN_WIDTH`                | :heavy_minus_sign:  | `double`        | TODO |
-| `FIDUCIAL_MAX_WIDTH`                | :heavy_minus_sign:  | `double`        | TODO |
-| `FIDUCIAL_TO_RESULT_WINDOW_OFFSET`  | :heavy_minus_sign:  | `double`        | TODO |
-| `FIDUCIAL_DISTANCE`                 | :heavy_minus_sign:  | `double`        | TODO |
-| `FIDUCIAL_COUNT`                    | :heavy_minus_sign:  | `double`        | TODO |
+| **Data Field**                      | **Required?**       | **Data Types**       | **Range**    | **Description**    |
+| :---------------------------------- | :-----------------: | :------------------- | :----------- |:----------------- |
+| `REF_IMG`                           | :heavy_check_mark:  | `String`             |              | The filename of the template image for the RDT |
+| `VIEW_FINDER_SCALE_H`               | :heavy_check_mark:  | `double`             | (0.0, 1.0)   | Height of the view finder compared to screen height in ratio |
+| `VIEW_FINDER_SCALE_W`               | :heavy_check_mark:  | `double`             |              | Width of the view finder compared to screen height in ratio |
+| `RESULT_WINDOW_RECT_TOP_LEFT`       | :heavy_check_mark:  | [`double`, `double`] |              | (x, y) coordinates of top-left corner of result window |
+| `RESULT_WINDOW_RECT_BOTTOM_RIGHT`   | :heavy_check_mark:  | [`double`, `double`] |              | (x, y) coordinates of bottom-right corner of result window |
+| `TOP_LINE_POSITION`                 | :heavy_check_mark:  | [`double`, `double`] |              | (x, y) coordinates of the center of the top line |
+| `MIDDLE_LINE_POSITION`              | :heavy_check_mark:  | [`double`, `double`] |              | (x, y) coordinates of the center of the middle line |
+| `BOTTOM_LINE_POSITION`              | :heavy_check_mark:  | [`double`, `double`] |              | (x, y) coordinates of the center of the bottom line |
+| `LINE_SEARCH_WIDTH`                 | :heavy_minus_sign:  | `double`             |              | Gap between two consecutive lines |
+| `TOP_LINE_NAME`                     | :heavy_check_mark:  | `String`             |              | The meaning of the top line (e.g., "Control", "Influenza A") |
+| `MIDDLE_LINE_NAME`                  | :heavy_check_mark:  | `String`             |              | The meaning of the middle line (e.g., "Control", "Influenza A") |
+| `BOTTOM_LINE_NAME`                  | :heavy_check_mark:  | `String`             |              | The meaning of the bottom line (e.g., "Control", "Malaria P.f") |
+| `LINE_INTENSITY`                    | :heavy_minus_sign:  | `int`                | (0, 255)     | Minimum intensity of the line. The default value is 80. If you the reader to read more faint line, you can decrease the values. However, it will also increase false positive. If you experience the reader is showing too many false positive results, you can increase the value. |
+| `FIDUCIAL_COUNT`                    | :heavy_minus_sign:  | `double`             |              | TODO |
+| `FIDUCIAL_DISTANCE`                 | :heavy_minus_sign:  | `double`             |              | TODO |
+| `FIDUCIAL_POSITION_MIN`             | :heavy_minus_sign:  | `double`             |              | TODO |
+| `FIDUCIAL_POSITION_MAX`             | :heavy_minus_sign:  | `double`             |              | TODO |
+| `FIDUCIAL_MIN_HEIGHT`               | :heavy_minus_sign:  | `double`             |              | TODO |
+| `FIDUCIAL_MIN_WIDTH`                | :heavy_minus_sign:  | `double`             |              | TODO |
+| `FIDUCIAL_MAX_WIDTH`                | :heavy_minus_sign:  | `double`             |              | TODO |
+| `FIDUCIAL_TO_RESULT_WINDOW_OFFSET`  | :heavy_minus_sign:  | `double`             |              | TODO |
+
