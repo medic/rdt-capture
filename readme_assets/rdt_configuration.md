@@ -6,7 +6,7 @@ RDTScan requires a clear, upright, and tightly cropped image of an unused RDT. B
 
 Good Exmaple               |  Bad Example 1            |  Bad Example 2            |  Bad Example 3            |  Bad Example 4
 :-------------------------:|:-------------------------:|:-------------------------:|:-------------------------:|:-------------------------:
-|<p align="center"><img src="covid19_good.jpg" alt="An example of a good RDT photo that is tightly cropped and perspective-corrected" height="200"/></p> | <p align="center"><img src="covid19_bad_1.jpg" alt="An example of a bad RDT photo because it is taken from too far away and includes the background" height="200"/></p> | <p align="center"><img src="covid19_bad_2.jpg" alt="An example of a bad RDT photo because only part of the RDT is shown" height="200"/></p>  | <p align="center"><img src="covid19_bad_3.jpg" alt="An example of a bad RDT photo because only part of the RDT is shown" height="200"/></p> | <p align="center"><img src="covid19_bad_4.jpg" alt="An example of a bad RDT photo because the RDT is skewed" height="200"/></p>|
+| <p align="center"><img src="covid19_good.jpg" alt="An example of a good RDT photo that is tightly cropped and perspective-corrected" height="200"/></p> | <p align="center"><img src="covid19_bad_1.jpg" alt="An example of a bad RDT photo because it is taken from too far away and includes the background" height="200"/></p> | <p align="center"><img src="covid19_bad_2.jpg" alt="An example of a bad RDT photo because only part of the RDT is shown" height="200"/></p>  | <p align="center"><img src="covid19_bad_3.jpg" alt="An example of a bad RDT photo because only part of the RDT is shown" height="200"/></p> | <p align="center"><img src="covid19_bad_4.jpg" alt="An example of a bad RDT photo because the RDT is skewed" height="200"/></p> |
 | Cropped and perspective-corrected. | Too far away. Background included. | Only a part of RDT is shown. | Only a part of RDT is shown. | RDT is skewed. |
 
 There are two ways to get such an image:
@@ -20,7 +20,7 @@ When trained clinicians look at an RDT design, they can usually quickly infer wh
 
 | Result Window                       | Control/Test Lines          |
 | :---------------------------------- | :-------------------------: |
-| ![](covid19_result_window.jpg)      | ![](covid19_lines.jpg)      |
+| <p align="center"><img src="covid19_result_window.jpg" alt="TODO" height="200"/></p> | <p align="center"><img src="covid19_lines.jpg" alt="TODO" height="200"/></p> |
 | ![](covid19_rw_tl.png)              | ![](covid19_top_line.png)   |
 | ![](covid19_rw_br.png)              | ![](covid19_middle_line.png)|
 |                                     | ![](covid19_bottom_line.png)|
