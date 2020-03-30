@@ -25,11 +25,6 @@ When trained clinicians look at an RDT design, they can usually quickly infer wh
 | ![](covid19_rw_br.png)              | ![](covid19_middle_line.png)|
 |                                     | ![](covid19_bottom_line.png)|
 
-* TODO
-*TODO: open in image editor*
-*TODO: image showing different regions of interest*
-*TODO: image showing how to find pixel locations for one of those regions of interest*
-
 ### 3. Modifying the configuration file
 If you are working directly on our repository, open the file `app/src/main/assets/config.json`. If not, copy that file over to oyr file 
 3. Key is the name of the RDT, and add the parameters specified in config.json
