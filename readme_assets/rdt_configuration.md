@@ -6,7 +6,7 @@ RDTScan requires a clear, upright, and tightly cropped image of an unused RDT. B
 
 Good Exmaple               |  Bad Example 1            |  Bad Example 2            |  Bad Example 3            |  Bad Example 4
 :-------------------------:|:-------------------------:|:-------------------------:|:-------------------------:|:-------------------------:
-![](covid19_good.jpg)   |  ![](covid19_bad_1.jpg)| ![](covid19_bad_2.jpg)  | ![](covid19_bad_3.jpg)  | ![](covid19_bad_4.jpg) 
+<center><img src="covid19_good.jpg" alt="" width="300"/></center> | <center><img src="covid19_bad_1.jpg" alt="" width="300"/></center> | <center><img src="covid19_bad_2.jpg" alt="" width="300"/></center>| <center><img src="covid19_bad_3.jpg" alt="" width="300"/></center>| <center><img src="covid19_bad_4.jpg" alt="" width="300"/></center>|
 Cropped and perspective corrected.   |  Too far away. Background included. | Only a part of RDT is shown.  | Only a part of RDT is shown. | RDT is skewed.
 
 There are two ways to get such an image:
