@@ -38,14 +38,10 @@ import edu.washington.cs.ubicomplab.rdt_reader.interfaces.SettingDialogListener;
 import edu.washington.cs.ubicomplab.rdt_reader.core.Constants;
 
 /**
- * An example activity for RDT detection and interpretation
+ * The main activity from which other activities are launched
  */
 public class MainActivity extends AppCompatActivity implements
         View.OnClickListener, SettingDialogListener {
-    // UI elements
-    private Button mImageQualityButton;
-    private Button mSettingsyButton;
-
     /**
      * {@link android.app.Activity} onCreate()
      * @param savedInstanceState: the bundle object in case this is launched from an intent
@@ -72,8 +68,8 @@ public class MainActivity extends AppCompatActivity implements
      */
     private void initViews() {
         // Initialize buttons
-        mImageQualityButton = findViewById(R.id.imagequalButton);
-        mSettingsyButton = findViewById(R.id.settingsButton);
+        Button mImageQualityButton = findViewById(R.id.imagequalButton);
+        Button mSettingsyButton = findViewById(R.id.settingsButton);
         mImageQualityButton.setOnClickListener(this);
         mSettingsyButton.setOnClickListener(this);
 
