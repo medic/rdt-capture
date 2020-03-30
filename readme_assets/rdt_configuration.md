@@ -6,7 +6,7 @@ RDTScan requires a clear, upright, and tightly cropped image of an unused RDT. B
 
 Good Exmaple               |  Bad Example 1            |  Bad Example 2            |  Bad Example 3            |  Bad Example 4
 :-------------------------:|:-------------------------:|:-------------------------:|:-------------------------:|:-------------------------:
-![](covid19_good.jpg)   |  ![](covid19_bad_1.jpg){:height="36px" width="36px"}| ![](covid19_bad_2.jpg)  | ![](covid19_bad_3.jpg)  | ![](covid19_bad_4.jpg)  
+![](covid19_good.jpg)   |  ![](covid19_bad_1.jpg| width=100)| ![](covid19_bad_2.jpg)  | ![](covid19_bad_3.jpg)  | ![](covid19_bad_4.jpg)  
 
 There are two ways to get such an image:
 1. Use a document scanning app like [OfficeLens](https://play.google.com/store/apps/details?id=com.microsoft.office.officelens&hl=en). As long as the RDT is on a clean and distinct background, the app will perform perspective correction and crop the image tightly around the RDT. 
