@@ -183,7 +183,7 @@ public class ImageProcessor {
      * needed to ensure high likelihood of correct automatic analysis
      * @param inputMat: the candidate video frame
      * @param flashEnabled: whether the camera's flash is currently enabled
-     * @return an RDTCaptureResult indicating which quality checks were passed
+     * @return an {@link RDTCaptureResult} indicating which quality checks were passed
      */
     public RDTCaptureResult assessImage(Mat inputMat, boolean flashEnabled) {
         // Convert the image to grayscale
@@ -942,7 +942,7 @@ public class ImageProcessor {
      * Interprets any lines that appear within the detected RDT's result window
      * @param inputMat: the candidate video frame
      * @param boundary: the corners of the bounding box around the detected RDT
-     * @return an RDTInterpretationResult indicating the test results
+     * @return an {@link RDTInterpretationResult} indicating the test results
      */
     public RDTInterpretationResult interpretRDT(Mat inputMat, MatOfPoint2f boundary) {
         // Crop the result window

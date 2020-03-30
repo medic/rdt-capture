@@ -108,10 +108,32 @@ public final class ImageUtil {
         Mat rgbaMat = new Mat();
         cvtColor(bgrMat, rgbaMat, Imgproc.COLOR_BGR2RGBA, 0);
 
+        // Garbage collection
         yuvMat.release();
         bgrMat.release();
 
         return rgbaMat;
+    }
+
+    /**
+     * Converts a Mat to a byte array for saving
+     * @param inputMat: the input iamge as a Mat
+     * @return a corresponding byte array
+     */
+    public static byte[] matToByteArray(Mat inputMat) {
+        // Convert from Mat to Bitmap
+        Bitmap resultBitmap = Bitmap.createBitmap(inputMat.cols(), inputMat.rows(), Bitmap.Config.ARGB_8888);
+        Utils.matToBitmap(inputMat, resultBitmap);
+
+        // Rotate by 90°
+        Matrix matrix = new Matrix();
+        matrix.postRotate(90);
+        resultBitmap = Bitmap.createBitmap(resultBitmap, 0, 0, resultBitmap.getWidth(), resultBitmap.getHeight(), matrix, true);
+
+        // Compress into byte array using JPEG
+        ByteArrayOutputStream bs = new ByteArrayOutputStream();
+        resultBitmap.compress(Bitmap.CompressFormat.JPEG, 100, bs);
+        return bs.toByteArray();
     }
 
     /**
@@ -230,47 +252,33 @@ public final class ImageUtil {
         int i;
         if (max) {
             // Measure the peak to the left side of the array
-            i = idx-1;
-            while (i > 0 && arr[i] > arr[i-1]) {
+            i = idx - 1;
+            while (i > 0 && arr[i] > arr[i - 1]) {
                 width += 1;
                 i -= 1;
             }
 
             // Measure the peak to the right side of the array
             i = idx;
-            while (i < arr.length-1 && arr[i] > arr[i+1]) {
+            while (i < arr.length - 1 && arr[i] > arr[i + 1]) {
                 width += 1;
                 i += 1;
             }
         } else {
             // Measure the valley to the left side of the array
-            i = idx-1;
-            while (i > 0 && arr[i] < arr[i-1]) {
+            i = idx - 1;
+            while (i > 0 && arr[i] < arr[i - 1]) {
                 width += 1;
                 i -= 1;
             }
 
             // Measure the valley to the right side of the array
             i = idx;
-            while (i < arr.length-1 && arr[i] < arr[i+1]) {
+            while (i < arr.length - 1 && arr[i] < arr[i + 1]) {
                 width += 1;
                 i += 1;
             }
         }
         return width;
-    }
-
-    public static byte[] matToRotatedByteArray(Mat captureMat) {
-        Bitmap resultBitmap = Bitmap.createBitmap(captureMat.cols(), captureMat.rows(), Bitmap.Config.ARGB_8888);
-        Utils.matToBitmap(captureMat, resultBitmap);
-
-        Matrix matrix = new Matrix();
-        matrix.postRotate(90);
-        resultBitmap = Bitmap.createBitmap(resultBitmap, 0, 0, resultBitmap.getWidth(), resultBitmap.getHeight(), matrix, true);
-
-        ByteArrayOutputStream bs = new ByteArrayOutputStream();
-        resultBitmap.compress(Bitmap.CompressFormat.JPEG, 100, bs);
-
-        return bs.toByteArray();
     }
 }
