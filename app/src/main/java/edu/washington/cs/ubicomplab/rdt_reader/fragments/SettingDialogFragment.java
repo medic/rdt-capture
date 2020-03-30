@@ -116,7 +116,7 @@ public class SettingDialogFragment extends DialogFragment implements RadioGroup.
     }
 
     private void UpdateConstants() {
-        Constants.SHARPNESS_THRESHOLD = (double)mSharpnessBar.getProgress()/100.0;
+        Constants.SHARPNESS_THRESHOLD = (double) mSharpnessBar.getProgress()/100.0;
         Constants.OVER_EXPOSURE_WHITE_COUNT =  mOverExpBar.getMax() - mOverExpBar.getProgress();
         Constants.UNDER_EXPOSURE_THRESHOLD = mUnderExpBar.getProgress();
         //Constants.SHADOW mShadowBar.getProgress();

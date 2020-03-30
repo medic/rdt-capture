@@ -106,12 +106,53 @@ public class MainActivity extends AppCompatActivity implements
         SharedPreferences sharedPref = context.getSharedPreferences(
                 getString(R.string.preference_file_key), Context.MODE_PRIVATE);
 
-        // Extract values from preferences
+        // Extract user's preferences and update the app's settings
         SharedPreferences.Editor editor = sharedPref.edit();
-        if (sharedPref.contains(getString(R.string.preference_language)))
-            Constants.LANGUAGE = sharedPref.getString(getString(R.string.preference_language),Constants.LANGUAGE);
+        String languagePref = getString(R.string.preference_language);
+        if (sharedPref.contains(languagePref))
+            Constants.LANGUAGE = sharedPref.getString(languagePref,
+                    Constants.LANGUAGE);
         else
-            editor.putString(getString(R.string.preference_language), Constants.LANGUAGE);
+            editor.putString(languagePref,
+                    Constants.LANGUAGE);
+
+        String underExposurePref = getString(R.string.preference_under_exposure);
+        if (sharedPref.contains(underExposurePref))
+            Constants.UNDER_EXPOSURE_THRESHOLD = sharedPref.getFloat(underExposurePref,
+                    (float) Constants.UNDER_EXPOSURE_THRESHOLD);
+        else
+            editor.putFloat(underExposurePref, (float) Constants.UNDER_EXPOSURE_THRESHOLD);
+
+        String overExposurePref = getString(R.string.preference_over_exposure);
+        if (sharedPref.contains(overExposurePref))
+            Constants.OVER_EXPOSURE_WHITE_COUNT = sharedPref.getFloat(overExposurePref,
+                    (float) Constants.OVER_EXPOSURE_WHITE_COUNT);
+        else
+            editor.putFloat(getString(R.string.preference_over_exposure),
+                    (float) Constants.OVER_EXPOSURE_WHITE_COUNT);
+
+        String sharpnessPref = getString(R.string.preference_sharpness);
+        if (sharedPref.contains(sharpnessPref))
+            Constants.SHARPNESS_THRESHOLD = sharedPref.getFloat(sharpnessPref,
+                    (float) Constants.SHARPNESS_THRESHOLD);
+        else
+            editor.putFloat(sharpnessPref,
+                    (float) Constants.SHARPNESS_THRESHOLD);
+
+        String positionPref = getString(R.string.preference_position);
+        if (sharedPref.contains(positionPref))
+            Constants.POSITION_THRESHOLD = sharedPref.getFloat(positionPref,
+                    (float) Constants.POSITION_THRESHOLD);
+        else
+            editor.putFloat(positionPref,
+                    (float) Constants.POSITION_THRESHOLD);
+
+        String sizePref = getString(R.string.preference_size);
+        if (sharedPref.contains(sizePref))
+            Constants.SIZE_THRESHOLD = sharedPref.getFloat(sizePref,
+                    (float) Constants.SIZE_THRESHOLD);
+        else
+            editor.putFloat(sizePref, (float)Constants.SIZE_THRESHOLD);
         editor.apply();
 
         // Change the language locale
