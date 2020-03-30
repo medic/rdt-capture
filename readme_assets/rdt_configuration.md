@@ -19,18 +19,14 @@ Once you have the template image, add it to the following folder in your Android
 When trained clinicians look at an RDT design, they can usually quickly infer where test results should appear on the RDT and what they should mean. Currently, RDTScan needs developers to provide that information to bootstrap the algorithm.
 
 ### Location of result window
-<img src="covid19_result_window.jpg" alt="TODO" height="200"/>
-
-| Top-Left Corner (x, y) | Bottom-Right Corner (x, y) |
-| :--------------------: | :------------------------: |
-| <img src="covid19_rw_tl.png" alt="TODO" height="200"/> | <img src="covid19_rw_br.png" alt="TODO" height="200"/> |
+|                        | Top-Left Corner (x, y) | Bottom-Right Corner (x, y) |
+| :--------------------: | :--------------------: | :------------------------: |
+| <img src="covid19_result_window.jpg" alt="TODO" height="200"/> | <img src="covid19_rw_tl.png" alt="TODO" height="200"/> | <img src="covid19_rw_br.png" alt="TODO" height="200"/> |
 
 ### Location of control/test lines
-<img src="covid19_lines.jpg" alt="TODO" height="200"/>
-
-| Top line (y-position only)  | Middle line (y-position only)  | Bottom line (y-position only)  |
-| :-------------------------: | :----------------------------: | :----------------------------: | 
-| <img src="covid19_top_line.png" alt="TODO" height="200"/> | <img src="covid19_middle_line.png" alt="TODO" height="200"/> | <img src="covid19_bottom_line.png" alt="TODO" height="200"/> |
+|                        | Top line (y-position only)  | Middle line (y-position only)  | Bottom line (y-position only)  |
+| :--------------------: | :-------------------------: | :----------------------------: | :----------------------------: | 
+| <img src="covid19_lines.jpg" alt="TODO" height="200"/> | <img src="covid19_top_line.png" alt="TODO" height="200"/> | <img src="covid19_middle_line.png" alt="TODO" height="200"/> | <img src="covid19_bottom_line.png" alt="TODO" height="200"/> |
 
 ## 3. Modifying the configuration file
 If you are working directly on our repository, open the file `app/src/main/assets/config.json`. If not, copy that file over to oyr file 
