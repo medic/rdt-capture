@@ -45,7 +45,7 @@ For detailed instructions on how to extend RDTScan for a new RDT, visit this [li
 * Inconsistent patterns (e.g., QR code, bar code)
 * More than three result lines
 
-<img src="readme_assets/rdt_examples.png" alt="Examples photographs of RDTs that work well and do not work well with RDTScan" width="300"/>
+<img src="readme_assets/rdt_examples.png" alt="Examples photographs of RDTs that work well and do not work well with RDTScan" width="300" align="center"/>
 
 For an explanation of how feature-matching works and why some designs are more amenable than others, please refer to this [tutorial](https://opencv-python-tutroals.readthedocs.io/en/latest/py_tutorials/py_feature2d/py_features_meaning/py_features_meaning.html) by OpenCV.
 
