@@ -26,84 +26,73 @@ import edu.washington.cs.ubicomplab.rdt_reader.R;
 import edu.washington.cs.ubicomplab.rdt_reader.interfaces.SettingDialogListener;
 import edu.washington.cs.ubicomplab.rdt_reader.core.Constants;
 
-public class SettingDialogFragment extends DialogFragment implements RadioGroup.OnCheckedChangeListener {
+/**
+ * Fragment view for allowing the end-user to modify the quality check thresholds
+ */
+public class SettingDialogFragment extends DialogFragment
+        implements RadioGroup.OnCheckedChangeListener {
 
-    SeekBar mSharpnessBar;
-    SeekBar mOverExpBar;
-    SeekBar mUnderExpBar;
-    SeekBar mShadowBar;
-    SeekBar mSizeBar;
-    SeekBar mPositionBar;
+    // Threshold setting UI elements
+    private SeekBar mSharpnessBar;
+    private SeekBar mUnderExpBar;
+    private SeekBar mOverExpBar;
+    private SeekBar mPositionBar;
+    private SeekBar mSizeBar;
+
+    // Language setting UI elements
     RadioButton mEnRadioButton;
     RadioButton mFrRadioButton;
     RadioButton mBmRadioButton;
     RadioGroup mLangGroup;
 
     @Override
-    public void onCheckedChanged(RadioGroup radioGroup, int i) {
-        if (i == R.id.enButton) {
-            Constants.LANGUAGE = "en";
-        } else if (i == R.id.frButton){
-            Constants.LANGUAGE = "fr";
-        } else  if (i == R.id.bmButton) {
-            Constants.LANGUAGE = "bm";
-        }
-    }
-
-    @Override
     public Dialog onCreateDialog(Bundle savedInstanceState) {
         // Use the Builder class for convenient dialog construction
         AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
-        // Get the layout inflater
-        LayoutInflater inflater = getActivity().getLayoutInflater();
 
+        LayoutInflater inflater = getActivity().getLayoutInflater();
         View dialogView = inflater.inflate(R.layout.dialog_setting, null);
 
+        // Assign all of the UI elements
         mSharpnessBar = dialogView.findViewById(R.id.sharpnessBar);
         mOverExpBar = dialogView.findViewById(R.id.overExpBar);
         mUnderExpBar = dialogView.findViewById(R.id.underExpBar);
-        mShadowBar = dialogView.findViewById(R.id.shadowBar);
-        mSizeBar = dialogView.findViewById(R.id.sizeBar);
         mPositionBar = dialogView.findViewById(R.id.positionBar);
+        mSizeBar = dialogView.findViewById(R.id.sizeBar);
+
         mEnRadioButton = dialogView.findViewById(R.id.enButton);
         mFrRadioButton = dialogView.findViewById(R.id.frButton);
         mBmRadioButton = dialogView.findViewById(R.id.bmButton);
         mLangGroup = dialogView.findViewById(R.id.langGroup);
 
+        // Set the initial values for the UI elements
         mSharpnessBar.setMax(100);
-        mSharpnessBar.setProgress((int)(Constants.SHARPNESS_THRESHOLD*100));
-
-        mOverExpBar.setMax(300);
-        mOverExpBar.setProgress(mOverExpBar.getMax() - (int)(Constants.OVER_EXPOSURE_WHITE_COUNT));
-
+        mSharpnessBar.setProgress((int) (Constants.SHARPNESS_THRESHOLD*100));
         mUnderExpBar.setMax(255);
-        mUnderExpBar.setProgress((int)(Constants.UNDER_EXPOSURE_THRESHOLD));
-
-        mSizeBar.setMax(20);
-        mSizeBar.setProgress((int)(1/Constants.SIZE_THRESHOLD));
-
+        mUnderExpBar.setProgress((int) (Constants.UNDER_EXPOSURE_THRESHOLD));
+        mOverExpBar.setMax(300);
+        mOverExpBar.setProgress(mOverExpBar.getMax() - (int) (Constants.OVER_EXPOSURE_WHITE_COUNT));
         mPositionBar.setMax(20);
-        mPositionBar.setProgress((int)(1/Constants.POSITION_THRESHOLD));
+        mPositionBar.setProgress((int) (1/Constants.POSITION_THRESHOLD));
+        mSizeBar.setMax(20);
+        mSizeBar.setProgress((int) (1/Constants.SIZE_THRESHOLD));
 
         mLangGroup.setOnCheckedChangeListener(this);
-
-        if (Constants.LANGUAGE.equals("fr")) {
+        if (Constants.LANGUAGE.equals("fr"))
             mFrRadioButton.setChecked(true);
-        } else if (Constants.LANGUAGE.equals("en")) {
+        else if (Constants.LANGUAGE.equals("en"))
             mEnRadioButton.setChecked(true);
-        } else if (Constants.LANGUAGE.equals("bm")) {
+        else if (Constants.LANGUAGE.equals("bm"))
             mBmRadioButton.setChecked(true);
-        }
 
         // Inflate and set the layout for the dialog
-        // Pass null as the parent view because its going in the dialog layout
+        // Pass null as the parent view because it is going in the dialog layout
         builder.setTitle(getString(R.string.settings))
                 .setView(dialogView)
-                // Add action buttons
                 .setPositiveButton(getString(R.string.done), new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int id) {
-                        UpdateConstants();
+                        updateConstants();
                         SettingDialogListener activity = (SettingDialogListener) getActivity();
                         activity.onClickPositiveButton();
                     }
@@ -115,27 +104,53 @@ public class SettingDialogFragment extends DialogFragment implements RadioGroup.
         return builder.create();
     }
 
-    private void UpdateConstants() {
+    /**
+     * Update the language settings based on radio button selection
+     * @param radioGroup: the radio group
+     * @param i: the ID of the element that was selected
+     */
+    @Override
+    public void onCheckedChanged(RadioGroup radioGroup, int i) {
+        switch (i) {
+            case R.id.enButton:
+                Constants.LANGUAGE = "en";
+                break;
+            case R.id.frButton:
+                Constants.LANGUAGE = "fr";
+                break;
+            case R.id.bmButton:
+                Constants.LANGUAGE = "bm";
+                break;
+            default:
+                Constants.LANGUAGE = "en";
+                break;
+        }
+    }
+
+    /**
+     * Update the constants based on user input
+     */
+    private void updateConstants() {
+        // Calculate the values based on seekbar position
         Constants.SHARPNESS_THRESHOLD = (double) mSharpnessBar.getProgress()/100.0;
         Constants.OVER_EXPOSURE_WHITE_COUNT =  mOverExpBar.getMax() - mOverExpBar.getProgress();
         Constants.UNDER_EXPOSURE_THRESHOLD = mUnderExpBar.getProgress();
-        //Constants.SHADOW mShadowBar.getProgress();
         Constants.SIZE_THRESHOLD = 1.0/(double)mSizeBar.getProgress();
         Constants.POSITION_THRESHOLD = 1.0/(double)mPositionBar.getProgress();
 
+        // Get the user's preferences
         Context context = getActivity();
         SharedPreferences sharedPref = context.getSharedPreferences(
                 getString(R.string.preference_file_key), Context.MODE_PRIVATE);
 
+        // Update the preferences
         SharedPreferences.Editor editor = sharedPref.edit();
         editor.putString(getString(R.string.preference_language), Constants.LANGUAGE);
-        editor.putFloat(getString(R.string.preference_over_exposure), (float)Constants.OVER_EXPOSURE_WHITE_COUNT);
-        editor.putFloat(getString(R.string.preference_under_exposure), (float)Constants.UNDER_EXPOSURE_THRESHOLD);
-        editor.putFloat(getString(R.string.preference_sharpness), (float)Constants.SHARPNESS_THRESHOLD);
-        editor.putFloat(getString(R.string.preference_position), (float)Constants.POSITION_THRESHOLD);
-        editor.putFloat(getString(R.string.preference_size), (float)Constants.SIZE_THRESHOLD);
+        editor.putFloat(getString(R.string.preference_under_exposure), (float) Constants.UNDER_EXPOSURE_THRESHOLD);
+        editor.putFloat(getString(R.string.preference_over_exposure), (float) Constants.OVER_EXPOSURE_WHITE_COUNT);
+        editor.putFloat(getString(R.string.preference_sharpness), (float) Constants.SHARPNESS_THRESHOLD);
+        editor.putFloat(getString(R.string.preference_position), (float) Constants.POSITION_THRESHOLD);
+        editor.putFloat(getString(R.string.preference_size), (float) Constants.SIZE_THRESHOLD);
         editor.apply();
-
-        Log.d(Constants.TAG, String.format("UODATED SETTINGS: BLUR: %.2f, SIZE: %.2f",  Constants.SHARPNESS_THRESHOLD, Constants.SIZE_THRESHOLD));
     }
 }

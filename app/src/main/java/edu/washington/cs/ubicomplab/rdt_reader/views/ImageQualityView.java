@@ -872,8 +872,8 @@ public class ImageQualityView extends LinearLayout implements View.OnClickListen
                     Log.i(TAG, "OpenCV loaded successfully");
                     processor = ImageProcessor.getInstance(mActivity, rdtName);
                     ViewportUsingBitmap viewport = findViewById(R.id.img_quality_check_viewport);
-                    viewport.hScale = (float)processor.mRDT.viewFinderScaleH;
-                    viewport.wScale = (float)processor.mRDT.viewFinderScaleW;
+                    viewport.hScale = (float) processor.mRDT.viewFinderScaleH;
+                    viewport.wScale = (float) processor.mRDT.viewFinderScaleW;
                 }
                 break;
                 default: {
