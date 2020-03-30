@@ -21,9 +21,9 @@ When trained clinicians look at an RDT design, they can usually quickly infer wh
 | Result Window                       | Control/Test Lines          |
 | :---------------------------------- | :-------------------------: |
 | ![](covid19_result_window.jpg)      | ![](covid19_lines.jpg)      |
-| ![](covid19_rw_tl.jpg)              | ![](covid19_top_line.jpg)   |
-| ![](covid19_rw_br.jpg)              | ![](covid19_middle_line.jpg)|
-|                                     | ![](covid19_bottom_line.jpg)|
+| ![](covid19_rw_tl.png)              | ![](covid19_top_line.png)   |
+| ![](covid19_rw_br.png)              | ![](covid19_middle_line.png)|
+|                                     | ![](covid19_bottom_line.png)|
 
 * TODO
 *TODO: open in image editor*
