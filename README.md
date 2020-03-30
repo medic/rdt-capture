@@ -38,11 +38,11 @@ Extending RDTScan to accommodate a new RDT is a matter of three steps: (1) addin
 * Inconsistent patterns (e.g., QR code, bar code)
 * More than three result lines
 
-<center><img src="rdt_examples.png" alt="Examples photographs of RDTs that work well and do not work well with RDTScan" width="300"/></center>
+<center><img src="readme_assets/rdt_examples.png" alt="Examples photographs of RDTs that work well and do not work well with RDTScan" width="300"/></center>
 
 For a relatively easy-to-understand explanation of how feature-matching works and why some designs are more amenable than others, please refer to this [tutorial](https://opencv-python-tutroals.readthedocs.io/en/latest/py_tutorials/py_feature2d/py_features_meaning/py_features_meaning.html) by OpenCV.
 
-This [Link](readme_assets/rdt_configuration.md) has detailed instruction for adding new RDT.
+Please, visit this [Link](readme_assets/rdt_configuration.md) for detailed instruction for adding new RDT.
 
 # API
 [Link](readme_assets/api_imageprocessor.md) for `ImageProcessor.java`
