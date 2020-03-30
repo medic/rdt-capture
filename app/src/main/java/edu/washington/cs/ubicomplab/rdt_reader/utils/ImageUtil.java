@@ -23,6 +23,8 @@ import org.opencv.core.Mat;
 import org.opencv.core.MatOfDMatch;
 import org.opencv.core.MatOfKeyPoint;
 import org.opencv.core.MatOfPoint;
+import org.opencv.core.MatOfPoint2f;
+import org.opencv.core.Point;
 import org.opencv.core.Scalar;
 import org.opencv.features2d.Features2d;
 import org.opencv.imgproc.Imgproc;
@@ -45,77 +47,14 @@ import static org.opencv.core.Core.inRange;
 import static org.opencv.imgproc.Imgproc.cvtColor;
 
 public final class ImageUtil {
-    /**
-     * Image constants
-     */
     private static String TAG = "ImageUtil";
 
-    public static final int GAUSSIAN_BLUR_WINDOW = 5;
-
     /**
-     *
-     * @param image
-     * @return
+     * Convert Android's Image class to an OpenCV Mat
+     * @param image: the input Image
+     * @return the same image as an OpenCV Mat
      */
-
-    public static byte[] imageToByteArray(Image image) {
-        byte[] data = null;
-        if (image.getFormat() == ImageFormat.JPEG) {
-            Image.Plane[] planes = image.getPlanes();
-            ByteBuffer buffer = planes[0].getBuffer();
-            data = new byte[buffer.capacity()];
-            buffer.get(data);
-            return data;
-        } else if (image.getFormat() == ImageFormat.YUV_420_888) {
-            data = NV21toJPEG(
-                    YUV_420_888toNV21(image),
-                    image.getWidth(), image.getHeight());
-        }
-        return data;
-    }
-
-    private static byte[] YUV_420_888toNV21(Image image) {
-        byte[] nv21;
-        ByteBuffer yBuffer = image.getPlanes()[0].getBuffer();
-        ByteBuffer uBuffer = image.getPlanes()[1].getBuffer();
-        ByteBuffer vBuffer = image.getPlanes()[2].getBuffer();
-
-        int ySize = yBuffer.remaining();
-        int uSize = uBuffer.remaining();
-        int vSize = vBuffer.remaining();
-
-        nv21 = new byte[ySize + uSize + vSize];
-
-        //U and V are swapped
-        yBuffer.get(nv21, 0, ySize);
-        vBuffer.get(nv21, ySize, vSize);
-        uBuffer.get(nv21, ySize + vSize, uSize);
-
-        return nv21;
-    }
-
-    private static byte[] NV21toJPEG(byte[] nv21, int width, int height) {
-        ByteArrayOutputStream out = new ByteArrayOutputStream();
-        YuvImage yuv = new YuvImage(nv21, ImageFormat.NV21, width, height, null);
-        yuv.compressToJpeg(new Rect(0, 0, width, height), 100, out);
-        return out.toByteArray();
-    }
-
     public static Mat imageToRGBMat(Image image) {
-        Mat yuvMat = imageToMat(image);
-        Mat bgrMat = new Mat(image.getHeight(), image.getWidth(), CvType.CV_8UC4);
-        image.close();
-        cvtColor(yuvMat, bgrMat, Imgproc.COLOR_YUV2BGR_I420);
-        Mat rgbaMat = new Mat();
-        cvtColor(bgrMat, rgbaMat, Imgproc.COLOR_BGR2RGBA, 0);
-
-        yuvMat.release();
-        bgrMat.release();
-
-        return rgbaMat;
-    }
-
-    public static Mat imageToMat(Image image) {
         ByteBuffer buffer;
         int rowStride;
         int pixelStride;
@@ -123,10 +62,12 @@ public final class ImageUtil {
         int height = image.getHeight();
         int offset = 0;
 
+        // Initialize data structure for output
         Image.Plane[] planes = image.getPlanes();
         byte[] data = new byte[image.getWidth() * image.getHeight() * ImageFormat.getBitsPerPixel(ImageFormat.YUV_420_888) / 8];
         byte[] rowData = new byte[planes[0].getRowStride()];
 
+        // Extract data as YUV
         for (int i = 0; i < planes.length; i++) {
             buffer = planes[i].getBuffer();
             rowStride = planes[i].getRowStride();
@@ -139,108 +80,203 @@ public final class ImageUtil {
                     int length = w * bytesPerPixel;
                     buffer.get(data, offset, length);
 
-                    if (h - row != 1) {
+                    if (h-row != 1)
                         buffer.position(buffer.position() + rowStride - length);
-                    }
                     offset += length;
                 } else {
-
-
-                    if (h - row == 1) {
+                    if (h - row == 1)
                         buffer.get(rowData, 0, width - pixelStride + 1);
-                    } else {
+                    else
                         buffer.get(rowData, 0, rowStride);
-                    }
 
-                    for (int col = 0; col < w; col++) {
+                    for (int col=0; col<w; col++)
                         data[offset++] = rowData[col * pixelStride];
-                    }
                 }
             }
         }
 
-        Mat mat = new Mat(height + height / 2, width, CvType.CV_8UC1);
-        mat.put(0, 0, data);
+        // Put data in a Mat object
+        Mat yuvMat = new Mat(height + height/2, width, CvType.CV_8UC1);
+        yuvMat.put(0, 0, data);
 
-        return mat;
+        // Convert from YUV to RGBA
+        Mat bgrMat = new Mat(image.getHeight(), image.getWidth(), CvType.CV_8UC4);
+        image.close();
+        cvtColor(yuvMat, bgrMat, Imgproc.COLOR_YUV2BGR_I420);
+        Mat rgbaMat = new Mat();
+        cvtColor(bgrMat, rgbaMat, Imgproc.COLOR_BGR2RGBA, 0);
+
+        // Garbage collection
+        yuvMat.release();
+        bgrMat.release();
+
+        return rgbaMat;
     }
 
-    public static String matToBase64(Mat mat) {
-        if (mat == null) {
-            return "";
-        }
-        Bitmap bitmap = Bitmap.createBitmap(mat.cols(), mat.rows(), Bitmap.Config.ARGB_8888);
-        Utils.matToBitmap(mat, bitmap);
-        ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-        bitmap.compress(Bitmap.CompressFormat.PNG, 100, byteArrayOutputStream);
-        byte[] byteArray = byteArrayOutputStream .toByteArray();
-        return Base64.encodeToString(byteArray, Base64.DEFAULT);
-    }
+    /**
+     * Converts a Mat to a byte array for saving
+     * @param inputMat: the input iamge as a Mat
+     * @return a corresponding byte array
+     */
+    public static byte[] matToByteArray(Mat inputMat) {
+        // Convert from Mat to Bitmap
+        Bitmap resultBitmap = Bitmap.createBitmap(inputMat.cols(), inputMat.rows(), Bitmap.Config.ARGB_8888);
+        Utils.matToBitmap(inputMat, resultBitmap);
 
-    public static byte[] matToRotatedByteArray(Mat captureMat) {
-        Bitmap resultBitmap = Bitmap.createBitmap(captureMat.cols(), captureMat.rows(), Bitmap.Config.ARGB_8888);
-        Utils.matToBitmap(captureMat, resultBitmap);
-
+        // Rotate by 90°
         Matrix matrix = new Matrix();
         matrix.postRotate(90);
         resultBitmap = Bitmap.createBitmap(resultBitmap, 0, 0, resultBitmap.getWidth(), resultBitmap.getHeight(), matrix, true);
 
+        // Compress into byte array using JPEG
         ByteArrayOutputStream bs = new ByteArrayOutputStream();
         resultBitmap.compress(Bitmap.CompressFormat.JPEG, 100, bs);
-
         return bs.toByteArray();
     }
 
-    private void drawKeypointsAndMatches(Mat inputMat, MatOfPoint boundary, MatOfKeyPoint inKeypoints, MatOfDMatch goodMatchesMat, RDT rdt) {
-        Mat resultMat = new Mat();
-        MatOfPoint boundaryMat = new MatOfPoint();
-        boundaryMat.fromList(boundary.toList());
-        ArrayList<MatOfPoint> list = new ArrayList<>();
-        list.add(boundaryMat);
-
-        Mat tempInputMat = inputMat.clone();
-        Imgproc.polylines(tempInputMat, list, true, Scalar.all(0),10);
-        Features2d.drawKeypoints(tempInputMat, inKeypoints, tempInputMat);
-        Features2d.drawMatches(rdt.refImg, rdt.refKeypoints, tempInputMat, inKeypoints, goodMatchesMat, resultMat);
-        Bitmap bitmap = Bitmap.createBitmap(inputMat.cols(), inputMat.rows(), Bitmap.Config.ARGB_8888);
-        Utils.matToBitmap(resultMat, bitmap);
-    }
-
-    private void calcuateAverageMat(Mat inputMat){
-        float[] avgIntensities = new float[inputMat.cols()];
-        float[] avgHues = new float[inputMat.cols()];
-        float[] avgSats = new float[inputMat.cols()];
-
-        for (int i = 0; i < inputMat.cols(); i++) {
-            float sumIntensity=0;
-            float sumHue=0;
-            float sumSat=0;
-            for (int j = 0; j < inputMat.rows(); j++) {
-                sumHue+=inputMat.get(j, i)[0];
-                sumIntensity+=inputMat.get(j, i)[1];
-                sumSat+=inputMat.get(j, i)[2];
-            }
-            avgIntensities[i] = sumIntensity/inputMat.rows();
-            avgHues[i] = sumHue/inputMat.rows();
-            avgSats[i] = sumSat/inputMat.rows();
-
-            Log.d(TAG, String.format("HLS at %d (%.2f, %.2f, %.2f) type %d", i,  avgHues[i]*2, avgIntensities[i]/255*100, avgSats[i]/255*100, inputMat.type()));
-        }
-    }
-
-    private Mat correctGamma(Mat enhancedImg, double gamma) {
-        Mat lutMat = new Mat(1, 256, CvType.CV_8UC1);
-        for (int i = 0; i < 256; i ++) {
-            double g = Math.pow((double)i/255.0, gamma)*255.0;
-            g = g > 255.0 ? 255.0 : g < 0 ? 0 : g;
-            lutMat.put(0, i, g);
-        }
-        Mat result = new Mat();
-        LUT(enhancedImg, lutMat, result);
-        return result;
-    }
-
+    /**
+     * Extract the brightness from an RGB color
+     * @param rgb: the RGB color
+     * @return the brightness (Y in YUV)
+     */
     public static double rgbToY(double[] rgb) {
         return 0.299 * rgb[0] + 0.587 * rgb[1] + 0.114 * rgb[2] + 20.0;
+    }
+
+    /**
+     * Crops the input image around the edges to reduce data size (for computation and upload)
+     * @param inputMat: the candidate video frame
+     * @param cropRatio: the amount by which the image should be cropped
+     *                 (as a fraction of each dimension)
+     * @return the cropped image
+     */
+    public static Mat cropInputMat(Mat inputMat, double cropRatio) {
+        int x = (int) (inputMat.cols() * (1.0-cropRatio)/2);
+        int y = (int) (inputMat.rows() * (1.0-cropRatio)/2);
+        int width = (int) (inputMat.cols() * cropRatio);
+        int height = (int) (inputMat.rows() * cropRatio);
+        org.opencv.core.Rect roi = new org.opencv.core.Rect(x, y, width, height);
+
+        return new Mat(inputMat, roi);
+    }
+
+    /**
+     * Adjusts the boundary so the coordinates align with image cropping
+     * @param inputMat: the candidate video frame
+     * @param boundary: the corners of the bounding box around the detected RDT
+     * @param cropRatio: the amount by which the image should be cropped
+     *                 (as a fraction of each dimension)
+     * @return the adjusted boundary coordinates
+     */
+    public static MatOfPoint2f adjustBoundary(Mat inputMat, MatOfPoint2f boundary, double cropRatio) {
+        // Compute the offset
+        int x = (int) (inputMat.cols() * (1.0-cropRatio)/2);
+        int y = (int) (inputMat.rows() * (1.0-cropRatio)/2);
+
+        // Apply the offset
+        Point[] boundaryPts = boundary.toArray();
+        for (Point p: boundaryPts) {
+            p.x -= x;
+            p.y -= y;
+        }
+
+        // Return the new boundary
+        return new MatOfPoint2f(boundaryPts);
+    }
+
+    /**
+     * Identifies the peaks/troughs within a vector of values
+     * @param arr: the array of values
+     * @param delta: the minimum peak/trough height
+     * @param max: whether a peak (max) or trough (min) is being tracked
+     * @return a List of [peak_idx, peak_value, peak_width] for all detected peaks/troughs
+     */
+    public static ArrayList<double[]> detectPeaks(double[] arr, double delta, boolean max) {
+        ArrayList<double[]> peaks = new ArrayList<>();
+        ArrayList<double[]> valleys = new ArrayList<>();
+
+        // Initialize peak tracking variables
+        double min_val = arr[0];
+        double max_val = arr[0];
+        int min_idx = Integer.MIN_VALUE;
+        int max_idx = Integer.MIN_VALUE;
+        boolean lookingForMax = true;
+
+        // TODO: i think something is wrong here...
+        for (int i=0; i<arr.length; i++) {
+            double curr = arr[i];
+            // Update the min/max values and locations
+            if (curr > max_val) {
+                max_val = curr;
+                max_idx = i;
+            }
+            if (curr < min_val) {
+                min_val = curr;
+                min_idx = i;
+            }
+
+            // Determine if peak has been found
+            if (lookingForMax) {
+                if (curr < max_val-delta) {
+                    if (max_idx != Integer.MIN_VALUE)
+                        peaks.add(new double[]{max_idx, max_val, measurePeakWidth(arr, max_idx, true)});
+                    min_val = curr;
+                    min_idx = i;
+                    lookingForMax = false;
+                }
+            } else {
+                if (curr > min_val+delta) {
+                    if (min_idx != Integer.MIN_VALUE)
+                        valleys.add(new double[]{min_idx, min_val, measurePeakWidth(arr, min_idx, false)});
+                    max_val = curr;
+                    max_idx = i;
+                    lookingForMax = true;
+                }
+            }
+        }
+
+        return (max ? peaks : valleys);
+    }
+
+    /**
+     * Measures the width of a detected peak/trough at the given location
+     * @param arr: the array of values
+     * @param idx: the index of the detected peak/trough
+     * @param max: whether a peak (max) or trough (min) is being tracked
+     * @return the width of the peak in pixels
+     */
+    private static double measurePeakWidth(double[] arr, int idx, boolean max) {
+        double width = 0;
+        int i;
+        if (max) {
+            // Measure the peak to the left side of the array
+            i = idx - 1;
+            while (i > 0 && arr[i] > arr[i - 1]) {
+                width += 1;
+                i -= 1;
+            }
+
+            // Measure the peak to the right side of the array
+            i = idx;
+            while (i < arr.length - 1 && arr[i] > arr[i + 1]) {
+                width += 1;
+                i += 1;
+            }
+        } else {
+            // Measure the valley to the left side of the array
+            i = idx - 1;
+            while (i > 0 && arr[i] < arr[i - 1]) {
+                width += 1;
+                i -= 1;
+            }
+
+            // Measure the valley to the right side of the array
+            i = idx;
+            while (i < arr.length - 1 && arr[i] < arr[i + 1]) {
+                width += 1;
+                i += 1;
+            }
+        }
+        return width;
     }
 }

@@ -72,8 +72,8 @@ public class ImageQualityActivity extends Activity implements ImageQualityViewLi
         Log.i("ImageQualityActivity", "Detected and Passed!");
         final ImageQualityActivity self = this;
 
-        final byte[] captureByteArray = ImageUtil.matToRotatedByteArray(rdtCaptureResult.resultMat);
-        final byte[] windowByteArray = ImageUtil.matToRotatedByteArray(rdtInterpretationResult.resultMat);
+        final byte[] captureByteArray = ImageUtil.matToByteArray(rdtCaptureResult.resultMat);
+        final byte[] windowByteArray = ImageUtil.matToByteArray(rdtInterpretationResult.resultMat);
         runOnUiThread(new Runnable() {
             @Override
             public void run() {

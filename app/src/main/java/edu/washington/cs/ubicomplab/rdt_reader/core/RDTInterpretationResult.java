@@ -44,8 +44,11 @@ public class RDTInterpretationResult {
         this.topLineName = topLineName;
         this.middleLineName = middleLineName;
         this.bottomLineName = bottomLineName;
+
+        // Convert the image to a Bitmap so it can be displayed with Android
         if (resultMat.cols() > 0 && resultMat.rows() > 0) {
-            this.resultBitmap = Bitmap.createBitmap(resultMat.cols(), resultMat.rows(), Bitmap.Config.ARGB_8888);
+            this.resultBitmap = Bitmap.createBitmap(resultMat.cols(), resultMat.rows(),
+                    Bitmap.Config.ARGB_8888);
             Utils.matToBitmap(resultMat, resultBitmap);
         }
     }
