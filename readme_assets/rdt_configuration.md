@@ -29,24 +29,23 @@ When trained clinicians look at an RDT design, they can usually quickly infer wh
 | <img src="covid19_lines.jpg" alt="TODO" height="200"/> | <img src="covid19_top_line.png" alt="TODO" height="200"/> | <img src="covid19_middle_line.png" alt="TODO" height="200"/> | <img src="covid19_bottom_line.png" alt="TODO" height="200"/> |
 
 ## 3. Modifying the configuration file
-If you are working directly on our repository, open the file `app/src/main/assets/config.json`. If not, copy that file over to oyr file 
-3. Key is the name of the RDT, and add the parameters specified in config.json
+If you are working directly on our repository, open the file `app/src/main/assets/config.json`. If not, copy that file over to the corresponding location in your code. The key value of each entry, corresponding to the RDT's name , will be used throughout the code as a lookup identifier. The values that follow the key are listed below:
 
 | **Data Field**                      | **Required?**       | **Data Types**       | **Range**    | **Description**    |
 | :---------------------------------- | :-----------------: | :------------------- | :----------- |:----------------- |
-| `REF_IMG`                           | :heavy_check_mark:  | `String`             |              | The filename of the template image for the RDT |
-| `VIEW_FINDER_SCALE_H`               | :heavy_check_mark:  | `double`             | (0.0, 1.0)   | Height of the view finder compared to screen height in ratio |
-| `VIEW_FINDER_SCALE_W`               | :heavy_check_mark:  | `double`             |              | Width of the view finder compared to screen height in ratio |
+| `REF_IMG`                           | :heavy_check_mark:  | `String`             |              | Filename of the template image for the RDT |
+| `VIEW_FINDER_SCALE_H`               | :heavy_check_mark:  | `double`             | (0.0, 1.0)   | Relative height of the view finder compared to screen height |
+| `VIEW_FINDER_SCALE_W`               | :heavy_check_mark:  | `double`             |              | Relative width of the view finder compared to screen height |
 | `RESULT_WINDOW_RECT_TOP_LEFT`       | :heavy_check_mark:  | [`double`, `double`] |              | (x, y) coordinates of top-left corner of result window |
 | `RESULT_WINDOW_RECT_BOTTOM_RIGHT`   | :heavy_check_mark:  | [`double`, `double`] |              | (x, y) coordinates of bottom-right corner of result window |
 | `TOP_LINE_POSITION`                 | :heavy_check_mark:  | `double`, `double`] |              | (x, y) coordinates of the center of the top line |
 | `MIDDLE_LINE_POSITION`              | :heavy_check_mark:  | `double`, `double`] |              | (x, y) coordinates of the center of the middle line |
 | `BOTTOM_LINE_POSITION`              | :heavy_check_mark:  | `double`, `double`] |              | (x, y) coordinates of the center of the bottom line |
 | `LINE_SEARCH_WIDTH`                 | :heavy_check_mark:  | `double`             |              | Gap between two consecutive lines |
-| `TOP_LINE_NAME`                     | :heavy_check_mark:  | `String`             |              | The meaning of the top line (e.g., "Control", "Influenza A") |
-| `MIDDLE_LINE_NAME`                  | :heavy_check_mark:  | `String`             |              | The meaning of the middle line (e.g., "Control", "Influenza A") |
-| `BOTTOM_LINE_NAME`                  | :heavy_check_mark:  | `String`             |              | The meaning of the bottom line (e.g., "Control", "Malaria P.f") |
-| `LINE_INTENSITY`                    | :heavy_minus_sign:  | `int`                | (0, 255)     | Minimum intensity of the line. The default value is 80. If you the reader to read more faint line, you can decrease the values. However, it will also increase false positive. If you experience the reader is showing too many false positive results, you can increase the value. |
+| `TOP_LINE_NAME`                     | :heavy_check_mark:  | `String`             |              | Meaning of the top line (e.g., "Control", "Influenza A") |
+| `MIDDLE_LINE_NAME`                  | :heavy_check_mark:  | `String`             |              | Meaning of the middle line (e.g., "Control", "Influenza A") |
+| `BOTTOM_LINE_NAME`                  | :heavy_check_mark:  | `String`             |              | Meaning of the bottom line (e.g., "Control", "Malaria P.f") |
+| `LINE_INTENSITY`                    | :heavy_minus_sign:  | `int`                | (0, 255)     | Minimum intensity of the line (default = 80) |
 | `FIDUCIAL_COUNT`                    | :heavy_minus_sign:  | `double`             |              | TODO |
 | `FIDUCIAL_DISTANCE`                 | :heavy_minus_sign:  | `double`             |              | TODO |
 | `FIDUCIAL_POSITION_MIN`             | :heavy_minus_sign:  | `double`             |              | TODO |
@@ -56,3 +55,4 @@ If you are working directly on our repository, open the file `app/src/main/asset
 | `FIDUCIAL_MAX_WIDTH`                | :heavy_minus_sign:  | `double`             |              | TODO |
 | `FIDUCIAL_TO_RESULT_WINDOW_OFFSET`  | :heavy_minus_sign:  | `double`             |              | TODO |
 
+Note that the `LINE_INTENSITY` gives the developer direct control over the interpretation accuracy of RDTScan for the target RDT. If RDTScan is under-reporting positive cases because it is missing faint lines, `LINE_INTENSITY` can be decreased to lower the threshold needed for a postivie test result. Conversely, if RDTScan is over-reporting positive cases, `LINE_INTENSITY` can be increased.
