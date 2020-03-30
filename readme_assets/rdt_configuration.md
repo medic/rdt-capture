@@ -4,7 +4,7 @@ Please follow the instruction to add new RDTs to the app.
 ## 1. Getting a suitable template
 RDTScan requires a clear, upright, and tightly cropped image of an unused RDT. Below are some examples of good and bad images:
 
-Good Exmaple               |  Bad Example 1            |  Bad Example 2            |  Bad Example 3            |  Bad Example 4
+Good Example               |  Bad Example 1            |  Bad Example 2            |  Bad Example 3            |  Bad Example 4
 :-------------------------:|:-------------------------:|:-------------------------:|:-------------------------:|:-------------------------:
 | <img src="covid19_good.jpg" alt="An example of a good RDT photo that is tightly cropped and perspective-corrected" height="200"/> | <img src="covid19_bad_1.jpg" alt="An example of a bad RDT photo because it is taken from too far away and includes the background" height="200"/> | <img src="covid19_bad_2.jpg" alt="An example of a bad RDT photo because only part of the RDT is shown" height="200"/>  | <img src="covid19_bad_3.jpg" alt="An example of a bad RDT photo because only part of the RDT is shown" height="200"/> | <img src="covid19_bad_4.jpg" alt="An example of a bad RDT photo because the RDT is skewed" height="200"/> |
 | Cropped and perspective-corrected. | Too far away. Background included. | Only a part of RDT is shown. | Only a part of RDT is shown. | RDT is skewed. |
