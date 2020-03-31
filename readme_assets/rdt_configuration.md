@@ -32,7 +32,7 @@ This information will tell RDTScan where the different lines should be located. 
 
 ### Location of fiducials (optional)
 Some RDTs may have the samge general design, but vary in exact appearance from test to test because they include a visual feature that encodes a unique identifier (e.g., barcode, QR code). Similarly, some designs vary because they are cut from a sheet at an interval that is different from their underlying pattern (e.g., [Quidel's QuickVue Influenza A+B Test](https://www.quidel.com/immunoassays/rapid-influenza-tests/quickvue-influenza-test). These designs can produce features that are inconsistent across RDTs from the same brand, thus complicating RDTScan's feature-based template-matching approach. To accommodate such designs, developers can specify the location of visual features that are consistently in the same location but vary in appearance across RDTs. RDTScan considers these features to be _fiducials_ and use their location as additional information for locating the RDT's result window.
-|                        | Fiducial corners (x, y) |
+|                        | Fiducial corners [(x, y), (x, y)] |
 | :--------------------: | :---------------------: |
 | <img src="quickvue_fiducial.png" alt="An RDT with the location of its fidicials annotated" height="200"/> | <img src="quickvue_fiducial_coordinates.png" alt="An image explaining where the developer should point their cursor to locate the corner of the fiducials in an image-editing program" height="200"/> |
 
