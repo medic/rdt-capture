@@ -30,12 +30,12 @@ import java.util.Date;
 import java.util.Locale;
 
 import edu.washington.cs.ubicomplab.rdt_reader.R;
-import edu.washington.cs.ubicomplab.rdt_reader.interfaces.SettingDialogListener;
+import edu.washington.cs.ubicomplab.rdt_reader.interfaces.SettingsDialogListener;
 import edu.washington.cs.ubicomplab.rdt_reader.core.Constants;
 
 import static java.text.DateFormat.getDateTimeInstance;
 
-public class ImageResultActivity extends AppCompatActivity implements View.OnClickListener, SettingDialogListener {
+public class ImageResultActivity extends AppCompatActivity implements View.OnClickListener, SettingsDialogListener {
 
     Bitmap mBitmapToSave;
     byte[] capturedByteArray, windowByteArray;

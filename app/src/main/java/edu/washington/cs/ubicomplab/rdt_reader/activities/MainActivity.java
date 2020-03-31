@@ -33,8 +33,8 @@ import java.util.ArrayList;
 import java.util.Locale;
 
 import edu.washington.cs.ubicomplab.rdt_reader.R;
-import edu.washington.cs.ubicomplab.rdt_reader.fragments.SettingDialogFragment;
-import edu.washington.cs.ubicomplab.rdt_reader.interfaces.SettingDialogListener;
+import edu.washington.cs.ubicomplab.rdt_reader.fragments.SettingsDialogFragment;
+import edu.washington.cs.ubicomplab.rdt_reader.interfaces.SettingsDialogListener;
 import edu.washington.cs.ubicomplab.rdt_reader.core.Constants;
 
 /**
@@ -42,7 +42,7 @@ import edu.washington.cs.ubicomplab.rdt_reader.core.Constants;
  * to select the target RDT and modify quality thresholds (for debugging purposes only)
  */
 public class MainActivity extends AppCompatActivity implements
-        View.OnClickListener, SettingDialogListener {
+        View.OnClickListener, SettingsDialogListener {
     /**
      * {@link android.app.Activity} onCreate()
      * @param savedInstanceState: the bundle object in case this is launched from an intent
@@ -180,7 +180,7 @@ public class MainActivity extends AppCompatActivity implements
         switch (item.getItemId()) {
             case R.id.action_settings:
                 // Go to the settings page
-                SettingDialogFragment dialog = new SettingDialogFragment();
+                SettingsDialogFragment dialog = new SettingsDialogFragment();
                 dialog.show(getFragmentManager(), "Setting Dialog");
                 return true;
             default:
@@ -212,13 +212,13 @@ public class MainActivity extends AppCompatActivity implements
             startActivity(intent);
         } else if (view.getId() == R.id.settingsButton) {
             // Launch the SettingDialogFragment
-            SettingDialogFragment dialog = new SettingDialogFragment();
+            SettingsDialogFragment dialog = new SettingsDialogFragment();
             dialog.show(getFragmentManager(), "Setting Dialog");
         }
     }
 
     /**
-     * {@link SettingDialogFragment} onClickPositiveButton()
+     * {@link SettingsDialogFragment} onClickPositiveButton()
      */
     @Override
     public void onClickPositiveButton() {
