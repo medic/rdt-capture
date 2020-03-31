@@ -46,9 +46,9 @@ public class ViewportUsingBitmap extends ViewGroup {
 
     public ViewportUsingBitmap(Context context, AttributeSet attrs, int defStyle) {
         super(context, attrs, defStyle);
-        TypedArray ta = context.obtainStyledAttributes(attrs, R.styleable.Viewport, 0, 0);
-        hScale = ta.getFloat(R.styleable.Viewport_heightScale, hScale);
-        wScale = ta.getFloat(R.styleable.Viewport_widthScale, wScale);
+        TypedArray ta = context.obtainStyledAttributes(attrs, R.styleable.ViewportUsingBitmap, 0, 0);
+        hScale = ta.getFloat(R.styleable.ViewportUsingBitmap_heightScale, hScale);
+        wScale = ta.getFloat(R.styleable.ViewportUsingBitmap_widthScale, wScale);
     }
 
     @Override

@@ -124,6 +124,11 @@ public class ImageQualityView extends LinearLayout implements View.OnClickListen
         CONTINUE, STOP
     }
 
+    /**
+     * {@link View} constructor
+     * @param context: the context where the view is being used
+     * @param attrs: the XML attributes for the view
+     */
     public ImageQualityView(Context context, AttributeSet attrs) {
         super(context, attrs);
         // determine where
@@ -150,23 +155,30 @@ public class ImageQualityView extends LinearLayout implements View.OnClickListen
      * Initializes UI elements and checks permissions
      */
     private void initViews() {
+        // Keep the screen on
         mActivity.getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         mActivity.getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN);
 
+        // Assign UI elements
         mViewport = findViewById(R.id.img_quality_check_viewport);
-        if (showViewport)
-            mViewport.setOnClickListener(this);
-        else
-            mViewport.setVisibility(GONE);
         mImageQualityFeedbackView = findViewById(R.id.img_quality_feedback_view);
         mProgress = findViewById(R.id.progressCircularBar);
         mProgressBackgroundView = findViewById(R.id.progressBackground);
         mProgressText = findViewById(R.id.progressText);
         mCaptureProgressBar = findViewById(R.id.captureProgressBar);
-        mCaptureProgressBar.setMax(CAPTURE_COUNT);
-        mCaptureProgressBar.setProgress(0);
         mInstructionText = findViewById(R.id.textInstruction);
 
+        // Set UI elements to default values
+        mCaptureProgressBar.setMax(CAPTURE_COUNT);
+        mCaptureProgressBar.setProgress(0);
+
+        // Decide whether the viewport should be shown or not
+        if (showViewport)
+            mViewport.setOnClickListener(this);
+        else
+            mViewport.setVisibility(GONE);
+
+        // Decide whether on-screen feedback should be shown or not
         if (showFeedback) {
             setProgressUI(mCurrentState);
         } else {
@@ -179,21 +191,8 @@ public class ImageQualityView extends LinearLayout implements View.OnClickListen
         }
     }
 
-    public boolean isExternalIntent() {
-        Intent i = mActivity.getIntent();
-        return i != null && "medic.mrdt.verify".equals(i.getAction());
-    }
-
     public void setImageQualityViewListener(ImageQualityViewListener listener) {
         mImageQualityViewListener = listener;
-    }
-
-    public void setFlashEnabled(boolean flashEnabled) {
-        if (this.flashEnabled == flashEnabled)
-            return;
-        this.flashEnabled = flashEnabled;
-        if (mCameraId != null)
-            this.updateRepeatingRequest();
     }
 
     /**
