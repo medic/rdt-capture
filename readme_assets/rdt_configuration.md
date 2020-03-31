@@ -11,22 +11,28 @@ Good Example               |  Bad Example 1            |  Bad Example 2         
 
 There are two ways to get such an image:
 1. Use a document scanning app like [OfficeLens](https://play.google.com/store/apps/details?id=com.microsoft.office.officelens&hl=en). As long as the RDT is on a clean and distinct background, the app will perform perspective correction and crop the image tightly around the RDT. 
-2. Take a photo yourself using a camera. The camera should be as parallel to the RDT as possible (i.e., each corner of the RDT should be 90&deg;). Open up the photo in an image-editing program (e.g., PhotoShop, GIMP) and crop the image as close to the RDT's edges as possible.
+2. Take a photo yourself using a camera. The camera should be as parallel to the RDT as possible (i.e., each corner of the RDT should be 90&deg;). Open up the photo using an image-editing program (e.g., PhotoShop, GIMP) and crop the image as close to the RDT's edges as possible.
 
 Once you have the template image, add it to the following folder in your Android code: `app/src/main/res/drawable/nodpi/`.
 
 ## 2. Identifying regions of interest
 When trained clinicians look at an RDT design, they can usually quickly infer where test results should appear on the RDT and what they should mean. Currently, RDTScan needs developers to provide that information to bootstrap the algorithm.
 
-### Location of result window
+### Location of result window (required)
+This information will tell RDTScan where the image should be cropped so the user can see a zoomed version of their results.
 |                        | Top-Left Corner (x, y) | Bottom-Right Corner (x, y) |
 | :--------------------: | :--------------------: | :------------------------: |
-| <img src="covid19_result_window.jpg" alt="TODO" height="200"/> | <img src="covid19_rw_tl.png" alt="TODO" height="200"/> | <img src="covid19_rw_br.png" alt="TODO" height="200"/> |
+| <img src="covid19_result_window.jpg" alt="An RDT with the location of its result window annotated" height="200"/> | <img src="covid19_rw_tl.png" alt="An image explaining where the developer should point their cursor to locate the top-left corner of the result window in an image-editing program" height="200"/> | <img src="covid19_rw_br.png" alt="An image explaining where the developer should point their cursor to locate the bottom-right corner of the result window in an image-editing program" height="200"/> |
 
-### Location of control/test lines
+### Location of control/test lines (required)
+This information will tell RDTScan where the different lines should be located. This is used to help RDTScan assign meaning to each of the lines and to prevent RDTScan from picking up on marks that are not actual lines.
 |                        | Top line (y-position only)  | Middle line (y-position only)  | Bottom line (y-position only)  |
 | :--------------------: | :-------------------------: | :----------------------------: | :----------------------------: | 
-| <img src="covid19_lines.jpg" alt="TODO" height="200"/> | <img src="covid19_top_line.png" alt="TODO" height="200"/> | <img src="covid19_middle_line.png" alt="TODO" height="200"/> | <img src="covid19_bottom_line.png" alt="TODO" height="200"/> |
+| <img src="covid19_lines.jpg" alt="An RDT with the location of its result lines annotated" height="200"/> | <img src="covid19_top_line.png" alt="An image explaining where the developer should point their cursor to locate the top line within the result window in an image-editing program" height="200"/> | <img src="covid19_middle_line.png" alt="An image explaining where the developer should point their cursor to locate the middle line within the result window in an image-editing program" height="200"/> | <img src="covid19_bottom_line.png" alt="An image explaining where the developer should point their cursor to locate the bottom line within the result window in an image-editing program" height="200"/> |
+
+### Location of fiducials (optional)
+Some RDTs may have the samge general design, but vary in exact appearance from test to test because they include a visual feature that encodes a unique identifier (e.g., barcode, QR code). Similarly, some designs vary because they are cut from a sheet at an interval that is different from their underlying pattern (e.g., [Quidel's QuickVue Influenza A+B Test](https://www.quidel.com/immunoassays/rapid-influenza-tests/quickvue-influenza-test). These designs can produce features that are inconsistent across RDTs from the same brand, thus complicating RDTScan's feature-based template-matching approach. To accommodate such designs, developers can specify the location of visual features that are consistently in the same location but vary in appearance across RDTs. RDTScan considers these features to be _fiducials_ and use their location as additional information for locating the RDT's result window.
+
 
 ## 3. Modifying the configuration file
 If you are working directly on our repository, open the file `app/src/main/assets/config.json`. If not, copy that file over to the corresponding location in your code. The key value of each entry, corresponding to the RDT's name , will be used throughout the code as a lookup identifier. The values that follow the key are listed below:
