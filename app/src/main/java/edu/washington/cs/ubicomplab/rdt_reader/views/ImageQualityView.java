@@ -113,6 +113,7 @@ public class ImageQualityView extends LinearLayout implements View.OnClickListen
         ORIENTATIONS.append(Surface.ROTATION_270, 180);
     }
     private ImageQualityViewListener mImageQualityViewListener;
+    private int mMeteringCounter = Integer.MIN_VALUE;
 
     // Thread handling for the preview and camera hardware
     private Semaphore mCameraOpenCloseLock = new Semaphore(1);
@@ -159,6 +160,10 @@ public class ImageQualityView extends LinearLayout implements View.OnClickListen
     public enum RDTDetectedResult {
         CONTINUE, STOP
     }
+
+    /////////////////////////////////////////
+    // Callbacks, threads, and other objects
+    /////////////////////////////////////////
 
     /**
      * Object for handling several lifecycle events on a {@link TextureView}
@@ -215,6 +220,54 @@ public class ImageQualityView extends LinearLayout implements View.OnClickListen
     };
 
     /**
+     * Prepares {@link ImageProcessor} once OpenCV has been loaded
+     **/
+    private BaseLoaderCallback mLoaderCallback = new BaseLoaderCallback(mActivity) {
+        @Override
+        public void onManagerConnected(int status) {
+            switch (status) {
+                case LoaderCallbackInterface.SUCCESS: {
+                    Log.i(TAG, "OpenCV loaded successfully");
+                    processor = ImageProcessor.getInstance(mActivity, rdtName);
+                    ViewportUsingBitmap viewport = findViewById(R.id.img_quality_check_viewport);
+                    viewport.hScale = (float) processor.mRDT.viewFinderScaleH;
+                    viewport.wScale = (float) processor.mRDT.viewFinderScaleW;
+                }
+                break;
+                default: {
+                    super.onManagerConnected(status);
+                }
+                break;
+            }
+        }
+    };
+
+    /**
+     * Callback for camera configuration
+     */
+    private CameraCaptureSession.StateCallback mCameraCaptureSessionStateCallback = new CameraCaptureSession.StateCallback() {
+        @Override
+        public void onConfigured(@NonNull CameraCaptureSession cameraCaptureSession) {
+            // The camera is already closed
+            if (null == mCameraDevice)
+                return;
+
+            // Save the camera session and notify the listener that the camera is ready
+            mCaptureSession = cameraCaptureSession;
+            if (mImageQualityViewListener != null)
+                mImageQualityViewListener.onRDTCameraReady();
+
+            updateRepeatingRequest();
+        }
+
+        @Override
+        public void onConfigureFailed(
+                @NonNull CameraCaptureSession cameraCaptureSession) {
+            showToast("Unable to open the camera.");
+        }
+    };
+
+    /**
      * The callback object for whenever {@link ImageReader} has an image available
      */
     private final ImageReader.OnImageAvailableListener mOnImageAvailableListener
@@ -248,6 +301,126 @@ public class ImageQualityView extends LinearLayout implements View.OnClickListen
         }
 
     };
+
+    /**
+     * Callback for handling events related to JPEG capture
+     */
+    private CameraCaptureSession.CaptureCallback mCaptureCallback
+            = new CameraCaptureSession.CaptureCallback() {
+
+        private void process(CaptureResult result) {
+            // Only process the image when the lock is available
+            synchronized (focusStateLock) {
+                // Check that camera information is available
+                FocusState previousFocusState = mFocusState;
+                if (result.get(CaptureResult.CONTROL_AF_MODE) == null ||
+                        result.get(CaptureResult.CONTROL_AF_STATE) == null)
+                    return;
+
+                // Interpret the current focus state to provide user feedback
+                if (result.get(CaptureResult.CONTROL_AF_MODE) ==
+                        CaptureResult.CONTROL_AF_MODE_CONTINUOUS_PICTURE) {
+                    switch (result.get(CaptureResult.CONTROL_AF_STATE)) {
+                        case CaptureResult.CONTROL_AF_STATE_PASSIVE_FOCUSED:
+                            mFocusState = FocusState.FOCUSED;
+                            break;
+                        case CaptureResult.CONTROL_AF_STATE_PASSIVE_UNFOCUSED:
+                            mFocusState = FocusState.UNFOCUSED;
+                            break;
+                        case CaptureResult.CONTROL_AF_STATE_INACTIVE:
+                            mFocusState = FocusState.INACTIVE;
+                            break;
+                        default:
+                            mFocusState = FocusState.FOCUSING;
+                            break;
+                    }
+
+                    // Display information to user if the focus state changed
+                    if (showFeedback && previousFocusState != mFocusState) {
+                        mActivity.runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                displayQualityResultFocusChanged();
+                            }
+                        });
+                    }
+                }
+            }
+        }
+
+        @Override
+        public void onCaptureProgressed(@NonNull CameraCaptureSession session,
+                                        @NonNull CaptureRequest request,
+                                        @NonNull CaptureResult partialResult) {
+            process(partialResult);
+        }
+
+        @Override
+        public void onCaptureCompleted(@NonNull CameraCaptureSession session,
+                                       @NonNull CaptureRequest request,
+                                       @NonNull TotalCaptureResult result) {
+            process(result);
+        }
+    };
+
+    /**
+     * The main {@link AsyncTask} that calls on the RDT quality checking and interpretation methods
+     */
+    private class ImageProcessAsyncTask extends AsyncTask<Image, Void, Void> {
+
+        @Override
+        protected Void doInBackground(Image... images) {
+            // Assess the quality of this image
+            Image image = images[0];
+            final Mat rgbaMat = ImageUtil.imageToRGBMat(image);
+            final RDTCaptureResult captureResult = processor.assessImage(rgbaMat, flashEnabled);
+            mActivity.runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    displayQualityResult(captureResult);
+                }
+            });
+            Log.d(TAG, String.format("Capture time: %d", System.currentTimeMillis() - timeTaken));
+            Log.d(TAG, String.format("Captured result: %b", captureResult.allChecksPassed));
+
+            // If all the quality check were passed, interpret the test result
+            RDTInterpretationResult interpretationResult = null;
+            if (captureResult.allChecksPassed) {
+                interpretationResult = processor.interpretRDT(captureResult.resultMat,
+                        captureResult.boundary);
+                image.close();
+            } else {
+                imageQueue.remove();
+                image.close();
+            }
+            rgbaMat.release();
+
+            // Determine if the RDT was successfully detected
+            RDTDetectedResult result = RDTDetectedResult.CONTINUE;
+            if (mImageQualityViewListener != null) {
+                result = mImageQualityViewListener.onRDTDetected(
+                        captureResult, interpretationResult,
+                        System.currentTimeMillis() - timeTaken
+                );
+            }
+
+            // Garbage collection
+            if (captureResult.resultMat != null)
+                captureResult.resultMat.release();
+            if (interpretationResult != null && interpretationResult.resultMat != null)
+                interpretationResult.resultMat.release();
+
+            // Interrupt the thread if a result was found
+            if (result == RDTDetectedResult.STOP)
+                mOnImageAvailableThread.interrupt();
+
+            return null;
+        }
+    }
+
+    /////////////////////////////////////////
+    // Methods
+    /////////////////////////////////////////
 
     /**
      * {@link View} constructor
@@ -333,125 +506,7 @@ public class ImageQualityView extends LinearLayout implements View.OnClickListen
     }
 
     /**
-     *
-     */
-    private class ImageProcessAsyncTask extends AsyncTask<Image, Void, Void> {
-
-        @Override
-        protected Void doInBackground(Image... images) {
-            // Assess the quality of this image
-            Image image = images[0];
-            final Mat rgbaMat = ImageUtil.imageToRGBMat(image);
-            final RDTCaptureResult captureResult = processor.assessImage(rgbaMat, flashEnabled);
-            mActivity.runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    displayQualityResult(captureResult);
-                }
-            });
-            Log.d(TAG, String.format("Capture time: %d", System.currentTimeMillis() - timeTaken));
-            Log.d(TAG, String.format("Captured result: %b", captureResult.allChecksPassed));
-
-            // If all the quality check were passed, interpret the test result
-            RDTInterpretationResult interpretationResult = null;
-            if (captureResult.allChecksPassed) {
-                interpretationResult = processor.interpretRDT(captureResult.resultMat,
-                        captureResult.boundary);
-                image.close();
-            } else {
-                imageQueue.remove();
-                image.close();
-            }
-            rgbaMat.release();
-
-            // TODO?
-            RDTDetectedResult result = RDTDetectedResult.CONTINUE;
-            if (mImageQualityViewListener != null) {
-                result = mImageQualityViewListener.onRDTDetected(
-                        captureResult, interpretationResult,
-                        System.currentTimeMillis() - timeTaken
-                );
-            }
-
-            // Garbage collection
-            if (captureResult.resultMat != null)
-                captureResult.resultMat.release();
-            if (interpretationResult != null && interpretationResult.resultMat != null)
-                interpretationResult.resultMat.release();
-
-            // Interrupt the thread if a result was found
-            if (result == RDTDetectedResult.STOP)
-                mOnImageAvailableThread.interrupt();
-
-            return null;
-        }
-    }
-
-    /**
-     * {@link CameraCaptureSession.CaptureCallback} that handles events related to JPEG capture.
-     */
-    private CameraCaptureSession.CaptureCallback mCaptureCallback
-            = new CameraCaptureSession.CaptureCallback() {
-
-        private void process(CaptureResult result) {
-            // Only process the image when the lock is available
-            synchronized (focusStateLock) {
-                // Check that camera information is available
-                FocusState previousFocusState = mFocusState;
-                if (result.get(CaptureResult.CONTROL_AF_MODE) == null ||
-                        result.get(CaptureResult.CONTROL_AF_STATE) == null)
-                    return;
-
-                // Interpret the current focus state to provide user feedback
-                if (result.get(CaptureResult.CONTROL_AF_MODE) ==
-                        CaptureResult.CONTROL_AF_MODE_CONTINUOUS_PICTURE) {
-                    switch (result.get(CaptureResult.CONTROL_AF_STATE)) {
-                        case CaptureResult.CONTROL_AF_STATE_PASSIVE_FOCUSED:
-                            mFocusState = FocusState.FOCUSED;
-                            break;
-                        case CaptureResult.CONTROL_AF_STATE_PASSIVE_UNFOCUSED:
-                            mFocusState = FocusState.UNFOCUSED;
-                            break;
-                        case CaptureResult.CONTROL_AF_STATE_INACTIVE:
-                            mFocusState = FocusState.INACTIVE;
-                            break;
-                        default:
-                            mFocusState = FocusState.FOCUSING;
-                            break;
-                    }
-
-                    // Display information to user if
-                    if (showFeedback && previousFocusState != mFocusState) {
-                        mActivity.runOnUiThread(new Runnable() {
-                            @Override
-                            public void run() {
-                                displayQualityResultFocusChanged();
-                            }
-                        });
-                    }
-                }
-            }
-        }
-
-        @Override
-        public void onCaptureProgressed(@NonNull CameraCaptureSession session,
-                                        @NonNull CaptureRequest request,
-                                        @NonNull CaptureResult partialResult) {
-            process(partialResult);
-        }
-
-        @Override
-        public void onCaptureCompleted(@NonNull CameraCaptureSession session,
-                                       @NonNull CaptureRequest request,
-                                       @NonNull TotalCaptureResult result) {
-            process(result);
-        }
-
-    };
-
-    /**
-     * Shows a {@link Toast} on the UI thread.
-     *
+     * Shows a {@link Toast} on the UI thread
      * @param text The message to show
      */
     private void showToast(final String text) {
@@ -465,13 +520,12 @@ public class ImageQualityView extends LinearLayout implements View.OnClickListen
         }
     }
 
+    /**
+     * {@link View} onResume()
+     */
     public void onResume() {
         startBackgroundThread();
-
-        // When the screen is turned off and turned back on, the SurfaceTexture is already
-        // available, and "onSurfaceTextureAvailable" will not be called. In that case, we can open
-        // a camera and start preview from here (otherwise, we wait until the surface is ready in
-        // the SurfaceTextureListener).
+        // Utilize the SurfaceTexture if it already exists, otherwise wait until it's available
         if (mTextureView.isAvailable()) {
             openCamera(mTextureView.getWidth(), mTextureView.getHeight());
         } else {
@@ -481,11 +535,13 @@ public class ImageQualityView extends LinearLayout implements View.OnClickListen
 
     }
 
+    /**
+     * {@link View} onPause()
+     */
     public void onPause() {
         closeCamera();
         stopBackgroundThread();
         ImageProcessor.destroy();
-        Log.d(TAG, "onpause called");
     }
 
     @Override
@@ -493,115 +549,32 @@ public class ImageQualityView extends LinearLayout implements View.OnClickListen
                                            @NonNull int[] grantResults) {
         if (requestCode == REQUEST_CAMERA_PERMISSION) {
             if (grantResults.length != 1 || grantResults[0] != PackageManager.PERMISSION_GRANTED) {
-                showToast("This App requires permission to use your camera.");
+                showToast("This app requires permission to use your camera.");
             }
         }
-    }
-
-    /**
-     * Sets up member variables related to camera.
-     *
-     * @param width  The width of available size for camera preview
-     * @param height The height of available size for camera preview
-     */
-    private void setUpCameraOutputs(int width, int height) {
-        CameraManager manager = (CameraManager) mActivity.getSystemService(Context.CAMERA_SERVICE);
-        try {
-            for (String cameraId : manager.getCameraIdList()) {
-                CameraCharacteristics characteristics
-                        = manager.getCameraCharacteristics(cameraId);
-
-                // We don't use a front facing camera in this sample.
-                Integer facing = characteristics.get(CameraCharacteristics.LENS_FACING);
-                if (facing != null && facing == CameraCharacteristics.LENS_FACING_FRONT) {
-                    continue;
-                }
-
-                StreamConfigurationMap map = characteristics.get(
-                        CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP);
-                if (map == null) {
-                    continue;
-                }
-
-                // choose optimal size
-                Size closestPreviewSize = new Size(Integer.MAX_VALUE, (int) (Integer.MAX_VALUE * (9.0 / 16.0)));
-                Size closestImageSize = new Size(Integer.MAX_VALUE, (int) (Integer.MAX_VALUE * (9.0 / 16.0)));
-                for (Size size : Arrays.asList(map.getOutputSizes(ImageFormat.YUV_420_888))) {
-                    Log.d(TAG, "Available Sizes: " + size.toString());
-                    if (size.getWidth() * 9 == size.getHeight() * 16) { //Preview surface ratio is 16:9
-                        double currPreviewDiff = (CAMERA2_PREVIEW_SIZE.height * CAMERA2_PREVIEW_SIZE.width) - closestPreviewSize.getHeight() * closestPreviewSize.getWidth();
-                        double newPreviewDiff = (CAMERA2_PREVIEW_SIZE.height * CAMERA2_PREVIEW_SIZE.width) - size.getHeight() * size.getWidth();
-
-                        double currImageDiff = (CAMERA2_IMAGE_SIZE.height * CAMERA2_IMAGE_SIZE.width) - closestImageSize.getHeight() * closestImageSize.getWidth();
-                        double newImageDiff = (CAMERA2_IMAGE_SIZE.height * CAMERA2_IMAGE_SIZE.width) - size.getHeight() * size.getWidth();
-
-                        if (Math.abs(currPreviewDiff) > Math.abs(newPreviewDiff)) {
-                            closestPreviewSize = size;
-                        }
-
-                        if (Math.abs(currImageDiff) > Math.abs(newImageDiff)) {
-                            closestImageSize = size;
-                        }
-                    }
-                }
-
-                Log.d(TAG, "Selected sizes: " + closestPreviewSize.toString() + ", " + closestImageSize.toString());
-
-                mPreviewSize = closestPreviewSize;
-                mImageReader = ImageReader.newInstance(closestImageSize.getWidth(), closestImageSize.getHeight(),
-                        ImageFormat.YUV_420_888, /*maxImages*/5);
-                mImageReader.setOnImageAvailableListener(
-                        mOnImageAvailableListener, mOnImageAvailableHandler);
-
-                CAMERA2_IMAGE_SIZE.width = closestImageSize.getWidth();
-                CAMERA2_IMAGE_SIZE.height = closestImageSize.getHeight();
-
-                CAMERA2_PREVIEW_SIZE.width = closestPreviewSize.getWidth();
-                CAMERA2_PREVIEW_SIZE.height = closestPreviewSize.getHeight();
-
-                // We fit the aspect ratio of TextureView to the size of preview we picked.
-                int orientation = getResources().getConfiguration().orientation;
-                if (orientation == Configuration.ORIENTATION_LANDSCAPE) {
-                    mTextureView.setAspectRatio(
-                            mPreviewSize.getWidth(), mPreviewSize.getHeight());
-                } else {
-                    mTextureView.setAspectRatio(
-                            mPreviewSize.getHeight(), mPreviewSize.getWidth());
-                }
-
-                mCameraId = cameraId;
-                return;
-            }
-        } catch (CameraAccessException e) {
-            e.printStackTrace();
-        } catch (NullPointerException e) {
-            // Currently an NPE is thrown when the Camera2API is used but not supported on the
-            // device this code runs.
-            showToast("Unable to open the camera.");
-        }
-    }
-
-    private void requestCameraPermission() {
-        ActivityCompat.requestPermissions(mActivity, new String[]{Manifest.permission.CAMERA}, MY_PERMISSION_REQUEST_CODE);
     }
 
     /**
      * Opens the camera specified by {@link #mCameraId}.
      */
     private void openCamera(int width, int height) throws SecurityException {
+        // Request camera permission if it has not been granted
         if (ContextCompat.checkSelfPermission(mActivity, Manifest.permission.CAMERA)
                 != PackageManager.PERMISSION_GRANTED) {
-            requestCameraPermission();
+            ActivityCompat.requestPermissions(mActivity,
+                    new String[]{Manifest.permission.CAMERA}, MY_PERMISSION_REQUEST_CODE);
             return;
         }
 
-        setUpCameraOutputs(width, height);
+        // Prepare the camera surfaces
+        setUpCameraOutputs();
         configureTransform(width, height);
+
+        // Open the camera
         CameraManager manager = (CameraManager) mActivity.getSystemService(Context.CAMERA_SERVICE);
         try {
-            if (!mCameraOpenCloseLock.tryAcquire(2500, TimeUnit.MILLISECONDS)) {
+            if (!mCameraOpenCloseLock.tryAcquire(2500, TimeUnit.MILLISECONDS))
                 throw new RuntimeException("Time out waiting to lock camera opening.");
-            }
             manager.openCamera(mCameraId, mStateCallback, mBackgroundHandler);
         } catch (CameraAccessException e) {
             e.printStackTrace();
@@ -611,11 +584,14 @@ public class ImageQualityView extends LinearLayout implements View.OnClickListen
     }
 
     /**
-     * Closes the current {@link CameraDevice}.
+     * Closes the {@link CameraDevice}
      */
     private void closeCamera() {
         try {
+            // Grab the lock
             mCameraOpenCloseLock.acquire();
+
+            // Close the objects associated with the camera
             if (null != mCaptureSession) {
                 mCaptureSession.close();
                 mCaptureSession = null;
@@ -636,160 +612,110 @@ public class ImageQualityView extends LinearLayout implements View.OnClickListen
     }
 
     /**
-     * Starts a background thread and its {@link Handler}.
+     * Sets up variables related to camera
      */
-    private void startBackgroundThread() {
-        mBackgroundThread = new HandlerThread("CameraBackground");
-        mBackgroundThread.start();
-        mBackgroundHandler = new Handler(mBackgroundThread.getLooper());
-
-        mOnImageAvailableThread = new HandlerThread("OnImageAvailableBackgroud");
-        mOnImageAvailableThread.start();
-        mOnImageAvailableHandler = new Handler(mOnImageAvailableThread.getLooper());
-    }
-
-    /**
-     * Stops the background thread and its {@link Handler}.
-     */
-    private void stopBackgroundThread() {
-        Log.d(TAG, "Thread Quit Safely.");
-        mBackgroundThread.quit();
-        mOnImageAvailableThread.quit();
+    private void setUpCameraOutputs() {
+        CameraManager manager = (CameraManager) mActivity.getSystemService(Context.CAMERA_SERVICE);
         try {
-            mBackgroundThread.join();
-            mBackgroundThread = null;
-            mBackgroundHandler = null;
+            // Try all possible cameras
+            for (String cameraId : manager.getCameraIdList()) {
+                CameraCharacteristics characteristics
+                        = manager.getCameraCharacteristics(cameraId);
 
-            mOnImageAvailableThread.join();
-            mOnImageAvailableThread = null;
-            mOnImageAvailableHandler = null;
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
-    }
+                // Skip if front-facing camera
+                Integer facing = characteristics.get(CameraCharacteristics.LENS_FACING);
+                if (facing != null && facing == CameraCharacteristics.LENS_FACING_FRONT)
+                    continue;
 
-    private CameraCaptureSession.StateCallback mCameraCaptureSessionStateCallback = new CameraCaptureSession.StateCallback() {
+                // Skip if streaming images not supported
+                StreamConfigurationMap map = characteristics.get(
+                        CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP);
+                if (map == null)
+                    continue;
 
-        @Override
-        public void onConfigured(@NonNull CameraCaptureSession cameraCaptureSession) {
-            // The camera is already closed
-            if (null == mCameraDevice)
+                // Initialize sizes for the camera preview and the image based on aspect ratio
+                // and maximum size
+                double[] aspectRatio = new double[]{16.0, 9.0};
+                Size closestPreviewSize = new Size(Integer.MAX_VALUE,
+                        (int) (Integer.MAX_VALUE * (aspectRatio[1] / aspectRatio[0])));
+                Size closestImageSize = new Size(Integer.MAX_VALUE,
+                        (int) (Integer.MAX_VALUE * (aspectRatio[1] / aspectRatio[0])));
+
+                // Find the closest sizes to the that is most similar to the desired aspect ratio
+                for (Size size : Arrays.asList(map.getOutputSizes(ImageFormat.YUV_420_888))) {
+                    Log.d(TAG, "Available Sizes: " + size.toString());
+                    if (size.getWidth()*aspectRatio[1] == size.getHeight()*aspectRatio[0]) {
+                        // Check if current preview size is closer to the ideal
+                        double currPreviewDiff = (CAMERA2_PREVIEW_SIZE.height*CAMERA2_PREVIEW_SIZE.width) -
+                                closestPreviewSize.getHeight()*closestPreviewSize.getWidth();
+                        double newPreviewDiff = (CAMERA2_PREVIEW_SIZE.height*CAMERA2_PREVIEW_SIZE.width) -
+                                size.getHeight()*size.getWidth();
+                        if (Math.abs(currPreviewDiff) > Math.abs(newPreviewDiff))
+                            closestPreviewSize = size;
+
+                        // Check if the current image size is closer to the ideal ratio
+                        double currImageDiff = (CAMERA2_IMAGE_SIZE.height * CAMERA2_IMAGE_SIZE.width) -
+                                closestImageSize.getHeight() * closestImageSize.getWidth();
+                        double newImageDiff = (CAMERA2_IMAGE_SIZE.height * CAMERA2_IMAGE_SIZE.width) - size.getHeight() * size.getWidth();
+                        if (Math.abs(currImageDiff) > Math.abs(newImageDiff))
+                            closestImageSize = size;
+                    }
+                }
+
+                Log.d(TAG, "Selected sizes: " + closestPreviewSize.toString() + ", " +
+                        closestImageSize.toString());
+
+                // Update the sizes based on what is available in the camera
+                mPreviewSize = closestPreviewSize;
+                CAMERA2_IMAGE_SIZE.width = closestImageSize.getWidth();
+                CAMERA2_IMAGE_SIZE.height = closestImageSize.getHeight();
+                CAMERA2_PREVIEW_SIZE.width = closestPreviewSize.getWidth();
+                CAMERA2_PREVIEW_SIZE.height = closestPreviewSize.getHeight();
+
+                // Start the image listener
+                mImageReader = ImageReader.newInstance(closestImageSize.getWidth(),
+                        closestImageSize.getHeight(), ImageFormat.YUV_420_888,5);
+                mImageReader.setOnImageAvailableListener(
+                        mOnImageAvailableListener, mOnImageAvailableHandler);
+
+                // Update the aspect ratio of the TextureView to the size of the preview
+                int orientation = getResources().getConfiguration().orientation;
+                if (orientation == Configuration.ORIENTATION_LANDSCAPE)
+                    mTextureView.setAspectRatio(mPreviewSize.getWidth(), mPreviewSize.getHeight());
+                else
+                    mTextureView.setAspectRatio(mPreviewSize.getHeight(), mPreviewSize.getWidth());
+
+                // Save the camera decision
+                mCameraId = cameraId;
                 return;
-
-            // TODO
-            mCaptureSession = cameraCaptureSession;
-            if (mImageQualityViewListener != null)
-                mImageQualityViewListener.onRDTCameraReady();
-
-            updateRepeatingRequest();
-        }
-
-        @Override
-        public void onConfigureFailed(
-                @NonNull CameraCaptureSession cameraCaptureSession) {
+            }
+        } catch (CameraAccessException e) {
+            e.printStackTrace();
+        } catch (NullPointerException e) {
             showToast("Unable to open the camera.");
         }
-    };
-
-    private int mCounter = Integer.MIN_VALUE;
-
-    private void updateRepeatingRequest() {
-        // When the session is ready, we start displaying the preview.
-        try {
-            CameraManager manager = (CameraManager) mActivity.getSystemService(Context.CAMERA_SERVICE);
-            CameraCharacteristics characteristics = manager.getCameraCharacteristics(mCameraId);
-
-
-            final android.graphics.Rect sensor = characteristics.get(CameraCharacteristics.SENSOR_INFO_ACTIVE_ARRAY_SIZE);
-            Log.d(TAG, "Sensor size: " + sensor.width() + ", " + sensor.height());
-            MeteringRectangle mr = new MeteringRectangle(sensor.width() / 2 - 50, sensor.height() / 2 - 50, 100 + (mCounter % 2), 100 + (mCounter % 2),
-                    MeteringRectangle.METERING_WEIGHT_MAX - 1);
-
-            Log.d(TAG, String.format("Sensor Size (%d, %d), Metering %s", sensor.width(), sensor.height(), mr.toString()));
-            Log.d(TAG, String.format("Regions AE %s", characteristics.get(CameraCharacteristics.CONTROL_MAX_REGIONS_AE).toString()));
-
-            mPreviewRequestBuilder.set(CaptureRequest.CONTROL_AF_MODE, CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_PICTURE);
-            mPreviewRequestBuilder.set(CaptureRequest.CONTROL_AF_REGIONS,
-                    new MeteringRectangle[]{mr});
-            mPreviewRequestBuilder.set(CaptureRequest.CONTROL_AE_MODE, CaptureRequest.CONTROL_AE_MODE_ON);
-            mPreviewRequestBuilder.set(CaptureRequest.CONTROL_AE_REGIONS,
-                    new MeteringRectangle[]{mr});
-            mPreviewRequestBuilder.set(CaptureRequest.CONTROL_AWB_MODE, CaptureRequest.CONTROL_AWB_MODE_AUTO);
-            mPreviewRequestBuilder.set(CaptureRequest.CONTROL_AWB_REGIONS,
-                    new MeteringRectangle[]{mr});
-
-            mPreviewRequestBuilder.set(CaptureRequest.FLASH_MODE, flashEnabled ? CaptureRequest.FLASH_MODE_TORCH : CaptureRequest.FLASH_MODE_OFF);
-            mPreviewRequest = mPreviewRequestBuilder.build();
-
-            try {
-                mCameraOpenCloseLock.acquire();
-                if (mCaptureSession != null) {
-                    mCaptureSession.setRepeatingRequest(mPreviewRequest,
-                            mCaptureCallback, mBackgroundHandler);
-                }
-            } catch (InterruptedException e) {
-                throw new RuntimeException("Interrupted while trying to lock camera closing.", e);
-            } finally {
-                mCameraOpenCloseLock.release();
-            }
-
-            mCounter++;
-        } catch (CameraAccessException e) {
-            e.printStackTrace();
-        }
-    }
-
-
-    /**
-     * Creates a new {@link CameraCaptureSession} for camera preview.
-     */
-    private void createCameraPreviewSession() {
-        try {
-            SurfaceTexture texture = mTextureView.getSurfaceTexture();
-            assert texture != null;
-
-            // We configure the size of default buffer to be the size of camera preview we want.
-            texture.setDefaultBufferSize(mPreviewSize.getWidth(), mPreviewSize.getHeight());
-
-            // This is the output Surface we need to start preview.
-            Surface surface = new Surface(texture);
-            Surface mImageSurface = mImageReader.getSurface();
-
-
-            // We set up a CaptureRequest.Builder with the output Surface.
-            mPreviewRequestBuilder
-                    = mCameraDevice.createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW);
-
-
-            mPreviewRequestBuilder.addTarget(surface);
-            mPreviewRequestBuilder.addTarget(mImageSurface);
-
-
-            // Here, we create a CameraCaptureSession for camera preview.
-            mCameraDevice.createCaptureSession(Arrays.asList(surface, mImageReader.getSurface()),
-                    mCameraCaptureSessionStateCallback, null
-            );
-        } catch (CameraAccessException e) {
-            e.printStackTrace();
-        }
     }
 
     /**
-     * Configures the necessary {@link android.graphics.Matrix} transformation to `mTextureView`.
-     * This method should be called after the camera preview size is determined in
-     * setUpCameraOutputs and also the size of `mTextureView` is fixed.
-     *
-     * @param viewWidth  The width of `mTextureView`
-     * @param viewHeight The height of `mTextureView`
+     * Configures transformation between {@link android.graphics.Matrix} and the TextureView
+     * Note:should be called after the camera preview size is determined in
+     * setUpCameraOutputs and the size of `mTextureView` is fixed
+     * @param viewWidth  The width of the TextureView
+     * @param viewHeight The height of the TextureView
      */
     private void configureTransform(int viewWidth, int viewHeight) {
+        // Skip if necessary objects have not been set
         if (null == mTextureView || null == mPreviewSize || null == mActivity) {
             return;
         }
+
+        // Calculate rectangles for both objects
         int rotation = mActivity.getWindowManager().getDefaultDisplay().getRotation();
         Matrix matrix = new Matrix();
         RectF viewRect = new RectF(0, 0, viewWidth, viewHeight);
         RectF bufferRect = new RectF(0, 0, mPreviewSize.getHeight(), mPreviewSize.getWidth());
+
+        // Compute the transformation matrix
         float centerX = viewRect.centerX();
         float centerY = viewRect.centerY();
         if (Surface.ROTATION_90 == rotation || Surface.ROTATION_270 == rotation) {
@@ -803,9 +729,144 @@ public class ImageQualityView extends LinearLayout implements View.OnClickListen
         } else if (Surface.ROTATION_180 == rotation) {
             matrix.postRotate(180, centerX, centerY);
         }
+
+        // Apply the transformation matrix
         mTextureView.setTransform(matrix);
     }
 
+    /**
+     * Starts the background threads and their {@link Handler}s
+     */
+    private void startBackgroundThread() {
+        // Start the thread for camera management
+        mBackgroundThread = new HandlerThread("CameraBackground");
+        mBackgroundThread.start();
+        mBackgroundHandler = new Handler(mBackgroundThread.getLooper());
+
+        // Start the thread for image processing
+        mOnImageAvailableThread = new HandlerThread("OnImageAvailableBackground");
+        mOnImageAvailableThread.start();
+        mOnImageAvailableHandler = new Handler(mOnImageAvailableThread.getLooper());
+    }
+
+    /**
+     * Stops the background threads and their {@link Handler}s
+     */
+    private void stopBackgroundThread() {
+        // Quit the thread for camera management
+        mBackgroundThread.quit();
+        try {
+            mBackgroundThread.join();
+            mBackgroundThread = null;
+            mBackgroundHandler = null;
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+
+        // Quit the thread for image processing
+        mOnImageAvailableThread.quit();
+        try {
+            mOnImageAvailableThread.join();
+            mOnImageAvailableThread = null;
+            mOnImageAvailableHandler = null;
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+    }
+
+    /**
+     * Handles auto-exposure and auto-focus
+     */
+    private void updateRepeatingRequest() {
+        try {
+            // Get the camera characteristics
+            CameraManager manager = (CameraManager) mActivity.getSystemService(Context.CAMERA_SERVICE);
+            CameraCharacteristics characteristics = manager.getCameraCharacteristics(mCameraId);
+
+            // Define the region for auto-exposure and auto-focus
+            final android.graphics.Rect sensor = characteristics.get(CameraCharacteristics.SENSOR_INFO_ACTIVE_ARRAY_SIZE);
+            MeteringRectangle mr = new MeteringRectangle(sensor.width()/2 - 50,
+                    sensor.height()/2 - 50,
+                    100 + (mMeteringCounter %2),
+                    100 + (mMeteringCounter %2),
+                    MeteringRectangle.METERING_WEIGHT_MAX-1);
+            Log.d(TAG, String.format("Sensor Size (%d, %d), Metering %s",
+                    sensor.width(), sensor.height(), mr.toString()));
+            Log.d(TAG, String.format("Regions AE %s",
+                    characteristics.get(CameraCharacteristics.CONTROL_MAX_REGIONS_AE).toString()));
+
+            // Set the various auto-exposure and auto-focus properties
+            mPreviewRequestBuilder.set(CaptureRequest.CONTROL_AF_MODE,
+                    CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_PICTURE);
+            mPreviewRequestBuilder.set(CaptureRequest.CONTROL_AF_REGIONS,
+                    new MeteringRectangle[]{mr});
+            mPreviewRequestBuilder.set(CaptureRequest.CONTROL_AE_MODE,
+                    CaptureRequest.CONTROL_AE_MODE_ON);
+            mPreviewRequestBuilder.set(CaptureRequest.CONTROL_AE_REGIONS,
+                    new MeteringRectangle[]{mr});
+            mPreviewRequestBuilder.set(CaptureRequest.CONTROL_AWB_MODE,
+                    CaptureRequest.CONTROL_AWB_MODE_AUTO);
+            mPreviewRequestBuilder.set(CaptureRequest.CONTROL_AWB_REGIONS,
+                    new MeteringRectangle[]{mr});
+
+            // Set the flash properties
+            mPreviewRequestBuilder.set(CaptureRequest.FLASH_MODE, flashEnabled ?
+                    CaptureRequest.FLASH_MODE_TORCH : CaptureRequest.FLASH_MODE_OFF);
+            mPreviewRequest = mPreviewRequestBuilder.build();
+
+            // Acquire the camera lock and begin requesting for images
+            try {
+                mCameraOpenCloseLock.acquire();
+                if (mCaptureSession != null) {
+                    mCaptureSession.setRepeatingRequest(mPreviewRequest,
+                            mCaptureCallback, mBackgroundHandler);
+                }
+            } catch (InterruptedException e) {
+                throw new RuntimeException("Interrupted while trying to lock camera closing.", e);
+            } finally {
+                mCameraOpenCloseLock.release();
+            }
+
+            // Update counter for auto-focus metering
+            mMeteringCounter++;
+        } catch (CameraAccessException e) {
+            e.printStackTrace();
+        }
+    }
+
+    /**
+     * Creates a new {@link CameraCaptureSession} for camera preview.
+     */
+    private void createCameraPreviewSession() {
+        try {
+            // Configure the size of default buffer
+            SurfaceTexture texture = mTextureView.getSurfaceTexture();
+            assert texture != null;
+            texture.setDefaultBufferSize(mPreviewSize.getWidth(), mPreviewSize.getHeight());
+
+            // Prepare the Surface
+            Surface surface = new Surface(texture);
+            Surface mImageSurface = mImageReader.getSurface();
+
+            // Add objects to builder
+            mPreviewRequestBuilder
+                    = mCameraDevice.createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW);
+            mPreviewRequestBuilder.addTarget(surface);
+            mPreviewRequestBuilder.addTarget(mImageSurface);
+
+            // Create CaptureSession for preview
+            mCameraDevice.createCaptureSession(Arrays.asList(surface, mImageReader.getSurface()),
+                    mCameraCaptureSessionStateCallback, null
+            );
+        } catch (CameraAccessException e) {
+            e.printStackTrace();
+        }
+    }
+
+    /**
+     * The listener for all of the Activity's buttons
+     * @param view the button that was selected
+     */
     @Override
     public void onClick(View view) {
         switch (view.getId()) {
@@ -816,40 +877,88 @@ public class ImageQualityView extends LinearLayout implements View.OnClickListen
         }
     }
 
-
     /**
-     * Imported from ImageQualityOpencvActivity
-     **/
-    private BaseLoaderCallback mLoaderCallback = new BaseLoaderCallback(mActivity) {
-        @Override
-        public void onManagerConnected(int status) {
-            switch (status) {
-                case LoaderCallbackInterface.SUCCESS: {
-                    Log.i(TAG, "OpenCV loaded successfully");
-                    processor = ImageProcessor.getInstance(mActivity, rdtName);
-                    ViewportUsingBitmap viewport = findViewById(R.id.img_quality_check_viewport);
-                    viewport.hScale = (float) processor.mRDT.viewFinderScaleH;
-                    viewport.wScale = (float) processor.mRDT.viewFinderScaleW;
-                }
-                break;
-                default: {
-                    super.onManagerConnected(status);
-                }
-                break;
-            }
-        }
-    };
+     * Updates the on-screen feedback for the user based on the camera's focus
+     */
+    private void displayQualityResultFocusChanged() {
+        // Skip if feedback is not needed
+        if (!showFeedback)
+            return;
 
-    public void setShowViewfinder(boolean showViewport) {
-        this.showViewport = showViewport;
-        mViewport.setVisibility(showViewport ? VISIBLE : GONE);
+        // Update information about image focus
+        FocusState currFocusState;
+        synchronized (focusStateLock) {
+            currFocusState = mFocusState;
+        }
+
+        // Update on-screen feedback
+        if (currFocusState == FocusState.FOCUSED) {
+            mInstructionText.setText(getResources().getString(R.string.instruction_pos));
+            String message = String.format(getResources().getString(R.string.quality_msg_format),
+                    "failed", "failed", "failed", "failed");
+            mImageQualityFeedbackView.setText(Html.fromHtml(message));
+        } else if (currFocusState == FocusState.INACTIVE) {
+            mInstructionText.setText(getResources().getString(R.string.instruction_pos));
+        } else if (currFocusState == FocusState.UNFOCUSED) {
+            mInstructionText.setText(getResources().getString(R.string.instruction_unfocused));
+        } else if (currFocusState == FocusState.FOCUSING) {
+            mInstructionText.setText(getResources().getString(R.string.instruction_focusing));
+        }
     }
 
+    /**
+     * Updates the on-screen feedback for the user based on image analysis
+     * @param captureResult: the {@link RDTCaptureResult} indicating which quality checks were passed
+     */
+    private void displayQualityResult(RDTCaptureResult captureResult) {
+        // Skip if feedback is not needed
+        if (!showFeedback)
+            return;
+
+        // Update information about image focus
+        FocusState currFocusState;
+        synchronized (focusStateLock) {
+            currFocusState = mFocusState;
+        }
+
+        // Extract information from the ImageProcessor
+        ImageProcessor.ExposureResult exposureResult = captureResult.exposureResult;
+        boolean isSharp = captureResult.isSharp;
+        boolean isCentered = captureResult.isCentered;
+        ImageProcessor.SizeResult sizeResult = captureResult.sizeResult;
+        boolean isOriented = captureResult.isOriented;
+        boolean isGlared = captureResult.isGlared;
+
+        // Update on-screen feedback
+        if (currFocusState == FocusState.FOCUSED) {
+            // Get the best instruction to help the user
+            int instruction = processor.getInstructionText(isCentered, sizeResult, isOriented, isGlared);
+            mInstructionText.setText(getResources().getText(instruction));
+
+            // Get the summary of the quality checks
+            String[] qChecks = processor.getSummaryText(exposureResult, isSharp, isCentered, sizeResult, isOriented, isGlared);
+            String message = String.format(getResources().getString(R.string.quality_msg_format_text), qChecks[0], qChecks[1], qChecks[2], qChecks[3]);
+            mImageQualityFeedbackView.setText(Html.fromHtml(message));
+        } else if (currFocusState == FocusState.INACTIVE) {
+            mInstructionText.setText(getResources().getString(R.string.instruction_pos));
+        } else if (currFocusState == FocusState.UNFOCUSED) {
+            mInstructionText.setText(getResources().getString(R.string.instruction_unfocused));
+        } else if (currFocusState == FocusState.FOCUSING) {
+            mInstructionText.setText(getResources().getString(R.string.instruction_focusing));
+        }
+    }
+
+    /**
+     * Updates the on-screen feedback for the user based on whether the RDT has been detected
+     * and the {@link ImageProcessor} is doing its final check
+     * @param currentState: the current {@link QualityCheckingState}
+     */
     private void setProgressUI(QualityCheckingState currentState) {
         // Skip if feedback is not needed
         if (!showFeedback)
             return;
 
+        // Update interface depending on whether the app is ready for it final check or not
         switch (currentState) {
             case QUALITY_CHECK:
                 mActivity.runOnUiThread(new Runnable() {
@@ -874,65 +983,6 @@ public class ImageQualityView extends LinearLayout implements View.OnClickListen
                     }
                 });
                 break;
-        }
-
-    }
-
-    private void displayQualityResult(RDTCaptureResult captureResult) {
-        if (!showFeedback) {
-            return;
-        }
-
-        ImageProcessor.ExposureResult exposureResult = captureResult.exposureResult;
-        boolean isSharp = captureResult.isSharp;
-        boolean isCentered = captureResult.isCentered;
-        ImageProcessor.SizeResult sizeResult = captureResult.sizeResult;
-        boolean isOriented = captureResult.isOriented;
-        boolean isGlared = captureResult.isGlared;
-
-        FocusState currFocusState;
-
-        synchronized (focusStateLock) {
-            currFocusState = mFocusState;
-        }
-
-        if (currFocusState == FocusState.FOCUSED) {
-            // Get the best instruction to help the user
-            int instruction = processor.getInstructionText(isCentered, sizeResult, isOriented, isGlared);
-            mInstructionText.setText(getResources().getText(instruction));
-
-            // Get the summary of the quality checks
-            String[] qChecks = processor.getSummaryText(exposureResult, isSharp, isCentered, sizeResult, isOriented, isGlared);
-            String message = String.format(getResources().getString(R.string.quality_msg_format_text), qChecks[0], qChecks[1], qChecks[2], qChecks[3]);
-            mImageQualityFeedbackView.setText(Html.fromHtml(message));
-        } else if (currFocusState == FocusState.INACTIVE) {
-            mInstructionText.setText(getResources().getString(R.string.instruction_pos));
-        } else if (currFocusState == FocusState.UNFOCUSED) {
-            mInstructionText.setText(getResources().getString(R.string.instruction_unfocused));
-        } else if (currFocusState == FocusState.FOCUSING) {
-            mInstructionText.setText(getResources().getString(R.string.instruction_focusing));
-        }
-    }
-
-    private void displayQualityResultFocusChanged() {
-        if (!showFeedback)
-            return;
-
-        FocusState currFocusState;
-        synchronized (focusStateLock) {
-            currFocusState = mFocusState;
-        }
-
-        if (currFocusState == FocusState.FOCUSED) {
-            mInstructionText.setText(getResources().getString(R.string.instruction_pos));
-            String message = String.format(getResources().getString(R.string.quality_msg_format), "failed", "failed", "failed", "failed");
-            mImageQualityFeedbackView.setText(Html.fromHtml(message));
-        } else if (currFocusState == FocusState.INACTIVE) {
-            mInstructionText.setText(getResources().getString(R.string.instruction_pos));
-        } else if (currFocusState == FocusState.UNFOCUSED) {
-            mInstructionText.setText(getResources().getString(R.string.instruction_unfocused));
-        } else if (currFocusState == FocusState.FOCUSING) {
-            mInstructionText.setText(getResources().getString(R.string.instruction_focusing));
         }
     }
 }
