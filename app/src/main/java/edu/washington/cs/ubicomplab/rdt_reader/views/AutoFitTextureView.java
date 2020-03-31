@@ -17,8 +17,12 @@ import android.graphics.RectF;
 import android.util.AttributeSet;
 import android.view.TextureView;
 
+/**
+ * The {@link android.view.View} that is used for drawing incoming video frames
+ * and overlay information
+ */
 public class AutoFitTextureView extends TextureView {
-    // The view's dimensions
+    // View dimension variables
     private int mRatioWidth = 0;
     private int mRatioHeight = 0;
 
@@ -64,11 +68,10 @@ public class AutoFitTextureView extends TextureView {
         if (0 == mRatioWidth || 0 == mRatioHeight) {
             setMeasuredDimension(width, height);
         } else {
-            if (width < height * mRatioWidth / mRatioHeight) {
+            if (width < height * mRatioWidth / mRatioHeight)
                 setMeasuredDimension(width, width * mRatioHeight / mRatioWidth);
-            } else {
+            else
                 setMeasuredDimension(height * mRatioWidth / mRatioHeight, height);
-            }
         }
     }
 

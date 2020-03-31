@@ -14,7 +14,7 @@ RDTScan uses a feature-matching approach for RDT recognition, allowing RDTScan t
 * This library requires that target smartphone's support Android's [Camera2 API](https://developer.android.com/reference/android/hardware/camera2/package-summary), which supports control over the camera's hardware.
 
 # Installation
-RDTScan utilizes [OpenCV for Android](https://opencv.org/android/) for many of the image processing steps, which in turn relies on Android's [Native Development Kit (NDK)](https://developer.android.com/ndk/). Setting up these resources can be difficult for some developers, so there are two options for getting started with RDTScan:
+RDTScan utilizes [OpenCV for Android](https://opencv.org/android/) for many of the image processing steps, which in turn relies on Android's [Native Development Kit (NDK)](https://developer.android.com/ndk/). Therefore, it is beyond the scope of the current project to export RDTScan's functionality as a `.jar` file. Instead, there are two options for getting started with RDTScan:
 * **No existing project:** If you are making a smartphone app from scratch, you can simply clone the repository directly and build your app on top of what has already been provided. This repository has all of the dependencies properly configured along with a fully-functioning app that developers can use to get started.
 * **Existing project:** If you have a smartphone app that has already been made and you are looking to add RDTScan to it, you will still need to add OpenCV for Android to your project. The [official tutorial](https://docs.opencv.org/2.4/doc/tutorials/introduction/android_binary_package/O4A_SDK.html) for doing this is fairly outdated, but there are plenty of other tutorials out there depending on your environment. Once you have done that, copy the following folders and files to your project (at the same path):
   * [`src/.../core/*`](app/src/main/java/edu/washington/cs/ubicomplab/rdt_reader/core)
@@ -33,23 +33,15 @@ This repository already includes the files needed to use RDTScan with a few RDT 
 * [Quidel's QuickVue Influenza A+B Test](https://www.quidel.com/immunoassays/rapid-influenza-tests/quickvue-influenza-test)
 * [JAL Medical COVID-19](https://www.jalmedical.com/products/covid-19-test-kits/)
 
-Extending RDTScan to accommodate a new RDT is a matter of three steps:
-1. Adding a clean photo of the RDT
-2. Identifying some regions-of-interest using an image-editing program (e.g., Photoshop, GIMP)
-3. Adding that information and other metadata to a configuration file.
+Extending RDTScan to accommodate a new RDT is a matter of three steps: (1) adding a clean photo of the RDT, (2) identifying some regions-of-interest using an image-editing program (e.g., Photoshop, GIMP), and (3) adding that information and other metadata to a configuration file. For detailed instructions on how to extend RDTScan for a new RDT, visit this [link](readme_assets/rdt_configuration.md).
 
-For detailed instructions on how to extend RDTScan for a new RDT, visit this [link](readme_assets/rdt_configuration.md).
-
-**Note:** Although RDTScan is designed to be as generalizable as possible, its feature-matching approach is less amenable to the following RDT characteristics:
+**Note:** RDTScan uses a feature-matching approach to locate the target RDT's design. A detailed explanation of this approach can be found at this [article](https://opencv-python-tutroals.readthedocs.io/en/latest/py_tutorials/py_feature2d/py_features_meaning/py_features_meaning.html) by the OpenCV Foundation. As that article explains, feature-matching is less compatable with certain visual characteristics. In the context of RDTs, this includes:
 * Blank cassettes with little or no lettering
 * Inconsistent patterns (e.g., QR code, bar code)
-* More than three result lines
 
 <p align="center">
 <img src="readme_assets/rdt_examples.png" alt="Examples photographs of RDTs that work well and do not work well with RDTScan" width="300"/>
 </p>
-
-For an explanation of how feature-matching works and why some designs are more amenable than others, please refer to this [tutorial](https://opencv-python-tutroals.readthedocs.io/en/latest/py_tutorials/py_feature2d/py_features_meaning/py_features_meaning.html) by OpenCV.
 
 # API
 [Link](readme_assets/api_imageprocessor.md) for `ImageProcessor.java`
