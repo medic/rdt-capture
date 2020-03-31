@@ -55,6 +55,7 @@ public final class Constants {
     public static Scalar BLOOD_COLOR_HIGH_HUE_UPPER = new Scalar(179, 255, 255);
     public static double BLOOD_PERCENTAGE_THRESHOLD = 0.25;
     public static int FIDUCIAL_SEARCH_NUM_CLUSTERS = 5;
+    public static int FIDUCIAL_THRESHOLD = 20;
 
     // SIFT feature template matching parameters
     public static double SIFT_RESIZE_FACTOR = 0.5;

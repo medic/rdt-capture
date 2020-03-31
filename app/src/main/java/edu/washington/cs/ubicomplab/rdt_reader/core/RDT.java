@@ -1,12 +1,15 @@
 package edu.washington.cs.ubicomplab.rdt_reader.core;
 
+import android.app.ListActivity;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 
 import org.json.JSONArray;
+import org.json.JSONException;
 import org.json.JSONObject;
 import org.opencv.android.Utils;
+import org.opencv.core.Core;
 import org.opencv.core.Mat;
 import org.opencv.core.MatOfKeyPoint;
 import org.opencv.core.Point;
@@ -17,6 +20,7 @@ import org.opencv.imgproc.Imgproc;
 import org.opencv.xfeatures2d.SIFT;
 
 import java.io.InputStream;
+import java.util.ArrayList;
 
 import static edu.washington.cs.ubicomplab.rdt_reader.core.Constants.SHARPNESS_GAUSSIAN_BLUR_WINDOW;
 import static org.opencv.imgproc.Imgproc.cvtColor;
@@ -33,19 +37,16 @@ public class RDT {
     public double viewFinderScaleH, viewFinderScaleW;
 
     // Result window variables
-    public int topLinePosition, middleLinePosition, bottomLinePosition;
+    public double topLinePosition, middleLinePosition, bottomLinePosition;
     public String topLineName, middleLineName, bottomLineName;
     public int lineIntensity;
     public int lineSearchWidth;
 
     // Fiducial variables
-    public int fiducialPositionMin, fiducialPositionMax;
-    public int fiducialMinH, fiducialMinW, fiducialMaxW;
-    public int fiducialToResultWindowOffset;
     public Rect resultWindowRect;
-    public int fiducialDistance;
-    public int fiducialCount;
-
+    public JSONArray fiducials;
+    public ArrayList<Rect> fiducialRects;
+    public boolean hasFiducial;
     // Feature matching variables
     public Mat refImg;
     public double refImgSharpness;
@@ -53,6 +54,8 @@ public class RDT {
     public MatOfKeyPoint refKeypoints;
     public SIFT detector;
     public BFMatcher matcher;
+
+    public boolean rotated = false;
 
     public RDT(Context context, String rdtName) {
         try {
@@ -70,6 +73,12 @@ public class RDT {
             refImg = new Mat();
             Bitmap bitmap = BitmapFactory.decodeResource(context.getResources(), refImageID);
             Utils.bitmapToMat(bitmap, refImg);
+
+            if(refImg.height() > refImg.width()) {
+                Core.rotate(refImg, refImg, Core.ROTATE_90_COUNTERCLOCKWISE);
+                rotated = true;
+            }
+
             cvtColor(refImg, refImg, Imgproc.COLOR_RGB2GRAY);
             this.rdtName = rdtName;
 
@@ -78,13 +87,15 @@ public class RDT {
             viewFinderScaleW = obj.getDouble("VIEW_FINDER_SCALE_W");
             JSONArray rectTL = obj.getJSONArray("RESULT_WINDOW_TOP_LEFT");
             JSONArray rectBR = obj.getJSONArray("RESULT_WINDOW_BOTTOM_RIGHT");
-            resultWindowRect = new Rect(new Point(rectTL.getDouble(0), rectTL.getDouble(1)),
-                    new Point(rectBR.getDouble(0), rectBR.getDouble(1)));
+            resultWindowRect = rotated ? new Rect(new Point(rectTL.getDouble(1), rectTL.getDouble(0)),
+                    new Point(rectBR.getDouble(1), rectBR.getDouble(0))) :
+                    new Rect(new Point(rectTL.getDouble(0), rectTL.getDouble(1)),
+                            new Point(rectBR.getDouble(0), rectBR.getDouble(1)));
 
             // Pull data related to the result window
-            topLinePosition = obj.getInt("TOP_LINE_POSITION");
-            middleLinePosition = obj.getInt("MIDDLE_LINE_POSITION");
-            bottomLinePosition = obj.getInt("BOTTOM_LINE_POSITION");
+            topLinePosition = rotated ? obj.getJSONArray("TOP_LINE_POSITION").getDouble(1) : obj.getJSONArray("TOP_LINE_POSITION").getDouble(0);
+            middleLinePosition = rotated ? obj.getJSONArray("MIDDLE_LINE_POSITION").getDouble(1) : obj.getJSONArray("MIDDLE_LINE_POSITION").getDouble(0);
+            bottomLinePosition = rotated ? obj.getJSONArray("BOTTOM_LINE_POSITION").getDouble(1) : obj.getJSONArray("BOTTOM_LINE_POSITION").getDouble(0);
             topLineName = obj.getString("TOP_LINE_NAME");
             middleLineName = obj.getString("MIDDLE_LINE_NAME");
             bottomLineName = obj.getString("BOTTOM_LINE_NAME");
@@ -92,15 +103,31 @@ public class RDT {
             lineSearchWidth = obj.getInt("LINE_SEARCH_WIDTH");
 
             // Pull data related to fiducials
-            boolean hasFiducial = fiducialCount > 0;
-            fiducialCount = obj.has("FIDUCIAL_COUNT") ? obj.getInt("FIDUCIAL_COUNT") : 0;
-            fiducialDistance = hasFiducial ? obj.getInt("FIDUCIAL_DISTANCE") : 0;
-            fiducialToResultWindowOffset = hasFiducial ? obj.getInt("FIDUCIAL_TO_RESULT_WINDOW_OFFSET") : 0;
-            fiducialPositionMin = hasFiducial ? obj.getInt("FIDUCIAL_POSITION_MIN") : 0;
-            fiducialPositionMax = hasFiducial ? obj.getInt("FIDUCIAL_POSITION_MAX") : 0;
-            fiducialMinH = hasFiducial ? obj.getInt("FIDUCIAL_MIN_HEIGHT") : 0;
-            fiducialMinW = hasFiducial ? obj.getInt("FIDUCIAL_MIN_WIDTH") : 0;
-            fiducialMaxW = hasFiducial ? obj.getInt("FIDUCIAL_MAX_WIDTH") : 0;
+            fiducials = obj.has("FIDUCIALS") ? obj.getJSONArray("FIDUCIAL_COUNT") : new JSONArray();
+            hasFiducial = fiducials.length() > 0;
+
+            if (hasFiducial && fiducials.length() == 2) {
+                JSONArray trueFiducial1 = fiducials.getJSONArray(0);
+                Point trueFiducialTL1 = rotated
+                        ? new Point(trueFiducial1.getJSONArray(0).getDouble(1), trueFiducial1.getJSONArray(0).getDouble(0))
+                        : new Point(trueFiducial1.getJSONArray(0).getDouble(0), trueFiducial1.getJSONArray(0).getDouble(1));
+                Point trueFiducialBR1 = rotated
+                        ? new Point(trueFiducial1.getJSONArray(1).getDouble(1), trueFiducial1.getJSONArray(1).getDouble(0))
+                        : new Point(trueFiducial1.getJSONArray(1).getDouble(0), trueFiducial1.getJSONArray(1).getDouble(1));
+
+                JSONArray trueFiducial2 = fiducials.getJSONArray(1);
+                Point trueFiducialTL2 = rotated
+                        ? new Point(trueFiducial2.getJSONArray(0).getDouble(1), trueFiducial2.getJSONArray(0).getDouble(0))
+                        : new Point(trueFiducial2.getJSONArray(0).getDouble(0), trueFiducial2.getJSONArray(0).getDouble(1));
+                Point trueFiducialBR2 = rotated
+                        ? new Point(trueFiducial2.getJSONArray(1).getDouble(1), trueFiducial2.getJSONArray(1).getDouble(0))
+                        : new Point(trueFiducial2.getJSONArray(1).getDouble(0), trueFiducial2.getJSONArray(1).getDouble(1));
+
+                fiducialRects = new ArrayList<>();
+
+                fiducialRects.add(new Rect(trueFiducialTL1, trueFiducialBR1));
+                fiducialRects.add(new Rect(trueFiducialTL2, trueFiducialBR2));
+            }
 
             // Store the reference's sharpness
             Size kernel = new Size(SHARPNESS_GAUSSIAN_BLUR_WINDOW,

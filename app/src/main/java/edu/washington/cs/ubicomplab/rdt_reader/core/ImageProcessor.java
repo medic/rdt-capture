@@ -13,6 +13,8 @@ import android.content.Context;
 import android.graphics.Bitmap;
 import android.util.Log;
 
+import org.json.JSONArray;
+import org.json.JSONException;
 import org.opencv.android.BaseLoaderCallback;
 import org.opencv.android.LoaderCallbackInterface;
 import org.opencv.android.OpenCVLoader;
@@ -793,8 +795,8 @@ public class ImageProcessor {
 
         // If fiducials are specified, use them to improve the estimate of the
         // result window's location, otherwise use the default rectangle specified by the user
-        Rect resultWindowRect = mRDT.fiducialCount == 0 ?
-                mRDT.resultWindowRect : cropResultWindowWithFidicual(correctedMat);
+        Rect resultWindowRect = mRDT.hasFiducial ?
+                cropResultWindowWithFidicual(correctedMat) : mRDT.resultWindowRect;
 
         // Resize the window so it's the same size as in the template
         correctedMat = new Mat(correctedMat, resultWindowRect);
@@ -867,17 +869,20 @@ public class ImageProcessor {
         for (int i = 0; i < contours.size(); i++) {
             Rect rect = Imgproc.boundingRect(contours.get(i));
             double rectPos = rect.x + rect.width;
-            if (mRDT.fiducialPositionMin < rectPos && rectPos < mRDT.fiducialPositionMax &&
-                    mRDT.fiducialMinH < rect.height && mRDT.fiducialMinW < rect.width &&
-                    rect.width < mRDT.fiducialMaxW) {
-                fiducialRects.add(rect);
+
+            for (Rect trueFiducialRect: mRDT.fiducialRects) {
+                if (trueFiducialRect.x + trueFiducialRect.width - Constants.FIDUCIAL_THRESHOLD < rectPos && rectPos < trueFiducialRect.x + trueFiducialRect.width + Constants.FIDUCIAL_THRESHOLD &&
+                        trueFiducialRect.height - Constants.FIDUCIAL_THRESHOLD < rect.height &&
+                        trueFiducialRect.width - Constants.FIDUCIAL_THRESHOLD < rect.width && rect.width < trueFiducialRect.width + Constants.FIDUCIAL_THRESHOLD) {
+                    fiducialRects.add(rect);
+                }
             }
         }
 
         // If the correct number of fiducials was found,
         // find the position of the result window relative to them
         Rect resultWindowMat = new Rect(0, 0, 0, 0);
-        if (fiducialRects.size() == mRDT.fiducialCount) {
+        if (fiducialRects.size() == mRDT.fiducials.length()) {
             // Find the average fiducial position
             double center0 = fiducialRects.get(0).x + fiducialRects.get(0).width;
             double center1 = fiducialRects.get(0).x + fiducialRects.get(0).width;
@@ -887,10 +892,9 @@ public class ImageProcessor {
             int midpoint = (int) ((center0 + center1) / 2);
 
             // Locate the result window relative the fiducials
-            double offset = mRDT.fiducialToResultWindowOffset;
-            Point tl = new Point(midpoint + offset - mRDT.resultWindowRect.width / 2.0,
+            Point tl = new Point(midpoint + mRDT.resultWindowRect.x,
                     mRDT.resultWindowRect.y);
-            Point br = new Point(midpoint + offset + mRDT.resultWindowRect.width / 2.0,
+            Point br = new Point(midpoint + mRDT.resultWindowRect.x + mRDT.resultWindowRect.width,
                     mRDT.resultWindowRect.y+mRDT.resultWindowRect.height);
             resultWindowMat = new Rect(tl, br);
         }
