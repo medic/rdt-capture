@@ -15,7 +15,6 @@ import android.content.DialogInterface;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.support.v7.app.AlertDialog;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.RadioButton;
@@ -23,13 +22,13 @@ import android.widget.RadioGroup;
 import android.widget.SeekBar;
 
 import edu.washington.cs.ubicomplab.rdt_reader.R;
-import edu.washington.cs.ubicomplab.rdt_reader.interfaces.SettingDialogListener;
+import edu.washington.cs.ubicomplab.rdt_reader.interfaces.SettingsDialogListener;
 import edu.washington.cs.ubicomplab.rdt_reader.core.Constants;
 
 /**
  * Fragment view for allowing the end-user to modify the quality check thresholds
  */
-public class SettingDialogFragment extends DialogFragment
+public class SettingsDialogFragment extends DialogFragment
         implements RadioGroup.OnCheckedChangeListener {
 
     // Threshold setting UI elements
@@ -92,7 +91,7 @@ public class SettingDialogFragment extends DialogFragment
                     @Override
                     public void onClick(DialogInterface dialog, int id) {
                         updateConstants();
-                        SettingDialogListener activity = (SettingDialogListener) getActivity();
+                        SettingsDialogListener activity = (SettingsDialogListener) getActivity();
                         activity.onClickPositiveButton();
                     }
                 })
