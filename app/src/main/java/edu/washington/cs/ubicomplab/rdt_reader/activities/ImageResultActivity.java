@@ -30,25 +30,43 @@ import java.util.Date;
 import java.util.Locale;
 
 import edu.washington.cs.ubicomplab.rdt_reader.R;
+import edu.washington.cs.ubicomplab.rdt_reader.fragments.SettingsDialogFragment;
 import edu.washington.cs.ubicomplab.rdt_reader.interfaces.SettingsDialogListener;
 import edu.washington.cs.ubicomplab.rdt_reader.core.Constants;
 
 import static java.text.DateFormat.getDateTimeInstance;
 
+/**
+ * The {@link android.app.Activity} for showing the results of RDT image post-processing and
+ * automatic analysis
+ * Note: In this example app, this activity is launched as an {@link Intent} from {@link MainActivity}
+ * with the target RDT's name passed in the bundle to support multiple RDT designs simultaneously
+ */
 public class ImageResultActivity extends AppCompatActivity implements View.OnClickListener, SettingsDialogListener {
-
+    // Image saving variables
     Bitmap mBitmapToSave;
     byte[] capturedByteArray, windowByteArray;
     boolean isImageSaved = false;
+
+    // Capture time variable
     long timeTaken = 0;
 
+    /**
+     * {@link android.app.Activity} onCreate()
+     * @param savedInstanceState: the bundle object in case this is launched from an intent
+     */
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_image_result);
+
+        // Initialize UI elements
         initViews();
     }
 
+    /**
+     * Initializes UI elements based on that data that was passed through the intent
+     */
     private void initViews() {
         Intent intent = getIntent();
 
@@ -81,7 +99,7 @@ public class ImageResultActivity extends AppCompatActivity implements View.OnCli
         if (intent.hasExtra("topLine")) {
             boolean topLine = intent.getBooleanExtra("topLine", false);
             TextView topLineTextView = findViewById(R.id.topLineTextView);
-            topLineTextView.setText(String.format("%s", topLine ?"True":"False"));
+            topLineTextView.setText(String.format("%s", topLine ? "True" : "False"));
         }
         if (intent.hasExtra("topLineName")) {
             String topLineName = intent.getStringExtra("topLineName");
@@ -93,7 +111,7 @@ public class ImageResultActivity extends AppCompatActivity implements View.OnCli
         if (intent.hasExtra("middleLine")) {
             boolean middleLine = intent.getBooleanExtra("middleLine", false);
             TextView middleLineTextView = findViewById(R.id.middleLineTextView);
-            middleLineTextView.setText(String.format("%s", middleLine ?"True":"False"));
+            middleLineTextView.setText(String.format("%s", middleLine ? "True" : "False"));
         }
         if (intent.hasExtra("middleLineName")) {
             String middleLineName = intent.getStringExtra("middleLineName");
@@ -105,7 +123,7 @@ public class ImageResultActivity extends AppCompatActivity implements View.OnCli
         if (intent.hasExtra("bottomLine")) {
             boolean bottomLine = intent.getBooleanExtra("bottomLine", false);
             TextView bottomLineTextView = findViewById(R.id.bottomLineTextView);
-            bottomLineTextView.setText(String.format("%s", bottomLine ?"True":"False"));
+            bottomLineTextView.setText(String.format("%s", bottomLine ? "True" : "False"));
         }
         if (intent.hasExtra("bottomLineName")) {
             String bottomLineName = intent.getStringExtra("bottomLineName");
@@ -116,7 +134,7 @@ public class ImageResultActivity extends AppCompatActivity implements View.OnCli
         // Buttons
         Button saveImageButton = findViewById(R.id.saveButton);
         saveImageButton.setOnClickListener(this);
-        Button sendImageButton = findViewById(R.id.sendButton);
+        Button sendImageButton = findViewById(R.id.doneButton);
         sendImageButton.setOnClickListener(this);
     }
 
@@ -129,58 +147,65 @@ public class ImageResultActivity extends AppCompatActivity implements View.OnCli
 
     @Override
     public void onClick(View view) {
+        // Save the photo locally on the user's device
         if (view.getId() == R.id.saveButton) {
+            // Skip if the image is already saved
             if (isImageSaved) {
                 Toast.makeText(this,"Image is already saved.", Toast.LENGTH_LONG).show();
                 return;
             }
 
+            // Create storage directories if they don't already exist
             File sdIconStorageDir = new File(Constants.RDT_IMAGE_DIR);
-
-            //create storage directories, if they don't exist
             sdIconStorageDir.mkdirs();
 
+            // Get the current time to use as part of the filename
             SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH-mm-ss-SSS");
 
+            // Save both the full image and the enhanced image
             try {
                 // Save the full image
-                String filePath = sdIconStorageDir.toString() + String.format("/%s-%08dms_full.jpg", sdf.format(new Date()), timeTaken);
+                String filePath = sdIconStorageDir.toString() +
+                        String.format("/%s-%08dms_full.jpg", sdf.format(new Date()), timeTaken);
                 FileOutputStream fileOutputStream = new FileOutputStream(filePath);
                 fileOutputStream.write(capturedByteArray);
                 fileOutputStream.flush();
                 fileOutputStream.close();
 
                 // Save the enhanced image
-                filePath = sdIconStorageDir.toString() + String.format("/%s-%08dms_cropped.jpg", sdf.format(new Date()), timeTaken);
+                filePath = sdIconStorageDir.toString() +
+                        String.format("/%s-%08dms_cropped.jpg", sdf.format(new Date()), timeTaken);
                 fileOutputStream = new FileOutputStream(filePath);
                 fileOutputStream.write(windowByteArray);
                 fileOutputStream.flush();
                 fileOutputStream.close();
 
+                // Send broadcast to OS so that the files appear immediately in the file system
                 sendBroadcast(new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE, Uri.parse("file://" + filePath)));
-                isImageSaved = true;
+
+                // Notify the user that the image has been saved
                 Toast.makeText(this,"Image is successfully saved!", Toast.LENGTH_SHORT).show();
+                isImageSaved = true;
             } catch (Exception e) {
                 Log.w("TAG", "Error saving image file: " + e.getMessage());
             }
-        } else if (view.getId() == R.id.sendButton) {
+        } else if (view.getId() == R.id.doneButton) {
             Intent data = new Intent();
             data.putExtra("RDTCaptureByteArray", capturedByteArray);
             setResult(RESULT_OK, data);
             finish();
-
-            Toast.makeText(this,"Image is successfully sent!", Toast.LENGTH_SHORT).show();
         }
     }
 
+    /**
+     * {@link SettingsDialogFragment} onClickPositiveButton()
+     */
     @Override
     public void onClickPositiveButton() {
         Resources res = getResources();
-        // Change locale settings in the app.
         DisplayMetrics dm = res.getDisplayMetrics();
         android.content.res.Configuration conf = res.getConfiguration();
-        conf.setLocale(new Locale(Constants.LANGUAGE)); // API 17+ only.
-        // Use conf.locale = new Locale(...) if targeting lower versions
+        conf.setLocale(new Locale(Constants.LANGUAGE));
         res.updateConfiguration(conf, dm);
 
         setContentView(R.layout.activity_image_quality);

@@ -17,8 +17,8 @@ import static edu.washington.cs.ubicomplab.rdt_reader.core.Constants.DEFAULT_RDT
 /**
  * The {@link android.app.Activity} for showing a real-time camera feed during image capture and
  * providing real-time feedback to the user
- * Note: In this example app, this activity is launched from {@link MainActivity} with the target
- * RDT's name passed in the bundle to support multiple RDT designs simultaneously
+ * Note: In this example app, this activity is launched as an {@link Intent} from {@link MainActivity}
+ * with the target RDT's name passed in the bundle to support multiple RDT designs simultaneously
  */
 public class ImageQualityActivity extends Activity implements ImageQualityViewListener {
     ImageQualityView mImageQualityView;

@@ -38,11 +38,11 @@
         android:text="@string/save_image"
         android:theme="@style/PrimaryButton"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toStartOf="@+id/sendButton"
+        app:layout_constraintEnd_toStartOf="@+id/doneButton"
         app:layout_constraintStart_toStartOf="parent" />
 
     <Button
-        android:id="@+id/sendButton"
+        android:id="@+id/doneButton"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginBottom="8dp"
@@ -106,7 +106,7 @@
         android:layout_marginStart="8dp"
         android:text="False"
         android:textAlignment="center"
-        app:layout_constraintBottom_toTopOf="@+id/sendButton"
+        app:layout_constraintBottom_toTopOf="@+id/doneButton"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toEndOf="@+id/middleLineTextView" />
 
