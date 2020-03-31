@@ -34,8 +34,8 @@ If you are working directly on our repository, open the file `app/src/main/asset
 | **Data Field**                      | **Required?**       | **Data Types**       | **Range**    | **Description**    |
 | :---------------------------------- | :-----------------: | :------------------- | :----------- |:----------------- |
 | `REF_IMG`                           | :heavy_check_mark:  | `String`             |              | Filename of the template image for the RDT |
-| `VIEW_FINDER_SCALE_H`               | :heavy_check_mark:  | `double`             | min = 0.0, max = 1.0   | Relative height of the view finder compared to screen height |
-| `VIEW_FINDER_SCALE_W`               | :heavy_check_mark:  | `double`             |              | Relative width of the view finder compared to screen height |
+| `VIEW_FINDER_SCALE_H`               | :heavy_check_mark:  | `double`             | min = 0.0, max = 1.0   | Relative height of the viewfinder compared to screen's height |
+| `VIEW_FINDER_SCALE_W`               | :heavy_check_mark:  | `double`             |              | Relative width of the viewfinder compared to screen's width |
 | `RESULT_WINDOW_RECT_TOP_LEFT`       | :heavy_check_mark:  | [`double`, `double`] |              | (x, y) coordinates of top-left corner of result window |
 | `RESULT_WINDOW_RECT_BOTTOM_RIGHT`   | :heavy_check_mark:  | [`double`, `double`] |              | (x, y) coordinates of bottom-right corner of result window |
 | `TOP_LINE_POSITION`                 | :heavy_check_mark:  | `double`, `double`] |              | (x, y) coordinates of the center of the top line |
