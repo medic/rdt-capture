@@ -54,7 +54,7 @@ If you are working directly on our repository, open the file `app/src/main/asset
 | `MIDDLE_LINE_NAME`                  | :heavy_check_mark:  | `String`             |              | Meaning of the middle line (e.g., "Control", "Influenza A") |
 | `BOTTOM_LINE_NAME`                  | :heavy_check_mark:  | `String`             |              | Meaning of the bottom line (e.g., "Control", "Malaria P.f") |
 | `LINE_INTENSITY`                    | :heavy_minus_sign:  | `int`                | min = 0, max= 255     | Minimum intensity of the line (default = 80) |
-| `FIDUCIAL_COUNT`                    | :heavy_minus_sign:  | `double`             |              | TODO |
+| `FIDUCIAL_COUNT`                    | :heavy_minus_sign:  | `int`             |              | TODO |
 | `FIDUCIALS`                 | :heavy_minus_sign:  | List of pairs of `[double, double]`  |              | Top-left and bottom-right (x, y) coordinates for each fiducial |
 
 Note that the `LINE_INTENSITY` parameter gives the developer direct control over the interpretation accuracy of RDTScan for the target RDT. If RDTScan is under-reporting positive cases because it is missing faint lines, `LINE_INTENSITY` can be decreased to lower the threshold needed for a postivie test result. Conversely, `LINE_INTENSITY` can be increased if RDTScan is over-reporting positive cases. The default value is based on deployments and studies with a handful of RDT brands, so it should serve as a reasonable baseline in most cases.
