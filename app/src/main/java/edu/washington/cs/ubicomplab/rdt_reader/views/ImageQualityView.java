@@ -11,7 +11,6 @@ package edu.washington.cs.ubicomplab.rdt_reader.views;
 import android.Manifest;
 import android.app.Activity;
 import android.content.Context;
-import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.res.Configuration;
 import android.content.res.TypedArray;
@@ -78,6 +77,7 @@ import static edu.washington.cs.ubicomplab.rdt_reader.core.Constants.*;
  */
 public class ImageQualityView extends LinearLayout implements View.OnClickListener, ActivityCompat.OnRequestPermissionsResultCallback {
     private Activity mActivity;
+    private static final String TAG = "ImageQualityView";
 
     // UI elements
     private TextView mImageQualityFeedbackView;
@@ -89,40 +89,165 @@ public class ImageQualityView extends LinearLayout implements View.OnClickListen
     private ViewportUsingBitmap mViewport;
     private boolean showViewport;
     private boolean showFeedback;
+    private AutoFitTextureView mTextureView;
 
     // Image quality variables
     public boolean flashEnabled = true;
-    private State mCurrentState = State.QUALITY_CHECK;
     private String rdtName;
 
-    // Image processing variables variables
+    // Image processing variables
     private ImageProcessor processor;
     private long timeTaken = 0;
 
-    private FocusState mFocusState = FocusState.INACTIVE;
-
+    // Image capture variables
+    private CameraCaptureSession mCaptureSession;
+    private String mCameraId;
+    private CameraDevice mCameraDevice;
+    private Size mPreviewSize;
+    private static final int REQUEST_CAMERA_PERMISSION = 1;
+    private static final SparseIntArray ORIENTATIONS = new SparseIntArray();
+    static {
+        ORIENTATIONS.append(Surface.ROTATION_0, 90);
+        ORIENTATIONS.append(Surface.ROTATION_90, 0);
+        ORIENTATIONS.append(Surface.ROTATION_180, 270);
+        ORIENTATIONS.append(Surface.ROTATION_270, 180);
+    }
     private ImageQualityViewListener mImageQualityViewListener;
 
-    public void setRDTName(String rdtName) {
-        this.rdtName = rdtName;
-    }
+    // Thread handling for the preview and camera hardware
+    private Semaphore mCameraOpenCloseLock = new Semaphore(1);
+    private CaptureRequest mPreviewRequest;
 
-    private enum State {
-        QUALITY_CHECK, FINAL_CHECK
-    }
-
-    private enum FocusState {
-        INACTIVE, FOCUSING, FOCUSED, UNFOCUSED
-    }
+    // Thread handling for the image processing
+    private HandlerThread mBackgroundThread;
+    private Handler mBackgroundHandler;
+    private HandlerThread mOnImageAvailableThread;
+    private Handler mOnImageAvailableHandler;
+    private ImageReader mImageReader;
+    final Object focusStateLock = new Object();
+    final BlockingQueue<Image> imageQueue = new ArrayBlockingQueue<>(1);
+    private CaptureRequest.Builder mPreviewRequestBuilder;
 
     /**
      * An Enumeration object that acts as a finite-state machine for image quality checking
-     * CONTINUE: a clean image has not been found yet, continue image capture
-     * STOP: a clean image has been found yet, image capture should stop
+     * QUALITY_CHECK: still looking for a clean video frame
+     * FINAL_CHECK: clean video frame has been found
+     */
+    private QualityCheckingState mCurrentState = QualityCheckingState.QUALITY_CHECK;
+    private enum QualityCheckingState {
+        QUALITY_CHECK, FINAL_CHECK
+    }
+
+    /**
+     * An Enumeration object that acts as a finite-state machine for
+     * the camera device's auto-focus operation
+     * INACTIVE: not doing anything or not available on the target device
+     * UNFOCUSED: camera devices is not focused on the target object
+     * FOCUSING: camera device is actively trying to focus
+     * FOCUSED: camera device is focused on the target object
+     */
+    private FocusState mFocusState = FocusState.INACTIVE;
+    private enum FocusState {
+        INACTIVE, UNFOCUSED, FOCUSING, FOCUSED
+    }
+
+    /**
+     * An Enumeration object for describing whether images should continue to be captured
+     * CONTINUE: still need to look at more images
+     * STOP: enough images have been processed
      */
     public enum RDTDetectedResult {
         CONTINUE, STOP
     }
+
+    /**
+     * Object for handling several lifecycle events on a {@link TextureView}
+     */
+    private final TextureView.SurfaceTextureListener mSurfaceTextureListener
+            = new TextureView.SurfaceTextureListener() {
+
+        @Override
+        public void onSurfaceTextureAvailable(SurfaceTexture texture, int width, int height) {
+            openCamera(width, height);
+        }
+
+        @Override
+        public void onSurfaceTextureSizeChanged(SurfaceTexture texture, int width, int height) {
+            configureTransform(width, height);
+        }
+
+        @Override
+        public boolean onSurfaceTextureDestroyed(SurfaceTexture texture) {
+            return true;
+        }
+
+        @Override
+        public void onSurfaceTextureUpdated(SurfaceTexture texture) { }
+
+    };
+
+    /**
+     * The callback for whenever {@link CameraDevice} changes its state.
+     */
+    private final CameraDevice.StateCallback mStateCallback = new CameraDevice.StateCallback() {
+
+        @Override
+        public void onOpened(@NonNull CameraDevice cameraDevice) {
+            // Start the camera preview
+            mCameraOpenCloseLock.release();
+            mCameraDevice = cameraDevice;
+            createCameraPreviewSession();
+        }
+
+        @Override
+        public void onDisconnected(@NonNull CameraDevice cameraDevice) {
+            mCameraOpenCloseLock.release();
+            if (null != cameraDevice && null != mCameraDevice) {
+                cameraDevice.close();
+                mCameraDevice = null;
+            }
+            mCameraDevice = null;
+        }
+
+        @Override
+        public void onError(@NonNull CameraDevice cameraDevice, int error) {
+        }
+    };
+
+    /**
+     * The callback object for whenever {@link ImageReader} has an image available
+     */
+    private final ImageReader.OnImageAvailableListener mOnImageAvailableListener
+            = new ImageReader.OnImageAvailableListener() {
+
+        @Override
+        public void onImageAvailable(ImageReader reader) {
+            // Check that the reader is available
+            if (reader == null)
+                return;
+
+            // Check that an image is available
+            final Image image = reader.acquireLatestImage();
+            if (image == null)
+                return;
+            if (imageQueue.size() > 0) {
+                image.close();
+                return;
+            }
+
+            // Check that the image is focused
+            if (mFocusState != FocusState.FOCUSED) {
+                image.close();
+                return;
+            }
+
+            // Add the image to the queue and execute the quality checking
+            // process on a different thread
+            imageQueue.add(image);
+            new ImageProcessAsyncTask().execute(image);
+        }
+
+    };
 
     /**
      * {@link View} constructor
@@ -191,182 +316,25 @@ public class ImageQualityView extends LinearLayout implements View.OnClickListen
         }
     }
 
+    /**
+     * Assigns the listener to this {@link View}
+     * @param listener: the {@link ImageQualityViewListener} to be used with this view
+     */
     public void setImageQualityViewListener(ImageQualityViewListener listener) {
         mImageQualityViewListener = listener;
     }
 
     /**
-     * Conversion from screen rotation to JPEG orientation.
+     * Store the name of the target RDT design
+     * @param rdtName: the target RDT's name
      */
-    private static final SparseIntArray ORIENTATIONS = new SparseIntArray();
-    private static final int REQUEST_CAMERA_PERMISSION = 1;
-
-    static {
-        ORIENTATIONS.append(Surface.ROTATION_0, 90);
-        ORIENTATIONS.append(Surface.ROTATION_90, 0);
-        ORIENTATIONS.append(Surface.ROTATION_180, 270);
-        ORIENTATIONS.append(Surface.ROTATION_270, 180);
+    public void setRDTName(String rdtName) {
+        this.rdtName = rdtName;
     }
 
     /**
-     * Tag for the {@link Log}.
+     *
      */
-    private static final String TAG = "ImageQualityView";
-
-    /**
-     * Camera state: Showing camera preview.
-     */
-    private static final int STATE_PREVIEW = 0;
-    /**
-     * ID of the current {@link CameraDevice}.
-     */
-    private String mCameraId;
-
-    /**
-     * A {@link CameraCaptureSession } for camera preview.
-     */
-    private CameraCaptureSession mCaptureSession;
-
-
-
-    /**
-     * {@link TextureView.SurfaceTextureListener} handles several lifecycle events on a
-     * {@link TextureView}.
-     */
-    private final TextureView.SurfaceTextureListener mSurfaceTextureListener
-            = new TextureView.SurfaceTextureListener() {
-
-        @Override
-        public void onSurfaceTextureAvailable(SurfaceTexture texture, int width, int height) {
-            openCamera(width, height);
-        }
-
-        @Override
-        public void onSurfaceTextureSizeChanged(SurfaceTexture texture, int width, int height) {
-            configureTransform(width, height);
-        }
-
-        @Override
-        public boolean onSurfaceTextureDestroyed(SurfaceTexture texture) {
-            return true;
-        }
-
-        @Override
-        public void onSurfaceTextureUpdated(SurfaceTexture texture) {
-
-        }
-
-    };
-
-    /**
-     * An {@link AutoFitTextureView} for camera preview.
-     */
-    private AutoFitTextureView mTextureView;
-
-
-    /**
-     * A reference to the opened {@link CameraDevice}.
-     */
-    private CameraDevice mCameraDevice;
-
-    /**
-     * The {@link android.util.Size} of camera preview.
-     */
-    private Size mPreviewSize;
-
-    /**
-     * {@link CameraDevice.StateCallback} is called when {@link CameraDevice} changes its state.
-     */
-    private final CameraDevice.StateCallback mStateCallback = new CameraDevice.StateCallback() {
-
-        @Override
-        public void onOpened(@NonNull CameraDevice cameraDevice) {
-            // This method is called when the camera is opened.  We start camera preview here.
-            mCameraOpenCloseLock.release();
-            mCameraDevice = cameraDevice;
-            createCameraPreviewSession();
-        }
-
-
-        @Override
-        public void onDisconnected(@NonNull CameraDevice cameraDevice) {
-            mCameraOpenCloseLock.release();
-            if (null != cameraDevice && null != mCameraDevice) {
-                cameraDevice.close();
-                mCameraDevice = null;
-            }
-            mCameraDevice = null;
-        }
-
-        @Override
-        public void onError(@NonNull CameraDevice cameraDevice, int error) {
-        }
-
-    };
-
-    /**
-     * An additional thread for running tasks that shouldn't block the UI.
-     */
-    private HandlerThread mBackgroundThread;
-
-    /**
-     * A {@link Handler} for running tasks in the background.
-     */
-    private Handler mBackgroundHandler;
-
-    /**
-     * An additional thread for running tasks that shouldn't block the UI.
-     */
-    private HandlerThread mOnImageAvailableThread;
-
-    /**
-     * A {@link Handler} for running tasks in the background.
-     */
-    private Handler mOnImageAvailableHandler;
-
-    /**
-     * An {@link ImageReader} that handles still image capture.
-     */
-    private ImageReader mImageReader;
-
-    final Object focusStateLock = new Object();
-
-    final BlockingQueue<Image> imageQueue = new ArrayBlockingQueue<>(1);
-
-    /**
-     * Callback object for the {@link ImageReader}. "onImageAvailable" will be called when a
-     * still image is ready to be saved.
-     */
-    private final ImageReader.OnImageAvailableListener mOnImageAvailableListener
-            = new ImageReader.OnImageAvailableListener() {
-
-        @Override
-        public void onImageAvailable(ImageReader reader) {
-            // Check that the reader is available
-            if (reader == null)
-                return;
-
-            // Check that an image is available
-            final Image image = reader.acquireLatestImage();
-            if (image == null)
-                return;
-            if (imageQueue.size() > 0) {
-                image.close();
-                return;
-            }
-
-            // Check that the image is focused
-            if (mFocusState != FocusState.FOCUSED) {
-                image.close();
-                return;
-            }
-
-            imageQueue.add(image);
-            new ImageProcessAsyncTask().execute(image);
-        }
-
-    };
-
     private class ImageProcessAsyncTask extends AsyncTask<Image, Void, Void> {
 
         @Override
@@ -418,22 +386,6 @@ public class ImageQualityView extends LinearLayout implements View.OnClickListen
             return null;
         }
     }
-
-    /**
-     * {@link CaptureRequest.Builder} for the camera preview
-     */
-    private CaptureRequest.Builder mPreviewRequestBuilder;
-
-    /**
-     * {@link CaptureRequest} generated by {@link #mPreviewRequestBuilder}
-     */
-    private CaptureRequest mPreviewRequest;
-
-
-    /**
-     * {@link Semaphore} to prevent the app from exiting before closing the camera.
-     */
-    private Semaphore mCameraOpenCloseLock = new Semaphore(1);
 
     /**
      * {@link CameraCaptureSession.CaptureCallback} that handles events related to JPEG capture.
@@ -893,12 +845,12 @@ public class ImageQualityView extends LinearLayout implements View.OnClickListen
         mViewport.setVisibility(showViewport ? VISIBLE : GONE);
     }
 
-    private void setProgressUI(State CurrentState) {
-        if (!showFeedback) {
+    private void setProgressUI(QualityCheckingState currentState) {
+        // Skip if feedback is not needed
+        if (!showFeedback)
             return;
-        }
 
-        switch (CurrentState) {
+        switch (currentState) {
             case QUALITY_CHECK:
                 mActivity.runOnUiThread(new Runnable() {
                     @Override
@@ -983,5 +935,4 @@ public class ImageQualityView extends LinearLayout implements View.OnClickListen
             mInstructionText.setText(getResources().getString(R.string.instruction_focusing));
         }
     }
-
 }
