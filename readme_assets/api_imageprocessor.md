@@ -299,7 +299,7 @@
 * `Mat enhancedMat`: a contrast-enhanced version of the RDT's result window
 
 ## interpretRDT()
-**Signature:** `InterpretationResult interpResult = interpretRDT(Mat inputMat, MatOfPoint2f boundary)`
+**Signature:** `InterpretationResult interpResult = interpretRDT(Mat inputMat, MatOfPoint2f boundary)`  
 **Purpose:** Interprets any lines that appear within the detected RDT's result window  
 **Parameters:**
 * `Mat inputMat`: the image known to have a clear RDT in the video frame
