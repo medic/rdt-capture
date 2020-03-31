@@ -26,7 +26,7 @@ This information will tell RDTScan where the image should be cropped so the user
 
 ### Location of control/test lines (required)
 This information will tell RDTScan where the different lines should be located. This is used to help RDTScan assign meaning to each of the lines and to prevent RDTScan from picking up on marks that are not actual lines.
-|                        | Top line (y-position only)  | Middle line (y-position only)  | Bottom line (y-position only)  |
+|                        | Top line (x, y)  | Middle line (x, y)  | Bottom line (x, y)  |
 | :--------------------: | :-------------------------: | :----------------------------: | :----------------------------: | 
 | <img src="covid19_lines.jpg" alt="An RDT with the location of its result lines annotated" height="200"/> | <img src="covid19_top_line.png" alt="An image explaining where you should point your cursor to locate the top line within the result window in an image-editing program" height="200"/> | <img src="covid19_middle_line.png" alt="An image explaining where you should point your cursor to locate the middle line within the result window in an image-editing program" height="200"/> | <img src="covid19_bottom_line.png" alt="An image explaining where you should point your cursor to locate the bottom line within the result window in an image-editing program" height="200"/> |
 
@@ -54,7 +54,6 @@ If you are working directly on our repository, open `app/src/main/assets/config.
 | `MIDDLE_LINE_NAME`                  | :heavy_check_mark:  | `String`             |              | Meaning of the middle line (e.g., "Control", "Influenza A") |
 | `BOTTOM_LINE_NAME`                  | :heavy_check_mark:  | `String`             |              | Meaning of the bottom line (e.g., "Control", "Malaria P.f") |
 | `LINE_INTENSITY`                    | :heavy_minus_sign:  | `int`                | min = 0, max= 255     | Minimum intensity of the line (default = 80) |
-| `FIDUCIAL_COUNT`                    | :heavy_minus_sign:  | `int`             |              | TODO |
-| `FIDUCIALS`                 | :heavy_minus_sign:  | List of pairs of `[double, double]`  |              | Top-left and bottom-right (x, y) coordinates for each fiducial |
+| `FIDUCIALS`                 | :heavy_minus_sign:  | List of pairs of `[double, double]`  |              | Top-left and bottom-right (x, y) coordinates for each fiducial (**Note:** RDTScan currently only supports either no fiducials or two fiducials; this will be addressed in a later update) |
 
 Note that the `LINE_INTENSITY` parameter gives you direct control over the interpretation accuracy of RDTScan for the target RDT. If RDTScan is under-reporting positive cases because it is missing faint lines, `LINE_INTENSITY` can be decreased to lower the threshold needed for a postivie test result. Conversely, `LINE_INTENSITY` can be increased if RDTScan is over-reporting positive cases. The default value is based on deployments and studies with a handful of RDT brands, so it should serve as a reasonable baseline in most cases.
