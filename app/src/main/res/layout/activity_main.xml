@@ -15,7 +15,7 @@
     tools:context="edu.washington.cs.ubicomplab.rdt_reader.activities.MainActivity">
 
     <Button
-        android:id="@+id/imagequalButton"
+        android:id="@+id/imageQualityButton"
         android:layout_width="266dp"
         android:layout_height="wrap_content"
         android:layout_marginStart="8dp"
@@ -53,7 +53,7 @@
         android:visibility="gone"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/imagequalButton" />
+        app:layout_constraintTop_toBottomOf="@+id/imageQualityButton" />
 
     <Spinner
         android:id="@+id/rdtname"
@@ -63,6 +63,6 @@
         android:entries="@array/spinnerItems"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/imagequalButton" />
+        app:layout_constraintTop_toBottomOf="@+id/imageQualityButton" />
 
 </android.support.constraint.ConstraintLayout>

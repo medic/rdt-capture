@@ -59,7 +59,6 @@ public class Viewport extends ViewGroup {
     @Override
     protected void dispatchDraw(Canvas canvas) {
         super.dispatchDraw(canvas);
-        int viewportMargin = 32;
         int viewportCornerRadius = 8;
         Paint eraser = new Paint();
         eraser.setAntiAlias(true);

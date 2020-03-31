@@ -25,8 +25,8 @@ import android.view.ViewGroup;
 import edu.washington.cs.ubicomplab.rdt_reader.R;
 
 public class ViewportUsingBitmap extends ViewGroup {
-    float hScale;
-    float wScale;
+    public float hScale;
+    public float wScale;
 
     private Canvas temp;
     private Paint paint;
@@ -70,7 +70,6 @@ public class ViewportUsingBitmap extends ViewGroup {
     @Override
     protected void dispatchDraw(Canvas canvas) {
         super.dispatchDraw(canvas);
-        int viewportMargin = 32;
         int viewportCornerRadius = 8;
         Paint eraser = new Paint();
         eraser.setAntiAlias(true);
