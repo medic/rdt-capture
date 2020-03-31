@@ -44,16 +44,16 @@ If you are working directly on our repository, open `app/src/main/assets/config.
 | `REF_IMG`                           | :heavy_check_mark:  | `String`             |              | Filename of the template image for the RDT |
 | `VIEW_FINDER_SCALE_H`               | :heavy_check_mark:  | `double`             | min = 0.0, max = 1.0   | Relative height of the viewfinder compared to screen's height |
 | `VIEW_FINDER_SCALE_W`               | :heavy_check_mark:  | `double`             |              | Relative width of the viewfinder compared to screen's width |
-| `RESULT_WINDOW_RECT_TOP_LEFT`       | :heavy_check_mark:  | `[double, double]` |              | (x, y) coordinates of top-left corner of result window |
-| `RESULT_WINDOW_RECT_BOTTOM_RIGHT`   | :heavy_check_mark:  | `[double, double]` |              | (x, y) coordinates of bottom-right corner of result window |
-| `TOP_LINE_POSITION`                 | :heavy_check_mark:  | `[double, double]` |              | (x, y) coordinates of the center of the top line |
-| `MIDDLE_LINE_POSITION`              | :heavy_check_mark:  | `[double, double]` |              | (x, y) coordinates of the center of the middle line |
-| `BOTTOM_LINE_POSITION`              | :heavy_check_mark:  | `[double, double]` |              | (x, y) coordinates of the center of the bottom line |
+| `RESULT_WINDOW_RECT_TOP_LEFT`       | :heavy_check_mark:  | `[double, double]` |              | (x, y) coordinates of result window's top-left corner |
+| `RESULT_WINDOW_RECT_BOTTOM_RIGHT`   | :heavy_check_mark:  | `[double, double]` |              | (x, y) coordinates of result window's bottom-right corner |
+| `TOP_LINE_POSITION`                 | :heavy_check_mark:  | `[double, double]` |              | (x, y) coordinates of the top line's center point |
+| `MIDDLE_LINE_POSITION`              | :heavy_check_mark:  | `[double, double]` |              | (x, y) coordinates of the middle line's center point |
+| `BOTTOM_LINE_POSITION`              | :heavy_check_mark:  | `[double, double]` |              | (x, y) coordinates of the bottom line's center point |
 | `LINE_SEARCH_WIDTH`                 | :heavy_check_mark:  | `double`             |              | Gap between two consecutive lines |
 | `TOP_LINE_NAME`                     | :heavy_check_mark:  | `String`             |              | Meaning of the top line (e.g., "Control", "Influenza A") |
 | `MIDDLE_LINE_NAME`                  | :heavy_check_mark:  | `String`             |              | Meaning of the middle line (e.g., "Control", "Influenza A") |
 | `BOTTOM_LINE_NAME`                  | :heavy_check_mark:  | `String`             |              | Meaning of the bottom line (e.g., "Control", "Malaria P.f") |
 | `LINE_INTENSITY`                    | :heavy_minus_sign:  | `int`                | min = 0, max= 255     | Minimum intensity of the line (default = 80) |
-| `FIDUCIALS`                 | :heavy_minus_sign:  | List of pairs of `[double, double]`  |              | Top-left and bottom-right (x, y) coordinates for each fiducial (**Note:** RDTScan currently only supports either no fiducials or two fiducials; this will be addressed in a later update) |
+| `FIDUCIALS`                 | :heavy_minus_sign:  | List of pairs of `[double, double]`  |              | (x, y) coordinates  of the top-left and bottom-right corners for each fiducial (**Note:** RDTScan currently only supports either no fiducials or two fiducials; this will be addressed in a later update) |
 
 Note that the `LINE_INTENSITY` parameter gives you direct control over the interpretation accuracy of RDTScan for the target RDT. If RDTScan is under-reporting positive cases because it is missing faint lines, `LINE_INTENSITY` can be decreased to lower the threshold needed for a postivie test result. Conversely, `LINE_INTENSITY` can be increased if RDTScan is over-reporting positive cases. The default value is based on deployments and studies with a handful of RDT brands, so it should serve as a reasonable baseline in most cases.
