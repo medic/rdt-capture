@@ -190,6 +190,9 @@ public final class ImageUtil {
 
     /**
      * Identifies the peaks/troughs within a vector of values
+     * Adapted from: https://gist.github.com/endolith/250860
+     * Note: This assumes alternating peaks and troughs, which is fine for this application,
+     * but may not be for other applications that require peak detection
      * @param arr: the array of values
      * @param delta: the minimum peak/trough height
      * @param max: whether a peak (max) or trough (min) is being tracked
@@ -197,7 +200,7 @@ public final class ImageUtil {
      */
     public static ArrayList<double[]> detectPeaks(double[] arr, double delta, boolean max) {
         ArrayList<double[]> peaks = new ArrayList<>();
-        ArrayList<double[]> valleys = new ArrayList<>();
+        ArrayList<double[]> troughs = new ArrayList<>();
 
         // Initialize peak tracking variables
         double min_val = arr[0];
@@ -206,7 +209,7 @@ public final class ImageUtil {
         int max_idx = Integer.MIN_VALUE;
         boolean lookingForMax = true;
 
-        // TODO: i think something is wrong here...
+        // Start looking for peaks/troughs
         for (int i=0; i<arr.length; i++) {
             double curr = arr[i];
             // Update the min/max values and locations
@@ -219,8 +222,9 @@ public final class ImageUtil {
                 min_idx = i;
             }
 
-            // Determine if peak has been found
+            // Determine if local optima has been found
             if (lookingForMax) {
+                // Peak finding
                 if (curr < max_val-delta) {
                     if (max_idx != Integer.MIN_VALUE)
                         peaks.add(new double[]{max_idx, max_val, measurePeakWidth(arr, max_idx, true)});
@@ -229,9 +233,10 @@ public final class ImageUtil {
                     lookingForMax = false;
                 }
             } else {
+                // Trough finding
                 if (curr > min_val+delta) {
                     if (min_idx != Integer.MIN_VALUE)
-                        valleys.add(new double[]{min_idx, min_val, measurePeakWidth(arr, min_idx, false)});
+                        troughs.add(new double[]{min_idx, min_val, measurePeakWidth(arr, min_idx, false)});
                     max_val = curr;
                     max_idx = i;
                     lookingForMax = true;
@@ -239,7 +244,8 @@ public final class ImageUtil {
             }
         }
 
-        return (max ? peaks : valleys);
+        // Return peaks or valleys
+        return (max ? peaks : troughs);
     }
 
     /**
