@@ -7,7 +7,7 @@
   -->
 
 <resources>
-    <declare-styleable name="Viewport">
+    <declare-styleable name="ViewportUsingBitmap">
         <attr name="area" format="float" />
         <attr name="heightScale" format="float" />
         <attr name="widthScale" format="float" />

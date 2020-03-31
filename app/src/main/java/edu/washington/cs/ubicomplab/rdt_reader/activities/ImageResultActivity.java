@@ -138,6 +138,9 @@ public class ImageResultActivity extends AppCompatActivity implements View.OnCli
         sendImageButton.setOnClickListener(this);
     }
 
+    /**
+     * {@link android.app.Activity} onBackPressed()
+     */
     @Override
     public void onBackPressed() {
         super.onBackPressed();
@@ -145,6 +148,10 @@ public class ImageResultActivity extends AppCompatActivity implements View.OnCli
         startActivity(intent);
     }
 
+    /**
+     * The listener for all of the Activity's buttons
+     * @param view the button that was selected
+     */
     @Override
     public void onClick(View view) {
         // Save the photo locally on the user's device

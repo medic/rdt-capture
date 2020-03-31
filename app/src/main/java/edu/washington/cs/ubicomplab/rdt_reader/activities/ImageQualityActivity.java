@@ -71,12 +71,8 @@ public class ImageQualityActivity extends Activity implements ImageQualityViewLi
      */
     @Override
     public void onBackPressed() {
-        if (mImageQualityView.isExternalIntent()) {
-            super.onBackPressed();
-        } else {
-            Intent intent = new Intent(this, MainActivity.class);
-            startActivity(intent);
-        }
+        Intent intent = new Intent(this, MainActivity.class);
+        startActivity(intent);
     }
 
     /**
