@@ -33,18 +33,23 @@ This repository already includes the files needed to use RDTScan with a few RDT 
 * [Quidel's QuickVue Influenza A+B Test](https://www.quidel.com/immunoassays/rapid-influenza-tests/quickvue-influenza-test)
 * [JAL Medical COVID-19](https://www.jalmedical.com/products/covid-19-test-kits/)
 
-Extending RDTScan to accommodate a new RDT is a matter of three steps: (1) adding a clean photo of the RDT, (2) identifying some regions-of-interest using an image-editing program (e.g., Photoshop, GIMP), and then (3) adding that information and other metadata to a configuration file. This process is outlined below:
+Extending RDTScan to accommodate a new RDT is a matter of three steps:
+1. Adding a clean photo of the RDT
+2. Identifying some regions-of-interest using an image-editing program (e.g., Photoshop, GIMP)
+3. Adding that information and other metadata to a configuration file.
+
+For detailed instructions on how to extend RDTScan for a new RDT, visit this [link](readme_assets/rdt_configuration.md).
 
 **Note:** Although RDTScan is designed to be as generalizable as possible, its feature-matching approach is less amenable to the following RDT characteristics:
 * Blank cassettes with little or no lettering
 * Inconsistent patterns (e.g., QR code, bar code)
 * More than three result lines
 
-<center><img src="readme_assets/rdt_examples.png" alt="Examples photographs of RDTs that work well and do not work well with RDTScan" width="300"/></center>
+<p align="center">
+<img src="readme_assets/rdt_examples.png" alt="Examples photographs of RDTs that work well and do not work well with RDTScan" width="300"/>
+</p>
 
-For a relatively easy-to-understand explanation of how feature-matching works and why some designs are more amenable than others, please refer to this [tutorial](https://opencv-python-tutroals.readthedocs.io/en/latest/py_tutorials/py_feature2d/py_features_meaning/py_features_meaning.html) by OpenCV.
-
-Please, visit this [Link](readme_assets/rdt_configuration.md) for detailed instruction for adding new RDT.
+For an explanation of how feature-matching works and why some designs are more amenable than others, please refer to this [tutorial](https://opencv-python-tutroals.readthedocs.io/en/latest/py_tutorials/py_feature2d/py_features_meaning/py_features_meaning.html) by OpenCV.
 
 # API
 [Link](readme_assets/api_imageprocessor.md) for `ImageProcessor.java`
