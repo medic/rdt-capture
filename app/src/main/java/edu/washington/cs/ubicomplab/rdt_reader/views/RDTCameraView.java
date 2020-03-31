@@ -46,9 +46,14 @@ public class RDTCameraView extends JavaCameraView implements Camera.AutoFocusCal
 
     public void setResolution(Camera.Size resolution) {
         disconnectCamera();
-        connectCamera((int)resolution.width, (int)resolution.height);
+        connectCamera((int) resolution.width, (int) resolution.height);
     }
 
+    /**
+     * Focuses the camera wherever the user touches on the screen
+     * Note: we do nto use this function since we handle auto-focus ourselves
+     * @param event: the touch event
+     */
     public void focusOnTouch(MotionEvent event) {
         Rect focusRect = calculateTapArea(event.getRawX(), event.getRawY(), 1f);
         Rect meteringRect = calculateTapArea(event.getRawX(), event.getRawY(), 1.5f);
