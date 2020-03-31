@@ -86,7 +86,6 @@ public class SettingDialogFragment extends DialogFragment
             mBmRadioButton.setChecked(true);
 
         // Inflate and set the layout for the dialog
-        // Pass null as the parent view because it is going in the dialog layout
         builder.setTitle(getString(R.string.settings))
                 .setView(dialogView)
                 .setPositiveButton(getString(R.string.done), new DialogInterface.OnClickListener() {

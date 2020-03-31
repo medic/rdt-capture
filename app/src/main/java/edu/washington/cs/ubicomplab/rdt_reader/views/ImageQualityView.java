@@ -72,25 +72,32 @@ import edu.washington.cs.ubicomplab.rdt_reader.utils.ImageUtil;
 
 import static edu.washington.cs.ubicomplab.rdt_reader.core.Constants.*;
 
-
+/**
+ * A {@link View} for showing a real-time camera feed during image capture and
+ * providing real-time feedback to the user
+ */
 public class ImageQualityView extends LinearLayout implements View.OnClickListener, ActivityCompat.OnRequestPermissionsResultCallback {
-    private ImageProcessor processor;
     private Activity mActivity;
+
+    // UI elements
     private TextView mImageQualityFeedbackView;
     private TextView mProgressText;
     private ProgressBar mProgress;
     private ProgressBar mCaptureProgressBar;
     private View mProgressBackgroundView;
     private TextView mInstructionText;
-    private State mCurrentState = State.QUALITY_CHECK;
+    private ViewportUsingBitmap mViewport;
     private boolean showViewport;
     private boolean showFeedback;
+
+    // Image quality variables
     public boolean flashEnabled = true;
+    private State mCurrentState = State.QUALITY_CHECK;
     private String rdtName;
 
+    // Image processing variables variables
+    private ImageProcessor processor;
     private long timeTaken = 0;
-
-    private ViewportUsingBitmap mViewport;
 
     private FocusState mFocusState = FocusState.INACTIVE;
 
@@ -108,44 +115,49 @@ public class ImageQualityView extends LinearLayout implements View.OnClickListen
         INACTIVE, FOCUSING, FOCUSED, UNFOCUSED
     }
 
+    /**
+     * An Enumeration object that acts as a finite-state machine for image quality checking
+     * CONTINUE: a clean image has not been found yet, continue image capture
+     * STOP: a clean image has been found yet, image capture should stop
+     */
     public enum RDTDetectedResult {
-        STOP, CONTINUE
+        CONTINUE, STOP
     }
 
     public ImageQualityView(Context context, AttributeSet attrs) {
         super(context, attrs);
-        if (context instanceof Activity) {
+        // determine where
+        if (context instanceof Activity)
             mActivity = (Activity) context;
-        } else {
+        else
             throw new Error("ImageQualityView must be created in an activity");
-        }
         inflate(context, R.layout.image_quality_view, this);
+        mActivity.setTitle("Image Quality Checker");
 
+        // Initialize UI elements
         TypedArray styleAttrs = context.getTheme().obtainStyledAttributes(
                 attrs, R.styleable.ImageQualityView, 0, 0);
         showViewport = styleAttrs.getBoolean(R.styleable.ImageQualityView_showViewport, true);
         showFeedback = styleAttrs.getBoolean(R.styleable.ImageQualityView_showFeedback, true);
-
         mTextureView = findViewById(R.id.texture);
-
-        timeTaken = System.currentTimeMillis();
-
         initViews();
+
+        // Keep track of how long it takes for image capture for benchmarking purposes
+        timeTaken = System.currentTimeMillis();
     }
 
-
+    /**
+     * Initializes UI elements and checks permissions
+     */
     private void initViews() {
-        mActivity.setTitle("Image Quality Checker");
-
         mActivity.getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         mActivity.getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN);
 
         mViewport = findViewById(R.id.img_quality_check_viewport);
-        if (showViewport) {
+        if (showViewport)
             mViewport.setOnClickListener(this);
-        } else {
+        else
             mViewport.setVisibility(GONE);
-        }
         mImageQualityFeedbackView = findViewById(R.id.img_quality_feedback_view);
         mProgress = findViewById(R.id.progressCircularBar);
         mProgressBackgroundView = findViewById(R.id.progressBackground);
@@ -177,13 +189,11 @@ public class ImageQualityView extends LinearLayout implements View.OnClickListen
     }
 
     public void setFlashEnabled(boolean flashEnabled) {
-        if (this.flashEnabled == flashEnabled) {
+        if (this.flashEnabled == flashEnabled)
             return;
-        }
         this.flashEnabled = flashEnabled;
-        if (mCameraId != null) {
+        if (mCameraId != null)
             this.updateRepeatingRequest();
-        }
     }
 
     /**
@@ -325,7 +335,7 @@ public class ImageQualityView extends LinearLayout implements View.OnClickListen
     final BlockingQueue<Image> imageQueue = new ArrayBlockingQueue<>(1);
 
     /**
-     * This a callback object for the {@link ImageReader}. "onImageAvailable" will be called when a
+     * Callback object for the {@link ImageReader}. "onImageAvailable" will be called when a
      * still image is ready to be saved.
      */
     private final ImageReader.OnImageAvailableListener mOnImageAvailableListener
@@ -333,22 +343,20 @@ public class ImageQualityView extends LinearLayout implements View.OnClickListen
 
         @Override
         public void onImageAvailable(ImageReader reader) {
-            if (reader == null) {
+            // Check that the reader is available
+            if (reader == null)
                 return;
-            }
 
+            // Check that an image is available
             final Image image = reader.acquireLatestImage();
-
-            if (image == null) {
+            if (image == null)
                 return;
-            }
-
             if (imageQueue.size() > 0) {
                 image.close();
                 return;
             }
 
-            //Log.d(TAG, "LOCAL FOCUS STATE: " + mFocusState + ", " + FocusState.FOCUSED);
+            // Check that the image is focused
             if (mFocusState != FocusState.FOCUSED) {
                 image.close();
                 return;
@@ -424,42 +432,44 @@ public class ImageQualityView extends LinearLayout implements View.OnClickListen
 
 
     /**
-     * A {@link Semaphore} to prevent the app from exiting before closing the camera.
+     * {@link Semaphore} to prevent the app from exiting before closing the camera.
      */
     private Semaphore mCameraOpenCloseLock = new Semaphore(1);
 
     /**
-     * A {@link CameraCaptureSession.CaptureCallback} that handles events related to JPEG capture.
+     * {@link CameraCaptureSession.CaptureCallback} that handles events related to JPEG capture.
      */
-
-    private int counter = 0;
     private CameraCaptureSession.CaptureCallback mCaptureCallback
             = new CameraCaptureSession.CaptureCallback() {
 
         private void process(CaptureResult result) {
+            // Only process the image when the lock is available
             synchronized (focusStateLock) {
+                // Check that camera information is available
                 FocusState previousFocusState = mFocusState;
-                if (result.get(CaptureResult.CONTROL_AF_MODE) == null || result.get(CaptureResult.CONTROL_AF_STATE) == null) {
-                    //Log.d(TAG, "FOCUS STATE: is null");
+                if (result.get(CaptureResult.CONTROL_AF_MODE) == null ||
+                        result.get(CaptureResult.CONTROL_AF_STATE) == null)
                     return;
-                }
-                if (result.get(CaptureResult.CONTROL_AF_MODE) == CaptureResult.CONTROL_AF_MODE_CONTINUOUS_PICTURE) {
-                    if (result.get(CaptureResult.CONTROL_AF_STATE) == CaptureResult.CONTROL_AF_STATE_PASSIVE_FOCUSED) {
-                        //Log.d(TAG, "FOCUS STATE: focused");
-                        mFocusState = FocusState.FOCUSED;
-                    } else if (result.get(CaptureResult.CONTROL_AF_STATE) == CaptureResult.CONTROL_AF_STATE_PASSIVE_UNFOCUSED) {
-                        //Log.d(TAG, "FOCUS STATE: unfocused");
-                        mFocusState = FocusState.UNFOCUSED;
-                    } else if (result.get(CaptureResult.CONTROL_AF_STATE) == CaptureResult.CONTROL_AF_STATE_INACTIVE) {
-                        //Log.d(TAG, "FOCUS STATE: inactive");
-                        mFocusState = FocusState.INACTIVE;
-                    } else if (result.get(CaptureResult.CONTROL_AF_STATE) == CaptureResult.CONTROL_AF_STATE_PASSIVE_SCAN) {
-                        //Log.d(TAG, "FOCUS STATE: focusing");
-                        mFocusState = FocusState.FOCUSING;
-                    } else {
-                        //Log.d(TAG, "FOCUS STATE: unknown state " + result.get(RDTCaptureResult.CONTROL_AF_STATE).toString());
+
+                // Interpret the current focus state to provide user feedback
+                if (result.get(CaptureResult.CONTROL_AF_MODE) ==
+                        CaptureResult.CONTROL_AF_MODE_CONTINUOUS_PICTURE) {
+                    switch (result.get(CaptureResult.CONTROL_AF_STATE)) {
+                        case CaptureResult.CONTROL_AF_STATE_PASSIVE_FOCUSED:
+                            mFocusState = FocusState.FOCUSED;
+                            break;
+                        case CaptureResult.CONTROL_AF_STATE_PASSIVE_UNFOCUSED:
+                            mFocusState = FocusState.UNFOCUSED;
+                            break;
+                        case CaptureResult.CONTROL_AF_STATE_INACTIVE:
+                            mFocusState = FocusState.INACTIVE;
+                            break;
+                        default:
+                            mFocusState = FocusState.FOCUSING;
+                            break;
                     }
 
+                    // Display information to user if
                     if (showFeedback && previousFocusState != mFocusState) {
                         mActivity.runOnUiThread(new Runnable() {
                             @Override
@@ -470,11 +480,6 @@ public class ImageQualityView extends LinearLayout implements View.OnClickListen
                     }
                 }
             }
-
-            //if (!Build.MODEL.equals("TECNO-W3")) {
-            //    if (counter++ % 10 == 0)
-            //        updateRepeatingRequest();
-            //}
         }
 
         @Override
@@ -959,12 +964,10 @@ public class ImageQualityView extends LinearLayout implements View.OnClickListen
     }
 
     private void displayQualityResultFocusChanged() {
-        if (!showFeedback) {
+        if (!showFeedback)
             return;
-        }
 
         FocusState currFocusState;
-
         synchronized (focusStateLock) {
             currFocusState = mFocusState;
         }

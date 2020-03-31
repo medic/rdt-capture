@@ -106,7 +106,7 @@ public class RDTCameraView extends JavaCameraView implements Camera.AutoFocusCal
         Camera.Parameters params = mCamera.getParameters();
         List<String> FocusModes = params.getSupportedFocusModes();
 
-        switch (type){
+        switch (type) {
             case 0:
                 if (FocusModes.contains(Camera.Parameters.FOCUS_MODE_AUTO))
                     params.setFocusMode(Camera.Parameters.FOCUS_MODE_AUTO);

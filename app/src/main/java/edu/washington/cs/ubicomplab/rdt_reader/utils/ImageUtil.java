@@ -46,6 +46,10 @@ import static org.opencv.core.Core.countNonZero;
 import static org.opencv.core.Core.inRange;
 import static org.opencv.imgproc.Imgproc.cvtColor;
 
+/**
+ * A class used to hold generic image processing functions that are not
+ * necessarily specific to RDTs
+ */
 public final class ImageUtil {
     private static String TAG = "ImageUtil";
 

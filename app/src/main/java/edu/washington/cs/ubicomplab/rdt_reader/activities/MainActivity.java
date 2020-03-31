@@ -38,7 +38,8 @@ import edu.washington.cs.ubicomplab.rdt_reader.interfaces.SettingDialogListener;
 import edu.washington.cs.ubicomplab.rdt_reader.core.Constants;
 
 /**
- * The main activity from which other activities are launched
+ * The main {@link android.app.Activity} from which other activities are launched, allowing users
+ * to select the target RDT and modify quality thresholds (for debugging purposes only)
  */
 public class MainActivity extends AppCompatActivity implements
         View.OnClickListener, SettingDialogListener {
@@ -59,8 +60,8 @@ public class MainActivity extends AppCompatActivity implements
         // Initialize UI elements
         initViews();
 
-        // Loads constants
-        loadPrefs();
+        // Loads image quality settings from user preferences
+        loadUserPrefs();
     }
 
     /**
@@ -68,7 +69,7 @@ public class MainActivity extends AppCompatActivity implements
      */
     private void initViews() {
         // Initialize buttons
-        Button mImageQualityButton = findViewById(R.id.imagequalButton);
+        Button mImageQualityButton = findViewById(R.id.imageQualityButton);
         Button mSettingsyButton = findViewById(R.id.settingsButton);
         mImageQualityButton.setOnClickListener(this);
         mSettingsyButton.setOnClickListener(this);
@@ -96,7 +97,7 @@ public class MainActivity extends AppCompatActivity implements
     /**
      * Loads the user's preferences
      */
-    private void loadPrefs() {
+    private void loadUserPrefs() {
         // Get the user's preferences
         Context context = getApplicationContext();
         SharedPreferences sharedPref = context.getSharedPreferences(
@@ -202,13 +203,15 @@ public class MainActivity extends AppCompatActivity implements
      */
     @Override
     public void onClick(View view) {
-        if (view.getId() == R.id.imagequalButton) {
+        if (view.getId() == R.id.imageQualityButton) {
+            // Launch an instance of the ImageQualityActivity and pass in the target RDT's name
             Spinner rdtName = (Spinner) findViewById(R.id.rdtname);
             Intent intent = new Intent(this, ImageQualityActivity.class);
             intent.putExtra("rdt_name", rdtName.getSelectedItem().toString());
             Log.d(TAG, "RDT Name: " +  rdtName.getSelectedItem().toString());
             startActivity(intent);
         } else if (view.getId() == R.id.settingsButton) {
+            // Launch the SettingDialogFragment
             SettingDialogFragment dialog = new SettingDialogFragment();
             dialog.show(getFragmentManager(), "Setting Dialog");
         }
