@@ -32,6 +32,7 @@ This repository already includes the files needed to use RDTScan with a few RDT 
 * [CareStart Malaria P.f/P.v](http://www.accessbio.net/eng/products/products01_02.asp)
 * [Quidel's QuickVue Influenza A+B Test](https://www.quidel.com/immunoassays/rapid-influenza-tests/quickvue-influenza-test)
 * [JAL Medical COVID-19](https://www.jalmedical.com/products/covid-19-test-kits/)
+* [Wondfo COVID-19](https://en.wondfo.com.cn/product/wondfo-sars-cov-2-antibody-test-lateral-flow-method-2/)
 
 Extending RDTScan to accommodate a new RDT is a matter of three steps: (1) adding a clean photo of the RDT, (2) identifying some regions-of-interest using an image-editing program (e.g., Photoshop, GIMP), and (3) adding that information and other metadata to a configuration file. For detailed instructions on how to extend RDTScan for a new RDT, visit this [link](readme_assets/rdt_configuration.md).
 
