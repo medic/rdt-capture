@@ -51,6 +51,7 @@ public class MainActivity extends AppCompatActivity implements
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setTitle("RDT Image Capture");
+        setContentView(R.layout.activity_main);
 
         // Create folders for saving the images on the device's SD card
         new File(Constants.RDT_IMAGE_DIR).mkdirs();

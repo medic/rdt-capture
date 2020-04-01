@@ -10,13 +10,11 @@ package edu.washington.cs.ubicomplab.rdt_reader.core;
 
 import android.app.Activity;
 import android.content.Context;
-import android.graphics.Bitmap;
 import android.util.Log;
 
 import org.opencv.android.BaseLoaderCallback;
 import org.opencv.android.LoaderCallbackInterface;
 import org.opencv.android.OpenCVLoader;
-import org.opencv.android.Utils;
 import org.opencv.calib3d.Calib3d;
 import org.opencv.core.Core;
 import org.opencv.core.CvType;
@@ -35,7 +33,6 @@ import org.opencv.core.Rect;
 import org.opencv.core.RotatedRect;
 import org.opencv.core.Size;
 import org.opencv.core.TermCriteria;
-import org.opencv.features2d.Features2d;
 import org.opencv.imgproc.CLAHE;
 import org.opencv.imgproc.Imgproc;
 import org.opencv.core.Scalar;
@@ -370,34 +367,6 @@ public class ImageProcessor {
     }
 
     /**
-     * Draws an image for debugging the feature-based template matching approach for RDT detection
-     * @param inputMat: the candidate video frame (in grayscale)
-     * @param boundary: the corners of the bounding box around the detected RDT
-     * @param keypoints: the SIFT keypoints within the video frame
-     * @param matchesMat: the correspondence between the different keypoints
-     * @return an image with keypoint matches drawn between the reference image
-     * and the candidate video frame
-     */
-    private Mat drawKeypointsAndMatches(Mat inputMat, MatOfPoint boundary,
-                                         MatOfKeyPoint keypoints, MatOfDMatch matchesMat) {
-        Mat debugMat = new Mat();
-        MatOfPoint boundaryMat = new MatOfPoint();
-        boundaryMat.fromList(boundary.toList());
-        ArrayList<MatOfPoint> list = new ArrayList<>();
-        list.add(boundaryMat);
-
-        Mat tempInputMat = inputMat.clone();
-        Imgproc.polylines(tempInputMat, list, true, Scalar.all(0),10);
-        Features2d.drawKeypoints(tempInputMat, keypoints, tempInputMat);
-        Features2d.drawMatches(mRDT.refImg, mRDT.refKeypoints, tempInputMat, keypoints,
-                matchesMat, debugMat);
-        Bitmap bitmap = Bitmap.createBitmap(inputMat.cols(), inputMat.rows(),
-                Bitmap.Config.ARGB_8888);
-        Utils.matToBitmap(debugMat, bitmap);
-        return debugMat;
-    }
-
-    /**
      * Calculates the brightness histogram of the candidate video frame
      * @param inputMat: the candidate video frame (in grayscale)
      * @return a 256-element histogram that quantifies the number of pixels at each
@@ -634,6 +603,9 @@ public class ImageProcessor {
         // Crop the image around the RDT's result window
         Mat resultWindowMat = cropResultWindow(inputMat, boundary);
 
+        if (resultWindowMat.height() == 0 || resultWindowMat.width() == 0)
+            return true;
+
         // Convert the image to HLS
         Mat hls = new Mat();
         cvtColor(resultWindowMat, hls, COLOR_BGR2HLS);
@@ -668,6 +640,9 @@ public class ImageProcessor {
     public boolean checkBlood(Mat inputMat, MatOfPoint2f boundary) {
         // Crop the image around the RDT's result window
         Mat resultWindowMat = cropResultWindow(inputMat, boundary);
+
+        if (resultWindowMat.height() == 0 || resultWindowMat.width() == 0)
+            return true;
 
         // Convert the image to HSV
         Mat hsv = new Mat();
@@ -793,9 +768,13 @@ public class ImageProcessor {
 
         // If fiducials are specified, use them to improve the estimate of the
         // result window's location, otherwise use the default rectangle specified by the user
-        Rect resultWindowRect = mRDT.fiducialCount == 0 ?
-                mRDT.resultWindowRect : cropResultWindowWithFidicual(correctedMat);
+        Rect resultWindowRect = mRDT.hasFiducial ?
+                cropResultWindowWithFidicual(correctedMat) : mRDT.resultWindowRect;
 
+        if (resultWindowRect.width == 0 || resultWindowRect.height == 0)
+            return new Mat();
+
+        Log.d(TAG, String.format("result rect: %d, %d, %d, %d", resultWindowRect.x, resultWindowRect.y, resultWindowRect.width, resultWindowRect.height));
         // Resize the window so it's the same size as in the template
         correctedMat = new Mat(correctedMat, resultWindowRect);
         if (correctedMat.width() > 0 && correctedMat.height() > 0)
@@ -867,30 +846,32 @@ public class ImageProcessor {
         for (int i = 0; i < contours.size(); i++) {
             Rect rect = Imgproc.boundingRect(contours.get(i));
             double rectPos = rect.x + rect.width;
-            if (mRDT.fiducialPositionMin < rectPos && rectPos < mRDT.fiducialPositionMax &&
-                    mRDT.fiducialMinH < rect.height && mRDT.fiducialMinW < rect.width &&
-                    rect.width < mRDT.fiducialMaxW) {
-                fiducialRects.add(rect);
+
+            for (Rect trueFiducialRect: mRDT.fiducialRects) {
+                if (trueFiducialRect.x + trueFiducialRect.width - Constants.FIDUCIAL_THRESHOLD < rectPos && rectPos < trueFiducialRect.x + trueFiducialRect.width + Constants.FIDUCIAL_THRESHOLD &&
+                        trueFiducialRect.height - Constants.FIDUCIAL_THRESHOLD < rect.height &&
+                        trueFiducialRect.width - Constants.FIDUCIAL_THRESHOLD < rect.width && rect.width < trueFiducialRect.width + Constants.FIDUCIAL_THRESHOLD) {
+                    fiducialRects.add(rect);
+                }
             }
         }
 
         // If the correct number of fiducials was found,
         // find the position of the result window relative to them
         Rect resultWindowMat = new Rect(0, 0, 0, 0);
-        if (fiducialRects.size() == mRDT.fiducialCount) {
+        if (fiducialRects.size() == mRDT.fiducials.length()) {
             // Find the average fiducial position
-            double center0 = fiducialRects.get(0).x + fiducialRects.get(0).width;
-            double center1 = fiducialRects.get(0).x + fiducialRects.get(0).width;
+            double rectBR0 = fiducialRects.get(0).x + fiducialRects.get(0).width;
+            double rectBR1 = fiducialRects.get(0).x + fiducialRects.get(0).width;
             if (fiducialRects.size() > 1)
-                center1 = fiducialRects.get(1).x + fiducialRects.get(1).width;
+                rectBR1 = fiducialRects.get(1).x + fiducialRects.get(1).width;
 
-            int midpoint = (int) ((center0 + center1) / 2);
+            int midpoint = (int) ((rectBR0 + rectBR1) / 2);
 
             // Locate the result window relative the fiducials
-            double offset = mRDT.fiducialToResultWindowOffset;
-            Point tl = new Point(midpoint + offset - mRDT.resultWindowRect.width / 2.0,
+            Point tl = new Point(midpoint + mRDT.distanctFromFiducialToResultWindow,
                     mRDT.resultWindowRect.y);
-            Point br = new Point(midpoint + offset + mRDT.resultWindowRect.width / 2.0,
+            Point br = new Point(midpoint + mRDT.distanctFromFiducialToResultWindow + mRDT.resultWindowRect.width,
                     mRDT.resultWindowRect.y+mRDT.resultWindowRect.height);
             resultWindowMat = new Rect(tl, br);
         }

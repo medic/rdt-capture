@@ -18,14 +18,16 @@
         android:id="@+id/imageQualityButton"
         android:layout_width="266dp"
         android:layout_height="wrap_content"
-        android:layout_marginStart="8dp"
         android:layout_marginEnd="8dp"
+        android:layout_marginStart="8dp"
+        android:layout_marginTop="16dp"
         android:background="@drawable/rounded_button"
+        android:onClick="onClick"
         android:text="@string/image_quality"
         android:theme="@style/PrimaryButton"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        tools:layout_editor_absoluteY="72dp" />
+        app:layout_constraintTop_toTopOf="parent" />
 
     <Button
         android:id="@+id/settingsButton"
@@ -34,9 +36,10 @@
         android:layout_marginBottom="8dp"
         android:layout_marginEnd="8dp"
         android:layout_marginStart="8dp"
+        android:background="@drawable/rounded_button"
+        android:onClick="onClick"
         android:text="@string/settings"
         android:theme="@style/PrimaryButton"
-        android:background="@drawable/rounded_button"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent" />
