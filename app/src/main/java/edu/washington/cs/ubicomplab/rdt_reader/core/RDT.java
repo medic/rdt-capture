@@ -43,6 +43,7 @@ public class RDT {
     public int lineSearchWidth;
 
     // Fiducial variables
+    public double distanctFromFiducialToResultWindow;
     public Rect resultWindowRect;
     public JSONArray fiducials;
     public ArrayList<Rect> fiducialRects;
@@ -103,8 +104,9 @@ public class RDT {
             lineSearchWidth = obj.getInt("LINE_SEARCH_WIDTH");
 
             // Pull data related to fiducials
-            fiducials = obj.has("FIDUCIALS") ? obj.getJSONArray("FIDUCIAL_COUNT") : new JSONArray();
+            fiducials = obj.has("FIDUCIALS") ? obj.getJSONArray("FIDUCIALS") : new JSONArray();
             hasFiducial = fiducials.length() > 0;
+            distanctFromFiducialToResultWindow = 0;
 
             if (hasFiducial && fiducials.length() == 2) {
                 JSONArray trueFiducial1 = fiducials.getJSONArray(0);
@@ -127,6 +129,8 @@ public class RDT {
 
                 fiducialRects.add(new Rect(trueFiducialTL1, trueFiducialBR1));
                 fiducialRects.add(new Rect(trueFiducialTL2, trueFiducialBR2));
+
+                distanctFromFiducialToResultWindow = resultWindowRect.x - (trueFiducialBR2.x + trueFiducialBR1.x)/2.0;
             }
 
             // Store the reference's sharpness
