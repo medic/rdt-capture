@@ -4,7 +4,7 @@
     "VIEW_FINDER_SCALE_H": 0.6,
     "VIEW_FINDER_SCALE_W": 0.15,
     "RESULT_WINDOW_TOP_LEFT": [600, 15],
-    "RESULT_WINDOW_BOTTOM_RIGHT": [700, 45],
+    "RESULT_WINDOW_BOTTOM_RIGHT": [690, 45],
     "TOP_LINE_POSITION": [615, 30],
     "MIDDLE_LINE_POSITION": [645, 30],
     "BOTTOM_LINE_POSITION": [675, 30],
@@ -12,7 +12,7 @@
     "MIDDLE_LINE_NAME": "Control",
     "BOTTOM_LINE_NAME": "TestB",
     "LINE_INTENSITY": 150,
-    "LINE_SEARCH_WIDTH": 13,
+    "LINE_SEARCH_WIDTH": 15,
     "FIDUCIALS": [[[170, 0],[285, 50]], [[860, 0],[895, 50]]],
     "FIDUCIAL_DISTANCE": 610,
     "FIDUCIAL_POSITION_MIN": 160,
@@ -35,7 +35,7 @@
     "MIDDLE_LINE_NAME": "TestPv",
     "BOTTOM_LINE_NAME": "TestPf",
     "LINE_INTENSITY": 85,
-    "LINE_SEARCH_WIDTH": 13
+    "LINE_SEARCH_WIDTH": 17
   },
   "malaria-experimental": {
     "REF_IMG": "malaria_experimental_ref_v0",
@@ -50,14 +50,14 @@
     "MIDDLE_LINE_NAME": "TestPv",
     "BOTTOM_LINE_NAME": "TestPf",
     "LINE_INTENSITY": 80,
-    "LINE_SEARCH_WIDTH": 13
+    "LINE_SEARCH_WIDTH": 17
   },
   "covid19-jalmedical": {
     "REF_IMG": "covid19_jalmedical_ref_v0",
     "VIEW_FINDER_SCALE_H": 0.6,
     "VIEW_FINDER_SCALE_W": 0.4,
-    "RESULT_WINDOW_TOP_LEFT": [252, 115],
-    "RESULT_WINDOW_BOTTOM_RIGHT": [408, 125],
+    "RESULT_WINDOW_TOP_LEFT": [266, 115],
+    "RESULT_WINDOW_BOTTOM_RIGHT": [390, 125],
     "TOP_LINE_POSITION": [285, 120],
     "MIDDLE_LINE_POSITION": [327, 120],
     "BOTTOM_LINE_POSITION": [367, 120],
@@ -65,13 +65,13 @@
     "MIDDLE_LINE_NAME": "lgG",
     "BOTTOM_LINE_NAME": "lgM",
     "LINE_INTENSITY": 85,
-    "LINE_SEARCH_WIDTH": 19
+    "LINE_SEARCH_WIDTH": 20
   },
   "covid19-wondfo": {
     "REF_IMG": "covid19_wondfo_ref_v0",
     "VIEW_FINDER_SCALE_H": 0.6,
     "VIEW_FINDER_SCALE_W": 0.3,
-    "RESULT_WINDOW_TOP_LEFT": [345, 70],
+    "RESULT_WINDOW_TOP_LEFT": [350, 70],
     "RESULT_WINDOW_BOTTOM_RIGHT": [420, 80],
     "TOP_LINE_POSITION": [370, 75],
     "MIDDLE_LINE_POSITION": [405, 75],
@@ -80,21 +80,21 @@
     "MIDDLE_LINE_NAME": "Test",
     "BOTTOM_LINE_NAME": "Test",
     "LINE_INTENSITY": 85,
-    "LINE_SEARCH_WIDTH": 25
+    "LINE_SEARCH_WIDTH": 17
   },
   "malaria-sdbioline": {
     "REF_IMG": "malaria_sdbioline_ref_v0",
     "VIEW_FINDER_SCALE_H": 0.6,
     "VIEW_FINDER_SCALE_W": 0.3,
-    "RESULT_WINDOW_TOP_LEFT": [240, 85],
-    "RESULT_WINDOW_BOTTOM_RIGHT": [360, 105],
+    "RESULT_WINDOW_TOP_LEFT": [260, 85],
+    "RESULT_WINDOW_BOTTOM_RIGHT": [350, 105],
     "TOP_LINE_POSITION": [280, 95],
     "MIDDLE_LINE_POSITION": [325, 95],
     "BOTTOM_LINE_POSITION": [325, 95],
     "TOP_LINE_NAME": "Control",
-    "MIDDLE_LINE_NAME": "lgG",
-    "BOTTOM_LINE_NAME": "lgM",
+    "MIDDLE_LINE_NAME": "Pf",
+    "BOTTOM_LINE_NAME": "Pf",
     "LINE_INTENSITY": 85,
-    "LINE_SEARCH_WIDTH": 30
+    "LINE_SEARCH_WIDTH": 22
   }
 }

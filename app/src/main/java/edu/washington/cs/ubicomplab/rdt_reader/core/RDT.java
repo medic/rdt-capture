@@ -94,9 +94,9 @@ public class RDT {
                             new Point(rectBR.getDouble(0), rectBR.getDouble(1)));
 
             // Pull data related to the result window
-            topLinePosition = rotated ? obj.getJSONArray("TOP_LINE_POSITION").getDouble(1) : obj.getJSONArray("TOP_LINE_POSITION").getDouble(0);
-            middleLinePosition = rotated ? obj.getJSONArray("MIDDLE_LINE_POSITION").getDouble(1) : obj.getJSONArray("MIDDLE_LINE_POSITION").getDouble(0);
-            bottomLinePosition = rotated ? obj.getJSONArray("BOTTOM_LINE_POSITION").getDouble(1) : obj.getJSONArray("BOTTOM_LINE_POSITION").getDouble(0);
+            topLinePosition = rotated ? obj.getJSONArray("TOP_LINE_POSITION").getDouble(1) - resultWindowRect.x : obj.getJSONArray("TOP_LINE_POSITION").getDouble(0) - resultWindowRect.x;
+            middleLinePosition = rotated ? obj.getJSONArray("MIDDLE_LINE_POSITION").getDouble(1) - resultWindowRect.x: obj.getJSONArray("MIDDLE_LINE_POSITION").getDouble(0) - resultWindowRect.x;
+            bottomLinePosition = rotated ? obj.getJSONArray("BOTTOM_LINE_POSITION").getDouble(1) - resultWindowRect.x: obj.getJSONArray("BOTTOM_LINE_POSITION").getDouble(0) - resultWindowRect.x;
             topLineName = obj.getString("TOP_LINE_NAME");
             middleLineName = obj.getString("MIDDLE_LINE_NAME");
             bottomLineName = obj.getString("BOTTOM_LINE_NAME");
