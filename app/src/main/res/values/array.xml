@@ -1,9 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string-array name="spinnerItems">
-        <item>quickvue</item>
-        <item>carestart</item>
-        <item>experimental</item>
-        <item>covid19</item>
+        <item>covid19-jalmedical</item>
+        <item>covid19-wondfo</item>
+        <item>malaria-carestart</item>
+        <item>malaria-experimental</item>
+        <item>malaria-sdbioline</item>
+        <item>flu-quickvue</item>
     </string-array>
 </resources>
