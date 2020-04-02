@@ -1,6 +1,6 @@
 {
-  "quickvue": {
-    "REF_IMG": "quickvue_ref_v5",
+  "flu-quickvue": {
+    "REF_IMG": "flu_quickvue_ref_v0",
     "VIEW_FINDER_SCALE_H": 0.6,
     "VIEW_FINDER_SCALE_W": 0.15,
     "RESULT_WINDOW_TOP_LEFT": [600, 15],
@@ -22,8 +22,8 @@
     "FIDUCIAL_MAX_WIDTH": 150,
     "FIDUCIAL_TO_RESULT_WINDOW_OFFSET": 50
   },
-  "carestart": {
-    "REF_IMG": "carestart_ref_v0",
+  "malaria-carestart": {
+    "REF_IMG": "malaria_carestart_ref_v0",
     "VIEW_FINDER_SCALE_H": 0.6,
     "VIEW_FINDER_SCALE_W": 0.4,
     "RESULT_WINDOW_TOP_LEFT": [210, 90],
@@ -37,8 +37,8 @@
     "LINE_INTENSITY": 85,
     "LINE_SEARCH_WIDTH": 13
   },
-  "experimental": {
-    "REF_IMG": "experimental_rdt_v2",
+  "malaria-experimental": {
+    "REF_IMG": "malaria_experimental_ref_v0",
     "VIEW_FINDER_SCALE_H": 0.6,
     "VIEW_FINDER_SCALE_W": 0.4,
     "RESULT_WINDOW_TOP_LEFT": [260, 100],
@@ -52,8 +52,8 @@
     "LINE_INTENSITY": 80,
     "LINE_SEARCH_WIDTH": 13
   },
-  "covid19": {
-    "REF_IMG": "covid19_ref_v0",
+  "covid19-jalmedical": {
+    "REF_IMG": "covid19_jalmedical_ref_v0",
     "VIEW_FINDER_SCALE_H": 0.6,
     "VIEW_FINDER_SCALE_W": 0.4,
     "RESULT_WINDOW_TOP_LEFT": [252, 115],
@@ -66,5 +66,35 @@
     "BOTTOM_LINE_NAME": "lgM",
     "LINE_INTENSITY": 85,
     "LINE_SEARCH_WIDTH": 19
+  },
+  "covid19-wondfo": {
+    "REF_IMG": "covid19_wondfo_ref_v0",
+    "VIEW_FINDER_SCALE_H": 0.6,
+    "VIEW_FINDER_SCALE_W": 0.3,
+    "RESULT_WINDOW_TOP_LEFT": [345, 70],
+    "RESULT_WINDOW_BOTTOM_RIGHT": [420, 80],
+    "TOP_LINE_POSITION": [370, 75],
+    "MIDDLE_LINE_POSITION": [405, 75],
+    "BOTTOM_LINE_POSITION": [405, 75],
+    "TOP_LINE_NAME": "Control",
+    "MIDDLE_LINE_NAME": "Test",
+    "BOTTOM_LINE_NAME": "Test",
+    "LINE_INTENSITY": 85,
+    "LINE_SEARCH_WIDTH": 25
+  },
+  "malaria-sdbioline": {
+    "REF_IMG": "malaria_sdbioline_ref_v0",
+    "VIEW_FINDER_SCALE_H": 0.6,
+    "VIEW_FINDER_SCALE_W": 0.3,
+    "RESULT_WINDOW_TOP_LEFT": [240, 85],
+    "RESULT_WINDOW_BOTTOM_RIGHT": [360, 105],
+    "TOP_LINE_POSITION": [280, 95],
+    "MIDDLE_LINE_POSITION": [325, 95],
+    "BOTTOM_LINE_POSITION": [325, 95],
+    "TOP_LINE_NAME": "Control",
+    "MIDDLE_LINE_NAME": "lgG",
+    "BOTTOM_LINE_NAME": "lgM",
+    "LINE_INTENSITY": 85,
+    "LINE_SEARCH_WIDTH": 30
   }
 }
