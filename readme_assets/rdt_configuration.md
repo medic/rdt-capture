@@ -49,9 +49,9 @@ If you are working directly on our repository, open `app/src/main/assets/config.
 | `TOP_LINE_POSITION`                 | :heavy_check_mark:  | `[double, double]` |              | (x, y) coordinates of the top line's center point |
 | `MIDDLE_LINE_POSITION`              | :heavy_check_mark:  | `[double, double]` |              | (x, y) coordinates of the middle line's center point |
 | `BOTTOM_LINE_POSITION`              | :heavy_check_mark:  | `[double, double]` |              | (x, y) coordinates of the bottom line's center point |
-| `TOP_LINE_NAME`                     | :heavy_check_mark:  | `String`             |              | Meaning of the top line (e.g., "Control", "Influenza A") (**Note**) One of the line names must be `Control`|
-| `MIDDLE_LINE_NAME`                  | :heavy_check_mark:  | `String`             |              | Meaning of the middle line (e.g., "Control", "Influenza A") (**Note**) One of the line names must be `Control`|
-| `BOTTOM_LINE_NAME`                  | :heavy_check_mark:  | `String`             |              | Meaning of the bottom line (e.g., "Control", "Malaria P.f") (**Note**) One of the line names must be `Control`|
+| `TOP_LINE_NAME`                     | :heavy_check_mark:  | `String`             |              | Meaning of the top line (e.g., "Control", "Influenza A"). (**Note**) One of the line names must be `Control`.|
+| `MIDDLE_LINE_NAME`                  | :heavy_check_mark:  | `String`             |              | Meaning of the middle line (e.g., "Control", "Influenza A"). (**Note**) One of the line names must be `Control`.|
+| `BOTTOM_LINE_NAME`                  | :heavy_check_mark:  | `String`             |              | Meaning of the bottom line (e.g., "Control", "Malaria P.f"). (**Note**) One of the line names must be `Control`.|
 | `LINE_INTENSITY`                    | :heavy_minus_sign:  | `int`                | min = 0, max= 255     | Minimum intensity of the line (default = 80) |
 | `FIDUCIALS`                 | :heavy_minus_sign:  | List of pairs of `[double, double]`  |              | (x, y) coordinates  of the top-left and bottom-right corners for each fiducial (**Note:** RDTScan currently only supports either no fiducials or two fiducials; this will be addressed in a later update) |
 
