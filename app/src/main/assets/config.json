@@ -12,7 +12,6 @@
     "MIDDLE_LINE_NAME": "Control",
     "BOTTOM_LINE_NAME": "TestB",
     "LINE_INTENSITY": 150,
-    "LINE_SEARCH_WIDTH": 15,
     "FIDUCIALS": [[[170, 0],[285, 50]], [[860, 0],[895, 50]]],
     "FIDUCIAL_DISTANCE": 610,
     "FIDUCIAL_POSITION_MIN": 160,
@@ -34,8 +33,7 @@
     "TOP_LINE_NAME": "Control",
     "MIDDLE_LINE_NAME": "TestPv",
     "BOTTOM_LINE_NAME": "TestPf",
-    "LINE_INTENSITY": 85,
-    "LINE_SEARCH_WIDTH": 17
+    "LINE_INTENSITY": 85
   },
   "malaria-experimental": {
     "REF_IMG": "malaria_experimental_ref_v0",
@@ -49,8 +47,7 @@
     "TOP_LINE_NAME": "Control",
     "MIDDLE_LINE_NAME": "TestPv",
     "BOTTOM_LINE_NAME": "TestPf",
-    "LINE_INTENSITY": 80,
-    "LINE_SEARCH_WIDTH": 17
+    "LINE_INTENSITY": 80
   },
   "covid19-jalmedical": {
     "REF_IMG": "covid19_jalmedical_ref_v0",
@@ -64,8 +61,7 @@
     "TOP_LINE_NAME": "Control",
     "MIDDLE_LINE_NAME": "lgG",
     "BOTTOM_LINE_NAME": "lgM",
-    "LINE_INTENSITY": 85,
-    "LINE_SEARCH_WIDTH": 20
+    "LINE_INTENSITY": 85
   },
   "covid19-wondfo": {
     "REF_IMG": "covid19_wondfo_ref_v0",
@@ -79,8 +75,7 @@
     "TOP_LINE_NAME": "Control",
     "MIDDLE_LINE_NAME": "Test",
     "BOTTOM_LINE_NAME": "Test",
-    "LINE_INTENSITY": 85,
-    "LINE_SEARCH_WIDTH": 17
+    "LINE_INTENSITY": 85
   },
   "malaria-sdbioline": {
     "REF_IMG": "malaria_sdbioline_ref_v0",
@@ -94,7 +89,6 @@
     "TOP_LINE_NAME": "Control",
     "MIDDLE_LINE_NAME": "Pf",
     "BOTTOM_LINE_NAME": "Pf",
-    "LINE_INTENSITY": 85,
-    "LINE_SEARCH_WIDTH": 22
+    "LINE_INTENSITY": 85
   }
 }

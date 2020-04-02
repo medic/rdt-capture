@@ -101,7 +101,8 @@ public class RDT {
             middleLineName = obj.getString("MIDDLE_LINE_NAME");
             bottomLineName = obj.getString("BOTTOM_LINE_NAME");
             lineIntensity = obj.getInt("LINE_INTENSITY");
-            lineSearchWidth = obj.getInt("LINE_SEARCH_WIDTH");
+            lineSearchWidth = obj.has("LINE_SEARCH_WIDTH") ? obj.getInt("LINE_SEARCH_WIDTH") :
+                    Math.min((int)((middleLinePosition-topLinePosition)/2.0),(int)((bottomLinePosition-middleLinePosition)/2.0));
 
             // Pull data related to fiducials
             fiducials = obj.has("FIDUCIALS") ? obj.getJSONArray("FIDUCIALS") : new JSONArray();
