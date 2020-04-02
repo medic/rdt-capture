@@ -625,10 +625,10 @@ public class ImageProcessor {
             if (i == histograms.length - 1)
                 clippingCount = histograms[i];
         }
-        Log.d(TAG, String.format("maxWhite: %d, clippingCount: %.5f", maxWhite, clippingCount));
+        Log.d(TAG, String.format("maxWhite: %d, clippingCount: %.20f", maxWhite, clippingCount));
 
         // Assess glare relative to thresholds
-        return maxWhite == 255 && clippingCount > GLARE_WHITE_COUNT;
+        return maxWhite >= GLARE_WHITE_VALUE || clippingCount > GLARE_WHITE_RATIO;
     }
 
     /**
@@ -747,6 +747,17 @@ public class ImageProcessor {
      * @return the RDT image tightly cropped and de-skewed around the result window
      */
     private Mat cropResultWindow(Mat inputMat, MatOfPoint2f boundary) {
+        return cropResultWindow(inputMat, boundary, 0);
+    }
+
+    /**
+     * Crops out the detected RDT's result window as a rectangle
+     * @param inputMat: the candidate video frame (in grayscale)
+     * @param boundary: the corners of the bounding box around the detected RDT
+     * @param offset: offset of result window for fine-tuned cropping
+     * @return the RDT image tightly cropped and de-skewed around the result window
+     */
+    private Mat cropResultWindow(Mat inputMat, MatOfPoint2f boundary, int offset) {
         // Get the corners of the reference RDT image
         Mat refBoundary = new Mat(4, 1, CvType.CV_32FC2);
         double[] a = new double[]{0, 0};
@@ -769,12 +780,13 @@ public class ImageProcessor {
         // If fiducials are specified, use them to improve the estimate of the
         // result window's location, otherwise use the default rectangle specified by the user
         Rect resultWindowRect = mRDT.hasFiducial ?
-                cropResultWindowWithFidicual(correctedMat) : mRDT.resultWindowRect;
+                cropResultWindowWithFidicual(correctedMat, offset) :
+                new Rect(mRDT.resultWindowRect.x + offset, mRDT.resultWindowRect.y + offset, mRDT.resultWindowRect.width, mRDT.resultWindowRect.height);
 
         if (resultWindowRect.width == 0 || resultWindowRect.height == 0)
             return new Mat();
 
-        Log.d(TAG, String.format("result rect: %d, %d, %d, %d", resultWindowRect.x, resultWindowRect.y, resultWindowRect.width, resultWindowRect.height));
+        Log.d(TAG, String.format("result rect: %d, %d, %d, %d, %d", resultWindowRect.x, resultWindowRect.y, resultWindowRect.width, resultWindowRect.height, offset));
         // Resize the window so it's the same size as in the template
         correctedMat = new Mat(correctedMat, resultWindowRect);
         if (correctedMat.width() > 0 && correctedMat.height() > 0)
@@ -787,9 +799,10 @@ public class ImageProcessor {
      * Uses color clustering to identify explicit 'fiducials' (densely colored markers) on the
      * detected RDT that can be used as reference points for locating the result window
      * @param inputMat: the candidate video frame (in RGBA and de-skewed)
+     * @param offset: offset of result window for fine-tuned cropping
      * @return the RDT image tightly cropped and de-skewed around the result window
      */
-    private Rect cropResultWindowWithFidicual(Mat inputMat) {
+    private Rect cropResultWindowWithFidicual(Mat inputMat, int offset) {
         // Flatten the input data
         Mat data = new Mat();
         inputMat.convertTo(data, CV_32F);
@@ -869,9 +882,9 @@ public class ImageProcessor {
             int midpoint = (int) ((rectBR0 + rectBR1) / 2);
 
             // Locate the result window relative the fiducials
-            Point tl = new Point(midpoint + mRDT.distanctFromFiducialToResultWindow,
+            Point tl = new Point(midpoint + mRDT.distanctFromFiducialToResultWindow + offset,
                     mRDT.resultWindowRect.y);
-            Point br = new Point(midpoint + mRDT.distanctFromFiducialToResultWindow + mRDT.resultWindowRect.width,
+            Point br = new Point(midpoint + mRDT.distanctFromFiducialToResultWindow + mRDT.resultWindowRect.width + offset,
                     mRDT.resultWindowRect.y+mRDT.resultWindowRect.height);
             resultWindowMat = new Rect(tl, br);
         }
@@ -926,73 +939,116 @@ public class ImageProcessor {
      * @return an {@link RDTInterpretationResult} indicating the test results
      */
     public RDTInterpretationResult interpretRDT(Mat inputMat, MatOfPoint2f boundary) {
-        // Crop the result window
-        Mat resultWindowMat = cropResultWindow(inputMat, boundary);
+        Mat resultWindowMat;
 
-        // Skip if there is no window to interpret
-        if (resultWindowMat.width() == 0 && resultWindowMat.height() == 0)
-            return new RDTInterpretationResult(resultWindowMat,
-                    false, false, false,
-                    mRDT.topLineName, mRDT.middleLineName, mRDT.bottomLineName);
-
-        // Convert the result window to grayscale
-        Mat grayMat = new Mat();
-        cvtColor(resultWindowMat, grayMat, COLOR_RGB2GRAY);
-
-        // Compute variance within the window
-        MatOfDouble mu = new MatOfDouble();
-        MatOfDouble sigma = new MatOfDouble();
-        Core.meanStdDev(grayMat, mu, sigma);
-        Core.MinMaxLocResult minMaxLocResult = Core.minMaxLoc(grayMat);
-        Log.d(TAG, String.format("stdev %.2f, minval %.2f at %s, maxval %.2f at %s",
-                sigma.get(0,0)[0],
-                minMaxLocResult.minVal, minMaxLocResult.minLoc,
-                minMaxLocResult.maxVal, minMaxLocResult.maxLoc));
-
-        // Enhance the result window if there is something worth enhancing in the first place
-        if (sigma.get(0,0)[0] > RESULT_WINDOW_ENHANCE_THRESHOLD)
-            resultWindowMat = enhanceResultWindow(resultWindowMat);
-
-        // Detect the lines in the result window
-        // Convert the image to HLS
-        Mat hls = new Mat();
-        cvtColor(resultWindowMat, hls, COLOR_BGR2HLS);
-
-        // Split the channels
-        List<Mat> channels = new ArrayList<>();
-        Core.split(hls, channels);
-
-        // Compute the average intensity for each column of the result window
-        Mat lightness = channels.get(1);
-        double[] avgIntensities = new double[lightness.cols()];
-        for (int i = 0; i < lightness.cols(); i++) {
-            avgIntensities[i] = 0;
-            for (int j = 0; j < lightness.rows(); j++)
-                avgIntensities[i] += lightness.get(j, i)[0];
-            avgIntensities[i] /= lightness.rows();
-        }
-
-        // Detect the peaks
-        ArrayList<double[]> peaks = ImageUtil.detectPeaks(avgIntensities, mRDT.lineIntensity, false);
-        for (double[] p : peaks)
-            Log.d(TAG, String.format("%.2f, %.2f, %.2f", p[0], p[1], p[2]));
-
-        // Determine which peaks correspond to which lines
         boolean topLine = false;
         boolean middleLine = false;
         boolean bottomLine = false;
-        for (double[] p : peaks) {
-            if (Math.abs(p[0] - mRDT.topLinePosition) < mRDT.lineSearchWidth) {
-                topLine = true;
-            } else if (Math.abs(p[0] - mRDT.middleLinePosition) < mRDT.lineSearchWidth) {
-                middleLine = true;
-            } else if (Math.abs(p[0] - mRDT.bottomLinePosition) < mRDT.lineSearchWidth) {
-                bottomLine = true;
-            }
+
+        boolean tuned = false;
+
+        int offset = 0;
+        int controlLineIndex = 0;
+        double controlLinePosition = 0;
+
+        if (mRDT.topLineName.toLowerCase().equals(CONTROL_LINE_NAME)) {
+            controlLineIndex = 0;
+            controlLinePosition = mRDT.topLinePosition;
+        } else if (mRDT.middleLineName.toLowerCase().equals(CONTROL_LINE_NAME)) {
+            controlLineIndex = 1;
+            controlLinePosition = mRDT.middleLinePosition;
+        } else if (mRDT.bottomLineName.toLowerCase().equals(CONTROL_LINE_NAME)) {
+            controlLineIndex = 2;
+            controlLinePosition = mRDT.bottomLinePosition;
         }
+
+        int cnt = 0;
+        do {
+            // Crop the result window
+            resultWindowMat = cropResultWindow(inputMat, boundary, offset);
+
+            // Skip if there is no window to interpret
+            if (resultWindowMat.width() == 0 && resultWindowMat.height() == 0)
+                return new RDTInterpretationResult(resultWindowMat,
+                        false, false, false,
+                        mRDT.topLineName, mRDT.middleLineName, mRDT.bottomLineName);
+
+            // Convert the result window to grayscale
+            Mat grayMat = new Mat();
+            cvtColor(resultWindowMat, grayMat, COLOR_RGB2GRAY);
+
+            // Compute variance within the window
+            MatOfDouble mu = new MatOfDouble();
+            MatOfDouble sigma = new MatOfDouble();
+            Core.meanStdDev(grayMat, mu, sigma);
+            Core.MinMaxLocResult minMaxLocResult = Core.minMaxLoc(grayMat);
+            Log.d(TAG, String.format("stdev %.2f, minval %.2f at %s, maxval %.2f at %s",
+                    sigma.get(0, 0)[0],
+                    minMaxLocResult.minVal, minMaxLocResult.minLoc,
+                    minMaxLocResult.maxVal, minMaxLocResult.maxLoc));
+
+            // Enhance the result window if there is something worth enhancing in the first place
+            if (sigma.get(0, 0)[0] > RESULT_WINDOW_ENHANCE_THRESHOLD)
+                resultWindowMat = enhanceResultWindow(resultWindowMat);
+
+            // Detect the lines in the result window
+            // Convert the image to HLS
+            Mat hls = new Mat();
+            cvtColor(resultWindowMat, hls, COLOR_BGR2HLS);
+
+            // Split the channels
+            List<Mat> channels = new ArrayList<>();
+            Core.split(hls, channels);
+
+            // Compute the average intensity for each column of the result window
+            Mat lightness = channels.get(1);
+            double[] avgIntensities = new double[lightness.cols()];
+            for (int i = 0; i < lightness.cols(); i++) {
+                avgIntensities[i] = 0;
+                for (int j = 0; j < lightness.rows(); j++)
+                    avgIntensities[i] += lightness.get(j, i)[0];
+                avgIntensities[i] /= lightness.rows();
+            }
+
+            // Detect the peaks
+            ArrayList<double[]> peaks = ImageUtil.detectPeaks(avgIntensities, mRDT.lineIntensity, false);
+            for (double[] p : peaks)
+                Log.d(TAG, String.format("peak: %.2f, %.2f, %.2f", p[0], p[1], p[2]));
+
+            // Determine which peaks correspond to which lines
+            for (double[] p : peaks) {
+                if (Math.abs(p[0] - mRDT.topLinePosition) < mRDT.lineSearchWidth) {
+                    topLine = true;
+                } else if (Math.abs(p[0] - mRDT.middleLinePosition) < mRDT.lineSearchWidth) {
+                    middleLine = true;
+                } else if (Math.abs(p[0] - mRDT.bottomLinePosition) < mRDT.lineSearchWidth) {
+                    bottomLine = true;
+                }
+            }
+
+            boolean[] results = {topLine, middleLine, bottomLine};
+
+            if (peaks.size() == 0)
+                break;
+
+            if (results[controlLineIndex]) {
+                double diff = peaks.get(controlLineIndex)[0] - controlLinePosition;
+
+                Log.d(TAG, String.format("diff: %.2f, controlLine: %.2f", diff, controlLinePosition));
+                if (abs(diff) <= 1) {
+                    tuned = true;
+                } else {
+                    offset += diff;
+                }
+            } else {
+                offset -= 10;
+            }
+
+            cnt++;
+        } while (!tuned && cnt < 10);
 
         return new RDTInterpretationResult(resultWindowMat,
                 topLine, middleLine, bottomLine,
-                mRDT.topLineName, mRDT.middleLineName, mRDT.topLineName);
+                mRDT.topLineName, mRDT.middleLineName, mRDT.bottomLineName);
     }
 }
