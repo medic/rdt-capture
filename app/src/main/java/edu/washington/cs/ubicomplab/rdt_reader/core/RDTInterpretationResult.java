@@ -23,6 +23,7 @@ public class RDTInterpretationResult {
     public String bottomLineName;
     public Mat resultMat;
     public Bitmap resultBitmap;
+    public boolean hasTooMuchBlood;
 
     public RDTInterpretationResult() {
         topLine = false;
@@ -33,10 +34,12 @@ public class RDTInterpretationResult {
         bottomLineName = DEFAULT_BOTTOM_LINE_NAME;
         resultMat = new Mat();
         resultBitmap = null;
+        hasTooMuchBlood = false;
     }
 
     public RDTInterpretationResult(Mat resultMat, boolean topLine, boolean middleLine, boolean bottomLine,
-                                   String topLineName, String middleLineName, String bottomLineName){
+                                   String topLineName, String middleLineName, String bottomLineName,
+                                   boolean hasTooMuchBlood){
         this.resultMat = resultMat;
         this.topLine = topLine;
         this.middleLine = middleLine;
@@ -44,6 +47,7 @@ public class RDTInterpretationResult {
         this.topLineName = topLineName;
         this.middleLineName = middleLineName;
         this.bottomLineName = bottomLineName;
+        this.hasTooMuchBlood = hasTooMuchBlood;
 
         // Convert the image to a Bitmap so it can be displayed with Android
         if (resultMat.cols() > 0 && resultMat.rows() > 0) {

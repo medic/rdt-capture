@@ -224,7 +224,6 @@ public class ImageProcessor {
                 isGlared = checkGlare(croppedMat, croppedBoundary);
             passed = passed && !isGlared;
 
-            // TODO: add blood checking here once verified
             return new RDTCaptureResult(passed, croppedMat, croppedBoundary, flashEnabled,
                     exposureResult, isSharp, isCentered, sizeResult,
                     isOriented, angle, isGlared, true);
@@ -646,7 +645,8 @@ public class ImageProcessor {
 
         // Convert the image to HSV
         Mat hsv = new Mat();
-        cvtColor(resultWindowMat, hsv, Imgproc.COLOR_RGB2HSV);
+
+        cvtColor(resultWindowMat, hsv, Imgproc.COLOR_BGR2HSV);
 
         // Filter image according to two definitions of red
         // (note: H in HSV is circular, so red can have low and high H values)
@@ -951,6 +951,8 @@ public class ImageProcessor {
         int controlLineIndex = 0;
         double controlLinePosition = 0;
 
+        boolean hasTooMuchBlood = false;
+
         if (mRDT.topLineName.toLowerCase().equals(CONTROL_LINE_NAME)) {
             controlLineIndex = 0;
             controlLinePosition = mRDT.topLinePosition;
@@ -971,11 +973,14 @@ public class ImageProcessor {
             if (resultWindowMat.width() == 0 && resultWindowMat.height() == 0)
                 return new RDTInterpretationResult(resultWindowMat,
                         false, false, false,
-                        mRDT.topLineName, mRDT.middleLineName, mRDT.bottomLineName);
+                        mRDT.topLineName, mRDT.middleLineName, mRDT.bottomLineName, false);
 
             // Convert the result window to grayscale
             Mat grayMat = new Mat();
             cvtColor(resultWindowMat, grayMat, COLOR_RGB2GRAY);
+
+            // Detect if image has too much blood (which may gives incorrect result)
+            hasTooMuchBlood = checkBlood(inputMat, boundary);
 
             // Compute variance within the window
             MatOfDouble mu = new MatOfDouble();
@@ -1049,6 +1054,6 @@ public class ImageProcessor {
 
         return new RDTInterpretationResult(resultWindowMat,
                 topLine, middleLine, bottomLine,
-                mRDT.topLineName, mRDT.middleLineName, mRDT.bottomLineName);
+                mRDT.topLineName, mRDT.middleLineName, mRDT.bottomLineName, hasTooMuchBlood);
     }
 }
