@@ -24,12 +24,13 @@ public final class Constants {
 
     // Default settings
     public static String LANGUAGE = "en";
-    public static final String DEFAULT_RDT_NAME = "carestart";
+    public static final String DEFAULT_RDT_NAME = "malaria-carestart";
     public static final String CONFIG_FILE_NAME = "config.json";
     public static final String DEFAULT_TOP_LINE_NAME = "Top Line Name";
     public static final String DEFAULT_MIDDLE_LINE_NAME = "Middle Line Name";
     public static final String DEFAULT_BOTTOM_LINE_NAME = "Bottom Line Name";
     public static final int MY_PERMISSION_REQUEST_CODE = 100;
+    public static final String CONTROL_LINE_NAME = "control";
 
     // Default camera size
     public static Size CAMERA2_PREVIEW_SIZE = new Size(1280, 720);
@@ -48,13 +49,15 @@ public final class Constants {
     public static int ANGLE_THRESHOLD = 10;
 
     // Result window image quality thresholds
-    public static double GLARE_WHITE_COUNT = 0.001;
+    public static int GLARE_WHITE_VALUE = 225;
+    public static double GLARE_WHITE_RATIO = 0.01;
     public static Scalar BLOOD_COLOR_LOW_HUE_LOWER = new Scalar(0, 100, 100);
     public static Scalar BLOOD_COLOR_LOW_HUE_UPPER = new Scalar(10, 255, 255);
     public static Scalar BLOOD_COLOR_HIGH_HUE_LOWER = new Scalar(160, 100, 100);
     public static Scalar BLOOD_COLOR_HIGH_HUE_UPPER = new Scalar(179, 255, 255);
     public static double BLOOD_PERCENTAGE_THRESHOLD = 0.25;
     public static int FIDUCIAL_SEARCH_NUM_CLUSTERS = 5;
+    public static int FIDUCIAL_THRESHOLD = 20;
 
     // SIFT feature template matching parameters
     public static double SIFT_RESIZE_FACTOR = 0.5;
