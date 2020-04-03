@@ -90,8 +90,9 @@ This work is driven by a team of researchers at the University of Washington's [
 | :----------------------------------------------------------- | :-------------------------------------------------- |
 | [Chunjong Park](http://cjpark.xyz/)                          | Project lead, research scientist, software engineer |
 | [Alex Mariakakis](https://atm15.github.io/)                  | Research scientist, software engineer               |
-| [Libby Lavitt](https://www.linkedin.com/in/libby-lavitt/)    | Project coordinator                                 |
+| [Libby Lavitt](https://www.linkedin.com/in/libby-lavitt/)    | Research program coordinator                        |
 | [Hung Ngo](http://www.hungvngo.com/)                         | Software engineer                                   |
+| [Zubair Amjad](https://zubairamjads.com/)                    | Software engineer                                   |
 | [Shwetak Patel](https://homes.cs.washington.edu/~shwetak/)   | Principal investigator                              |
 
 A number of organizations were involved as early adopters of the RDTScan library and have provided useful feedback to the project:
