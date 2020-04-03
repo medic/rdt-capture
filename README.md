@@ -27,7 +27,8 @@ RDTScan utilizes [OpenCV for Android](https://opencv.org/android/) for many of t
 * **No existing project:** If you are making a smartphone app from scratch, you can simply clone the repository directly and build your app on top of what has already been provided. This repository has all of the dependencies properly configured along with a fully-functioning app that developers can use to get started.
 * **Existing project:** If you have a smartphone app that has already been made and you are looking to add RDTScan to it, you will still need to add OpenCV for Android to your project. The [official tutorial](https://docs.opencv.org/2.4/doc/tutorials/introduction/android_binary_package/O4A_SDK.html) for doing this is fairly outdated, but there are plenty of other tutorials out there depending on your environment. Once you have done that, copy the following folders and files to your project (at the same path):
   * [`src/.../core/*`](app/src/main/java/edu/washington/cs/ubicomplab/rdt_reader/core)
-  * [`src/.../util/*`](app/src/main/java/edu/washington/cs/ubicomplab/rdt_reader/utils)
+  * [`src/.../utils/*`](app/src/main/java/edu/washington/cs/ubicomplab/rdt_reader/utils)
+  * [`src/.../views/*`](app/src/main/java/edu/washington/cs/ubicomplab/rdt_reader/views)
   * [`assets/config.json`](app/src/main/assets/config.json)
 
 ### Troubleshooting:
