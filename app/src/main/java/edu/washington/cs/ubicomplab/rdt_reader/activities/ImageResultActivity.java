@@ -132,10 +132,13 @@ public class ImageResultActivity extends AppCompatActivity implements View.OnCli
         }
 
         if (intent.hasExtra("hasTooMuchBlood")) {
-            // TODO: Need to figure out where the too much blood should be displayed
-            // TODO: 1 idea is to have a checkmark or a warning indicating that this image has too much blood
             boolean hasTooMuchBlood = intent.getBooleanExtra("hasTooMuchBlood", false);
-
+            TextView warningView = findViewById(R.id.WarningView);
+            if (hasTooMuchBlood) {
+                warningView.setText(getString(R.string.too_much_blood_warning));
+            } else {
+                warningView.setText("");
+            }
         }
 
         // Buttons
