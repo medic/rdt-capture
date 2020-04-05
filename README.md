@@ -1,3 +1,12 @@
+# Table of Contents
+* [Overview](#overview)
+* [Installation](#installation)
+* [Configuration for New RDTs](#configuration-for-new-rdts)
+* [API](#api)
+* [Attribution](#attribution)
+* [About Us](#about-us)
+* [License](#license)
+
 # Overview
 RDTScan is an open-source library for developers who are interested in creating Android apps that support the digital curation and interpretation of [rapid diagnostic tests (RDTs)](https://en.wikipedia.org/wiki/Rapid_diagnostic_test). RDTScan provides the following functionality:
 
@@ -18,7 +27,8 @@ RDTScan utilizes [OpenCV for Android](https://opencv.org/android/) for many of t
 * **No existing project:** If you are making a smartphone app from scratch, you can simply clone the repository directly and build your app on top of what has already been provided. This repository has all of the dependencies properly configured along with a fully-functioning app that developers can use to get started.
 * **Existing project:** If you have a smartphone app that has already been made and you are looking to add RDTScan to it, you will still need to add OpenCV for Android to your project. The [official tutorial](https://docs.opencv.org/2.4/doc/tutorials/introduction/android_binary_package/O4A_SDK.html) for doing this is fairly outdated, but there are plenty of other tutorials out there depending on your environment. Once you have done that, copy the following folders and files to your project (at the same path):
   * [`src/.../core/*`](app/src/main/java/edu/washington/cs/ubicomplab/rdt_reader/core)
-  * [`src/.../util/*`](app/src/main/java/edu/washington/cs/ubicomplab/rdt_reader/utils)
+  * [`src/.../utils/*`](app/src/main/java/edu/washington/cs/ubicomplab/rdt_reader/utils)
+  * [`src/.../views/*`](app/src/main/java/edu/washington/cs/ubicomplab/rdt_reader/views)
   * [`assets/config.json`](app/src/main/assets/config.json)
 
 ### Troubleshooting:
@@ -75,10 +85,26 @@ Developers are allowed to use RDTScan as they please provided that they abide by
 Chunjong Park, Alex Mariakakis, Shwetak Patel, Jane Yang, Diego Lassala, Ari Johnson, Beatrice Wassuna, Fatou Fall, Marème Soda Gaye, Isaac Holeman. Supporting Smartphone-Based Image Capture of Rapid Diagnostic Tests in Low-Resource Settings. To appear in Proceedings of the 2020 International Conference on Information and Communication Technologies and Development. Association for Computing Machinery, New York, NY, USA, vol. 14. 2020. DOI: TBD
 ```
 
-# Acknowledgement
-RDTScan is built for [Android](https://www.android.com/) devices and therefore inherently tied to the platform. To perform image processing on-device, RDTScan utilizes [OpenCV for Android](https://opencv.org/android/). This work is financial supported by the [Bill and Melinda Gates Foundation](https://www.gatesfoundation.org/). 
+# About Us
+This work is driven by a team of researchers at the University of Washington's [UbiComp Lab](https://ubicomplab.cs.washington.edu/):
+| Name                                                         | Project Role(s)                                     |
+| :----------------------------------------------------------- | :-------------------------------------------------- |
+| [Chunjong Park](http://cjpark.xyz/)                          | Project lead, research scientist, software engineer |
+| [Alex Mariakakis](https://atm15.github.io/)                  | Research scientist, software engineer               |
+| [Libby Lavitt](https://www.linkedin.com/in/libby-lavitt/)    | Research program coordinator                        |
+| [Hung Ngo](http://www.hungvngo.com/)                         | Software engineer                                   |
+| [Zubair Amjad](https://zubairamjads.com/)                    | Software engineer                                   |
+| [Shwetak Patel](https://homes.cs.washington.edu/~shwetak/)   | Principal investigator                              |
 
-# Licensing
+A number of organizations were involved as early adopters of the RDTScan library and have provided useful feedback to the project:
+* [Medic Mobile](https://medicmobile.org/)
+* [Muso](https://www.musohealth.org/)
+* [Audere](https://auderenow.org/)
+* [Ona](https://ona.io/home/)
+
+This work is financially supported by the [Bill and Melinda Gates Foundation](https://www.gatesfoundation.org/).
+
+# License
 The software is provided under [BSD-3-Clause](LICENSE). Contributions to this project are accepted under the same license.
 
 In the United States, or any other jurisdictions where they may apply, the following additional disclaimer of warranty and limitation of liability are hereby incorporated into the terms and conditions of the BSD-3-Clause open source license:

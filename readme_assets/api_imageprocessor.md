@@ -23,11 +23,11 @@
 * [`measureOrientation()`](#measureOrientation)
 * [`checkOrientation()`](#checkOrientation)
 * [`checkGlare()`](#checkGlare)
-* [`checkBlood()`](#checkBlood)
 * [`getInstructionText()`](#getInstructionText)
 * [`getSummaryText()`](#getSummaryText)
 
 # Methods for RDT Interpretation
+* [`checkBlood()`](#checkBlood)
 * [`cropResultWindow()`](#cropResultWindow)
 * [`cropResultWindowWithFiducial()`](#checkFiducial)
 * [`enhanceResultWindow()`](#enhanceResultWindow)
@@ -232,16 +232,6 @@
 **Returns:**
 * `boolean isGlared`: whether there is glare within the detected RDT's result window
 
-## checkBlood()
-**Signature:** `boolean isBloody = checkBloody(Mat inputMat, MatOfPoint2f boundary)`  
-**Purpose:** Determines if there is blood within the detected RDT's result window  
-**Parameters:**
-* `Mat inputMat`: the candidate video frame (in grayscale)
-* `MatOfPoint2f boundary`: the corners of the bounding box around the detected RDT
-
-**Returns:**
-* `boolean isBloody`: whether there is blood within the detected RDT's result window
-
 ## getInstructionText()
 **Signature:** `int instruction = getInstructionText(boolean isCentered, SizeResult sizeResult, boolean isOriented, boolean isGlared)`  
 **Purpose:** Generate the most logical instruction to help the user fix a single quality check  
@@ -269,6 +259,16 @@
 * `String[] summaryText`: summary for each quality checking component
 
 - - -
+
+## checkBlood()
+**Signature:** `boolean isBloody = checkBloody(Mat inputMat, MatOfPoint2f boundary)`  
+**Purpose:** Determines if there is blood within the detected RDT's result window  
+**Parameters:**
+* `Mat inputMat`: the candidate video frame (in grayscale)
+* `MatOfPoint2f boundary`: the corners of the bounding box around the detected RDT
+
+**Returns:**
+* `boolean isBloody`: whether there is blood within the detected RDT's result window
 
 ## cropResultWindow()
 **Signature:** `Mat resultWindow = cropResultWindow(Mat inputMat, MatOfPoint2f boundary)`  
