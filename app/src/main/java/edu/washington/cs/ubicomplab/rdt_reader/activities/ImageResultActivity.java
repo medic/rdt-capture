@@ -131,6 +131,16 @@ public class ImageResultActivity extends AppCompatActivity implements View.OnCli
             bottomLineNameTextView.setText(bottomLineName);
         }
 
+        if (intent.hasExtra("hasTooMuchBlood")) {
+            boolean hasTooMuchBlood = intent.getBooleanExtra("hasTooMuchBlood", false);
+            TextView warningView = findViewById(R.id.WarningView);
+            if (hasTooMuchBlood) {
+                warningView.setText(getString(R.string.too_much_blood_warning));
+            } else {
+                warningView.setText("");
+            }
+        }
+
         // Buttons
         Button saveImageButton = findViewById(R.id.saveButton);
         saveImageButton.setOnClickListener(this);
