@@ -104,7 +104,7 @@ A number of organizations were involved as early adopters of the RDTScan library
 
 This work is financially supported by the [Bill and Melinda Gates Foundation](https://www.gatesfoundation.org/).
 
-Please contact us at [rdtscan@cs.washington.edu](rdtscan@cs.washington.edu) if you have any questions.
+Please contact us at <rdtscan@cs.washington.edu> if you have any questions.
 
 # License
 The software is provided under [BSD-3-Clause](LICENSE). Contributions to this project are accepted under the same license.
