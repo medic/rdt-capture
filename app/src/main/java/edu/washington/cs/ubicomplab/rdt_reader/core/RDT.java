@@ -84,8 +84,9 @@ public class RDT {
             this.rdtName = rdtName;
 
             // Pull data related to UI
-            viewFinderScaleH = obj.getDouble("VIEW_FINDER_SCALE_H");
-            viewFinderScaleW = obj.getDouble("VIEW_FINDER_SCALE_W");
+            viewFinderScaleH = obj.getDouble("VIEW_FINDER_SCALE");
+            viewFinderScaleW = (viewFinderScaleH * (double)refImg.height()/(double)refImg.width())+Constants.VIEW_FINDER_SCALE_W_PADDING;
+            //viewFinderScaleW = obj.getDouble("VIEW_FINDER_SCALE_W");
             JSONArray rectTL = obj.getJSONArray("RESULT_WINDOW_TOP_LEFT");
             JSONArray rectBR = obj.getJSONArray("RESULT_WINDOW_BOTTOM_RIGHT");
             resultWindowRect = rotated ? new Rect(new Point(rectTL.getDouble(1), rectTL.getDouble(0)),
