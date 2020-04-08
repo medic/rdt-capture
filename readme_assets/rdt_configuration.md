@@ -42,8 +42,7 @@ If you are working directly on our repository, open `app/src/main/assets/config.
 | **Data Field**                      | **Required?**       | **Data Types**       | **Range**    | **Description**    |
 | :---------------------------------- | :-----------------: | :------------------- | :----------- |:----------------- |
 | `REF_IMG`                           | :heavy_check_mark:  | `String`             |              | Filename of the template image for the RDT |
-| `VIEW_FINDER_SCALE_H`               | :heavy_check_mark:  | `double`             | min = 0.0, max = 1.0   | Relative height of the viewfinder compared to screen's height |
-| `VIEW_FINDER_SCALE_W`               | :heavy_check_mark:  | `double`             |              | Relative width of the viewfinder compared to screen's width |
+| `VIEW_FINDER_SCALE`                 | :heavy_check_mark:  | `double`             | min = 0.0, max = 1.0   | Relative height of the viewfinder compared to screen's height |
 | `RESULT_WINDOW_RECT_TOP_LEFT`       | :heavy_check_mark:  | `[double, double]` |              | (x, y) coordinates of result window's top-left corner |
 | `RESULT_WINDOW_RECT_BOTTOM_RIGHT`   | :heavy_check_mark:  | `[double, double]` |              | (x, y) coordinates of result window's bottom-right corner |
 | `TOP_LINE_POSITION`                 | :heavy_check_mark:  | `[double, double]` |              | (x, y) coordinates of the top line's center point |
