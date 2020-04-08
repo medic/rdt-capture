@@ -52,8 +52,8 @@ public final class Constants {
     public static int ANGLE_THRESHOLD = 10;
 
     // Result window image quality thresholds
-    public static int GLARE_WHITE_VALUE = 225;
-    public static double GLARE_WHITE_RATIO = 0.01;
+    public static int GLARE_WHITE_VALUE = 235;
+    public static double GLARE_WHITE_RATIO = 0.00;
     public static Scalar BLOOD_COLOR_LOW_HUE_LOWER = new Scalar(0, 100, 100);
     public static Scalar BLOOD_COLOR_LOW_HUE_UPPER = new Scalar(10, 255, 255);
     public static Scalar BLOOD_COLOR_HIGH_HUE_LOWER = new Scalar(160, 100, 100);

@@ -55,6 +55,8 @@ public class RDT {
     public MatOfKeyPoint refKeypoints;
     public SIFT detector;
     public BFMatcher matcher;
+    //Glare check variables
+    public boolean checkGlare;
 
     public boolean rotated = false;
 
@@ -104,6 +106,8 @@ public class RDT {
             lineIntensity = obj.getInt("LINE_INTENSITY");
             lineSearchWidth = obj.has("LINE_SEARCH_WIDTH") ? obj.getInt("LINE_SEARCH_WIDTH") :
                     Math.min((int)((middleLinePosition-topLinePosition)/2.0),(int)((bottomLinePosition-middleLinePosition)/2.0));
+
+            checkGlare = obj.has("CHECK_GLARE") ? obj.getBoolean("CHECK_GLARE") : false;
 
             // Pull data related to fiducials
             fiducials = obj.has("FIDUCIALS") ? obj.getJSONArray("FIDUCIALS") : new JSONArray();
