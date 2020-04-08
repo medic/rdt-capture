@@ -220,8 +220,9 @@ public class ImageProcessor {
             
             // Check for glare
             boolean isGlared = false;
-            if (passed)
+            if (passed && mRDT.checkGlare) {
                 isGlared = checkGlare(croppedMat, croppedBoundary);
+            }
             passed = passed && !isGlared;
 
             return new RDTCaptureResult(passed, croppedMat, croppedBoundary, flashEnabled,
@@ -733,7 +734,7 @@ public class ImageProcessor {
         texts[2] = rdtFramingCheck ? checkSymbol + "Position/Size: passed": "Position/Size: failed";
 
         // Glare text
-        texts[3] = isGlared ? checkSymbol + "No glare: passed" : "No glare: failed";
+        texts[3] = isGlared ? "No glare: failed" : checkSymbol + "No glare: passed";
 
         // Shadow text
         texts[4] = checkSymbol + "Shadow: passed";

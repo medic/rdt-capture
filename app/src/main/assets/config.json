@@ -31,7 +31,8 @@
     "TOP_LINE_NAME": "Control",
     "MIDDLE_LINE_NAME": "TestPv",
     "BOTTOM_LINE_NAME": "TestPf",
-    "LINE_INTENSITY": 85
+    "LINE_INTENSITY": 85,
+    "CHECK_GLARE": true
   },
   "malaria-experimental": {
     "REF_IMG": "malaria_experimental_ref_v0",
