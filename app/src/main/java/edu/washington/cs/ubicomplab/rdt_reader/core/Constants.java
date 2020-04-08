@@ -36,6 +36,9 @@ public final class Constants {
     public static Size CAMERA2_PREVIEW_SIZE = new Size(1280, 720);
     public static Size CAMERA2_IMAGE_SIZE = new Size(1280, 720);
 
+    //View finder size setting
+    public static double VIEW_FINDER_SCALE_W_PADDING = 0.20;
+
     // Overall image quality thresholds
     public static final int SHARPNESS_GAUSSIAN_BLUR_WINDOW = 5;
     public static double SHARPNESS_THRESHOLD = 0.8;
