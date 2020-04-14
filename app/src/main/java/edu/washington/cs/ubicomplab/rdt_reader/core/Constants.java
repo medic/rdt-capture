@@ -68,7 +68,7 @@ public final class Constants {
     public static int RANSAC = 5;
 
     // Interpretation parameters
-    public static double RESULT_WINDOW_ENHANCE_THRESHOLD = 7.5;
+    public static double RESULT_WINDOW_ENHANCE_THRESHOLD = 2.5;
     public static int CLAHE_CLIP_LIMIT = 10;
     public static int CLAHE_WIDTH = 5;
 
