@@ -166,7 +166,7 @@
 * `boolean isSharp`: whether `inputMat` has a reasonable sharpness
 
 ## measurePosition()
-**Signature:** `Point position = measurePosition(MatOfPoint2f boundary)`  
+**Signature:** `Point center = measurePosition(MatOfPoint2f boundary)`  
 **Purpose:** Identifies the center of the detected RDT  
 **Parameters:**
 * `MatOfPoint2f boundary`: the corners of the bounding box around the detected RDT
