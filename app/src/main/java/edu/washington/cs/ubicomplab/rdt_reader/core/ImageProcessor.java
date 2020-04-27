@@ -207,7 +207,7 @@ public class ImageProcessor {
             boolean isOriented = false;
             double angle = 0.0;
             if (boundary.size().width > 0 && boundary.size().height > 0) {
-                isCentered = checkCentering(boundary, inputSize);
+                isCentered = checkPosition(boundary, inputSize);
                 sizeResult = checkSize(boundary, inputSize);
                 isOriented = checkOrientation(boundary);
                 angle = measureOrientation(boundary);
@@ -478,7 +478,7 @@ public class ImageProcessor {
      * @param boundary: the corners of the bounding box around the detected RDT
      * @return the (x, y) coordinate corresponding to the center of the RDT
      */
-    private Point measureCentering (MatOfPoint2f boundary) {
+    private Point measurePosition(MatOfPoint2f boundary) {
         RotatedRect rotatedRect = minAreaRect(boundary);
         return rotatedRect.center;
     }
@@ -491,9 +491,9 @@ public class ImageProcessor {
      * @return whether the boundary of the detected RDT is close enough to the center of the
      * screen for consistent interpretation
      */
-    private boolean checkCentering(MatOfPoint2f boundary, Size size) {
+    private boolean checkPosition(MatOfPoint2f boundary, Size size) {
         // Calculate the center of the detected RDT
-        Point center = measureCentering(boundary);
+        Point center = measurePosition(boundary);
 
         // Calculate the center of the screen
         Point trueCenter = new Point(size.width/2, size.height/2);
