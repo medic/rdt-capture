@@ -23,18 +23,26 @@
         android:layout_height="fill_parent"
         android:visibility="gone"
         opencv:camera_id="any"
-        opencv:show_fps="true" />
+        opencv:show_fps="true"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
 
-    <edu.washington.cs.ubicomplab.rdt_reader.Viewport
+    <edu.washington.cs.ubicomplab.rdt_reader.views.ViewportUsingBitmap
         android:id="@+id/exp_date_check_viewport"
         android:layout_width="fill_parent"
         android:layout_height="fill_parent"
         android:layout_weight=".5"
         android:background="@color/black_overlay"
         custom:heightScale="0.3"
-        custom:widthScale="0.9">
+        custom:widthScale="0.9"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" >
 
-    </edu.washington.cs.ubicomplab.rdt_reader.Viewport>
+    </edu.washington.cs.ubicomplab.rdt_reader.views.ViewportUsingBitmap>
 
     <LinearLayout
         android:id="@+id/exp_date_camera_controls"

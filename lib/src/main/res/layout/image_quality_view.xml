@@ -13,9 +13,9 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context="edu.washington.cs.ubicomplab.rdt_reader.ImageQualityActivity">
+    tools:context=".activities.ImageQualityActivity">
 
-    <edu.washington.cs.ubicomplab.rdt_reader.AutoFitTextureView
+    <edu.washington.cs.ubicomplab.rdt_reader.views.AutoFitTextureView
         android:id="@+id/texture"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
@@ -27,14 +27,18 @@
         app:layout_constraintTop_toTopOf="parent" />
 
 
-    <edu.washington.cs.ubicomplab.rdt_reader.ViewportUsingBitmap
+    <edu.washington.cs.ubicomplab.rdt_reader.views.ViewportUsingBitmap
         android:id="@+id/img_quality_check_viewport"
         android:layout_width="fill_parent"
         android:layout_height="fill_parent"
         android:layout_weight=".5"
         android:background="@color/transparent_overlay"
         custom:heightScale="0.60"
-        custom:widthScale="0.40" />
+        custom:widthScale="0.40"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
 
     <View
         android:id="@+id/progressBackground"
