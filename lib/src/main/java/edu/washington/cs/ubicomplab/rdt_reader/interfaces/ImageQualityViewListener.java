@@ -2,6 +2,7 @@ package edu.washington.cs.ubicomplab.rdt_reader.interfaces;
 
 import edu.washington.cs.ubicomplab.rdt_reader.core.RDTCaptureResult;
 import edu.washington.cs.ubicomplab.rdt_reader.core.RDTInterpretationResult;
+import edu.washington.cs.ubicomplab.rdt_reader.views.ImageQualityView;
 
 /**
  * Interface for determining whether the app should advance to showing the test results

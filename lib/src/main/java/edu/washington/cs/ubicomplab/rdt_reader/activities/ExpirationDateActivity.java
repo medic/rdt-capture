@@ -8,18 +8,15 @@
 
 package edu.washington.cs.ubicomplab.rdt_reader.activities;
 
-import static com.google.android.gms.vision.Frame.ROTATION_90;
-import static edu.washington.cs.ubicomplab.rdt_reader.Constants.*;
-
 import android.content.Intent;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.graphics.drawable.Drawable;
 import android.os.AsyncTask;
+import android.os.Bundle;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
-import android.os.Bundle;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.util.SparseArray;
@@ -52,9 +49,15 @@ import java.util.Date;
 import java.util.Locale;
 
 import edu.washington.cs.ubicomplab.rdt_reader.R;
+import edu.washington.cs.ubicomplab.rdt_reader.core.Constants;
+import edu.washington.cs.ubicomplab.rdt_reader.interfaces.SettingsDialogListener;
 import edu.washington.cs.ubicomplab.rdt_reader.views.RDTCameraView;
 
-public class ExpirationDateActivity extends AppCompatActivity implements CvCameraViewListener2, SettingDialogFragment.SettingDialogListener {
+import static com.google.android.gms.vision.Frame.ROTATION_90;
+
+public class ExpirationDateActivity extends AppCompatActivity implements CvCameraViewListener2, SettingsDialogListener {
+
+    private final String TAG = ExpirationDateActivity.class.getName();
 
     private RDTCameraView mOpenCvCameraView;
     private TextRecognizer mTextRecognizer;

@@ -8,7 +8,6 @@
 
 package edu.washington.cs.ubicomplab.rdt_reader.activities;
 
-import static edu.washington.cs.ubicomplab.rdt_reader.core.Constants.*;
 import android.Manifest;
 import android.content.Context;
 import android.content.Intent;
@@ -16,10 +15,10 @@ import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.content.res.Resources;
 import android.net.Uri;
+import android.os.Bundle;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
-import android.os.Bundle;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.Menu;
@@ -33,9 +32,12 @@ import java.util.ArrayList;
 import java.util.Locale;
 
 import edu.washington.cs.ubicomplab.rdt_reader.R;
+import edu.washington.cs.ubicomplab.rdt_reader.core.Constants;
 import edu.washington.cs.ubicomplab.rdt_reader.fragments.SettingsDialogFragment;
 import edu.washington.cs.ubicomplab.rdt_reader.interfaces.SettingsDialogListener;
-import edu.washington.cs.ubicomplab.rdt_reader.core.Constants;
+
+import static edu.washington.cs.ubicomplab.rdt_reader.core.Constants.MY_PERMISSION_REQUEST_CODE;
+import static edu.washington.cs.ubicomplab.rdt_reader.core.Constants.TAG;
 
 /**
  * The main {@link android.app.Activity} from which other activities are launched, allowing users
@@ -178,14 +180,13 @@ public class MainActivity extends AppCompatActivity implements
      */
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        switch (item.getItemId()) {
-            case R.id.action_settings:
-                // Go to the settings page
-                SettingsDialogFragment dialog = new SettingsDialogFragment();
-                dialog.show(getFragmentManager(), "Setting Dialog");
-                return true;
-            default:
-                return false;
+        if (item.getItemId() == R.id.action_settings) {
+            // Go to the settings page
+            SettingsDialogFragment dialog = new SettingsDialogFragment();
+            dialog.show(getFragmentManager(), "Setting Dialog");
+            return true;
+        } else {
+            return false;
         }
     }
 

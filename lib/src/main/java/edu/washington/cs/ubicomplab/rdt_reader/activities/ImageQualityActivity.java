@@ -3,13 +3,13 @@ package edu.washington.cs.ubicomplab.rdt_reader.activities;
 import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
-import android.util.Log;
 
-import edu.washington.cs.ubicomplab.rdt_reader.interfaces.ImageQualityViewListener;
 import edu.washington.cs.ubicomplab.rdt_reader.R;
 import edu.washington.cs.ubicomplab.rdt_reader.core.RDTCaptureResult;
 import edu.washington.cs.ubicomplab.rdt_reader.core.RDTInterpretationResult;
+import edu.washington.cs.ubicomplab.rdt_reader.interfaces.ImageQualityViewListener;
 import edu.washington.cs.ubicomplab.rdt_reader.utils.ImageUtil;
+import edu.washington.cs.ubicomplab.rdt_reader.views.ImageQualityView;
 
 import static edu.washington.cs.ubicomplab.rdt_reader.core.Constants.DEFAULT_RDT_NAME;
 
@@ -99,14 +99,22 @@ public class ImageQualityActivity extends Activity implements ImageQualityViewLi
         if (!rdtCaptureResult.allChecksPassed || rdtInterpretationResult == null)
             return ImageQualityView.RDTDetectedResult.CONTINUE;
 
-        // Pass the image quality and interpretation data to the new activity
-        final ImageQualityActivity self = this;
+        useCapturedImage(rdtCaptureResult, rdtInterpretationResult, timeTaken);
+
+        return ImageQualityView.RDTDetectedResult.STOP;
+    }
+
+    public void useCapturedImage(RDTCaptureResult rdtCaptureResult, RDTInterpretationResult rdtInterpretationResult, long timeTaken) {
         final byte[] captureByteArray = ImageUtil.matToByteArray(rdtCaptureResult.resultMat);
         final byte[] windowByteArray = ImageUtil.matToByteArray(rdtInterpretationResult.resultMat);
+        moveToResultActivity(captureByteArray, windowByteArray, rdtInterpretationResult, timeTaken);
+    }
+
+    private void moveToResultActivity(final byte[] captureByteArray, final byte[] windowByteArray, final RDTInterpretationResult rdtInterpretationResult, final long timeTaken) {
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
-                Intent i = new Intent(self, ImageResultActivity.class);
+                Intent i = new Intent(ImageQualityActivity.this, ImageResultActivity.class);
                 i.addFlags(Intent.FLAG_ACTIVITY_FORWARD_RESULT);
                 i.putExtra("captured", captureByteArray);
                 i.putExtra("window", windowByteArray);
@@ -119,57 +127,6 @@ public class ImageQualityActivity extends Activity implements ImageQualityViewLi
                 i.putExtra("timeTaken", timeTaken);
                 i.putExtra("hasTooMuchBlood", rdtInterpretationResult.hasTooMuchBlood);
                 startActivity(i);
-            }
-        });
-        return ImageQualityView.RDTDetectedResult.STOP;
-    }
-
-    @Override
-    public ImageQualityView.RDTDectedResult onRDTDetected(
-            final ImageProcessor.CaptureResult captureResult,
-            final ImageProcessor.InterpretationResult interpretationResult,
-            final long timeTaken) {
-        Log.i("ImageQualityActivity", "Detected!");
-        if (!captureResult.allChecksPassed || interpretationResult == null) {
-            return ImageQualityView.RDTDectedResult.CONTINUE;
-        }
-        Log.i("ImageQualityActivity", "Detected and Passed!");
-
-        useCapturedImage(captureResult, interpretationResult, timeTaken);
-
-        return ImageQualityView.ImageQualityView.RDTDectedResult.STOP;
-    }
-
-    public void useCapturedImage(ImageProcessor.CaptureResult captureResult, ImageProcessor.InterpretationResult interpretationResult, long timeTaken) {
-        final byte[] captureByteArray = edu.washington.cs.ubicomplab.rdt_reader.ImageUtil.matToRotatedByteArray(captureResult.resultMat);
-        final byte[] windowByteArray = edu.washington.cs.ubicomplab.rdt_reader.ImageUtil.matToRotatedByteArray(interpretationResult.resultMat);
-        moveToResultActivity(captureByteArray, windowByteArray, interpretationResult, timeTaken);
-    }
-
-    private void moveToResultActivity(final byte[] captureByteArray, final byte[] windowByteArray, final ImageProcessor.InterpretationResult interpretationResult, final long timeTaken) {
-        runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                if (mImageQualityView.isExternalIntent()) {
-                    Intent i = new Intent();
-                    i.putExtra("data", captureByteArray);
-                    i.putExtra("timeTaken", timeTaken);
-                    setResult(Activity.RESULT_OK, i);
-                    finish();
-                } else {
-                    Intent i = new Intent(edu.washington.cs.ubicomplab.rdt_reader.ImageQualityActivity.this, ImageResultActivity.class);
-                    i.addFlags(Intent.FLAG_ACTIVITY_FORWARD_RESULT);
-                    i.putExtra("captured", captureByteArray);
-                    i.putExtra("window", windowByteArray);
-                    i.putExtra("topLine", interpretationResult.topLine);
-                    i.putExtra("middleLine", interpretationResult.middleLine);
-                    i.putExtra("bottomLine", interpretationResult.bottomLine);
-                    i.putExtra("topLineName", interpretationResult.topLineName);
-                    i.putExtra("middleLineName", interpretationResult.middleLineName);
-                    i.putExtra("bottomLineName", interpretationResult.bottomLineName);
-                    i.putExtra("timeTaken", timeTaken);
-                    startActivity(i);
-                }
             }
         });
     }

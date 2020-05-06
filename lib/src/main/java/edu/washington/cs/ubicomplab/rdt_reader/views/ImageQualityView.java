@@ -38,7 +38,6 @@ import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.text.Html;
-import android.text.Spanned;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.util.Size;
@@ -62,21 +61,21 @@ import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
-import static edu.washington.cs.ubicomplab.rdt_reader.Constants.CAMERA2_IMAGE_SIZE;
-import static edu.washington.cs.ubicomplab.rdt_reader.Constants.CAMERA2_PREVIEW_SIZE;
-import static edu.washington.cs.ubicomplab.rdt_reader.Constants.CAPTURE_COUNT;
-import static edu.washington.cs.ubicomplab.rdt_reader.Constants.MY_PERMISSION_REQUEST_CODE;
-import static edu.washington.cs.ubicomplab.rdt_reader.util.Utils.hideProgressDialog;
-import static edu.washington.cs.ubicomplab.rdt_reader.util.Utils.showProgressDialog;
+
 import edu.washington.cs.ubicomplab.rdt_reader.R;
 import edu.washington.cs.ubicomplab.rdt_reader.activities.ImageQualityActivity;
 import edu.washington.cs.ubicomplab.rdt_reader.core.ImageProcessor;
-import edu.washington.cs.ubicomplab.rdt_reader.interfaces.ImageQualityViewListener;
 import edu.washington.cs.ubicomplab.rdt_reader.core.RDTCaptureResult;
 import edu.washington.cs.ubicomplab.rdt_reader.core.RDTInterpretationResult;
+import edu.washington.cs.ubicomplab.rdt_reader.interfaces.ImageQualityViewListener;
 import edu.washington.cs.ubicomplab.rdt_reader.utils.ImageUtil;
 
-import static edu.washington.cs.ubicomplab.rdt_reader.core.Constants.*;
+import static edu.washington.cs.ubicomplab.rdt_reader.core.Constants.CAMERA2_IMAGE_SIZE;
+import static edu.washington.cs.ubicomplab.rdt_reader.core.Constants.CAMERA2_PREVIEW_SIZE;
+import static edu.washington.cs.ubicomplab.rdt_reader.core.Constants.CAPTURE_COUNT;
+import static edu.washington.cs.ubicomplab.rdt_reader.core.Constants.MY_PERMISSION_REQUEST_CODE;
+import static edu.washington.cs.ubicomplab.rdt_reader.util.Utils.hideProgressDialog;
+import static edu.washington.cs.ubicomplab.rdt_reader.util.Utils.showProgressDialog;
 
 /**
  * A {@link View} for showing a real-time camera feed during image capture and
@@ -111,11 +110,6 @@ public class ImageQualityView extends LinearLayout implements View.OnClickListen
     private String rdtName;
 
     private ImageButton btnFlashToggle;
-
-    private long timeTaken = 0;
-
-    private ViewportUsingBitmap mViewport;
-
     private FocusState mFocusState = FocusState.INACTIVE;
 
     private ImageQualityViewListener mImageQualityViewListener;
@@ -127,7 +121,7 @@ public class ImageQualityView extends LinearLayout implements View.OnClickListen
         ORIENTATIONS.append(Surface.ROTATION_180, 270);
         ORIENTATIONS.append(Surface.ROTATION_270, 180);
     }
-    private ImageQualityViewListener mImageQualityViewListener;
+
     private int mMeteringCounter = Integer.MIN_VALUE;
 
     // Thread handling for the preview and camera hardware
@@ -184,7 +178,6 @@ public class ImageQualityView extends LinearLayout implements View.OnClickListen
      * FOCUSING: camera device is actively trying to focus
      * FOCUSED: camera device is focused on the target object
      */
-    private FocusState mFocusState = FocusState.INACTIVE;
     private enum FocusState {
         INACTIVE, UNFOCUSED, FOCUSING, FOCUSED
     }
@@ -318,23 +311,18 @@ public class ImageQualityView extends LinearLayout implements View.OnClickListen
 
             // Check that an image is available
             final Image image = reader.acquireLatestImage();
-            if (image == null)
-                return;
-            if (imageQueue.size() > 0) {
-                image.close();
-                return;
-            }
+            if (continueProcessingImg(image)) {
+                // Check that the image is focused
+                if (mFocusState != FocusState.FOCUSED) {
+                    image.close();
+                    return;
+                }
 
-            // Check that the image is focused
-            if (mFocusState != FocusState.FOCUSED) {
-                image.close();
-                return;
+                // Add the image to the queue and execute the quality checking
+                // process on a different thread
+                imageQueue.add(image);
+                new ImageProcessAsyncTask().execute(image);
             }
-
-            // Add the image to the queue and execute the quality checking
-            // process on a different thread
-            imageQueue.add(image);
-            new ImageProcessAsyncTask().execute(image);
         }
 
     };
@@ -924,11 +912,8 @@ public class ImageQualityView extends LinearLayout implements View.OnClickListen
      */
     @Override
     public void onClick(View view) {
-        switch (view.getId()) {
-            case R.id.img_quality_check_viewport: {
-                updateRepeatingRequest();
-                break;
-            }
+        if (view.getId() == R.id.img_quality_check_viewport) {
+            updateRepeatingRequest();
         }
     }
 
@@ -1055,12 +1040,24 @@ public class ImageQualityView extends LinearLayout implements View.OnClickListen
                 final Image image = reader.acquireLatestImage();
                 if (continueProcessingImg(image)) {
                     imageQueue.add(image);
-                    Mat capturedMat = ImageUtil.imageToMat(image);
-                    ImageProcessor.CaptureResult captureResult = new ImageProcessor.CaptureResult(capturedMat);
-                    ((ImageQualityActivity) mActivity).useCapturedImage(captureResult, new ImageProcessor.InterpretationResult(), 0);
+                    Mat capturedMat = ImageUtil.imageToRGBMat(image);
+                    RDTCaptureResult captureResult = new RDTCaptureResult(capturedMat);
+                    ((ImageQualityActivity) mActivity).useCapturedImage(captureResult, new RDTInterpretationResult(), 0);
                 }
             }
 
         }, null);
+    }
+
+    private boolean continueProcessingImg(Image image) {
+        if (image == null) {
+            return false;
+        }
+
+        if (imageQueue.size() > 0) {
+            image.close();
+            return false;
+        }
+        return true;
     }
 }

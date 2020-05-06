@@ -28,6 +28,8 @@ public class RDTCaptureResult {
     public boolean isGlared;
     public boolean fiducial;
 
+
+
     public RDTCaptureResult(boolean allChecksPassed, Mat resultMat,
                             MatOfPoint2f boundary, boolean flashEnabled,
                             ImageProcessor.ExposureResult exposureResult, boolean isSharp,
@@ -49,5 +51,9 @@ public class RDTCaptureResult {
 
         this.fiducial = fiducial;
         this.isGlared = isGlared;
+    }
+
+    public RDTCaptureResult(Mat resultMat) {
+        this.resultMat = resultMat;
     }
 }

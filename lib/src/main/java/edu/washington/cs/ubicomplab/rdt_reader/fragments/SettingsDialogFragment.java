@@ -109,19 +109,14 @@ public class SettingsDialogFragment extends DialogFragment
      */
     @Override
     public void onCheckedChanged(RadioGroup radioGroup, int i) {
-        switch (i) {
-            case R.id.enButton:
-                Constants.LANGUAGE = "en";
-                break;
-            case R.id.frButton:
-                Constants.LANGUAGE = "fr";
-                break;
-            case R.id.bmButton:
-                Constants.LANGUAGE = "bm";
-                break;
-            default:
-                Constants.LANGUAGE = "en";
-                break;
+        if (i == R.id.enButton) {
+            Constants.LANGUAGE = "en";
+        } else if (i == R.id.frButton) {
+            Constants.LANGUAGE = "fr";
+        } else if (i == R.id.bmButton) {
+            Constants.LANGUAGE = "bm";
+        } else {
+            Constants.LANGUAGE = "en";
         }
     }
 

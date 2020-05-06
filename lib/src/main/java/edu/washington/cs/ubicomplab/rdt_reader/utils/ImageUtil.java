@@ -413,12 +413,12 @@ public final class ImageUtil {
 
     public static void saveImage(final Context context, final byte[] byteArray, final long timeTaken, final boolean testResult, final OnImageSavedCallBack onImageSavedCallBack) {
 
-        class SaveImageTask extends AsyncTask<edu.washington.cs.ubicomplab.rdt_reader.ImageUtil.SaveImageParams, Void, String> {
+        class SaveImageTask extends AsyncTask<SaveImageParams, Void, String> {
             private OnImageSavedCallBack imageSavedCallBack;
             @Override
-            protected String doInBackground(edu.washington.cs.ubicomplab.rdt_reader.ImageUtil.SaveImageParams... params) {
+            protected String doInBackground(SaveImageParams... params) {
                 String filePath = "";
-                edu.washington.cs.ubicomplab.rdt_reader.ImageUtil.SaveImageParams imageParams = params[0];
+                SaveImageParams imageParams = params[0];
                 File sdIconStorageDir = new File(Constants.RDT_IMAGE_DIR);
                 sdIconStorageDir.mkdirs();
                 SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH-mm-ss-SSS");
@@ -448,7 +448,7 @@ public final class ImageUtil {
             }
         }
 
-        new SaveImageTask().execute(new edu.washington.cs.ubicomplab.rdt_reader.ImageUtil.SaveImageParams(context, byteArray, timeTaken, onImageSavedCallBack));
+        new SaveImageTask().execute(new SaveImageParams(context, byteArray, timeTaken, onImageSavedCallBack));
     }
 
     private static class SaveImageParams {

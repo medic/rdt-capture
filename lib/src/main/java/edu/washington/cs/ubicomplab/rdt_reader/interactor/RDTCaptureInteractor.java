@@ -4,6 +4,7 @@ import android.content.Context;
 
 import edu.washington.cs.ubicomplab.rdt_reader.callback.OnImageSavedCallBack;
 import edu.washington.cs.ubicomplab.rdt_reader.presenter.RDTCapturePresenter;
+import edu.washington.cs.ubicomplab.rdt_reader.utils.ImageUtil;
 
 /**
  * Created by Vincent Karuri on 23/05/2019
