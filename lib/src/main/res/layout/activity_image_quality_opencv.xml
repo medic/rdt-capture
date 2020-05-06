@@ -1,55 +1,60 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!--
+  ~ Copyright (C) 2019 University of Washington Ubicomp Lab
+  ~ All rights reserved.
+  ~
+  ~ This software may be modified and distributed under the terms
+  ~ of a BSD-style license that can be found in the LICENSE file.
+  -->
+
 <android.support.constraint.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:custom="http://schemas.android.com/apk/res-auto"
-    xmlns:opencv="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context="edu.washington.cs.ubicomplab.rdt_reader.ImageQualityOpencvActivity">
+    tools:context="edu.washington.cs.ubicomplab.rdt_reader.activities.ImageQualityActivity">
 
-    <edu.washington.cs.ubicomplab.rdt_reader.RDTCamera2View
-        android:id="@+id/img_quality_check_camera_view"
-        android:layout_width="fill_parent"
-        android:layout_height="fill_parent"
-        android:visibility="gone"
-        opencv:camera_id="any"
-        opencv:show_fps="true" />
-
-    <View
-        android:id="@+id/cameraBackground"
+    <edu.washington.cs.ubicomplab.rdt_reader.views.AutoFitTextureView
+        android:id="@+id/texture"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:background="@color/gray_overlay"
-        android:visibility="visible" />
+        android:layout_alignParentStart="true"
+        android:layout_alignParentTop="true"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
 
     <TextView
         android:id="@+id/img_quality_feedback_view"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
+        android:background="@color/transparent_overlay"
         android:gravity="bottom"
         android:paddingHorizontal="5dp"
         android:paddingVertical="5dp"
         android:textAlignment="center"
         android:textColor="@android:color/white"
-        android:textSize="20sp" />
+        android:textSize="20sp"
+        app:layout_constraintStart_toStartOf="parent" />
 
-
-    <edu.washington.cs.ubicomplab.rdt_reader.Viewport
+    <edu.washington.cs.ubicomplab.rdt_reader.views.ViewportUsingBitmap
         android:id="@+id/img_quality_check_viewport"
         android:layout_width="fill_parent"
         android:layout_height="fill_parent"
         android:layout_weight=".5"
-        android:background="@color/black_overlay"
-        custom:heightScale="0.55"
-        custom:widthScale="0.35" />
+        android:background="@color/transparent_overlay"
+        custom:heightScale="0.60"
+        custom:widthScale="0.40" />
 
     <View
         android:id="@+id/progressBackground"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:background="@color/black_overlay"
-        android:visibility="visible" />
+        android:visibility="visible"
+        app:layout_constraintTop_toTopOf="parent" />
 
     <ProgressBar
         android:id="@+id/progressCircularBar"
@@ -95,7 +100,7 @@
         android:text="@string/instruction"
         android:textAlignment="center"
         android:textColor="@color/colorWhite"
-        android:textSize="25sp"
+        android:textSize="20sp"
         android:textStyle="bold"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
@@ -123,3 +128,4 @@
         tools:visibility="visible" />
 
 </android.support.constraint.ConstraintLayout>
+

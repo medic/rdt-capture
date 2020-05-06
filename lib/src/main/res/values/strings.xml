@@ -14,6 +14,7 @@
     <string name="progress_final">Captured! Analyzing the image…</string>
     <string name="instruction">Fit RDT in the rectangle. Hold still...</string>
     <string name="instruction_detected"><![CDATA[RDT detected at the center!]]></string>
+    <string name="instruction_glare"><![CDATA[Slightly move the phone \n to remove glare at the center.]]></string>
     <string name="instruction_pos"><![CDATA[Place RDT at the center.\nFit RDT to the rectangle.]]></string>
     <string name="instruction_too_small"><![CDATA[Place RDT at the center.\nFit RDT to the rectangle.\nMove closer.]]></string>
     <string name="instruction_too_large"><![CDATA[Place RDT at the center.\nFit RDT to the rectangle.\nMove further away.]]></string>
@@ -60,4 +61,5 @@
     <string name="manual_capture_instructions">RDT not detected.\nFit RDT and take photo instead.</string>
     <string name="light_on"> Light on</string>
     <string name="light_off"> Light off</string>
+    <string name="too_much_blood_warning">Warning: Blood amount excessive, RDT might not be accurate</string>
 </resources>

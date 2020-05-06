@@ -8,9 +8,6 @@ import android.util.Log;
 import java.util.HashMap;
 import java.util.Map;
 
-import edu.washington.cs.ubicomplab.rdt_reader.ImageProcessor;
-import edu.washington.cs.ubicomplab.rdt_reader.ImageQualityActivity;
-import edu.washington.cs.ubicomplab.rdt_reader.ImageUtil;
 import edu.washington.cs.ubicomplab.rdt_reader.callback.OnImageSavedCallBack;
 import edu.washington.cs.ubicomplab.rdt_reader.presenter.RDTCapturePresenter;
 

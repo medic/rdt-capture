@@ -12,7 +12,6 @@ import org.opencv.core.DMatch;
 import org.opencv.core.KeyPoint;
 import org.opencv.core.Mat;
 import org.opencv.android.CameraBridgeViewBase.CvCameraViewListener2;
-import org.opencv.core.MatOfByte;
 import org.opencv.core.MatOfDMatch;
 import org.opencv.core.MatOfDouble;
 import org.opencv.core.MatOfKeyPoint;
@@ -60,6 +59,8 @@ import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.StringTokenizer;
+
+import edu.washington.cs.ubicomplab.rdt_reader.views.RDTCameraView;
 
 import static com.google.android.gms.vision.Frame.ROTATION_90;
 import static org.opencv.core.CvType.CV_32F;
