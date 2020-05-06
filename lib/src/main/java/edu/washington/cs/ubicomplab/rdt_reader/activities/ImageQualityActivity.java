@@ -20,7 +20,7 @@ import static edu.washington.cs.ubicomplab.rdt_reader.core.Constants.DEFAULT_RDT
  * with the target RDT's name passed in the bundle to support multiple RDT designs simultaneously
  */
 public class ImageQualityActivity extends Activity implements ImageQualityViewListener {
-    ImageQualityView mImageQualityView;
+    protected ImageQualityView mImageQualityView;
 
     /**
      * {@link android.app.Activity} onCreate()
@@ -129,5 +129,9 @@ public class ImageQualityActivity extends Activity implements ImageQualityViewLi
                 startActivity(i);
             }
         });
+    }
+
+    public ImageQualityView getmImageQualityView() {
+        return mImageQualityView;
     }
 }
