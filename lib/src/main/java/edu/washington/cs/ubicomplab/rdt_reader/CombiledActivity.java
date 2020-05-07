@@ -12,7 +12,6 @@ import org.opencv.core.DMatch;
 import org.opencv.core.KeyPoint;
 import org.opencv.core.Mat;
 import org.opencv.android.CameraBridgeViewBase.CvCameraViewListener2;
-import org.opencv.core.MatOfByte;
 import org.opencv.core.MatOfDMatch;
 import org.opencv.core.MatOfDouble;
 import org.opencv.core.MatOfKeyPoint;
@@ -61,12 +60,16 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.StringTokenizer;
 
+import edu.washington.cs.ubicomplab.rdt_reader.views.RDTCameraView;
+import edu.washington.cs.ubicomplab.rdt_reader.views.ViewportUsingBitmap;
+
 import static com.google.android.gms.vision.Frame.ROTATION_90;
 import static org.opencv.core.CvType.CV_32F;
 import static org.opencv.core.CvType.CV_8UC1;
 
 public class CombiledActivity extends AppCompatActivity implements CvCameraViewListener2, View.OnTouchListener {
-    private static final String TAG = "rdt-reader:CombiledActivity";
+    private static final String TAG = CombiledActivity.class.getName();
+
     private static final int MY_CAMERA_REQUEST_CODE = 100;
     private static final Scalar RED = new Scalar(255, 0, 0);
     private static final Scalar GREEN = new Scalar(0, 255, 0);
@@ -89,7 +92,7 @@ public class CombiledActivity extends AppCompatActivity implements CvCameraViewL
     private boolean isExpChecked = false;
     private boolean isQualChecked = false;
     private StepView mStepView;
-    private Viewport viewport;
+    private ViewportUsingBitmap viewport;
 
     private BaseLoaderCallback mLoaderCallback = new BaseLoaderCallback(this) {
         @Override

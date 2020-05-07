@@ -32,16 +32,13 @@
 
     <application>
         <activity
-            android:name=".MainActivity"
+            android:name=".activities.MainActivity"
             android:configChanges="keyboardHidden|orientation"
             android:noHistory="true"
             android:screenOrientation="portrait">
         </activity>
         <activity
-            android:name=".ExpirationDateActivity"
-            android:noHistory="true" />
-        <activity
-            android:name=".ImageQualityActivity"
+            android:name=".activities.ImageQualityActivity"
             android:theme="@style/Theme.AppCompat.NoActionBar"
             android:configChanges="keyboardHidden|orientation"
             android:exported="true"
@@ -51,11 +48,6 @@
                 <action android:name="medic.mrdt.verify"/>
             </intent-filter>
         </activity>
-        <activity
-            android:name=".ImageResultActivity"
-            android:configChanges="keyboardHidden|orientation"
-            android:noHistory="true"
-            android:screenOrientation="portrait" />
 
         <activity android:name=".activity.RDTCaptureActivity" />
     </application>

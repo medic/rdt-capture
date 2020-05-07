@@ -8,14 +8,15 @@ import android.util.Log;
 import java.util.HashMap;
 import java.util.Map;
 
-import edu.washington.cs.ubicomplab.rdt_reader.ImageProcessor;
-import edu.washington.cs.ubicomplab.rdt_reader.ImageQualityActivity;
-import edu.washington.cs.ubicomplab.rdt_reader.ImageUtil;
+import edu.washington.cs.ubicomplab.rdt_reader.activities.ImageQualityActivity;
 import edu.washington.cs.ubicomplab.rdt_reader.callback.OnImageSavedCallBack;
+import edu.washington.cs.ubicomplab.rdt_reader.core.RDTCaptureResult;
+import edu.washington.cs.ubicomplab.rdt_reader.core.RDTInterpretationResult;
 import edu.washington.cs.ubicomplab.rdt_reader.presenter.RDTCapturePresenter;
+import edu.washington.cs.ubicomplab.rdt_reader.utils.ImageUtil;
 
-import static edu.washington.cs.ubicomplab.rdt_reader.Constants.SAVED_IMAGE_FILE_PATH;
-import static edu.washington.cs.ubicomplab.rdt_reader.Constants.SAVED_IMAGE_RESULT;
+import static edu.washington.cs.ubicomplab.rdt_reader.core.Constants.SAVED_IMAGE_FILE_PATH;
+import static edu.washington.cs.ubicomplab.rdt_reader.core.Constants.SAVED_IMAGE_RESULT;
 
 public class RDTCaptureActivity extends ImageQualityActivity implements ActivityCompat.OnRequestPermissionsResultCallback, OnImageSavedCallBack {
 
@@ -29,16 +30,16 @@ public class RDTCaptureActivity extends ImageQualityActivity implements Activity
     }
 
     @Override
-    public void useCapturedImage(ImageProcessor.CaptureResult captureResult, ImageProcessor.InterpretationResult interpretationResult, long timeTaken) {
+    public void useCapturedImage(RDTCaptureResult rdtCaptureResult, RDTInterpretationResult rdtInterpretationResult, long timeTaken) {
         Log.i(TAG, "Processing captured image");
-        final byte[] captureByteArray = ImageUtil.matToRotatedByteArray(captureResult.resultMat);
-        boolean testResult = interpretTestResult(interpretationResult);
+        final byte[] captureByteArray = ImageUtil.matToRotatedByteArray(rdtCaptureResult.resultMat);
+        boolean testResult = interpretTestResult(rdtInterpretationResult);
         presenter.saveImage(getApplicationContext(), captureByteArray, System.currentTimeMillis(), testResult, this);
     }
 
-    protected boolean interpretTestResult(ImageProcessor.InterpretationResult interpretationResult) {
-        return  interpretationResult.topLine && interpretationResult.middleLine
-                || interpretationResult.topLine && interpretationResult.bottomLine;
+    protected boolean interpretTestResult(RDTInterpretationResult rdtInterpretationResult) {
+        return  rdtInterpretationResult.topLine && rdtInterpretationResult.middleLine
+                || rdtInterpretationResult.topLine && rdtInterpretationResult.bottomLine;
     }
 
     @Override
