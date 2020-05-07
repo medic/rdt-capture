@@ -118,6 +118,7 @@ public class ImageQualityActivity extends Activity implements ImageQualityViewLi
                 i.putExtra("middleLineName", rdtInterpretationResult.middleLineName);
                 i.putExtra("bottomLineName", rdtInterpretationResult.bottomLineName);
                 i.putExtra("timeTaken", timeTaken);
+                i.putExtra("hasTooMuchBlood", rdtInterpretationResult.hasTooMuchBlood);
                 startActivity(i);
             }
         });

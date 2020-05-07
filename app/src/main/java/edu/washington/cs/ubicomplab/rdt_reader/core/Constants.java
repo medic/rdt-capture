@@ -36,6 +36,9 @@ public final class Constants {
     public static Size CAMERA2_PREVIEW_SIZE = new Size(1280, 720);
     public static Size CAMERA2_IMAGE_SIZE = new Size(1280, 720);
 
+    //View finder size setting
+    public static double VIEW_FINDER_SCALE_W_PADDING = 0.20;
+
     // Overall image quality thresholds
     public static final int SHARPNESS_GAUSSIAN_BLUR_WINDOW = 5;
     public static double SHARPNESS_THRESHOLD = 0.8;
@@ -49,8 +52,8 @@ public final class Constants {
     public static int ANGLE_THRESHOLD = 10;
 
     // Result window image quality thresholds
-    public static int GLARE_WHITE_VALUE = 225;
-    public static double GLARE_WHITE_RATIO = 0.01;
+    public static int GLARE_WHITE_VALUE = 235;
+    public static double GLARE_WHITE_RATIO = 0.00;
     public static Scalar BLOOD_COLOR_LOW_HUE_LOWER = new Scalar(0, 100, 100);
     public static Scalar BLOOD_COLOR_LOW_HUE_UPPER = new Scalar(10, 255, 255);
     public static Scalar BLOOD_COLOR_HIGH_HUE_LOWER = new Scalar(160, 100, 100);
@@ -65,7 +68,7 @@ public final class Constants {
     public static int RANSAC = 5;
 
     // Interpretation parameters
-    public static double RESULT_WINDOW_ENHANCE_THRESHOLD = 7.5;
+    public static double RESULT_WINDOW_ENHANCE_THRESHOLD = 2.5;
     public static int CLAHE_CLIP_LIMIT = 10;
     public static int CLAHE_WIDTH = 5;
 

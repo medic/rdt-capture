@@ -217,14 +217,14 @@ public class ImageProcessor {
             // Crop around the edges to reduce data size and speedup computation
             Mat croppedMat = ImageUtil.cropInputMat(inputMat, CROP_RATIO);
             MatOfPoint2f croppedBoundary = ImageUtil.adjustBoundary(inputMat, boundary, CROP_RATIO);
-            
+
             // Check for glare
             boolean isGlared = false;
-            if (passed)
+            if (passed && mRDT.checkGlare) {
                 isGlared = checkGlare(croppedMat, croppedBoundary);
+            }
             passed = passed && !isGlared;
 
-            // TODO: add blood checking here once verified
             return new RDTCaptureResult(passed, croppedMat, croppedBoundary, flashEnabled,
                     exposureResult, isSharp, isCentered, sizeResult,
                     isOriented, angle, isGlared, true);
@@ -635,18 +635,20 @@ public class ImageProcessor {
      * Determines if there is blood within the detected RDT's result window
      * @param inputMat: the candidate video frame (in grayscale)
      * @param boundary: the corners of the bounding box around the detected RDT
+     * @param offset: the fine-tune offset for the bounding box
      * @return whether there is blood within the detected RDT's result window
      */
-    public boolean checkBlood(Mat inputMat, MatOfPoint2f boundary) {
+    public boolean checkBlood(Mat inputMat, MatOfPoint2f boundary, int offset) {
         // Crop the image around the RDT's result window
-        Mat resultWindowMat = cropResultWindow(inputMat, boundary);
+        Mat resultWindowMat = cropResultWindow(inputMat, boundary, offset);
 
         if (resultWindowMat.height() == 0 || resultWindowMat.width() == 0)
             return true;
 
         // Convert the image to HSV
         Mat hsv = new Mat();
-        cvtColor(resultWindowMat, hsv, Imgproc.COLOR_RGB2HSV);
+
+        cvtColor(resultWindowMat, hsv, Imgproc.COLOR_BGR2HSV);
 
         // Filter image according to two definitions of red
         // (note: H in HSV is circular, so red can have low and high H values)
@@ -733,7 +735,7 @@ public class ImageProcessor {
         texts[2] = rdtFramingCheck ? checkSymbol + "Position/Size: passed": "Position/Size: failed";
 
         // Glare text
-        texts[3] = isGlared ? checkSymbol + "No glare: passed" : "No glare: failed";
+        texts[3] = isGlared ? "No glare: failed" : checkSymbol + "No glare: passed";
 
         // Shadow text
         texts[4] = checkSymbol + "Shadow: passed";
@@ -951,6 +953,8 @@ public class ImageProcessor {
         int controlLineIndex = 0;
         double controlLinePosition = 0;
 
+        boolean hasTooMuchBlood = false;
+
         if (mRDT.topLineName.toLowerCase().equals(CONTROL_LINE_NAME)) {
             controlLineIndex = 0;
             controlLinePosition = mRDT.topLinePosition;
@@ -971,11 +975,14 @@ public class ImageProcessor {
             if (resultWindowMat.width() == 0 && resultWindowMat.height() == 0)
                 return new RDTInterpretationResult(resultWindowMat,
                         false, false, false,
-                        mRDT.topLineName, mRDT.middleLineName, mRDT.bottomLineName);
+                        mRDT.topLineName, mRDT.middleLineName, mRDT.bottomLineName, false);
 
             // Convert the result window to grayscale
             Mat grayMat = new Mat();
             cvtColor(resultWindowMat, grayMat, COLOR_RGB2GRAY);
+
+            // Detect if image has too much blood (which may gives incorrect result)
+            hasTooMuchBlood = checkBlood(inputMat, boundary, offset);
 
             // Compute variance within the window
             MatOfDouble mu = new MatOfDouble();
@@ -1016,12 +1023,18 @@ public class ImageProcessor {
                 Log.d(TAG, String.format("peak: %.2f, %.2f, %.2f", p[0], p[1], p[2]));
 
             // Determine which peaks correspond to which lines
-            for (double[] p : peaks) {
-                if (Math.abs(p[0] - mRDT.topLinePosition) < mRDT.lineSearchWidth) {
+            int detectedControlLineIndex = -1;
+            double detectedControlLineDiff = Double.MAX_VALUE;
+            for (int i = 0; i < peaks.size(); i ++) {
+                if (Math.abs(peaks.get(i)[0] - mRDT.topLinePosition) < mRDT.lineSearchWidth) {
                     topLine = true;
-                } else if (Math.abs(p[0] - mRDT.middleLinePosition) < mRDT.lineSearchWidth) {
+                    if (detectedControlLineDiff >  Math.abs(peaks.get(i)[0] - mRDT.topLinePosition)) {
+                        detectedControlLineDiff = Math.abs(peaks.get(i)[0] - mRDT.topLinePosition);
+                        detectedControlLineIndex = i;
+                    }
+                } else if (Math.abs(peaks.get(i)[0] - mRDT.middleLinePosition) < mRDT.lineSearchWidth) {
                     middleLine = true;
-                } else if (Math.abs(p[0] - mRDT.bottomLinePosition) < mRDT.lineSearchWidth) {
+                } else if (Math.abs(peaks.get(i)[0] - mRDT.bottomLinePosition) < mRDT.lineSearchWidth) {
                     bottomLine = true;
                 }
             }
@@ -1032,7 +1045,7 @@ public class ImageProcessor {
                 break;
 
             if (results[controlLineIndex]) {
-                double diff = peaks.get(controlLineIndex)[0] - controlLinePosition;
+                double diff = peaks.get(detectedControlLineIndex)[0] - controlLinePosition;
 
                 Log.d(TAG, String.format("diff: %.2f, controlLine: %.2f", diff, controlLinePosition));
                 if (abs(diff) <= 1) {
@@ -1044,11 +1057,13 @@ public class ImageProcessor {
                 offset -= 10;
             }
 
+            Log.d(TAG, String.format("Tuned: %s, offset: %d", tuned, offset));
+
             cnt++;
         } while (!tuned && cnt < 10);
 
         return new RDTInterpretationResult(resultWindowMat,
                 topLine, middleLine, bottomLine,
-                mRDT.topLineName, mRDT.middleLineName, mRDT.bottomLineName);
+                mRDT.topLineName, mRDT.middleLineName, mRDT.bottomLineName, hasTooMuchBlood);
     }
 }

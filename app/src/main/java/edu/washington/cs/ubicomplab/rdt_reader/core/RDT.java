@@ -55,6 +55,8 @@ public class RDT {
     public MatOfKeyPoint refKeypoints;
     public SIFT detector;
     public BFMatcher matcher;
+    //Glare check variables
+    public boolean checkGlare;
 
     public boolean rotated = false;
 
@@ -84,8 +86,9 @@ public class RDT {
             this.rdtName = rdtName;
 
             // Pull data related to UI
-            viewFinderScaleH = obj.getDouble("VIEW_FINDER_SCALE_H");
-            viewFinderScaleW = obj.getDouble("VIEW_FINDER_SCALE_W");
+            viewFinderScaleH = obj.getDouble("VIEW_FINDER_SCALE");
+            viewFinderScaleW = (viewFinderScaleH * (double)refImg.height()/(double)refImg.width())+Constants.VIEW_FINDER_SCALE_W_PADDING;
+            //viewFinderScaleW = obj.getDouble("VIEW_FINDER_SCALE_W");
             JSONArray rectTL = obj.getJSONArray("RESULT_WINDOW_TOP_LEFT");
             JSONArray rectBR = obj.getJSONArray("RESULT_WINDOW_BOTTOM_RIGHT");
             resultWindowRect = rotated ? new Rect(new Point(rectTL.getDouble(1), rectTL.getDouble(0)),
@@ -102,7 +105,9 @@ public class RDT {
             bottomLineName = obj.getString("BOTTOM_LINE_NAME");
             lineIntensity = obj.getInt("LINE_INTENSITY");
             lineSearchWidth = obj.has("LINE_SEARCH_WIDTH") ? obj.getInt("LINE_SEARCH_WIDTH") :
-                    Math.min((int)((middleLinePosition-topLinePosition)/2.0),(int)((bottomLinePosition-middleLinePosition)/2.0));
+                    Math.max((int)((middleLinePosition-topLinePosition)/2.0),(int)((bottomLinePosition-middleLinePosition)/2.0));
+
+            checkGlare = obj.has("CHECK_GLARE") ? obj.getBoolean("CHECK_GLARE") : false;
 
             // Pull data related to fiducials
             fiducials = obj.has("FIDUCIALS") ? obj.getJSONArray("FIDUCIALS") : new JSONArray();

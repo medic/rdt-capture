@@ -1,8 +1,7 @@
 {
   "flu-quickvue": {
     "REF_IMG": "flu_quickvue_ref_v0",
-    "VIEW_FINDER_SCALE_H": 0.6,
-    "VIEW_FINDER_SCALE_W": 0.15,
+    "VIEW_FINDER_SCALE": 0.6,
     "RESULT_WINDOW_TOP_LEFT": [600, 15],
     "RESULT_WINDOW_BOTTOM_RIGHT": [690, 45],
     "TOP_LINE_POSITION": [615, 30],
@@ -23,8 +22,7 @@
   },
   "malaria-carestart": {
     "REF_IMG": "malaria_carestart_ref_v0",
-    "VIEW_FINDER_SCALE_H": 0.6,
-    "VIEW_FINDER_SCALE_W": 0.4,
+    "VIEW_FINDER_SCALE": 0.6,
     "RESULT_WINDOW_TOP_LEFT": [210, 90],
     "RESULT_WINDOW_BOTTOM_RIGHT": [300, 100],
     "TOP_LINE_POSITION": [225, 95],
@@ -33,12 +31,12 @@
     "TOP_LINE_NAME": "Control",
     "MIDDLE_LINE_NAME": "TestPv",
     "BOTTOM_LINE_NAME": "TestPf",
-    "LINE_INTENSITY": 85
+    "LINE_INTENSITY": 85,
+    "CHECK_GLARE": true
   },
   "malaria-experimental": {
     "REF_IMG": "malaria_experimental_ref_v0",
-    "VIEW_FINDER_SCALE_H": 0.6,
-    "VIEW_FINDER_SCALE_W": 0.4,
+    "VIEW_FINDER_SCALE": 0.6,
     "RESULT_WINDOW_TOP_LEFT": [260, 100],
     "RESULT_WINDOW_BOTTOM_RIGHT": [360, 116],
     "TOP_LINE_POSITION": [275, 108],
@@ -51,8 +49,7 @@
   },
   "covid19-jalmedical": {
     "REF_IMG": "covid19_jalmedical_ref_v0",
-    "VIEW_FINDER_SCALE_H": 0.6,
-    "VIEW_FINDER_SCALE_W": 0.4,
+    "VIEW_FINDER_SCALE": 0.6,
     "RESULT_WINDOW_TOP_LEFT": [266, 115],
     "RESULT_WINDOW_BOTTOM_RIGHT": [390, 125],
     "TOP_LINE_POSITION": [285, 120],
@@ -65,10 +62,9 @@
   },
   "covid19-wondfo": {
     "REF_IMG": "covid19_wondfo_ref_v0",
-    "VIEW_FINDER_SCALE_H": 0.6,
-    "VIEW_FINDER_SCALE_W": 0.3,
-    "RESULT_WINDOW_TOP_LEFT": [350, 70],
-    "RESULT_WINDOW_BOTTOM_RIGHT": [420, 80],
+    "VIEW_FINDER_SCALE": 0.6,
+    "RESULT_WINDOW_TOP_LEFT": [350, 67],
+    "RESULT_WINDOW_BOTTOM_RIGHT": [420, 77],
     "TOP_LINE_POSITION": [370, 75],
     "MIDDLE_LINE_POSITION": [405, 75],
     "BOTTOM_LINE_POSITION": [405, 75],
@@ -79,8 +75,7 @@
   },
   "malaria-sdbioline": {
     "REF_IMG": "malaria_sdbioline_ref_v0",
-    "VIEW_FINDER_SCALE_H": 0.6,
-    "VIEW_FINDER_SCALE_W": 0.3,
+    "VIEW_FINDER_SCALE": 0.6,
     "RESULT_WINDOW_TOP_LEFT": [260, 85],
     "RESULT_WINDOW_BOTTOM_RIGHT": [350, 105],
     "TOP_LINE_POSITION": [280, 95],
