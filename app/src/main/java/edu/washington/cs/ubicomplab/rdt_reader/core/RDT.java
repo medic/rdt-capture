@@ -21,6 +21,7 @@ import org.opencv.xfeatures2d.SIFT;
 
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.Collection;
 
 import static edu.washington.cs.ubicomplab.rdt_reader.core.Constants.SHARPNESS_GAUSSIAN_BLUR_WINDOW;
 import static org.opencv.imgproc.Imgproc.cvtColor;
@@ -41,6 +42,7 @@ public class RDT {
     public String topLineName, middleLineName, bottomLineName;
     public int lineIntensity;
     public int lineSearchWidth;
+    public ArrayList<double[]> topLineHueRange, middleLineHueRange, bottomLineHueRange;
 
     // Fiducial variables
     public double distanctFromFiducialToResultWindow;
@@ -100,6 +102,9 @@ public class RDT {
             topLinePosition = rotated ? obj.getJSONArray("TOP_LINE_POSITION").getDouble(1) - resultWindowRect.x : obj.getJSONArray("TOP_LINE_POSITION").getDouble(0) - resultWindowRect.x;
             middleLinePosition = rotated ? obj.getJSONArray("MIDDLE_LINE_POSITION").getDouble(1) - resultWindowRect.x: obj.getJSONArray("MIDDLE_LINE_POSITION").getDouble(0) - resultWindowRect.x;
             bottomLinePosition = rotated ? obj.getJSONArray("BOTTOM_LINE_POSITION").getDouble(1) - resultWindowRect.x: obj.getJSONArray("BOTTOM_LINE_POSITION").getDouble(0) - resultWindowRect.x;
+            topLineHueRange = obj.has("TOP_LINE_HUE_RANGE") ? new ArrayList<double[]>((Collection<? extends double[]>) obj.getJSONArray("TOP_LINE_HUE_RANGE")) : new ArrayList<double[]>();
+            middleLineHueRange = obj.has("MIDDLE_LINE_HUE_RANGE") ? new ArrayList<double[]>((Collection<? extends double[]>) obj.getJSONArray("MIDDLE_LINE_HUE_RANGE")) : new ArrayList<double[]>();
+            bottomLineHueRange = obj.has("BOTTOM_LINE_HUE_RANGE") ? new ArrayList<double[]>((Collection<? extends double[]>) obj.getJSONArray("BOTTOM_LINE_HUE_RANGE")) : new ArrayList<double[]>();
             topLineName = obj.getString("TOP_LINE_NAME");
             middleLineName = obj.getString("MIDDLE_LINE_NAME");
             bottomLineName = obj.getString("BOTTOM_LINE_NAME");
