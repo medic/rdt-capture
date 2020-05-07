@@ -193,6 +193,7 @@ public class ImageProcessor {
         ExposureResult exposureResult = checkExposure(grayMat);
         boolean isSharp = checkSharpness(grayMat.submat(viewFinderRect));
         boolean passed = exposureResult == ExposureResult.NORMAL && isSharp;
+        boolean fiducial = false;
 
         // If the frame passes those two checks, continue to try to detect the RDT
         if (passed) {
@@ -224,6 +225,14 @@ public class ImageProcessor {
                 isGlared = checkGlare(croppedMat, croppedBoundary);
             }
             passed = passed && !isGlared;
+
+            // Check for fiducial
+            if (passed && mRDT.hasFiducial) {
+                Mat fiducialMat = correctPerspective(croppedMat, croppedBoundary);
+                Rect resultRect = cropResultWindowWithFiducial(fiducialMat, 0);
+                fiducial = resultRect.height > 0 && resultRect.width > 0;
+                passed = passed && fiducial;
+            }
 
             return new RDTCaptureResult(passed, croppedMat, croppedBoundary, flashEnabled,
                     exposureResult, isSharp, isCentered, sizeResult,
@@ -760,29 +769,12 @@ public class ImageProcessor {
      * @return the RDT image tightly cropped and de-skewed around the result window
      */
     private Mat cropResultWindow(Mat inputMat, MatOfPoint2f boundary, int offset) {
-        // Get the corners of the reference RDT image
-        Mat refBoundary = new Mat(4, 1, CvType.CV_32FC2);
-        double[] a = new double[]{0, 0};
-        double[] b = new double[]{mRDT.refImg.cols() - 1, 0};
-        double[] c = new double[]{mRDT.refImg.cols() - 1, mRDT.refImg.rows() - 1};
-        double[] d = new double[]{0, mRDT.refImg.rows() - 1};
-        refBoundary.put(0, 0, a);
-        refBoundary.put(1, 0, b);
-        refBoundary.put(2, 0, c);
-        refBoundary.put(3, 0, d);
-
-        // Calculate the perspective transformation matrix that maps the corners of the
-        // detected RDT to the corners of the reference image
-        Mat M = getPerspectiveTransform(boundary, refBoundary);
-
-        // Apply perspective correction to the RDT in the video frame
-        Mat correctedMat = new Mat(mRDT.refImg.rows(), mRDT.refImg.cols(), mRDT.refImg.type());
-        warpPerspective(inputMat, correctedMat, M, new Size(mRDT.refImg.cols(), mRDT.refImg.rows()));
+        Mat correctedMat = correctPerspective(inputMat, boundary);
 
         // If fiducials are specified, use them to improve the estimate of the
         // result window's location, otherwise use the default rectangle specified by the user
         Rect resultWindowRect = mRDT.hasFiducial ?
-                cropResultWindowWithFidicual(correctedMat, offset) :
+                cropResultWindowWithFiducial(correctedMat, offset) :
                 new Rect(mRDT.resultWindowRect.x + offset, mRDT.resultWindowRect.y + offset, mRDT.resultWindowRect.width, mRDT.resultWindowRect.height);
 
         if (resultWindowRect.width == 0 || resultWindowRect.height == 0)
@@ -804,7 +796,7 @@ public class ImageProcessor {
      * @param offset: offset of result window for fine-tuned cropping
      * @return the RDT image tightly cropped and de-skewed around the result window
      */
-    private Rect cropResultWindowWithFidicual(Mat inputMat, int offset) {
+    private Rect cropResultWindowWithFiducial(Mat inputMat, int offset) {
         // Flatten the input data
         Mat data = new Mat();
         inputMat.convertTo(data, CV_32F);
@@ -899,6 +891,35 @@ public class ImageProcessor {
         element_erode.release();
         element_dilate.release();
         return resultWindowMat;
+    }
+
+    /**
+     * Corrects perspective of captured RDT
+     * @param inputMat: the candidate video frame
+     * @param boundary: the corners of the bounding box around the detected RDT
+     * @return
+     */
+    private Mat correctPerspective(Mat inputMat, MatOfPoint2f boundary) {
+        // Get the corners of the reference RDT image
+        Mat refBoundary = new Mat(4, 1, CvType.CV_32FC2);
+        double[] a = new double[]{0, 0};
+        double[] b = new double[]{mRDT.refImg.cols() - 1, 0};
+        double[] c = new double[]{mRDT.refImg.cols() - 1, mRDT.refImg.rows() - 1};
+        double[] d = new double[]{0, mRDT.refImg.rows() - 1};
+        refBoundary.put(0, 0, a);
+        refBoundary.put(1, 0, b);
+        refBoundary.put(2, 0, c);
+        refBoundary.put(3, 0, d);
+
+        // Calculate the perspective transformation matrix that maps the corners of the
+        // detected RDT to the corners of the reference image
+        Mat M = getPerspectiveTransform(boundary, refBoundary);
+
+        // Apply perspective correction to the RDT in the video frame
+        Mat correctedMat = new Mat(mRDT.refImg.rows(), mRDT.refImg.cols(), mRDT.refImg.type());
+        warpPerspective(inputMat, correctedMat, M, new Size(mRDT.refImg.cols(), mRDT.refImg.rows()));
+
+        return correctedMat;
     }
 
     /**
@@ -1009,33 +1030,73 @@ public class ImageProcessor {
 
             // Compute the average intensity for each column of the result window
             Mat lightness = channels.get(1);
+            Mat hue = channels.get(0);
             double[] avgIntensities = new double[lightness.cols()];
+            double[] avgHues = new double[hue.cols()];
             for (int i = 0; i < lightness.cols(); i++) {
                 avgIntensities[i] = 0;
-                for (int j = 0; j < lightness.rows(); j++)
+                avgHues[i] = 0;
+                for (int j = 0; j < lightness.rows(); j++) {
                     avgIntensities[i] += lightness.get(j, i)[0];
+                    avgHues[i] += hue.get(j, i)[0];
+                }
                 avgIntensities[i] /= lightness.rows();
+                avgHues[i] /= hue.rows();
             }
 
             // Detect the peaks
             ArrayList<double[]> peaks = ImageUtil.detectPeaks(avgIntensities, mRDT.lineIntensity, false);
             for (double[] p : peaks)
-                Log.d(TAG, String.format("peak: %.2f, %.2f, %.2f", p[0], p[1], p[2]));
+                Log.d(TAG, String.format("peak: %.2f, %.2f, %.2f, %.2f", p[0], p[1], p[2], avgHues[(int)p[0]]));
 
             // Determine which peaks correspond to which lines
             int detectedControlLineIndex = -1;
             double detectedControlLineDiff = Double.MAX_VALUE;
             for (int i = 0; i < peaks.size(); i ++) {
                 if (Math.abs(peaks.get(i)[0] - mRDT.topLinePosition) < mRDT.lineSearchWidth) {
-                    topLine = true;
-                    if (detectedControlLineDiff >  Math.abs(peaks.get(i)[0] - mRDT.topLinePosition)) {
-                        detectedControlLineDiff = Math.abs(peaks.get(i)[0] - mRDT.topLinePosition);
-                        detectedControlLineIndex = i;
+                    if (mRDT.topLineHueRange.size() > 0) {
+                        for (double[] range: mRDT.topLineHueRange) {
+                            topLine = topLine || (range[0] <= avgHues[(int)peaks.get(i)[0]] &&  range[1] <= avgHues[(int)peaks.get(i)[0]]);
+                        }
+                    } else {
+                        topLine = true;
+                    }
+                    if (controlLineIndex == 0) {
+                        if (detectedControlLineDiff > Math.abs(peaks.get(i)[0] - mRDT.topLinePosition)) {
+                            detectedControlLineDiff = Math.abs(peaks.get(i)[0] - mRDT.topLinePosition);
+                            detectedControlLineIndex = i;
+                        }
                     }
                 } else if (Math.abs(peaks.get(i)[0] - mRDT.middleLinePosition) < mRDT.lineSearchWidth) {
-                    middleLine = true;
+                    if (mRDT.middleLineHueRange.size() > 0) {
+                        for (double[] range: mRDT.middleLineHueRange) {
+                            middleLine = middleLine || (range[0] <= avgHues[(int)peaks.get(i)[0]] &&  range[1] <= avgHues[(int)peaks.get(i)[0]]);
+                        }
+                    } else {
+                        middleLine = true;
+                    }
+
+                    if (controlLineIndex == 1) {
+                        if (detectedControlLineDiff > Math.abs(peaks.get(i)[0] - mRDT.topLinePosition)) {
+                            detectedControlLineDiff = Math.abs(peaks.get(i)[0] - mRDT.topLinePosition);
+                            detectedControlLineIndex = i;
+                        }
+                    }
                 } else if (Math.abs(peaks.get(i)[0] - mRDT.bottomLinePosition) < mRDT.lineSearchWidth) {
-                    bottomLine = true;
+                    if (mRDT.bottomLineHueRange.size() > 0) {
+                        for (double[] range: mRDT.bottomLineHueRange) {
+                            bottomLine = bottomLine || (range[0] <= avgHues[(int)peaks.get(i)[0]] &&  range[1] <= avgHues[(int)peaks.get(i)[0]]);
+                        }
+                    } else {
+                        bottomLine = true;
+                    }
+
+                    if (controlLineIndex == 2) {
+                        if (detectedControlLineDiff > Math.abs(peaks.get(i)[0] - mRDT.topLinePosition)) {
+                            detectedControlLineDiff = Math.abs(peaks.get(i)[0] - mRDT.topLinePosition);
+                            detectedControlLineIndex = i;
+                        }
+                    }
                 }
             }
 
@@ -1045,6 +1106,7 @@ public class ImageProcessor {
                 break;
 
             if (results[controlLineIndex]) {
+                Log.d(TAG, String.format("detected control line index: %d, control line index: %d", detectedControlLineIndex, controlLineIndex));
                 double diff = peaks.get(detectedControlLineIndex)[0] - controlLinePosition;
 
                 Log.d(TAG, String.format("diff: %.2f, controlLine: %.2f", diff, controlLinePosition));
