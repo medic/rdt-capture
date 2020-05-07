@@ -46,11 +46,11 @@ If you are working directly on our repository, open `app/src/main/assets/config.
 | `RESULT_WINDOW_RECT_TOP_LEFT`       | :heavy_check_mark:  | `[double, double]` |              | (x, y) coordinates of result window's top-left corner |
 | `RESULT_WINDOW_RECT_BOTTOM_RIGHT`   | :heavy_check_mark:  | `[double, double]` |              | (x, y) coordinates of result window's bottom-right corner |
 | `TOP_LINE_POSITION`                 | :heavy_check_mark:  | `[double, double]` |              | (x, y) coordinates of the top line's center point |
-| `TOP_LINE_HUE_RANGE`                 | :heavy_minus_sign:  | `[[double, double],...]` |  min = 0.0, max = 180.0            | Range of hue values for the top line color |
+| `TOP_LINE_HUE_RANGE`                 | :heavy_minus_sign:  | `[[double, double],...]` |  min = `0.0`, max = `180.0`           | Range of hue values for the top line color |
 | `MIDDLE_LINE_POSITION`              | :heavy_check_mark:  | `[double, double]` |              | (x, y) coordinates of the middle line's center point |
-| `MIDDLE_LINE_HUE_RANGE`                 | :heavy_minus_sign:  | `[[double, double],...]` |  min = 0.0, max = 180.0            | Range of hue values for the middle line color |
+| `MIDDLE_LINE_HUE_RANGE`                 | :heavy_minus_sign:  | `[[double, double],...]` |  min = `0.0`, max = `180.0`            | Range of hue values for the middle line color |
 | `BOTTOM_LINE_POSITION`              | :heavy_check_mark:  | `[double, double]` |              | (x, y) coordinates of the bottom line's center point |
-| `BOTTOM_LINE_HUE_RANGE`                 | :heavy_minus_sign:  | `[[double, double],...]` |  min = 0.0, max = 180.0            | Range of hue values for the bottom line color |
+| `BOTTOM_LINE_HUE_RANGE`                 | :heavy_minus_sign:  | `[[double, double],...]` |  min = `0.0`, max = `180.0`            | Range of hue values for the bottom line color |
 | `TOP_LINE_NAME`                     | :heavy_check_mark:  | `String`             |              | Meaning of the top line (e.g., "Control", "Influenza A"). (**Note**) One of the line names must be `Control`.|
 | `MIDDLE_LINE_NAME`                  | :heavy_check_mark:  | `String`             |              | Meaning of the middle line (e.g., "Control", "Influenza A"). (**Note**) One of the line names must be `Control`.|
 | `BOTTOM_LINE_NAME`                  | :heavy_check_mark:  | `String`             |              | Meaning of the bottom line (e.g., "Control", "Malaria P.f"). (**Note**) One of the line names must be `Control`.|
