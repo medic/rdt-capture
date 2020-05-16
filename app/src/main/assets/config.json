@@ -63,6 +63,19 @@
     "BOTTOM_LINE_NAME": "lgM",
     "LINE_INTENSITY": 85
   },
+  "covid19-modified": {
+    "REF_IMG": "covid19_modified_ref_v0",
+    "VIEW_FINDER_SCALE": 0.6,
+    "RESULT_WINDOW_TOP_LEFT": [266, 115],
+    "RESULT_WINDOW_BOTTOM_RIGHT": [390, 125],
+    "TOP_LINE_POSITION": [285, 120],
+    "MIDDLE_LINE_POSITION": [327, 120],
+    "BOTTOM_LINE_POSITION": [367, 120],
+    "TOP_LINE_NAME": "Control",
+    "MIDDLE_LINE_NAME": "lgG",
+    "BOTTOM_LINE_NAME": "lgM",
+    "LINE_INTENSITY": 85
+  },
   "covid19-wondfo": {
     "REF_IMG": "covid19_wondfo_ref_v0",
     "VIEW_FINDER_SCALE": 0.6,
