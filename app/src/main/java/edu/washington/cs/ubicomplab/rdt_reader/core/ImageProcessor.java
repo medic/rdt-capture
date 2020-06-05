@@ -982,7 +982,7 @@ public class ImageProcessor {
         } else if (mRDT.middleLineName.toLowerCase().equals(CONTROL_LINE_NAME)) {
             controlLineIndex = 1;
             controlLinePosition = mRDT.middleLinePosition;
-        } else if (mRDT.bottomLineName.toLowerCase().equals(CONTROL_LINE_NAME)) {
+        } else if (mRDT.numberOfLines > 2 && mRDT.bottomLineName.toLowerCase().equals(CONTROL_LINE_NAME)) {
             controlLineIndex = 2;
             controlLinePosition = mRDT.bottomLinePosition;
         }
@@ -996,7 +996,7 @@ public class ImageProcessor {
             if (resultWindowMat.width() == 0 && resultWindowMat.height() == 0)
                 return new RDTInterpretationResult(resultWindowMat,
                         false, false, false,
-                        mRDT.topLineName, mRDT.middleLineName, mRDT.bottomLineName, false);
+                        mRDT.topLineName, mRDT.middleLineName, mRDT.bottomLineName, false, mRDT.numberOfLines);
 
             // Convert the result window to grayscale
             Mat grayMat = new Mat();
@@ -1082,7 +1082,7 @@ public class ImageProcessor {
                             detectedControlLineIndex = i;
                         }
                     }
-                } else if (Math.abs(peaks.get(i)[0] - mRDT.bottomLinePosition) < mRDT.lineSearchWidth) {
+                } else if (mRDT.numberOfLines > 2 && Math.abs(peaks.get(i)[0] - mRDT.bottomLinePosition) < mRDT.lineSearchWidth) {
                     if (mRDT.bottomLineHueRange.size() > 0) {
                         for (double[] range: mRDT.bottomLineHueRange) {
                             bottomLine = bottomLine || (range[0] <= avgHues[(int)peaks.get(i)[0]] &&  range[1] <= avgHues[(int)peaks.get(i)[0]]);
@@ -1126,6 +1126,6 @@ public class ImageProcessor {
 
         return new RDTInterpretationResult(resultWindowMat,
                 topLine, middleLine, bottomLine,
-                mRDT.topLineName, mRDT.middleLineName, mRDT.bottomLineName, hasTooMuchBlood);
+                mRDT.topLineName, mRDT.middleLineName, mRDT.bottomLineName, hasTooMuchBlood, mRDT.numberOfLines);
     }
 }

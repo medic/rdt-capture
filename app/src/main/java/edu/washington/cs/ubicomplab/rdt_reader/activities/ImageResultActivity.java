@@ -95,6 +95,12 @@ public class ImageResultActivity extends AppCompatActivity implements View.OnCli
             timeTextView.setText(String.format("%.2f seconds", timeTaken/1000.0));
         }
 
+        //Number of lines
+        int numberOfLines = 2;
+        if (intent.hasExtra("numberOfLines")) {
+            numberOfLines = intent.getIntExtra("numberOfLines", 2);
+        }
+
         // Top line
         if (intent.hasExtra("topLine")) {
             boolean topLine = intent.getBooleanExtra("topLine", false);
@@ -120,14 +126,16 @@ public class ImageResultActivity extends AppCompatActivity implements View.OnCli
         }
 
         // Bottom line
-        if (intent.hasExtra("bottomLine")) {
+        if (numberOfLines > 2 && intent.hasExtra("bottomLine")) {
             boolean bottomLine = intent.getBooleanExtra("bottomLine", false);
             TextView bottomLineTextView = findViewById(R.id.bottomLineTextView);
+            bottomLineTextView.setVisibility(View.VISIBLE);
             bottomLineTextView.setText(String.format("%s", bottomLine ? "True" : "False"));
         }
-        if (intent.hasExtra("bottomLineName")) {
+        if (numberOfLines > 2 &&  intent.hasExtra("bottomLineName")) {
             String bottomLineName = intent.getStringExtra("bottomLineName");
             TextView bottomLineNameTextView = findViewById(R.id.bottomLineNameTextView);
+            bottomLineNameTextView.setVisibility(View.VISIBLE);
             bottomLineNameTextView.setText(bottomLineName);
         }
 

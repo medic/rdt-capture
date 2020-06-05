@@ -83,10 +83,8 @@
     "RESULT_WINDOW_BOTTOM_RIGHT": [420, 77],
     "TOP_LINE_POSITION": [370, 75],
     "MIDDLE_LINE_POSITION": [405, 75],
-    "BOTTOM_LINE_POSITION": [405, 75],
     "TOP_LINE_NAME": "Control",
     "MIDDLE_LINE_NAME": "Test",
-    "BOTTOM_LINE_NAME": "Test",
     "LINE_INTENSITY": 85
   },
   "malaria-sdbioline": {
@@ -96,10 +94,8 @@
     "RESULT_WINDOW_BOTTOM_RIGHT": [350, 105],
     "TOP_LINE_POSITION": [280, 95],
     "MIDDLE_LINE_POSITION": [325, 95],
-    "BOTTOM_LINE_POSITION": [325, 95],
     "TOP_LINE_NAME": "Control",
     "MIDDLE_LINE_NAME": "Pf",
-    "BOTTOM_LINE_NAME": "Pf",
     "LINE_INTENSITY": 85
   }
 }

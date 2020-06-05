@@ -43,6 +43,7 @@ public class RDT {
     public int lineIntensity;
     public int lineSearchWidth;
     public ArrayList<double[]> topLineHueRange, middleLineHueRange, bottomLineHueRange;
+    public int numberOfLines;
 
     // Fiducial variables
     public double distanctFromFiducialToResultWindow;
@@ -101,16 +102,29 @@ public class RDT {
             // Pull data related to the result window
             topLinePosition = rotated ? obj.getJSONArray("TOP_LINE_POSITION").getDouble(1) - resultWindowRect.x : obj.getJSONArray("TOP_LINE_POSITION").getDouble(0) - resultWindowRect.x;
             middleLinePosition = rotated ? obj.getJSONArray("MIDDLE_LINE_POSITION").getDouble(1) - resultWindowRect.x: obj.getJSONArray("MIDDLE_LINE_POSITION").getDouble(0) - resultWindowRect.x;
-            bottomLinePosition = rotated ? obj.getJSONArray("BOTTOM_LINE_POSITION").getDouble(1) - resultWindowRect.x: obj.getJSONArray("BOTTOM_LINE_POSITION").getDouble(0) - resultWindowRect.x;
+            if (obj.has("BOTTOM_LINE_POSITION")) {
+                bottomLinePosition = rotated ? obj.getJSONArray("BOTTOM_LINE_POSITION").getDouble(1) - resultWindowRect.x: obj.getJSONArray("BOTTOM_LINE_POSITION").getDouble(0) - resultWindowRect.x;
+                numberOfLines = 3;
+            } else {
+                bottomLinePosition = 0;
+                numberOfLines = 2;
+            }
             topLineHueRange = obj.has("TOP_LINE_HUE_RANGE") ? new ArrayList<double[]>((Collection<? extends double[]>) obj.getJSONArray("TOP_LINE_HUE_RANGE")) : new ArrayList<double[]>();
             middleLineHueRange = obj.has("MIDDLE_LINE_HUE_RANGE") ? new ArrayList<double[]>((Collection<? extends double[]>) obj.getJSONArray("MIDDLE_LINE_HUE_RANGE")) : new ArrayList<double[]>();
             bottomLineHueRange = obj.has("BOTTOM_LINE_HUE_RANGE") ? new ArrayList<double[]>((Collection<? extends double[]>) obj.getJSONArray("BOTTOM_LINE_HUE_RANGE")) : new ArrayList<double[]>();
             topLineName = obj.getString("TOP_LINE_NAME");
             middleLineName = obj.getString("MIDDLE_LINE_NAME");
-            bottomLineName = obj.getString("BOTTOM_LINE_NAME");
+            if (numberOfLines > 2 && obj.has("BOTTOM_LINE_NAME")) {
+                bottomLineName = obj.getString("BOTTOM_LINE_NAME");
+            }
             lineIntensity = obj.getInt("LINE_INTENSITY");
-            lineSearchWidth = obj.has("LINE_SEARCH_WIDTH") ? obj.getInt("LINE_SEARCH_WIDTH") :
-                    Math.max((int)((middleLinePosition-topLinePosition)/2.0),(int)((bottomLinePosition-middleLinePosition)/2.0));
+            if (numberOfLines > 2 && obj.has("BOTTOM_LINE_POSITION")) {
+                lineSearchWidth = obj.has("LINE_SEARCH_WIDTH") ? obj.getInt("LINE_SEARCH_WIDTH") :
+                        Math.max((int) ((middleLinePosition - topLinePosition) / 2.0), (int) ((bottomLinePosition - middleLinePosition) / 2.0));
+            } else {
+                lineSearchWidth = obj.has("LINE_SEARCH_WIDTH") ? obj.getInt("LINE_SEARCH_WIDTH") :
+                        (int) ((middleLinePosition - topLinePosition) / 2.0);
+            }
 
             checkGlare = obj.has("CHECK_GLARE") ? obj.getBoolean("CHECK_GLARE") : false;
 
