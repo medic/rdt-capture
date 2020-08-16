@@ -1,6 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string-array name="spinnerItems">
+        <item>covid1</item>
+        <item>covid2</item>
+        <item>covid3</item>
+        <item>covid4</item>
+        <item>covid5</item>
         <item>covid19-jalmedical</item>
         <item>covid19-wondfo</item>
         <item>covid19-modified</item>

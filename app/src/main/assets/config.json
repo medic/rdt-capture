@@ -97,5 +97,66 @@
     "TOP_LINE_NAME": "Control",
     "MIDDLE_LINE_NAME": "Pf",
     "LINE_INTENSITY": 85
+  },
+  "covid1": {
+    "REF_IMG": "covid1_ref",
+    "VIEW_FINDER_SCALE": 0.6,
+    "RESULT_WINDOW_TOP_LEFT": [260, 115],
+    "RESULT_WINDOW_BOTTOM_RIGHT": [395, 135],
+    "TOP_LINE_POSITION": [280, 125],
+    "MIDDLE_LINE_POSITION": [325, 125],
+    "BOTTOM_LINE_POSITION": [370, 125],
+    "TOP_LINE_NAME": "Control",
+    "MIDDLE_LINE_NAME": "lgG",
+    "BOTTOM_LINE_NAME": "lgM",
+    "LINE_INTENSITY": 85
+  },
+  "covid2": {
+    "REF_IMG": "covid2_ref",
+    "VIEW_FINDER_SCALE": 0.6,
+    "RESULT_WINDOW_TOP_LEFT": [320, 70],
+    "RESULT_WINDOW_BOTTOM_RIGHT": [460, 80],
+    "TOP_LINE_POSITION": [340, 75],
+    "MIDDLE_LINE_POSITION": [385, 75],
+    "BOTTOM_LINE_POSITION": [430, 75],
+    "TOP_LINE_NAME": "Control",
+    "MIDDLE_LINE_NAME": "G",
+    "BOTTOM_LINE_NAME": "M",
+    "LINE_INTENSITY": 85
+  },
+  "covid3": {
+    "REF_IMG": "covid3_ref",
+    "VIEW_FINDER_SCALE": 0.6,
+    "RESULT_WINDOW_TOP_LEFT": [255, 95],
+    "RESULT_WINDOW_BOTTOM_RIGHT": [370, 115],
+    "TOP_LINE_POSITION": [275, 105],
+    "MIDDLE_LINE_POSITION": [350, 105],
+    "TOP_LINE_NAME": "Control",
+    "MIDDLE_LINE_NAME": "G",
+    "LINE_INTENSITY": 85
+  },
+  "covid4": {
+    "REF_IMG": "covid4_ref",
+    "VIEW_FINDER_SCALE": 0.6,
+    "RESULT_WINDOW_TOP_LEFT": [265, 90],
+    "RESULT_WINDOW_BOTTOM_RIGHT": [375, 115],
+    "TOP_LINE_POSITION": [285, 105],
+    "MIDDLE_LINE_POSITION": [360, 105],
+    "TOP_LINE_NAME": "Control",
+    "MIDDLE_LINE_NAME": "M",
+    "LINE_INTENSITY": 85
+  },
+  "covid5": {
+    "REF_IMG": "covid5_ref",
+    "VIEW_FINDER_SCALE": 0.6,
+    "RESULT_WINDOW_TOP_LEFT": [335, 70],
+    "RESULT_WINDOW_BOTTOM_RIGHT": [480, 90],
+    "TOP_LINE_POSITION": [360, 80],
+    "MIDDLE_LINE_POSITION": [405, 80],
+    "BOTTOM_LINE_POSITION": [450, 80],
+    "TOP_LINE_NAME": "Control",
+    "MIDDLE_LINE_NAME": "lgG",
+    "BOTTOM_LINE_NAME": "lgM",
+    "LINE_INTENSITY": 85
   }
 }
