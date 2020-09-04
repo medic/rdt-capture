@@ -50,8 +50,8 @@
     "BOTTOM_LINE_NAME": "TestPf",
     "LINE_INTENSITY": 80
   },
-  "covid19-jalmedical": {
-    "REF_IMG": "covid19_jalmedical_ref_v0",
+  "covid19-alltest": {
+    "REF_IMG": "covid19_alltest_ref_v0",
     "VIEW_FINDER_SCALE": 0.6,
     "RESULT_WINDOW_TOP_LEFT": [266, 95],
     "RESULT_WINDOW_BOTTOM_RIGHT": [390, 105],
@@ -98,8 +98,8 @@
     "MIDDLE_LINE_NAME": "Pf",
     "LINE_INTENSITY": 85
   },
-  "covid1": {
-    "REF_IMG": "covid1_ref",
+  "covid19-Alltest": {
+    "REF_IMG": "covid19_realytech_ref_v0",
     "VIEW_FINDER_SCALE": 0.6,
     "RESULT_WINDOW_TOP_LEFT": [260, 115],
     "RESULT_WINDOW_BOTTOM_RIGHT": [395, 135],
@@ -111,8 +111,8 @@
     "BOTTOM_LINE_NAME": "lgM",
     "LINE_INTENSITY": 85
   },
-  "covid2": {
-    "REF_IMG": "covid2_ref",
+  "covid19-Greenspring": {
+    "REF_IMG": "covid19_greenspring_ref_v0",
     "VIEW_FINDER_SCALE": 0.6,
     "RESULT_WINDOW_TOP_LEFT": [320, 70],
     "RESULT_WINDOW_BOTTOM_RIGHT": [460, 80],
@@ -124,8 +124,8 @@
     "BOTTOM_LINE_NAME": "M",
     "LINE_INTENSITY": 85
   },
-  "covid3": {
-    "REF_IMG": "covid3_ref",
+  "covid19-SDBiosensor-IgG": {
+    "REF_IMG": "covid19_sdbiosensorIgG_ref_v0",
     "VIEW_FINDER_SCALE": 0.6,
     "RESULT_WINDOW_TOP_LEFT": [255, 95],
     "RESULT_WINDOW_BOTTOM_RIGHT": [370, 115],
@@ -135,8 +135,8 @@
     "MIDDLE_LINE_NAME": "G",
     "LINE_INTENSITY": 85
   },
-  "covid4": {
-    "REF_IMG": "covid4_ref",
+  "covid19-SDBiosensor-IgM": {
+    "REF_IMG": "covid19_sdbiosensorIgM_ref_v0",
     "VIEW_FINDER_SCALE": 0.6,
     "RESULT_WINDOW_TOP_LEFT": [265, 90],
     "RESULT_WINDOW_BOTTOM_RIGHT": [375, 115],
