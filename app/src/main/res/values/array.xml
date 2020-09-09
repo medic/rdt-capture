@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string-array name="spinnerItems">
-        <item>covid19-realytech</item>
-        <item>covid19-greenspring</item>
-        <item>covid19-sdbiosensorIgG</item>
-        <item>covid19-sdbiosensorIgM</item>
+        <item>covid19-Realytech</item>
+        <item>covid19-Greenspring</item>
+        <item>covid19-SDBiosensor-IgG</item>
+        <item>covid19-SDBiosensor-IgM</item>
         <item>covid5</item>
-        <item>covid19-alltest</item>
+        <item>covid19-Alltest</item>
         <item>covid19-wondfo</item>
         <item>covid19-modified</item>
         <item>malaria-carestart</item>
