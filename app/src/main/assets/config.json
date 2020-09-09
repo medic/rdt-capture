@@ -98,7 +98,7 @@
     "MIDDLE_LINE_NAME": "Pf",
     "LINE_INTENSITY": 85
   },
-  "covid19-Alltest": {
+  "covid19-Realytech": {
     "REF_IMG": "covid19_realytech_ref_v0",
     "VIEW_FINDER_SCALE": 0.6,
     "RESULT_WINDOW_TOP_LEFT": [260, 115],
