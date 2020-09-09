@@ -50,7 +50,7 @@
     "BOTTOM_LINE_NAME": "TestPf",
     "LINE_INTENSITY": 80
   },
-  "covid19-alltest": {
+  "covid19-Alltest": {
     "REF_IMG": "covid19_alltest_ref_v0",
     "VIEW_FINDER_SCALE": 0.6,
     "RESULT_WINDOW_TOP_LEFT": [266, 95],
