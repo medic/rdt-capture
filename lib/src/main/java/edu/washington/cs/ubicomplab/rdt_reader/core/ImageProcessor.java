@@ -12,6 +12,7 @@ import android.app.Activity;
 import android.content.Context;
 import android.util.Log;
 
+import org.json.JSONObject;
 import org.opencv.android.BaseLoaderCallback;
 import org.opencv.android.LoaderCallbackInterface;
 import org.opencv.android.OpenCVLoader;
@@ -127,12 +128,17 @@ public class ImageProcessor {
         Log.d(TAG, "REFERENCE LOAD/DETECT/COMPUTE: " + (System.currentTimeMillis() - startTime));
     }
 
-    /**
-     * Singleton creation method for this class
-     * @param activity: the activity that is using this code
-     * @param rdtName: the name of the target RDT
-     * @return an instance of this class if one already exists, otherwise creates a new one
-     */
+    private ImageProcessor(JSONObject rdtConfig) {
+        mRDT = new RDT(rdtConfig);
+        mRDT.refImgSharpness = measureSharpness(mRDT.refImg);
+    }
+
+    public static ImageProcessor getInstance(JSONObject rdtConfig) {
+        if (instance == null)
+            instance = new ImageProcessor(rdtConfig);
+        return instance;
+    }
+
     public static ImageProcessor getInstance(Activity activity, String rdtName) {
         if (instance == null)
             instance = new ImageProcessor(activity, rdtName);
