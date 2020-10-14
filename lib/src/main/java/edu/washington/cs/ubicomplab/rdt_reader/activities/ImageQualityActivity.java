@@ -4,6 +4,7 @@ import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
 
+import org.json.JSONException;
 import org.json.JSONObject;
 
 import edu.washington.cs.ubicomplab.rdt_reader.R;
@@ -47,8 +48,12 @@ public class ImageQualityActivity extends Activity implements ImageQualityViewLi
             mImageQualityView.setRDTName(DEFAULT_RDT_NAME);
         }
 
-        // Extract config json obj
-        mImageQualityView.setRdtJsonConfig((JSONObject) b.getParcelable(RDT_JSON_CONFIG));
+        try {
+            // Extract config json obj
+            mImageQualityView.setRdtJsonConfig(new JSONObject(b.getString(RDT_JSON_CONFIG)));
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
     }
 
     /**
