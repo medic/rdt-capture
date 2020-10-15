@@ -80,7 +80,6 @@ public class RDT {
             JSONObject obj = new JSONObject(new String(buffer, "UTF-8")).getJSONObject(rdtName);
             refImageID = context.getResources().getIdentifier(obj.getString("REF_IMG"),
                     "drawable", context.getPackageName());
-            refImg = new Mat();
             Bitmap bitmap = BitmapFactory.decodeResource(context.getResources(), refImageID);
             init(obj, bitmap);
         } catch (Exception ex) {
@@ -98,6 +97,7 @@ public class RDT {
 
     private void init(JSONObject obj, Bitmap bitmap) throws JSONException {
         // Load the template image
+        refImg = new Mat();
         Utils.bitmapToMat(bitmap, refImg);
 
         if(refImg.height() > refImg.width()) {
@@ -122,10 +122,10 @@ public class RDT {
         // Pull data related to the result window
         topLinePosition = rotated ? obj.getJSONArray("TOP_LINE_POSITION").getDouble(1) - resultWindowRect.x : obj.getJSONArray("TOP_LINE_POSITION").getDouble(0) - resultWindowRect.x;
         middleLinePosition = rotated ? obj.getJSONArray("MIDDLE_LINE_POSITION").getDouble(1) - resultWindowRect.x: obj.getJSONArray("MIDDLE_LINE_POSITION").getDouble(0) - resultWindowRect.x;
-        bottomLinePosition = rotated ? obj.getJSONArray("BOTTOM_LINE_POSITION").getDouble(1) - resultWindowRect.x: obj.getJSONArray("BOTTOM_LINE_POSITION").getDouble(0) - resultWindowRect.x;
+        bottomLinePosition = getBottomLinePosition(obj, rotated);
         topLineName = obj.getString("TOP_LINE_NAME");
         middleLineName = obj.getString("MIDDLE_LINE_NAME");
-        bottomLineName = obj.getString("BOTTOM_LINE_NAME");
+        bottomLineName = obj.optString("BOTTOM_LINE_NAME");
         lineIntensity = obj.getInt("LINE_INTENSITY");
         lineSearchWidth = obj.has("LINE_SEARCH_WIDTH") ? obj.getInt("LINE_SEARCH_WIDTH") :
                 Math.max((int)((middleLinePosition-topLinePosition)/2.0),(int)((bottomLinePosition-middleLinePosition)/2.0));
@@ -173,5 +173,11 @@ public class RDT {
         detector = SIFT.create();
         matcher = BFMatcher.create(BFMatcher.BRUTEFORCE, false);
         detector.detectAndCompute(refImg, new Mat(), refKeypoints, refDescriptor);
+    }
+
+    private double getBottomLinePosition(JSONObject rdtConfig, boolean rotated) throws JSONException {
+        return rdtConfig.optJSONArray("BOTTOM_LINE_POSITION") == null ? 0
+                : rotated ? rdtConfig.getJSONArray("BOTTOM_LINE_POSITION").getDouble(1) - resultWindowRect.x
+                : rdtConfig.getJSONArray("BOTTOM_LINE_POSITION").getDouble(0) - resultWindowRect.x;
     }
 }
