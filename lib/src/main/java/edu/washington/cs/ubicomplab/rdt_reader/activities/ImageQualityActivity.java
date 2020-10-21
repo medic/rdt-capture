@@ -50,7 +50,10 @@ public class ImageQualityActivity extends Activity implements ImageQualityViewLi
 
         try {
             // Extract config json obj
-            mImageQualityView.setRdtJsonConfig(new JSONObject(b.getString(RDT_JSON_CONFIG)));
+            String rdtConfig = b.getString(RDT_JSON_CONFIG, null);
+            if (rdtConfig != null) {
+                mImageQualityView.setRdtJsonConfig(new JSONObject(rdtConfig));
+            }
         } catch (JSONException e) {
             e.printStackTrace();
         }
