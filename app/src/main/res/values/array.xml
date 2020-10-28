@@ -13,5 +13,7 @@
         <item>malaria-experimental</item>
         <item>malaria-sdbioline</item>
         <item>flu-quickvue</item>
+        <item>covid19-Joysbio-Ag</item>
+        <item>syphilis-SDBiosensor-Ab</item>      
     </string-array>
 </resources>
