@@ -159,4 +159,26 @@
     "BOTTOM_LINE_NAME": "lgM",
     "LINE_INTENSITY": 85
   }
+    "syphilis-SDBiosensor-Ab": {
+    "REF_IMG": "syphilisab_sdbiosensor_ref_v0",
+    "VIEW_FINDER_SCALE": 0.6,
+    "RESULT_WINDOW_TOP_LEFT": [456, 165],
+    "RESULT_WINDOW_BOTTOM_RIGHT": [758, 213],
+    "TOP_LINE_POSITION": [547, 187],
+    "MIDDLE_LINE_POSITION": [646, 187],
+    "TOP_LINE_NAME": "Control",
+    "MIDDLE_LINE_NAME": "Test",
+    "LINE_INTENSITY": 85
+  }
+    "covid19-Joysbio-Ag": {
+    "REF_IMG": "covid19ag_joysbio_ref_v0",
+    "VIEW_FINDER_SCALE": 0.6,
+    "RESULT_WINDOW_TOP_LEFT": [252, 87],
+    "RESULT_WINDOW_BOTTOM_RIGHT": [385, 107],
+    "TOP_LINE_POSITION": [298, 97],
+    "MIDDLE_LINE_POSITION": [340, 97],
+    "TOP_LINE_NAME": "Control",
+    "MIDDLE_LINE_NAME": "Test",
+    "LINE_INTENSITY": 85
+  }
 }
