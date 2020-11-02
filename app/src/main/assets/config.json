@@ -158,7 +158,7 @@
     "MIDDLE_LINE_NAME": "lgG",
     "BOTTOM_LINE_NAME": "lgM",
     "LINE_INTENSITY": 85
-  }
+  },
     "syphilis-SDBiosensor-Ab": {
     "REF_IMG": "syphilisab_sdbiosensor_ref_v0",
     "VIEW_FINDER_SCALE": 0.6,
@@ -169,7 +169,7 @@
     "TOP_LINE_NAME": "Control",
     "MIDDLE_LINE_NAME": "Test",
     "LINE_INTENSITY": 85
-  }
+  },
     "covid19-Joysbio-Ag": {
     "REF_IMG": "covid19ag_joysbio_ref_v0",
     "VIEW_FINDER_SCALE": 0.6,
