@@ -52,6 +52,7 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import org.json.JSONObject;
 import org.opencv.android.BaseLoaderCallback;
 import org.opencv.android.LoaderCallbackInterface;
 import org.opencv.core.Mat;
@@ -96,6 +97,7 @@ public class ImageQualityView extends LinearLayout implements View.OnClickListen
     private boolean showViewport;
     private boolean showFeedback;
     private AutoFitTextureView mTextureView;
+    private JSONObject rdtJsonConfig;
 
     // Image processing variables
     private ImageProcessor processor;
@@ -258,7 +260,8 @@ public class ImageQualityView extends LinearLayout implements View.OnClickListen
             switch (status) {
                 case LoaderCallbackInterface.SUCCESS: {
                     Log.i(TAG, "OpenCV loaded successfully");
-                    processor = ImageProcessor.getInstance(mActivity, rdtName);
+                    processor = getRdtJsonConfig() == null ? ImageProcessor.getInstance(mActivity, rdtName)
+                            : ImageProcessor.getInstance(getRdtJsonConfig());
                     ViewportUsingBitmap viewport = findViewById(R.id.img_quality_check_viewport);
                     viewport.hScale = (float) processor.mRDT.viewFinderScaleH;
                     viewport.wScale = (float) processor.mRDT.viewFinderScaleW;
@@ -1059,5 +1062,13 @@ public class ImageQualityView extends LinearLayout implements View.OnClickListen
             return false;
         }
         return true;
+    }
+
+    public JSONObject getRdtJsonConfig() {
+        return rdtJsonConfig;
+    }
+
+    public void setRdtJsonConfig(JSONObject rdtJsonConfig) {
+        this.rdtJsonConfig = rdtJsonConfig;
     }
 }

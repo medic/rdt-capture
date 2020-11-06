@@ -81,4 +81,6 @@ public final class Constants {
     public static final int REQUEST_CAMERA_PERMISSION = 1;
     public static String SAVED_IMAGE_FILE_PATH = "saved_image_file_path";
     public static String SAVED_IMAGE_RESULT = "saved_image_result";
+
+    public static String RDT_JSON_CONFIG = "rdt_json_config";
 }

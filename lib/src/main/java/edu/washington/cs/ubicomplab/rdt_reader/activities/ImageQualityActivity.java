@@ -4,6 +4,9 @@ import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import edu.washington.cs.ubicomplab.rdt_reader.R;
 import edu.washington.cs.ubicomplab.rdt_reader.core.RDTCaptureResult;
 import edu.washington.cs.ubicomplab.rdt_reader.core.RDTInterpretationResult;
@@ -12,6 +15,7 @@ import edu.washington.cs.ubicomplab.rdt_reader.utils.ImageUtil;
 import edu.washington.cs.ubicomplab.rdt_reader.views.ImageQualityView;
 
 import static edu.washington.cs.ubicomplab.rdt_reader.core.Constants.DEFAULT_RDT_NAME;
+import static edu.washington.cs.ubicomplab.rdt_reader.core.Constants.RDT_JSON_CONFIG;
 
 /**
  * The {@link android.app.Activity} for showing a real-time camera feed during image capture and
@@ -42,6 +46,16 @@ public class ImageQualityActivity extends Activity implements ImageQualityViewLi
             mImageQualityView.setRDTName(rdtName);
         } else {
             mImageQualityView.setRDTName(DEFAULT_RDT_NAME);
+        }
+
+        try {
+            // Extract config json obj
+            String rdtConfig = b.getString(RDT_JSON_CONFIG, null);
+            if (rdtConfig != null) {
+                mImageQualityView.setRdtJsonConfig(new JSONObject(rdtConfig));
+            }
+        } catch (JSONException e) {
+            e.printStackTrace();
         }
     }
 
