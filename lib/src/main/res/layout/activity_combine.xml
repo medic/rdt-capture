@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="utf-8"?>
+<android.support.constraint.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android" xmlns:custom="http://schemas.android.com/apk/res-auto"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:opencv="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/container"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context="edu.washington.cs.ubicomplab.rdt_reader.CombiledActivity">
+
+    <!--org.opencv.android.JavaCameraView-->
+    <edu.washington.cs.ubicomplab.rdt_reader.views.RDTCameraView
+        android:id="@+id/opencv_camera_view"
+        android:layout_width="fill_parent"
+        android:layout_height="fill_parent"
+        android:visibility="gone"
+        opencv:camera_id="any"
+        opencv:show_fps="true" />
+
+    <Button
+        android:id="@+id/capture_button"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="16dp"
+        android:layout_marginEnd="8dp"
+        android:layout_marginStart="8dp"
+        android:text="Capture"
+        android:theme="@style/PrimaryButton"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent" />
+
+    <TextView
+        android:id="@+id/instructionTextView"
+        android:layout_width="341dp"
+        android:layout_height="94dp"
+        android:layout_marginBottom="8dp"
+        android:layout_marginEnd="8dp"
+        android:layout_marginStart="8dp"
+        android:layout_marginTop="8dp"
+        android:text="Show the expiation date on the packaging"
+        android:textColor="@android:color/white"
+        android:textSize="32sp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.518"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_bias="0.835" />
+
+    <edu.washington.cs.ubicomplab.rdt_reader.Viewport
+        android:id="@+id/viewport"
+        android:layout_width="fill_parent"
+        android:layout_height="fill_parent"
+        android:layout_weight=".5"
+        android:background="@color/black_overlay"
+        />
+
+    <com.shuhart.stepview.StepView
+        android:id="@+id/step_view"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@color/gray_overlay"
+        android:padding="16dp"
+        app:animationType="Line"
+        app:doneCircleColor="@color/colorPrimary"
+        app:doneCircleRadius="12dp"
+        app:doneStepLineColor="@color/colorPrimary"
+        app:doneStepMarkColor="@color/colorWhite"
+        app:nextStepLineColor="@color/colorPrimary"
+        app:nextTextColor="@color/colorPrimary"
+        app:selectedCircleColor="@color/colorPrimary"
+        app:selectedCircleRadius="12dp"
+        app:selectedStepNumberColor="@color/colorWhite"
+        app:selectedTextColor="@color/colorPrimary"
+        app:stepLineWidth="1dp"
+        app:stepNumberTextSize="12sp"
+        app:stepPadding="4dp"
+        app:stepViewStyle="@style/StepView" />
+
+
+</android.support.constraint.ConstraintLayout>
