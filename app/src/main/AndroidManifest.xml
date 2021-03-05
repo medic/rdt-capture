@@ -1,4 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!--
+  ~ Copyright (C) 2019 University of Washington Ubicomp Lab
+  ~ All rights reserved.
+  ~
+  ~ This software may be modified and distributed under the terms
+  ~ of a BSD-style license that can be found in the LICENSE file.
+  -->
+
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="edu.washington.cs.ubicomplab.rdt_reader">
 
@@ -30,7 +38,7 @@
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
         <activity
-            android:name=".MainActivity"
+            android:name=".activities.MainActivity"
             android:configChanges="keyboardHidden|orientation"
             android:noHistory="true"
             android:screenOrientation="portrait">
@@ -41,10 +49,7 @@
             </intent-filter>
         </activity>
         <activity
-            android:name=".ExpirationDateActivity"
-            android:noHistory="true" />
-        <activity
-            android:name=".ImageQualityActivity"
+            android:name=".activities.ImageQualityActivity"
             android:theme="@style/Theme.AppCompat.NoActionBar"
             android:configChanges="keyboardHidden|orientation"
             android:exported="true"
@@ -56,7 +61,7 @@
             </intent-filter>
         </activity>
         <activity
-            android:name=".ImageResultActivity"
+            android:name=".activities.ImageResultActivity"
             android:configChanges="keyboardHidden|orientation"
             android:noHistory="true"
             android:screenOrientation="portrait" />

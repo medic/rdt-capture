@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string-array name="spinnerItems">
+        <item>covid19-Realytech</item>
+        <item>covid19-Greenspring</item>
+        <item>covid19-SDBiosensor-IgG</item>
+        <item>covid19-SDBiosensor-IgM</item>
+        <item>covid5</item>
+        <item>covid19-Alltest</item>
+        <item>covid19-wondfo</item>
+        <item>covid19-modified</item>
+        <item>malaria-carestart</item>
+        <item>malaria-prevent</item>
+        <item>malaria-experimental</item>
+        <item>malaria-sdbioline</item>
+        <item>flu-quickvue</item>
+        <item>covid19-Joysbio-Ag</item>
+        <item>syphilis-SDBiosensor-Ab</item>      
+    </string-array>
+</resources>

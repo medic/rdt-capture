@@ -1,11 +1,20 @@
+<!--
+  ~ Copyright (C) 2019 University of Washington Ubicomp Lab
+  ~ All rights reserved.
+  ~
+  ~ This software may be modified and distributed under the terms
+  ~ of a BSD-style license that can be found in the LICENSE file.
+  -->
+
 <resources>
     <string name="app_name">rdt-reader</string>
     <string name="title_activity_result">ResultActivity</string>
     <string name="title_activity_camera2_test">Camera2TestActivity</string>
     <string name="progress_initialization">Stay still…</string>
     <string name="progress_final">Captured! Analyzing the image…</string>
-    <string name="instruction">Place the RDT inside the rectangle.</string>
+    <string name="instruction">Fit RDT in the rectangle. Hold still...</string>
     <string name="instruction_detected"><![CDATA[RDT detected at the center!]]></string>
+    <string name="instruction_glare"><![CDATA[Slightly move the phone \n to remove glare at the center.]]></string>
     <string name="instruction_pos"><![CDATA[Place RDT at the center.\nFit RDT to the rectangle.]]></string>
     <string name="instruction_too_small"><![CDATA[Place RDT at the center.\nFit RDT to the rectangle.\nMove closer.]]></string>
     <string name="instruction_too_large"><![CDATA[Place RDT at the center.\nFit RDT to the rectangle.\nMove further away.]]></string>
@@ -13,7 +22,8 @@
     <string name="instruction_unfocused"><![CDATA[Place RDT at the center.\n Fit RDT to the rectangle.\nCamera is not focused. \nMove further away.]]></string>
     <string name="over_exposed_msg">TOO BRIGHT </string>
     <string name="under_exposed_msg">TOO DARK </string>
-    <string name="quality_msg_format"> <![CDATA[POSITION/SIZE: %s <br> SHARPNESS: %s <br> BRIGHTNESS: %s <br> NO SHADOW: %s]]></string>
+    <string name="quality_msg_format"> <![CDATA[Exposure: %s <br> Sharpness: %s <br> Position/Size: %s <br> No glare: %s]]></string>
+    <string name="quality_msg_format_text"> <![CDATA[%s <br> %s <br> %s <br> %s]]></string>
     <string name="exp_date_undetected"><![CDATA[EXP DATE NOT DETECTED.\n ]]></string>
     <string name="exp_date_expired"><![CDATA[EXPIRED!\n DO NOT USE THIS RDT! ]]></string>
     <string name="exp_date_valid"><![CDATA[VALID!\n YOU CAN USE THIS RDT. ]]></string>
@@ -46,5 +56,6 @@
     <string name="preference_shadow">shadow</string>
     <string name="preference_file_key">rdt-capture-pref</string>
     <string name="cancel">Cancel</string>
+    <string name="too_much_blood_warning">Warning: Blood amount excessive, RDT might not be accurate</string>
 
 </resources>
