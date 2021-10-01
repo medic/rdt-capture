@@ -64,6 +64,17 @@ Developers are allowed to use RDTScan as they please provided that they abide by
 
 ### BibTex
 ```
+@article{park2021design,
+  title={The Design and Evaluation of a Mobile System for Rapid Diagnostic Test Interpretation},
+  author={Park, Chunjong and Ngo, Hung and Lavitt, Libby Rose and Karuri, Vincent and Bhatt, Shiven and Lubell-Doughtie, Peter and Shankar, Anuraj H and Ndwiga, Leonard and Osoti, Victor and Wambua, Juliana K and others},
+  journal={Proceedings of the ACM on Interactive, Mobile, Wearable and Ubiquitous Technologies},
+  volume={5},
+  number={1},
+  pages={1--26},
+  year={2021},
+  publisher={ACM New York, NY, USA}
+}
+
 @inproceedings{park2020supporting,
   author = {Park, Chunjong and Mariakakis, Alex and Patel, Shwetak and Yang, Jane and Lassala, Diego and Johnson, Ari and Wassuna, Beatrice and Fall, Fatou and Soda Gaye, Marème and Holeman, Isaac},
   title = {Supporting Smartphone-Based Image Capture of Rapid Diagnostic Tests in Low-Resource Settings},
@@ -82,6 +93,8 @@ Developers are allowed to use RDTScan as they please provided that they abide by
 
 ### Chicago-Style
 ```
+Park, Chunjong, Hung Ngo, Libby Rose Lavitt, Vincent Karuri, Shiven Bhatt, Peter Lubell-Doughtie, Anuraj H. Shankar et al. "The Design and Evaluation of a Mobile System for Rapid Diagnostic Test Interpretation." Proceedings of the ACM on Interactive, Mobile, Wearable and Ubiquitous Technologies 5, no. 1 (2021): 1-26.
+
 Chunjong Park, Alex Mariakakis, Shwetak Patel, Jane Yang, Diego Lassala, Ari Johnson, Beatrice Wassuna, Fatou Fall, Marème Soda Gaye, Isaac Holeman. Supporting Smartphone-Based Image Capture of Rapid Diagnostic Tests in Low-Resource Settings. To appear in Proceedings of the 2020 International Conference on Information and Communication Technologies and Development. Association for Computing Machinery, New York, NY, USA, vol. 14. 2020. DOI: TBD
 ```
 
