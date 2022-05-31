@@ -46,7 +46,7 @@ This repository already includes the files needed to use RDTScan with a few RDT 
 
 Extending RDTScan to accommodate a new RDT is a matter of three steps: (1) adding a clean photo of the RDT, (2) identifying some regions-of-interest using an image-editing program (e.g., Photoshop, GIMP), and (3) adding that information and other metadata to a configuration file. For detailed instructions on how to extend RDTScan for a new RDT, visit this [link](readme_assets/rdt_configuration.md).
 
-**Note:** RDTScan uses a feature-matching approach to locate the target RDT's design. A detailed explanation of this approach can be found at this [article](https://opencv-python-tutroals.readthedocs.io/en/latest/py_tutorials/py_feature2d/py_features_meaning/py_features_meaning.html) by the OpenCV Foundation. As that article explains, feature-matching is less compatable with certain visual characteristics. In the context of RDTs, this includes:
+**Note:** RDTScan uses a feature-matching approach to locate the target RDT's design. A detailed explanation of this approach can be found at this [article](https://docs.opencv.org/4.x/dc/dc3/tutorial_py_matcher.html) by the OpenCV Foundation. As that article explains, feature-matching is less compatable with certain visual characteristics. In the context of RDTs, this includes:
 * Blank cassettes with little or no lettering
 * Inconsistent patterns (e.g., QR code, bar code)
 
@@ -58,11 +58,9 @@ Extending RDTScan to accommodate a new RDT is a matter of three steps: (1) addin
 [Link](readme_assets/api_imageprocessor.md) for `ImageProcessor.java`
 
 # Attribution
-Developers are allowed to use RDTScan as they please provided that they abide by the project's license: [BSD-3-Clause](LICENSE). However, we would greatly appreciate attribution where possible. For example, any conference or journal publications that result from a tool built with our library should cite the following paper:
+Developers are allowed to use RDTScan as they please provided that they abide by the project's license: [BSD-3-Clause](LICENSE). However, we would greatly appreciate attribution where possible. For example, any conference or journal publications that result from a tool built with our library should cite the following papers:
 
-**Note:** This publication has been accepted to the [ICTD 2020 conference](https://ictd2020.org/), but is pending publication. A pre-print version of the paper will be made available shortly.
-
-### BibTex
+### BibTeX
 ```
 @article{park2021design,
   title={The Design and Evaluation of a Mobile System for Rapid Diagnostic Test Interpretation},
