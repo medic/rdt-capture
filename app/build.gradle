@@ -1,39 +1,21 @@
+/*
+ * Copyright (C) 2019 University of Washington Ubicomp Lab
+ * All rights reserved.
+ *
+ * This software may be modified and distributed under the terms
+ * of a BSD-style license that can be found in the LICENSE file.
+ */
+
 apply plugin: 'com.android.application'
 
-def getVersionCode = {
-  int versionCode = 1
-  if(System.env.TRAVIS == 'true' && System.env.TRAVIS_TAG && System.env.TRAVIS_TAG.startsWith('v')) {
-    def versionParts = System.env.TRAVIS_TAG.split(/[\.v]/)
-
-    if (versionParts.length != 4)
-      throw new RuntimeException("Unexpected version number - should be of formatted as 'v0.0.0', but was: $System.env.TRAVIS_TAG")
-
-    versionParts = versionParts.drop(1).collect { Integer.parseInt(it) }
-
-    if (versionParts[1] > 999 || versionParts[2] > 999)
-      throw new RuntimeException('Version part greater than 999 not allowed.')
-
-    versionCode = (1000 * 1000 * versionParts[0]) + 1000 * versionParts[1] + versionParts[2]
-    if (versionCode > 2100000000 / 10)
-      throw new RuntimeException('versionCode bigger than max allowed by Google Play.')
-  }
-
-  return versionCode
-}
-
-def getVersionName = {
-  System.env.TRAVIS_TAG ?: 'SNAPSHOT'
-}
-
 android {
-    compileSdkVersion 28
+    compileSdkVersion 26
     defaultConfig {
         applicationId "edu.washington.cs.ubicomplab.rdt_reader"
         minSdkVersion 21
-        targetSdkVersion 28
-        versionCode getVersionCode()
-        versionName getVersionName()
-        archivesBaseName = "${project.name}-${versionName}"
+        targetSdkVersion 26
+        versionCode 1
+        versionName "1.0"
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
         externalNativeBuild {
             cmake {
@@ -41,51 +23,34 @@ android {
             }
         }
     }
-
-    signingConfigs {
-        release {
-            storeFile file(System.env.ANDROID_KEYSTORE_PATH ?: signingConfigs.debug.storeFile)
-            storePassword System.env.ANDROID_KEYSTORE_PASSWORD ?: signingConfigs.debug.storePassword
-            keyAlias System.env.ANDROID_KEY_ALIAS ?: signingConfigs.debug.keyAlias
-            keyPassword System.env.ANDROID_KEY_PASSWORD ?: signingConfigs.debug.keyPassword
-        }
-    }
-
     buildTypes {
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
-            signingConfig signingConfigs.release
         }
     }
-
     externalNativeBuild {
         cmake {
             path "CMakeLists.txt"
         }
     }
-
-    android {
-        lintOptions {
-            abortOnError false
-        }
-    }
 }
 
 dependencies {
-    implementation 'com.android.support:support-v4:28.0.0'
+    implementation 'com.android.support:support-v4:26.1.0'
     testImplementation 'junit:junit:4.12'
     implementation fileTree(include: ['*.jar'], dir: 'libs')
-    implementation 'com.android.support:appcompat-v7:28.0.0'
+    implementation 'com.android.support:appcompat-v7:26.1.0'
     implementation 'com.android.support.constraint:constraint-layout:1.0.2'
     androidTestImplementation 'com.android.support.test:runner:1.0.1'
     androidTestImplementation 'com.android.support.test.espresso:espresso-core:3.0.1'
-    implementation 'com.android.support:design:28.0.0'
+    implementation 'com.android.support:design:26.1.0'
     implementation 'com.github.PhilJay:MPAndroidChart:v3.0.3'
-    compile 'com.google.android.gms:play-services-vision:11+'
-    compile 'com.shuhart.stepview:stepview:1.2.0'
+    implementation 'com.google.android.gms:play-services-vision:11+'
+    implementation 'com.shuhart.stepview:stepview:1.2.0'
     //compile 'org.nd4j:nd4j-native:0.9.1'
     //compile 'org.nd4j:nd4j-native:0.9.1:android-x86'
-    implementation project(':openCVLibrary341')
-    implementation 'com.android.support:cardview-v7:28.0.0'
+    //implementation project(':openCVLibrary341-contrib')
+    implementation 'com.android.support:cardview-v7:26.1.0'
+    implementation project(':openCVLibrary341-contrib')
 }
